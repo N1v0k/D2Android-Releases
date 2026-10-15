@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions about installation and saved games
+    url: https://github.com/N1v0k/D2Android-Releases#faq
+    about: Please read the FAQ first.

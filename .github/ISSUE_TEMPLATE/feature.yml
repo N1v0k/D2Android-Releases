@@ -1,0 +1,15 @@
+name: Idea or wish
+description: Suggest a feature or an improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: "What should happen, and in which situation in the game?"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "Why does it help on a phone?"

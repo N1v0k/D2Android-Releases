@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please never post CD keys, game files or saved games of other people.
+  - type: input
+    id: phone
+    attributes:
+      label: "Phone model"
+      placeholder: "e.g. RedMagic 10 Pro"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: "Android version"
+      placeholder: "e.g. Android 15"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: "App version"
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install the game?
+      options: [Installation without a PC, Copied a 1.13d game folder]
+  - type: textarea
+    id: what
+    attributes:
+      label: "What happened, and what did you expect?"
+      description: Steps to reproduce help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnosis
+    attributes:
+      label: Diagnosis
+      description: "In the game: ≡ → Game helpers → Share diagnosis, right after the problem. Attach the file here."
