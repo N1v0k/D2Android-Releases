@@ -3,6 +3,15 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.0.1 (2026-10-15)
+
+- Installing the game without a PC: the expansion installer no longer stops and asks for the "Diablo II Game CD" on a fresh installation.
+- Installing the game without a PC when the installers are already in Download/D2Android (for example after reinstalling the app): the installation no longer stops with "Path not found".
+- Pausing: when the app stays in the background, the pause is handed over to the game's own menu cleanly.
+- Sound: more robust audio output.
+- Importing saves: a failed import is now rolled back completely.
+- Take button: picks up items and uses objects directly through the game instead of simulated clicks.
+
 ## 1.0.0 (2026-10-15)
 
 - First public release: Diablo II: Lord of Destruction 1.13d on Android phones with Snapdragon and Adreno graphics.
