@@ -106,7 +106,7 @@ playable on a phone, not to change the game.
 
 - **Without a PC:** the app downloads Blizzard's official installers, you type in your own CD keys, and the app installs
   and patches the game to 1.13d. See [Installation](#installation).
-- **Or** copy an existing 1.13d game folder to the phone.
+- **Or** copy an existing 1.13d game folder to the phone and choose it in the app.
 - A start check tells you honestly if your phone or your game version is not supported.
 
 ## Requirements
@@ -125,7 +125,8 @@ playable on a phone, not to change the game.
    > **Play Protect:** Google Play Protect may block the installation ("Unsafe app blocked") because the app is built
    > for an older Android version. It needs that to be allowed to run the game. Tap **More details → Install anyway**.
 
-2. Open **Diablo II**. The app sets itself up once (about a minute).
+2. Open **Diablo II**. Without a game it shows two ways: **Install the game (without a PC)** or **Choose game folder**
+   (see below). The first start of the game takes about a minute longer, the app sets itself up once.
 
 ### Install the game without a PC (recommended)
 
@@ -144,8 +145,10 @@ The app does what you would do on a PC, with Blizzard's own files:
 ### Alternative: copy a 1.13d game folder
 
 If you already have Diablo II + LoD at version 1.13d on a PC: copy the whole game folder (with `Game.exe`,
-`d2data.mpq`, `d2exp.mpq` …) to the phone, for example to `Download/Diablo II`, and pick it in the app:
-**Game settings → Choose game folder**. The app checks the version; other versions (1.14, Resurrected) do not work.
+`d2data.mpq`, `d2exp.mpq` …) to the phone, for example to `Download/Diablo II`, then choose it in the app: on the
+first start tap **Choose game folder** (later: **Game settings → Choose game folder**). The app does not search the
+phone for a game by itself, it uses the folder you choose. It checks the version; other versions (1.14, Resurrected)
+do not work.
 
 ### Bring your saved games
 

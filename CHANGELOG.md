@@ -3,6 +3,18 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.0.2 (2026-10-15)
+
+- The in-game menu no longer shows the idle mode.
+- First start: the app asks for permission to show notifications before the game starts, no longer over the starting game (which could stay black).
+- Choosing the game: the app no longer searches the phone for a game folder by itself. Without a game it offers two ways, "Install the game (without a PC)" and "Choose game folder". After the update, choose your game folder once.
+- Belt refill: when the game refuses one kind of potion, only that kind pauses briefly; the others keep refilling.
+- Device check: phones whose Adreno GPU is not in the graphics driver's list are shown as "not tested" instead of "supported" (starting is still allowed).
+- Automatic potions: when life drops fast or is already low, the largest potion is used, and a potion that is still working is only topped up with a larger one. Rejuvenation potions react faster.
+- Item names on the ground no longer carry over from the previous game.
+- A tap on a monster that had to wait no longer turns into a stray click after a hang or after returning from the background.
+- PlugY stats pages: the page buttons are set up again if that failed once.
+
 ## 1.0.1 (2026-10-15)
 
 - Installing the game without a PC: the expansion installer no longer stops and asks for the "Diablo II Game CD" on a fresh installation.
