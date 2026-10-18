@@ -3,6 +3,10 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.2.1 (2026-10-18)
+
+- Materials: taking a gem back out after "Deposit all" no longer crashes the game.
+
 ## 1.2.0 (2026-10-17)
 
 - Shoulder buttons: besides a skill, each one can now attack, drink a healing potion, take, show names, open the map, inventory, a town portal and more.
