@@ -3,6 +3,40 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.3.0 (2026-10-22)
+
+- New start page in the game's look: your characters in their equipment, with the area of their last save. A tap starts the character straight into the game, without the game's menus and with its loading animation; a long press picks the difficulty. "New character" leads straight to the class choice, "Classic start" shows the game's menus as before, and saving and leaving the game in its Esc menu returns to the start page.
+- Diablo II's title music plays on the app pages, and taps there click like in the game; "Music" at the top right switches both off.
+- Gamepad support in the style of D2R: the left stick walks, the buttons attack, take and cast with a second row on LT, the D-pad drinks potions. A pointer works in the inventory, stash, vendors and menus; Start opens the menu, View the inventory or (held) a wheel of windows. The touch buttons hide while the pad is in use and come back with the first tap.
+- Settings in the look of the game's options menu: groups with a search, shorter texts, the PlugY options, and reachable in the game from the ≡ menu.
+- Bottom bar: an info grid (FPS, battery, players, level, DPS or gold) in place of the stamina, an experience bar, and the clock on top.
+- Frame rate limit, with 90, 120 and 144 FPS on displays that support them.
+- Effect column: every status effect with its remaining time, Bone Armor's remaining protection, shrines with their picture, and auras shown as active as long as they are on.
+- Damage numbers over time: poison, burning and open wounds show a summed number about every ¾ s, fire wall and inferno sums instead of a flood of ones, and DPS counts them. Hits of revived monsters are grey and not counted.
+- Builds for every class (27 in all), "All points back" and "Spend all points following the build".
+- "Take": the ring of targets sits in the middle and is chosen with a short swipe; holding "Take" on a townsperson shows their options as a ring.
+- A tap on the mercenary's portrait opens his items; with a healing potion on the cursor it heals him.
+- A tap on the death screen brings the character back.
+- Stash: the gold amount to withdraw is filled in; the materials window fits into the stash; rune and gem names without "[fs]".
+- Item comparison shows the weapon damage before and after, and the equipped item's tooltip moves above or below when there is no room beside it.
+- Sorting the inventory leaves the largest free block; the loot filter is kept per character.
+- Menu row: "Assign Keys", "Show Items" and walk/run next to them.
+- Aim assist: a "Blind spot behind the character" (60° by default) – without the joystick, monsters right behind your back are left alone until you turn towards them.
+- The buttons in the settings window ("Move buttons", help and troubleshooting) are drawn in the game's style.
+- Installing: in portrait with only the steps shown; when something goes wrong (no network, full storage, missing permission), the page says what to do and offers a way on; a stopped patch continues on the next start; choosing a folder says what it did.
+- A fresh install starts with the picture size "Large (540 lines)"; the app pages run in full screen.
+
+- Holding attack or a spell no longer stalls after pressing again; a tapped skill casts while the joystick is held; "Attack" tapped while walking strikes once, then walks on; a tap into the bare world no longer moves the character.
+- Teleport onto a spot with a monster above it lands on the marked spot.
+- The game keeps running with picture and sound after a long time in the background with the screen off.
+- The pentagram in the main menu no longer quits Diablo II; the game's Esc menu stays open after the app pause instead of crashing.
+- Game buttons appear with the game world instead of over "Loading…".
+- Auto gold picks gold up reliably, also while attacking, and leaves it lying when the purse is full.
+- Quest scrolls (Inifuss, Horadric) can be used by tap; the quest button shows in the folded menu row when there is quest news.
+- Opening a window while running stops the character at once; with the compact bottom bar, taps beside the orbs open nothing.
+- The ≡ menu has no black band, "Quit" is visible; the status bar stays hidden after the screen goes off and on.
+- Sharp text on the stone buttons.
+
 ## 1.2.1 (2026-10-18)
 
 - Materials: taking a gem back out after "Deposit all" no longer crashes the game.

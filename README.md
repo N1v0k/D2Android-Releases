@@ -164,8 +164,10 @@ playable on a phone, not to change the game.
    > **Play Protect:** Google Play Protect may block the installation ("Unsafe app blocked") because the app is built
    > for an older Android version. It needs that to be allowed to run the game. Tap **More details → Install anyway**.
 
-2. Open **Diablo II**. Without a game it shows two ways: **Install the game (without a PC)** or **Choose game folder**
+2. Open **D2Android**. Without a game it shows two ways: **Install the game (without a PC)** or **Choose game folder**
    (see below). The first start of the game takes about a minute longer, the app sets itself up once.
+3. Then the start page shows your characters. Tap one to go straight into the game with it, or tap **New character**
+   for the class selection. **Classic start (the game's menus)** opens the game's own menus as on a PC.
 
 ### Install the game without a PC (recommended)
 
@@ -179,19 +181,20 @@ The app does what you would do on a PC, with Blizzard's own files:
    sent anywhere else** by the app. On screen they stay masked.
 4. Blizzard's installer installs the game to `Download/D2Android/Diablo2` (about 4 minutes), then the app applies
    **Blizzard's official 1.13d patch** and checks the result.
-5. Tap **Use it** – the game starts.
+5. Tap **Use it** – the start page comes up. Tap **New character** for your first character.
 
 ### Alternative: copy a 1.13d game folder
 
 If you already have Diablo II + LoD at version 1.13d on a PC: copy the whole game folder (with `Game.exe`,
 `d2data.mpq`, `d2exp.mpq` …) to the phone, for example to `Download/Diablo II`, then choose it in the app: on the
-first start tap **Choose game folder** (later: **Game settings → Choose game folder**). The app does not search the
+first start tap **Choose game folder** (later: **Settings → Saved games → Choose game folder**). The app does not search the
 phone for a game by itself, it uses the folder you choose. It checks the version; other versions (1.14, Resurrected)
 do not work.
 
 ### Bring your saved games
 
-- **From another phone with D2Android:** Game settings → **Share saved games** there, then **Load saved games** here.
+- **From another phone with D2Android:** Settings → Saved games → **Share saved games** there, then **Load saved games**
+  here.
 - **From a PC:** copy the `save` folder of your game (`.d2s` characters, plus the stash files) into the `save` folder
   of the game folder on the phone. Characters must come from 1.13d (or older) single player.
 - **PlugY:** the shared stash lives in its own file (`_LOD_SharedStashSave.sss`) next to your characters. Copy it too,
@@ -213,7 +216,7 @@ D2Android is a hobby project. Bug reports and ideas are welcome as
 [issues](https://github.com/N1v0k/D2Android-Releases/issues/new/choose) – please use the templates.
 
 - Bugs: phone model, Android version, app version and what you did. In the game, the menu
-  **≡ → Game helpers → Share diagnosis** right after the problem creates a file (what the app did in the last minutes,
+  **≡ → Settings → Help and info → Share diagnosis** right after the problem creates a file (what the app did in the last minutes,
   no game files) that helps a lot. **Report a bug** right below it opens the bug form with phone model, Android
   version and app version already filled in.
 - Tested on RedMagic 8 Pro and 10 Pro. Everything else is best effort and not officially supported.
@@ -270,5 +273,5 @@ Planned, without a fixed order or date:
 ## Licences and source code
 
 D2Android uses free software: Wine, Box64, DXVK, Mesa (Turnip), D2DX, PlugY, ALSA and parts of Winlator, among others.
-Their licences are listed in the app (**Game settings → Licences**) and in `THIRD-PARTY-NOTICES.txt` of every release.
+Their licenses are listed in the app (**Settings → Help and info → Licenses**, or **Licenses** on the start page) and in `THIRD-PARTY-NOTICES.txt` of every release.
 The source code of the LGPL/GPL parts we ship comes with every release (`…-lgpl-src.zip`, see `SOURCE-OFFER.txt`).
