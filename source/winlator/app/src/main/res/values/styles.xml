@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- D2Android: the dark theme of the app; Winlator's light theme and widget styles are gone -->
+<resources>
+    <style name="AppThemeBase" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="tabSelectedTextColor">?attr/colorPrimaryText</item>
+        <item name="tabTextColor">?attr/colorSecondaryText</item>
+        <item name="android:windowBackground">?attr/colorPrimarySurface</item>
+        <item name="android:colorBackground">?attr/colorPrimarySurface</item>
+        <item name="android:textViewStyle">@style/TextView</item>
+        <item name="android:checkboxStyle">@style/CheckBox</item>
+        <item name="android:listPopupWindowStyle">@style/ListPopupWindow</item>
+        <item name="listPopupWindowStyle">@style/ListPopupWindow</item>
+        <item name="android:popupWindowStyle">@style/PopupWindow</item>
+        <item name="popupWindowStyle">@style/PopupWindow</item>
+        <item name="android:popupMenuStyle">@style/PopupMenu</item>
+        <item name="popupMenuStyle">@style/PopupMenu</item>
+        <item name="android:toolbarStyle">@style/Toolbar</item>
+        <item name="toolbarStyle">@style/Toolbar</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItem</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:radioButtonStyle">@style/RadioButton</item>
+        <item name="radioButtonStyle">@style/RadioButton</item>
+    </style>
+    <style name="AppThemeDark" parent="@style/AppThemeBase">
+        <item name="colorAccent">#0288d1</item>
+        <item name="colorPrimary">#505963</item>
+        <item name="colorPrimaryDark">#3f474f</item>
+        <item name="colorControlNormal">#616161</item>
+        <item name="colorPrimaryText">#fafafa</item>
+        <item name="colorSecondaryText">#9e9e9e</item>
+        <item name="colorPrimarySurface">#1b1e21</item>
+        <item name="colorSecondarySurface">#2d3238</item>
+        <item name="colorPrimaryVariant">#56677a</item>
+        <item name="colorSecondaryVariant">#37424f</item>
+        <item name="colorError">#ef5350</item>
+        <item name="popupMenuBackground">@drawable/content_dialog_background_dark</item>
+        <item name="toolboxBackground">@drawable/toolbox_dark</item>
+        <item name="panelBackground">@drawable/panel_background_dark</item>
+        <item name="preloaderBackground">@drawable/preloader_background_dark</item>
+        <item name="progressBarIndeterminateImage">@drawable/progress_bar_indeterminate_dark</item>
+    </style>
+    <style name="AppThemeFullscreenDark" parent="@style/AppThemeDark">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+    <style name="SpinnerDropDownItem" parent="@android:style/Widget.Holo.DropDownItem.Spinner">
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="ListPopupWindow" parent="@android:style/Widget.ListPopupWindow">
+        <item name="android:popupBackground">?attr/popupMenuBackground</item>
+        <item name="android:dropDownHorizontalOffset">-4dp</item>
+    </style>
+    <style name="PopupWindow" parent="@android:style/Widget.PopupWindow">
+        <item name="android:popupBackground">?attr/popupMenuBackground</item>
+        <item name="android:dropDownHorizontalOffset">-4dp</item>
+    </style>
+    <style name="PopupMenu" parent="@android:style/Widget.PopupMenu">
+        <item name="android:popupBackground">?attr/popupMenuBackground</item>
+    </style>
+    <style name="TextView" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="CheckBox" parent="@android:style/Widget.CompoundButton.CheckBox">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="RadioButton" parent="@android:style/Widget.CompoundButton.RadioButton">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+        <item name="android:paddingRight">8dp</item>
+    </style>
+    <style name="TitleTextAppearance" parent="android:TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+    </style>
+    <style name="Toolbar" parent="@android:style/Widget.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="titleTextColor">#ffffff</item>
+        <item name="titleTextAppearance">@style/TitleTextAppearance</item>
+    </style>
+</resources>

@@ -1,0 +1,9 @@
+build/
+.gradle/
+.cxx/
+local.properties
+*.apk
+winlator/app/src/main/assets/d2/
+winlator/app/src/release/assets/
+winlator/app/src/main/assets/licenses/*
+!winlator/app/src/main/assets/licenses/index.tsv

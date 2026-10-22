@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- D2Android: strings and colors for the launcher and the remote test mode -->
+<resources>
+    <string name="d2test_label" translatable="false">D2 Test</string>
+    <string name="d2_shortcut_game_settings">Game settings</string>
+</resources>

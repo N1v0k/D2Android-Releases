@@ -1,0 +1,3239 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "id": "ama-javelin",
+      "class": 0,
+      "skills": [
+        [
+          1,
+          10,
+          1
+        ],
+        [
+          1,
+          9,
+          1
+        ],
+        [
+          6,
+          14,
+          1
+        ],
+        [
+          6,
+          15,
+          1
+        ],
+        [
+          6,
+          13,
+          1
+        ],
+        [
+          12,
+          20,
+          1
+        ],
+        [
+          12,
+          18,
+          1
+        ],
+        [
+          18,
+          24,
+          1
+        ],
+        [
+          18,
+          25,
+          1
+        ],
+        [
+          24,
+          29,
+          1
+        ],
+        [
+          24,
+          28,
+          1
+        ],
+        [
+          30,
+          35,
+          1
+        ],
+        [
+          30,
+          32,
+          1
+        ],
+        [
+          30,
+          33,
+          1
+        ],
+        [
+          18,
+          24,
+          20
+        ],
+        [
+          30,
+          35,
+          20
+        ],
+        [
+          6,
+          14,
+          20
+        ],
+        [
+          12,
+          20,
+          20
+        ],
+        [
+          30,
+          34,
+          15
+        ],
+        [
+          1,
+          10,
+          3
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 24,
+          "role": "haupt"
+        },
+        {
+          "skill": 14,
+          "role": "haupt"
+        },
+        {
+          "skill": 10,
+          "role": "haupt"
+        },
+        {
+          "skill": 35,
+          "role": "stark"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "munition",
+      "waffe": "speer",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/amazon-javelin.shtml",
+        "https://classic.battle.net/diablo2exp/skills/amazon-passive.shtml"
+      ]
+    },
+    {
+      "id": "ama-bow",
+      "class": 0,
+      "skills": [
+        [
+          1,
+          6,
+          1
+        ],
+        [
+          1,
+          9,
+          1
+        ],
+        [
+          6,
+          11,
+          1
+        ],
+        [
+          6,
+          12,
+          1
+        ],
+        [
+          6,
+          13,
+          1
+        ],
+        [
+          12,
+          18,
+          1
+        ],
+        [
+          18,
+          22,
+          1
+        ],
+        [
+          18,
+          23,
+          1
+        ],
+        [
+          24,
+          26,
+          1
+        ],
+        [
+          24,
+          29,
+          1
+        ],
+        [
+          24,
+          28,
+          1
+        ],
+        [
+          30,
+          32,
+          1
+        ],
+        [
+          30,
+          33,
+          1
+        ],
+        [
+          6,
+          12,
+          20
+        ],
+        [
+          24,
+          26,
+          20
+        ],
+        [
+          18,
+          22,
+          20
+        ],
+        [
+          30,
+          33,
+          10
+        ],
+        [
+          18,
+          23,
+          10
+        ],
+        [
+          1,
+          9,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          50
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 26,
+          "role": "haupt"
+        },
+        {
+          "skill": 22,
+          "role": "haupt"
+        },
+        {
+          "skill": 6,
+          "role": "haupt"
+        },
+        {
+          "skill": 12,
+          "role": "stark"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "munition",
+      "waffe": "bogen",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/amazon-bow.shtml",
+        "https://classic.battle.net/diablo2exp/skills/amazon-passive.shtml"
+      ]
+    },
+    {
+      "id": "ama-freeze",
+      "class": 0,
+      "skills": [
+        [
+          1,
+          6,
+          1
+        ],
+        [
+          6,
+          11,
+          1
+        ],
+        [
+          6,
+          12,
+          1
+        ],
+        [
+          6,
+          13,
+          1
+        ],
+        [
+          12,
+          18,
+          1
+        ],
+        [
+          18,
+          21,
+          1
+        ],
+        [
+          24,
+          29,
+          1
+        ],
+        [
+          24,
+          28,
+          1
+        ],
+        [
+          30,
+          31,
+          1
+        ],
+        [
+          30,
+          32,
+          1
+        ],
+        [
+          30,
+          31,
+          20
+        ],
+        [
+          18,
+          21,
+          20
+        ],
+        [
+          6,
+          11,
+          20
+        ],
+        [
+          6,
+          12,
+          20
+        ],
+        [
+          1,
+          9,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          50
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 31,
+          "role": "haupt"
+        },
+        {
+          "skill": 21,
+          "role": "haupt"
+        },
+        {
+          "skill": 11,
+          "role": "haupt"
+        },
+        {
+          "skill": 6,
+          "role": "haupt"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "munition",
+      "waffe": "bogen",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/amazon-bow.shtml",
+        "https://classic.battle.net/diablo2exp/skills/amazon-passive.shtml"
+      ]
+    },
+    {
+      "id": "sorc-fire",
+      "class": 1,
+      "skills": [
+        [
+          1,
+          36,
+          1
+        ],
+        [
+          1,
+          40,
+          1
+        ],
+        [
+          2,
+          37,
+          1
+        ],
+        [
+          24,
+          56,
+          1
+        ],
+        [
+          30,
+          61,
+          1
+        ],
+        [
+          12,
+          47,
+          20
+        ],
+        [
+          1,
+          36,
+          20
+        ],
+        [
+          24,
+          56,
+          20
+        ],
+        [
+          30,
+          61,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 36,
+          "role": "haupt"
+        },
+        {
+          "skill": 47,
+          "role": "stark",
+          "mainFrom": 18
+        },
+        {
+          "skill": 40,
+          "role": "puffer"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/sorceress-fire.shtml",
+        "https://diablo2.diablowiki.net/Sorceress_Fire_Spells"
+      ]
+    },
+    {
+      "id": "sorc-cold",
+      "class": 1,
+      "skills": [
+        [
+          1,
+          39,
+          1
+        ],
+        [
+          1,
+          40,
+          1
+        ],
+        [
+          6,
+          44,
+          1
+        ],
+        [
+          30,
+          65,
+          1
+        ],
+        [
+          24,
+          59,
+          20
+        ],
+        [
+          6,
+          45,
+          20
+        ],
+        [
+          18,
+          55,
+          20
+        ],
+        [
+          1,
+          39,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 45,
+          "role": "haupt"
+        },
+        {
+          "skill": 39,
+          "role": "haupt"
+        },
+        {
+          "skill": 59,
+          "role": "stark"
+        },
+        {
+          "skill": 40,
+          "role": "puffer"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/sorceress-cold.shtml"
+      ]
+    },
+    {
+      "id": "sorc-light",
+      "class": 1,
+      "skills": [
+        [
+          1,
+          38,
+          1
+        ],
+        [
+          1,
+          40,
+          1
+        ],
+        [
+          2,
+          37,
+          1
+        ],
+        [
+          6,
+          42,
+          1
+        ],
+        [
+          12,
+          49,
+          1
+        ],
+        [
+          18,
+          53,
+          1
+        ],
+        [
+          18,
+          54,
+          1
+        ],
+        [
+          30,
+          63,
+          1
+        ],
+        [
+          1,
+          38,
+          8
+        ],
+        [
+          18,
+          53,
+          20
+        ],
+        [
+          12,
+          49,
+          20
+        ],
+        [
+          30,
+          63,
+          20
+        ],
+        [
+          6,
+          42,
+          5
+        ],
+        [
+          1,
+          38,
+          20
+        ],
+        [
+          12,
+          48,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 53,
+          "role": "haupt"
+        },
+        {
+          "skill": 49,
+          "role": "haupt"
+        },
+        {
+          "skill": 38,
+          "role": "haupt"
+        },
+        {
+          "skill": 40,
+          "role": "puffer"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/sorceress-lightning.shtml"
+      ]
+    },
+    {
+      "id": "sorc-orb",
+      "class": 1,
+      "skills": [
+        [
+          1,
+          39,
+          1
+        ],
+        [
+          1,
+          40,
+          1
+        ],
+        [
+          2,
+          37,
+          1
+        ],
+        [
+          6,
+          44,
+          1
+        ],
+        [
+          6,
+          45,
+          1
+        ],
+        [
+          18,
+          55,
+          1
+        ],
+        [
+          18,
+          54,
+          1
+        ],
+        [
+          24,
+          59,
+          1
+        ],
+        [
+          30,
+          64,
+          1
+        ],
+        [
+          30,
+          65,
+          1
+        ],
+        [
+          30,
+          64,
+          20
+        ],
+        [
+          6,
+          45,
+          15
+        ],
+        [
+          1,
+          39,
+          20
+        ],
+        [
+          30,
+          65,
+          20
+        ],
+        [
+          6,
+          45,
+          20
+        ],
+        [
+          24,
+          59,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 64,
+          "role": "haupt"
+        },
+        {
+          "skill": 45,
+          "role": "haupt"
+        },
+        {
+          "skill": 39,
+          "role": "haupt"
+        },
+        {
+          "skill": 40,
+          "role": "puffer"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/sorceress-cold.shtml"
+      ]
+    },
+    {
+      "id": "necro-bone",
+      "class": 2,
+      "skills": [
+        [
+          1,
+          67,
+          1
+        ],
+        [
+          1,
+          66,
+          1
+        ],
+        [
+          1,
+          68,
+          1
+        ],
+        [
+          6,
+          75,
+          1
+        ],
+        [
+          30,
+          93,
+          1
+        ],
+        [
+          18,
+          84,
+          20
+        ],
+        [
+          1,
+          67,
+          20
+        ],
+        [
+          30,
+          93,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 84,
+          "role": "haupt"
+        },
+        {
+          "skill": 67,
+          "role": "haupt"
+        },
+        {
+          "skill": 68,
+          "role": "puffer"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/",
+        "https://gamespy-archives.quaddicted.com/sites/www.planetdiablo.com/diablo2/characters/necromancer/strategy/bonemancer/index.html",
+        "https://almarsguides.com/Computer/Games/Diablo2/Builds/Necromancer/Builds/PoisonandBone/Levels1-30"
+      ]
+    },
+    {
+      "id": "necro-summon",
+      "class": 2,
+      "skills": [
+        [
+          1,
+          70,
+          1
+        ],
+        [
+          1,
+          69,
+          1
+        ],
+        [
+          1,
+          66,
+          1
+        ],
+        [
+          1,
+          68,
+          1
+        ],
+        [
+          6,
+          75,
+          1
+        ],
+        [
+          6,
+          74,
+          1
+        ],
+        [
+          12,
+          80,
+          1
+        ],
+        [
+          12,
+          79,
+          1
+        ],
+        [
+          24,
+          89,
+          1
+        ],
+        [
+          24,
+          87,
+          1
+        ],
+        [
+          30,
+          95,
+          1
+        ],
+        [
+          1,
+          70,
+          20
+        ],
+        [
+          1,
+          69,
+          20
+        ],
+        [
+          12,
+          80,
+          20
+        ],
+        [
+          6,
+          74,
+          20
+        ],
+        [
+          30,
+          95,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 67,
+          "role": "haupt"
+        },
+        {
+          "skill": 70,
+          "role": "taste"
+        },
+        {
+          "skill": 74,
+          "role": "taste"
+        },
+        {
+          "skill": 68,
+          "role": "puffer"
+        }
+      ],
+      "idle": "nein",
+      "idleGrund": "diener",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/necromancer-summoning.shtml",
+        "https://classic.battle.net/diablo2exp/skills/necromancer-curses.shtml",
+        "https://www.theamazonbasin.com/forums/index.php?/topic/110965-necromancer-build-guides/"
+      ]
+    },
+    {
+      "id": "necro-poison",
+      "class": 2,
+      "skills": [
+        [
+          1,
+          67,
+          1
+        ],
+        [
+          1,
+          66,
+          1
+        ],
+        [
+          1,
+          68,
+          1
+        ],
+        [
+          6,
+          73,
+          1
+        ],
+        [
+          6,
+          75,
+          1
+        ],
+        [
+          6,
+          74,
+          1
+        ],
+        [
+          18,
+          83,
+          1
+        ],
+        [
+          30,
+          92,
+          1
+        ],
+        [
+          30,
+          92,
+          20
+        ],
+        [
+          50,
+          91,
+          1
+        ],
+        [
+          6,
+          73,
+          20
+        ],
+        [
+          18,
+          83,
+          20
+        ],
+        [
+          50,
+          91,
+          20
+        ],
+        [
+          1,
+          67,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 73,
+          "role": "haupt"
+        },
+        {
+          "skill": 67,
+          "role": "haupt"
+        },
+        {
+          "skill": 92,
+          "role": "nova"
+        },
+        {
+          "skill": 68,
+          "role": "puffer"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "fluch",
+      "waffe": "dolch",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/necromancer-poison.shtml",
+        "https://classic.battle.net/diablo2exp/skills/necromancer-curses.shtml"
+      ]
+    },
+    {
+      "id": "pala-hammer",
+      "class": 3,
+      "skills": [
+        [
+          1,
+          98,
+          1
+        ],
+        [
+          1,
+          97,
+          1
+        ],
+        [
+          1,
+          99,
+          1
+        ],
+        [
+          6,
+          101,
+          1
+        ],
+        [
+          6,
+          104,
+          1
+        ],
+        [
+          12,
+          107,
+          1
+        ],
+        [
+          12,
+          108,
+          1
+        ],
+        [
+          12,
+          109,
+          1
+        ],
+        [
+          18,
+          112,
+          1
+        ],
+        [
+          18,
+          113,
+          1
+        ],
+        [
+          18,
+          115,
+          1
+        ],
+        [
+          24,
+          117,
+          1
+        ],
+        [
+          1,
+          98,
+          8
+        ],
+        [
+          18,
+          112,
+          20
+        ],
+        [
+          18,
+          113,
+          20
+        ],
+        [
+          12,
+          108,
+          20
+        ],
+        [
+          18,
+          115,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          25
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 112,
+          "role": "haupt"
+        },
+        {
+          "skill": 113,
+          "role": "taste"
+        },
+        {
+          "skill": 117,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "aura",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/paladin-combat.shtml",
+        "https://classic.battle.net/diablo2exp/skills/paladin-offense.shtml",
+        "https://classic.battle.net/diablo2exp/skills/paladin-defense.shtml"
+      ]
+    },
+    {
+      "id": "pala-zeal",
+      "class": 3,
+      "skills": [
+        [
+          1,
+          96,
+          1
+        ],
+        [
+          1,
+          98,
+          1
+        ],
+        [
+          1,
+          97,
+          1
+        ],
+        [
+          6,
+          101,
+          1
+        ],
+        [
+          12,
+          106,
+          1
+        ],
+        [
+          12,
+          108,
+          1
+        ],
+        [
+          12,
+          107,
+          1
+        ],
+        [
+          18,
+          113,
+          1
+        ],
+        [
+          18,
+          112,
+          1
+        ],
+        [
+          24,
+          117,
+          1
+        ],
+        [
+          30,
+          122,
+          1
+        ],
+        [
+          1,
+          98,
+          8
+        ],
+        [
+          12,
+          106,
+          20
+        ],
+        [
+          30,
+          122,
+          20
+        ],
+        [
+          1,
+          96,
+          20
+        ],
+        [
+          24,
+          117,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 106,
+          "role": "haupt"
+        },
+        {
+          "skill": 122,
+          "role": "taste"
+        },
+        {
+          "skill": 98,
+          "role": "taste"
+        },
+        {
+          "skill": 117,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "aura",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/paladin-combat.shtml",
+        "https://classic.battle.net/diablo2exp/skills/paladin-offense.shtml",
+        "https://gamespy-archives.quaddicted.com/sites/www.planetdiablo.com/diablo2/characters/paladin/strategy/asmodeous/index.html"
+      ]
+    },
+    {
+      "id": "pala-avenger",
+      "class": 3,
+      "skills": [
+        [
+          1,
+          96,
+          1
+        ],
+        [
+          1,
+          98,
+          1
+        ],
+        [
+          1,
+          97,
+          1
+        ],
+        [
+          1,
+          100,
+          1
+        ],
+        [
+          6,
+          101,
+          1
+        ],
+        [
+          6,
+          102,
+          1
+        ],
+        [
+          6,
+          103,
+          1
+        ],
+        [
+          6,
+          105,
+          1
+        ],
+        [
+          12,
+          106,
+          1
+        ],
+        [
+          12,
+          107,
+          1
+        ],
+        [
+          12,
+          110,
+          1
+        ],
+        [
+          18,
+          111,
+          1
+        ],
+        [
+          18,
+          112,
+          1
+        ],
+        [
+          18,
+          114,
+          1
+        ],
+        [
+          24,
+          119,
+          1
+        ],
+        [
+          24,
+          117,
+          1
+        ],
+        [
+          30,
+          123,
+          1
+        ],
+        [
+          30,
+          125,
+          1
+        ],
+        [
+          18,
+          111,
+          20
+        ],
+        [
+          30,
+          123,
+          20
+        ],
+        [
+          1,
+          100,
+          20
+        ],
+        [
+          6,
+          105,
+          20
+        ],
+        [
+          12,
+          110,
+          17
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 111,
+          "role": "haupt"
+        },
+        {
+          "skill": 106,
+          "role": "haupt"
+        },
+        {
+          "skill": 123,
+          "role": "taste"
+        },
+        {
+          "skill": 117,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "aura",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/paladin-combat.shtml",
+        "https://classic.battle.net/diablo2exp/skills/paladin-defense.shtml",
+        "https://gamespy-archives.quaddicted.com/sites/www.planetdiablo.com/diablo2/characters/paladin/strategy/avenger111/index.html"
+      ]
+    },
+    {
+      "id": "barb-frenzy",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          133,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          12,
+          140,
+          1
+        ],
+        [
+          24,
+          147,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          24,
+          147,
+          20
+        ],
+        [
+          1,
+          127,
+          10
+        ],
+        [
+          24,
+          149,
+          20
+        ],
+        [
+          6,
+          133,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          60
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 133,
+          "role": "stark"
+        },
+        {
+          "skill": 147,
+          "role": "haupt"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        }
+      ],
+      "waffe": "schwert",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/",
+        "https://diablo2.diablowiki.net/Frenzy",
+        "https://www.icy-veins.com/d2/frenzy-barbarian-build-skills"
+      ]
+    },
+    {
+      "id": "barb-whirlwind",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          132,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          12,
+          139,
+          1
+        ],
+        [
+          18,
+          144,
+          1
+        ],
+        [
+          18,
+          143,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          30,
+          151,
+          1
+        ],
+        [
+          30,
+          155,
+          1
+        ],
+        [
+          30,
+          153,
+          1
+        ],
+        [
+          30,
+          152,
+          1
+        ],
+        [
+          30,
+          151,
+          20
+        ],
+        [
+          1,
+          127,
+          20
+        ],
+        [
+          24,
+          149,
+          20
+        ],
+        [
+          6,
+          138,
+          20
+        ],
+        [
+          30,
+          153,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          60
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 151,
+          "role": "haupt"
+        },
+        {
+          "skill": 144,
+          "role": "haupt"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "durchlauf",
+      "waffe": "schwert",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatskills.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatmasteries.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-warcries.shtml"
+      ]
+    },
+    {
+      "id": "barb-berserk",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          12,
+          139,
+          1
+        ],
+        [
+          18,
+          144,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          30,
+          152,
+          1
+        ],
+        [
+          30,
+          155,
+          1
+        ],
+        [
+          30,
+          152,
+          20
+        ],
+        [
+          1,
+          127,
+          10
+        ],
+        [
+          18,
+          144,
+          10
+        ],
+        [
+          6,
+          138,
+          20
+        ],
+        [
+          1,
+          130,
+          20
+        ],
+        [
+          24,
+          149,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          60
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 152,
+          "role": "haupt"
+        },
+        {
+          "skill": 144,
+          "role": "haupt"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        }
+      ],
+      "waffe": "schwert",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatskills.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-warcries.shtml"
+      ]
+    },
+    {
+      "id": "barb-leap",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          132,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          18,
+          143,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          30,
+          155,
+          1
+        ],
+        [
+          1,
+          127,
+          8
+        ],
+        [
+          18,
+          143,
+          20
+        ],
+        [
+          6,
+          132,
+          20
+        ],
+        [
+          1,
+          127,
+          20
+        ],
+        [
+          24,
+          149,
+          20
+        ],
+        [
+          6,
+          138,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          60
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 143,
+          "role": "taste"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        },
+        {
+          "skill": 155,
+          "role": "puffer"
+        }
+      ],
+      "idle": "nein",
+      "idleGrund": "bewegung",
+      "waffe": "schwert",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatskills.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatmasteries.shtml"
+      ]
+    },
+    {
+      "id": "barb-throw",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          133,
+          1
+        ],
+        [
+          6,
+          135,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          12,
+          140,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          30,
+          155,
+          1
+        ],
+        [
+          12,
+          140,
+          20
+        ],
+        [
+          6,
+          135,
+          20
+        ],
+        [
+          6,
+          133,
+          20
+        ],
+        [
+          24,
+          149,
+          20
+        ],
+        [
+          6,
+          138,
+          20
+        ],
+        [
+          1,
+          126,
+          4
+        ]
+      ],
+      "str": [
+        [
+          1,
+          50
+        ],
+        [
+          20,
+          60
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 140,
+          "role": "haupt"
+        },
+        {
+          "skill": 133,
+          "role": "stark"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "munition",
+      "waffe": "wurf",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatskills.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatmasteries.shtml"
+      ]
+    },
+    {
+      "id": "barb-warcry",
+      "class": 4,
+      "skills": [
+        [
+          1,
+          126,
+          1
+        ],
+        [
+          6,
+          133,
+          1
+        ],
+        [
+          6,
+          138,
+          1
+        ],
+        [
+          6,
+          137,
+          1
+        ],
+        [
+          18,
+          146,
+          1
+        ],
+        [
+          24,
+          149,
+          1
+        ],
+        [
+          30,
+          154,
+          1
+        ],
+        [
+          30,
+          155,
+          1
+        ],
+        [
+          30,
+          154,
+          20
+        ],
+        [
+          6,
+          133,
+          12
+        ],
+        [
+          1,
+          130,
+          20
+        ],
+        [
+          6,
+          137,
+          20
+        ],
+        [
+          18,
+          146,
+          20
+        ],
+        [
+          24,
+          149,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          60
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 154,
+          "role": "nova"
+        },
+        {
+          "skill": 133,
+          "role": "stark"
+        },
+        {
+          "skill": 138,
+          "role": "puffer"
+        },
+        {
+          "skill": 149,
+          "role": "puffer"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "mana",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/barbarian-warcries.shtml",
+        "https://classic.battle.net/diablo2exp/skills/barbarian-combatskills.shtml"
+      ]
+    },
+    {
+      "id": "druid-wind",
+      "class": 5,
+      "skills": [
+        [
+          1,
+          221,
+          1
+        ],
+        [
+          6,
+          230,
+          1
+        ],
+        [
+          6,
+          226,
+          1
+        ],
+        [
+          6,
+          227,
+          1
+        ],
+        [
+          12,
+          235,
+          1
+        ],
+        [
+          18,
+          240,
+          1
+        ],
+        [
+          18,
+          237,
+          1
+        ],
+        [
+          24,
+          245,
+          1
+        ],
+        [
+          30,
+          250,
+          1
+        ],
+        [
+          30,
+          247,
+          1
+        ],
+        [
+          24,
+          245,
+          20
+        ],
+        [
+          18,
+          240,
+          20
+        ],
+        [
+          12,
+          235,
+          20
+        ],
+        [
+          30,
+          250,
+          20
+        ],
+        [
+          6,
+          230,
+          3
+        ],
+        [
+          6,
+          226,
+          20
+        ],
+        [
+          1,
+          221,
+          4
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 245,
+          "role": "haupt"
+        },
+        {
+          "skill": 240,
+          "role": "haupt"
+        },
+        {
+          "skill": 230,
+          "role": "haupt"
+        },
+        {
+          "skill": 235,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "zustand",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/druid-elemental.shtml",
+        "https://classic.battle.net/diablo2exp/skills/druid-summoning.shtml"
+      ]
+    },
+    {
+      "id": "druid-fire",
+      "class": 5,
+      "skills": [
+        [
+          1,
+          225,
+          1
+        ],
+        [
+          1,
+          221,
+          1
+        ],
+        [
+          6,
+          229,
+          1
+        ],
+        [
+          6,
+          226,
+          1
+        ],
+        [
+          6,
+          227,
+          1
+        ],
+        [
+          6,
+          230,
+          1
+        ],
+        [
+          12,
+          234,
+          1
+        ],
+        [
+          12,
+          235,
+          1
+        ],
+        [
+          18,
+          237,
+          1
+        ],
+        [
+          18,
+          240,
+          1
+        ],
+        [
+          24,
+          244,
+          1
+        ],
+        [
+          24,
+          245,
+          1
+        ],
+        [
+          30,
+          250,
+          1
+        ],
+        [
+          30,
+          249,
+          1
+        ],
+        [
+          30,
+          247,
+          1
+        ],
+        [
+          12,
+          234,
+          20
+        ],
+        [
+          24,
+          244,
+          20
+        ],
+        [
+          30,
+          249,
+          20
+        ],
+        [
+          1,
+          225,
+          20
+        ],
+        [
+          6,
+          229,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 234,
+          "role": "haupt"
+        },
+        {
+          "skill": 244,
+          "role": "haupt"
+        },
+        {
+          "skill": 229,
+          "role": "haupt"
+        },
+        {
+          "skill": 249,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "zustand",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/druid-elemental.shtml"
+      ]
+    },
+    {
+      "id": "druid-wolf",
+      "class": 5,
+      "skills": [
+        [
+          1,
+          223,
+          1
+        ],
+        [
+          1,
+          224,
+          1
+        ],
+        [
+          1,
+          221,
+          1
+        ],
+        [
+          6,
+          226,
+          1
+        ],
+        [
+          6,
+          227,
+          1
+        ],
+        [
+          12,
+          232,
+          1
+        ],
+        [
+          18,
+          238,
+          1
+        ],
+        [
+          18,
+          236,
+          1
+        ],
+        [
+          18,
+          237,
+          1
+        ],
+        [
+          30,
+          248,
+          1
+        ],
+        [
+          30,
+          247,
+          1
+        ],
+        [
+          30,
+          248,
+          20
+        ],
+        [
+          1,
+          223,
+          20
+        ],
+        [
+          1,
+          224,
+          20
+        ],
+        [
+          12,
+          232,
+          20
+        ],
+        [
+          18,
+          236,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 223,
+          "role": "taste"
+        },
+        {
+          "skill": 248,
+          "role": "taste"
+        },
+        {
+          "skill": 232,
+          "role": "taste"
+        },
+        {
+          "skill": 236,
+          "role": "taste"
+        }
+      ],
+      "idle": "nein",
+      "idleGrund": "gestalt",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/druid-shapeshifting.shtml",
+        "https://classic.battle.net/diablo2exp/skills/druid-summoning.shtml"
+      ]
+    },
+    {
+      "id": "druid-summon",
+      "class": 5,
+      "skills": [
+        [
+          1,
+          221,
+          1
+        ],
+        [
+          1,
+          222,
+          1
+        ],
+        [
+          6,
+          226,
+          1
+        ],
+        [
+          6,
+          227,
+          1
+        ],
+        [
+          12,
+          231,
+          1
+        ],
+        [
+          18,
+          237,
+          1
+        ],
+        [
+          18,
+          236,
+          1
+        ],
+        [
+          24,
+          241,
+          1
+        ],
+        [
+          30,
+          247,
+          1
+        ],
+        [
+          30,
+          247,
+          20
+        ],
+        [
+          18,
+          237,
+          20
+        ],
+        [
+          6,
+          227,
+          20
+        ],
+        [
+          6,
+          226,
+          20
+        ],
+        [
+          18,
+          236,
+          20
+        ],
+        [
+          1,
+          221,
+          3
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [],
+      "keys": [
+        {
+          "skill": 247,
+          "role": "taste"
+        },
+        {
+          "skill": 237,
+          "role": "taste"
+        },
+        {
+          "skill": 227,
+          "role": "taste"
+        },
+        {
+          "skill": 226,
+          "role": "taste"
+        }
+      ],
+      "idle": "nein",
+      "idleGrund": "diener",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/druid-summoning.shtml"
+      ]
+    },
+    {
+      "id": "assa-trap",
+      "class": 6,
+      "skills": [
+        [
+          1,
+          251,
+          1
+        ],
+        [
+          6,
+          258,
+          1
+        ],
+        [
+          6,
+          256,
+          1
+        ],
+        [
+          12,
+          261,
+          1
+        ],
+        [
+          12,
+          264,
+          1
+        ],
+        [
+          12,
+          263,
+          1
+        ],
+        [
+          18,
+          267,
+          1
+        ],
+        [
+          18,
+          268,
+          1
+        ],
+        [
+          24,
+          271,
+          1
+        ],
+        [
+          30,
+          276,
+          1
+        ],
+        [
+          30,
+          279,
+          1
+        ],
+        [
+          24,
+          271,
+          20
+        ],
+        [
+          30,
+          276,
+          20
+        ],
+        [
+          12,
+          261,
+          20
+        ],
+        [
+          6,
+          256,
+          20
+        ],
+        [
+          1,
+          251,
+          10
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          25
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 271,
+          "role": "haupt"
+        },
+        {
+          "skill": 261,
+          "role": "haupt"
+        },
+        {
+          "skill": 251,
+          "role": "haupt"
+        },
+        {
+          "skill": 258,
+          "role": "taste"
+        }
+      ],
+      "idle": "teilweise",
+      "idleGrund": "fallen",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/assassin-traps.shtml",
+        "https://classic.battle.net/diablo2exp/skills/assassin-shadow.shtml"
+      ]
+    },
+    {
+      "id": "assa-kick",
+      "class": 6,
+      "skills": [
+        [
+          1,
+          255,
+          1
+        ],
+        [
+          6,
+          258,
+          1
+        ],
+        [
+          6,
+          260,
+          1
+        ],
+        [
+          12,
+          263,
+          1
+        ],
+        [
+          12,
+          264,
+          1
+        ],
+        [
+          18,
+          267,
+          1
+        ],
+        [
+          18,
+          268,
+          1
+        ],
+        [
+          18,
+          270,
+          1
+        ],
+        [
+          24,
+          275,
+          1
+        ],
+        [
+          30,
+          279,
+          1
+        ],
+        [
+          30,
+          278,
+          1
+        ],
+        [
+          1,
+          255,
+          20
+        ],
+        [
+          18,
+          267,
+          20
+        ],
+        [
+          30,
+          278,
+          20
+        ],
+        [
+          30,
+          279,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 255,
+          "role": "haupt"
+        },
+        {
+          "skill": 258,
+          "role": "taste"
+        },
+        {
+          "skill": 267,
+          "role": "taste"
+        },
+        {
+          "skill": 275,
+          "role": "taste"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/assassin-martialarts.shtml",
+        "https://classic.battle.net/diablo2exp/skills/assassin-shadow.shtml"
+      ]
+    },
+    {
+      "id": "assa-martial",
+      "class": 6,
+      "skills": [
+        [
+          1,
+          254,
+          1
+        ],
+        [
+          1,
+          255,
+          1
+        ],
+        [
+          6,
+          259,
+          1
+        ],
+        [
+          6,
+          258,
+          1
+        ],
+        [
+          12,
+          265,
+          1
+        ],
+        [
+          18,
+          269,
+          1
+        ],
+        [
+          18,
+          267,
+          1
+        ],
+        [
+          24,
+          274,
+          1
+        ],
+        [
+          30,
+          280,
+          1
+        ],
+        [
+          30,
+          280,
+          20
+        ],
+        [
+          6,
+          259,
+          20
+        ],
+        [
+          18,
+          269,
+          20
+        ],
+        [
+          24,
+          274,
+          20
+        ],
+        [
+          1,
+          255,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          40
+        ],
+        [
+          20,
+          75
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 280,
+          "role": "taste"
+        },
+        {
+          "skill": 259,
+          "role": "taste"
+        },
+        {
+          "skill": 255,
+          "role": "taste"
+        },
+        {
+          "skill": 258,
+          "role": "taste"
+        }
+      ],
+      "idle": "nein",
+      "idleGrund": "kombo",
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/assassin-martialarts.shtml",
+        "https://classic.battle.net/diablo2exp/skills/assassin-shadow.shtml"
+      ]
+    },
+    {
+      "id": "assa-blade",
+      "class": 6,
+      "skills": [
+        [
+          1,
+          251,
+          1
+        ],
+        [
+          6,
+          257,
+          1
+        ],
+        [
+          6,
+          258,
+          1
+        ],
+        [
+          12,
+          262,
+          1
+        ],
+        [
+          18,
+          266,
+          1
+        ],
+        [
+          18,
+          267,
+          1
+        ],
+        [
+          30,
+          277,
+          1
+        ],
+        [
+          30,
+          278,
+          1
+        ],
+        [
+          30,
+          279,
+          1
+        ],
+        [
+          1,
+          251,
+          8
+        ],
+        [
+          18,
+          266,
+          20
+        ],
+        [
+          6,
+          257,
+          20
+        ],
+        [
+          30,
+          278,
+          20
+        ],
+        [
+          30,
+          277,
+          20
+        ]
+      ],
+      "str": [
+        [
+          1,
+          35
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "dex": [
+        [
+          1,
+          25
+        ],
+        [
+          20,
+          50
+        ]
+      ],
+      "keys": [
+        {
+          "skill": 266,
+          "role": "haupt"
+        },
+        {
+          "skill": 251,
+          "role": "haupt"
+        },
+        {
+          "skill": 257,
+          "role": "taste"
+        },
+        {
+          "skill": 258,
+          "role": "taste"
+        }
+      ],
+      "sources": [
+        "https://classic.battle.net/diablo2exp/skills/assassin-traps.shtml",
+        "https://classic.battle.net/diablo2exp/skills/assassin-shadow.shtml"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- D2Android: long-press shortcut of the "Diablo II" icon (package at.d2android) -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="d2_game_settings"
+        android:enabled="true"
+        android:icon="@mipmap/d2_launcher"
+        android:shortcutShortLabel="@string/d2_shortcut_game_settings">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="at.d2android"
+            android:targetClass="com.winlator.d2.D2SettingsActivity"/>
+    </shortcut>
+</shortcuts>
