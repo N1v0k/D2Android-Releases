@@ -41,16 +41,11 @@ your thumb means, not where a virtual pointer happens to be.
 
 ### Gameplay
 
-Short clips from one session on a phone, without sound; they play right here on the page.
+A short clip from a phone, without sound; it plays right here on the page.
 
 <table align="center">
-<tr><td align="center" width="50%"><img src="media/gameplay-1.webp" alt="In town: stash, inventory and the waypoint" width="410"><br><sub>In town: stash, inventory and the waypoint</sub></td><td align="center" width="50%"><img src="media/gameplay-2.webp" alt="Outer Cloister: fighting with the joystick, attack and skill buttons" width="410"><br><sub>Outer Cloister: fighting with the joystick, attack and skill buttons</sub></td></tr>
-<tr><td align="center" width="50%"><img src="media/gameplay-3.webp" alt="Along the cloister walls to the door of the monastery" width="410"><br><sub>Along the cloister walls to the door of the monastery</sub></td><td align="center" width="50%"><img src="media/gameplay-4.webp" alt="Fighting in the dark halls, with the map overlay" width="410"><br><sub>Fighting in the dark halls, with the map overlay</sub></td></tr>
-<tr><td align="center" width="50%"><img src="media/gameplay-5.webp" alt="More fighting in the halls of the monastery" width="410"><br><sub>More fighting in the halls of the monastery</sub></td><td align="center" width="50%"><img src="media/gameplay-6.webp" alt="Outside again: putting a skill on an F button and moving the buttons" width="410"><br><sub>Outside again: putting a skill on an F button and moving the buttons</sub></td></tr>
-<tr><td align="center" colspan="2"><img src="media/gameplay-7.webp" alt="The menu and the game helpers" width="410"><br><sub>The menu and the game helpers</sub></td></tr>
+<tr><td align="center"><img src="media/gameplay-2.webp" alt="Outer Cloister: fighting with the joystick, attack and skill buttons" width="410"><br><sub>Outer Cloister: fighting with the joystick, attack and skill buttons</sub></td></tr>
 </table>
-
-<p align="center">Download the whole video in full quality: <a href="media/gameplay.mp4">gameplay.mp4</a> (about 2.5 minutes, 20 MB, no sound)</p>
 
 ## Features
 
