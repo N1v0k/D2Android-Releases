@@ -73,8 +73,8 @@ playable on a phone, not to change the game.
 - Menu row at the top right with the game windows (inventory, character, skills, quests, map), town portal, pause,
   **Show Items** (item names), walk/run and **Assign Keys**; you choose which buttons stay visible when the row is
   folded. The quests button also shows in the folded row when there is quest news.
-- **Assign Keys** hides and shows the game buttons; a long press opens the editing mode to put skills on buttons, move
-  them and change their size.
+- **Assign Keys** opens the editing mode: put skills on the buttons, move them and change their size. In the skill tree,
+  hold a skill and tap an F button to put it there.
 - The **≡** menu holds the settings, the build page, the tour, the keyboard, switching character and quitting.
 - A crisper look: the menu icons are scaled up sharply, round buttons have a gold ring like the frames of the game,
   buttons and the settings are drawn in the game's style, the buttons only appear once you are in the game, and they

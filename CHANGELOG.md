@@ -3,6 +3,12 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.3.1 (2026-10-22)
+
+- "Assign Keys" opens the editing mode with a single tap; no more long press. While a window such as the inventory is open, it still brings the game buttons back.
+- In the skill tree, hold a skill and then tap an F button to put the skill there. A skill that is not learned yet or is passive says so instead.
+- No more rings in the game world around the target of "Take" or of an attack; the game's own name and life bar show the target.
+
 ## 1.3.0 (2026-10-22)
 
 - New start page in the game's look: your characters in their equipment, with the area of their last save. A tap starts the character straight into the game, without the game's menus and with its loading animation; a long press picks the difficulty. "New character" leads straight to the class choice, "Classic start" shows the game's menus as before, and saving and leaving the game in its Esc menu returns to the start page.
