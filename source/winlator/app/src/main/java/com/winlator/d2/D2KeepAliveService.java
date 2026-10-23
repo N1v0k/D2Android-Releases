@@ -17,19 +17,46 @@ import androidx.core.content.ContextCompat;
 
 import com.winlator.R;
 
+
+
+
+
+
+
+
+
+
 public class D2KeepAliveService extends Service {
     private static final String TAG = "D2KeepAlive";
     public static final String CHANNEL_ID = "d2_game";
+
     private static final String[] OLD_CHANNEL_IDS = {"winlator_foreground_service", "d2_background"};
     private static final int NOTIFICATION_ID = 2;
+
     public static final String EXTRA_SAVE_AND_EXIT = "d2_save_and_exit";
+
+
+
+
     public static final String EXTRA_ONLY_SAVED = "d2_nur_gespeichert";
+
+
+
+
     public static final String EXTRA_THEN_INSTALL = "d2_then_install";
+
+
+
+
+
     public static final String ACTION_SAVE_AND_EXIT = "at.d2android.action.SAVE_AND_EXIT";
     private static final String EXTRA_PAUSED = "paused";
 
+
+
     private static volatile boolean shown;
     private static volatile boolean shownPaused;
+
 
     public static void onLanguageChanged(Context context) {
         if (shown) start(context, shownPaused);
@@ -50,12 +77,19 @@ public class D2KeepAliveService extends Service {
         context.stopService(new Intent(context, D2KeepAliveService.class));
     }
 
+
+
+
+
     public static void createChannel(Context context) {
         NotificationManager nm = context.getSystemService(NotificationManager.class);
         if (nm == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         for (String old : OLD_CHANNEL_IDS) {
             if (nm.getNotificationChannel(old) != null) nm.deleteNotificationChannel(old);
         }
+
+
+
         NotificationChannel channel = new NotificationChannel(CHANNEL_ID, D2Text.get(context, R.string.channel_name), NotificationManager.IMPORTANCE_DEFAULT);
         channel.setDescription(D2Text.get(context, R.string.channel_description));
         channel.setSound(null, null);
@@ -106,10 +140,12 @@ public class D2KeepAliveService extends Service {
             .build();
     }
 
+
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         Log.i(TAG, "task removed, ending the game");
+
         D2ExitLog.note(D2ExitText.taskRemoved(D2GuestComponent.running()));
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();

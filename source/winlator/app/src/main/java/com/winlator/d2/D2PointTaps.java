@@ -1,17 +1,30 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
 public final class D2PointTaps {
+
     public static final int UNKNOWN = -1, OTHER = 0, SKILL_BOX = 1, TAB = 2;
+
     static final int PLUS_SLACK = 4;
+
     public static final int DOUBLE = 5;
+
     static final long SENT_MS = 3000;
 
     private final int[] spot = new int[4];
+
     private int lastStat = -1;
     private long lastUp;
     private boolean lastSingle;
+
     private int anchorFree = -1, sent;
     private long sentAt;
+
 
     public int skillTreeHit(D2Points p, float x, float y) {
         if (p == null || !p.skillTreeKnown()) return UNKNOWN;
@@ -25,6 +38,11 @@ public final class D2PointTaps {
         }
         return OTHER;
     }
+
+
+
+
+
 
     public int treeSkillAt(D2Points p, java.util.function.IntUnaryOperator place, float x, float y) {
         if (p == null || !p.skillTreeKnown() || p.firstSkill < 0 || place == null) return -1;
@@ -41,9 +59,14 @@ public final class D2PointTaps {
         return -1;
     }
 
+
+
+
+
     public static boolean statsKnown(D2Points p, boolean plugyLoaded) {
         return p != null && p.skillTreeKnown() && p.canSend(D2Points.KIND_STAT) && (p.statsPage >= 0 || !plugyLoaded);
     }
+
 
     public int plusHit(D2Points p, boolean plugyLoaded, int gameWidth, float x, float y) {
         if (!statsKnown(p, plugyLoaded) || p.statsPage > 0) return -1;
@@ -53,6 +76,14 @@ public final class D2PointTaps {
         return -1;
     }
 
+
+
+
+
+
+
+
+
     public int tap(int stat, int free, long now, long downAt, long doubleTapMs) {
         boolean second = lastSingle && stat == lastStat && downAt >= lastUp && downAt - lastUp <= doubleTapMs;
         lastStat = stat;
@@ -60,6 +91,7 @@ public final class D2PointTaps {
         lastSingle = !second;
         return spend(second ? DOUBLE - 1 : 1, free, now);
     }
+
 
     public int hold(int free, long now) {
         lastSingle = false;

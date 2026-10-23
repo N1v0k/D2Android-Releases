@@ -6,11 +6,19 @@ import android.content.res.Resources;
 
 import java.util.Locale;
 
+
+
+
+
+
+
 public final class D2Text {
     public static final String AUTO = "auto", GERMAN = "de", ENGLISH = "en";
+
     private static volatile int generation;
 
     private D2Text() {}
+
 
     public static String language(Context context) {
         String chosen = D2Settings.appLanguage(context);
@@ -20,12 +28,14 @@ public final class D2Text {
         return "de".equals(Locale.getDefault().getLanguage()) ? GERMAN : ENGLISH;
     }
 
+
     public static Context wrap(Context context) {
         Locale locale = new Locale(language(context));
         Configuration config = new Configuration(context.getResources().getConfiguration());
         config.setLocale(locale);
         return context.createConfigurationContext(config);
     }
+
 
     public static Resources resources(Context context) {
         return wrap(context).getResources();
@@ -34,6 +44,7 @@ public final class D2Text {
     public static String get(Context context, int id, Object... args) {
         return args.length == 0 ? resources(context).getString(id) : resources(context).getString(id, args);
     }
+
 
     public static void choose(Context context, String language) {
         D2Settings.setAppLanguage(context, language);
@@ -44,6 +55,10 @@ public final class D2Text {
         if (l != null) l.run();
     }
 
+
+
+
+
     public static void gameLanguageChanged(Context context) {
         if (!AUTO.equals(D2Settings.appLanguage(context))) return;
         generation++;
@@ -52,6 +67,7 @@ public final class D2Text {
         Runnable l = listener;
         if (l != null) l.run();
     }
+
 
     private static volatile Runnable listener;
 

@@ -1,4 +1,42 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define RVA_DrawUnitInfoCall 0x1D457
 #define RVA_DrawUnitInfo     0x1A730
 #define RVA_GameDamage       0x8BCB0
@@ -27,6 +65,10 @@
 #define DMG_COLOR_SHADOW 6
 #define DMG_COLOR_DPS 7
 #define DMG_FONT 1
+
+
+
+
 #define DMG_FONT_LARGE 7
 #define DMG_CRIT_BOLD 0
 
@@ -41,10 +83,12 @@ static DWORD dmgGame;
 static LONG dmgRequest;
 static DWORD dmgRequestResets;
 static volatile LONG dmgRecord;
+
 static volatile struct { DWORD defType, defId, attType, attId, attTxt, attAlign, amount, result; LONG attNpc; LONG phys, fire, cold, light, magic, poison, burn; DWORD total; } dmgRing[DMG_RING];
 static volatile LONG dmgWritten;
 static LONG dmgRead;
 DWORD dmgSetUnitStat;
+
 static volatile struct { DWORD defId, loss, ownerType, ownerId, dead, element; } dmgDotRing[DMG_DOT_RING];
 static volatile LONG dmgDotWritten;
 static LONG dmgDotRead;
@@ -61,6 +105,7 @@ static DWORD dmgFloatNext;
 static struct { DWORD at, value; } dmgHits[DMG_HITS];
 static DWORD dmgHitNext;
 
+
 __attribute__((force_align_arg_pointer)) void __cdecl noteDamage(void* defender, DWORD newLife, void* attacker, BYTE* damage) {
     if (!dmgRecord || !readable(defender, 0x10) || RD32(defender, U_TYPE) != UNIT_MONSTER || !readable(damage, 0x50)) return;
     DWORD old = fGetUnitStat(defender, 6, 0);
@@ -71,6 +116,7 @@ __attribute__((force_align_arg_pointer)) void __cdecl noteDamage(void* defender,
     dmgRing[k].attType = readable(attacker, 0x10) ? RD32(attacker, U_TYPE) : 0xFFFFFFFF;
     dmgRing[k].attId = readable(attacker, 0x10) ? RD32(attacker, U_ID) : 0xFFFFFFFF;
     dmgRing[k].attTxt = readable(attacker, 0x10) ? RD32(attacker, U_TXTNO) : 0xFFFFFFFF;
+
     int monster = readable(attacker, 0x18) && RD32(attacker, U_TYPE) == UNIT_MONSTER;
     BYTE* row = monster ? monStatsRow(attacker) : NULL;
     dmgRing[k].attAlign = monster ? fGetUnitStat(attacker, 172, 0) : 0xFFFFFFFF;
@@ -88,6 +134,7 @@ __attribute__((force_align_arg_pointer)) void __cdecl noteDamage(void* defender,
     InterlockedIncrement(&dmgWritten);
 }
 
+
 static void noteOverTime(void* unit, DWORD loss, BYTE* list, DWORD element, int dead) {
     if (!loss) return;
     LONG k = dmgDotWritten % DMG_DOT_RING;
@@ -99,6 +146,11 @@ static void noteOverTime(void* unit, DWORD loss, BYTE* list, DWORD element, int 
     dmgDotRing[k].dead = dead;
     InterlockedIncrement(&dmgDotWritten);
 }
+
+
+
+
+
 
 __attribute__((force_align_arg_pointer)) void __cdecl notePoison(void* unit, DWORD newLife) {
     static const DWORD states[] = {STATE_POISON, STATE_BURNING, STATE_OPENWOUNDS};
@@ -143,6 +195,7 @@ __asm__(
     ".text\n"
     ".globl _poisonStub\n"
     "_poisonStub:\n"
+
     "    pushal\n"
     "    pushl 0x2C(%esp)\n"
     "    pushl 0x28(%esp)\n"
@@ -157,6 +210,7 @@ __asm__(
     ".text\n"
     ".globl _damageStub\n"
     "_damageStub:\n"
+
     "    pushal\n"
     "    pushl %ebp\n"
     "    pushl 0x54(%esp)\n"
@@ -167,6 +221,7 @@ __asm__(
     "    popal\n"
     "    jmp *_dmgSetUnitStat\n"
 );
+
 
 static DWORD dmgCallTarget(DWORD at) {
     const BYTE* p = (const BYTE*) at;
@@ -192,6 +247,7 @@ static void checkDamageSites(void) {
     damagePatched = server && dmgCallTarget(game + RVA_GameDamageSet) == (DWORD) damageStub;
     logLine(damageSites ? "damage numbers sites verified%s" : "damage numbers sites not as expected (server %d, draw %d)",
         damageSites ? (damagePatched ? " (stub already in place)" : "") : "", server, draw);
+
     static const BYTE regen[] = {0x83, 0xEC, 0x0C, 0x53, 0x56, 0x57, 0x6A, 0x00, 0x8B, 0xF2, 0x6A, 0x4A, 0x8B, 0xF9, 0x56};
     static const BYTE regenSet[] = {0x8B, 0xFD, 0x83, 0xFF, 0x01, 0x7D, 0x02, 0x33, 0xFF, 0x6A, 0x00, 0x57, 0x6A, 0x06, 0x56};
     BYTE* listThunk = (BYTE*) (game + RVA_GameStateListThunk);
@@ -212,6 +268,7 @@ static void checkDamageSites(void) {
         poisonPatched ? " (stub already in place)" : "");
 }
 
+
 static int damagePatchCall(DWORD rva, void (*stub)(void)) {
     BYTE* at = (BYTE*) (dmgGame + rva);
     if (dmgCallTarget((DWORD) at) == (DWORD) stub) return 1;
@@ -224,14 +281,21 @@ static int damagePatchCall(DWORD rva, void (*stub)(void)) {
     return 1;
 }
 
+
+
 static LONG damagePatchServer(void) {
     if (!damageSites || !damagePatchCall(RVA_GameDamageSet, damageStub)) return 0;
     return 1 | (poisonSite && damagePatchCall(RVA_GameRegenSet, poisonStub) ? 2 : 0);
 }
 
+
 static int damageCapable(void) {
     return damageSites && srvState == 1 && singlePlayerGame();
 }
+
+
+
+
 
 static void damageCommand(int numbers, int dps, int element, int appDps, DWORD now) {
     DWORD off = now - 60000;
@@ -241,13 +305,16 @@ static void damageCommand(int numbers, int dps, int element, int appDps, DWORD n
     damageAppDpsUntil = appDps ? now + 2000 : off;
 }
 
+
 static DWORD damageDps(void) {
+
     if (!damageDpsOn || !damagePatched || !singlePlayerGame()) return 0xFFFF;
     DWORD now = GetTickCount(), sum = 0;
     for (int h = 0; h < DMG_HITS; h++) if (dmgHits[h].value && now - dmgHits[h].at < DMG_WINDOW_MS) sum += dmgHits[h].value;
     DWORD dps = sum * 1000 / DMG_WINDOW_MS;
     return dps > 0xFFFE ? 0xFFFE : dps;
 }
+
 
 static void drawDamage(void) {
     DWORD now = GetTickCount();
@@ -278,6 +345,7 @@ static void drawDamage(void) {
         }
     }
     if (damageDpsOn && !damageAppDps) {
+
         DWORD dps = damageDps();
         if (dps && dps != 0xFFFF) {
             wchar_t text[32];
@@ -288,6 +356,7 @@ static void drawDamage(void) {
     }
     fSetTextSize(oldFont);
 }
+
 
 __attribute__((force_align_arg_pointer)) static void __stdcall unitInfoDrawn(void* selected) {
     ((void (__stdcall *)(void*)) (client + RVA_DrawUnitInfo))(selected);
@@ -305,8 +374,10 @@ static void applyDamageDraw(int on) {
     logLine(on ? "damage numbers drawing on" : "damage numbers drawing off");
 }
 
+
 static void updateDamage(void* player, DWORD now) {
     if (!damageSites) return;
+
     if (player && singlePlayerGame() && (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))))
         srvCheck();
     damageNumbersOn = (int) (now - damageNumbersUntil) < 0;
@@ -314,6 +385,7 @@ static void updateDamage(void* player, DWORD now) {
     damageAppDps = (int) (now - damageAppDpsUntil) < 0;
     damageStyle = (int) (now - damageElementUntil) < 0 ? DMG_STYLE_ELEMENT : DMG_STYLE_SIMPLE;
     int wanted = (damageNumbersOn || damageDpsOn) && player && singlePlayerGame();
+
     if (wanted && !damagePatched && srvState == 1) {
         if (dmgRequest && dmgRequestResets != srvResets) dmgRequest = 0;
         LONG answer;
@@ -333,16 +405,25 @@ static void updateDamage(void* player, DWORD now) {
     InterlockedExchange(&dmgRecord, wanted && damagePatched);
     int draw = wanted && damagePatched;
     if (draw != damageDrawApplied) applyDamageDraw(draw);
+
     LONG written = InterlockedCompareExchange(&dmgWritten, 0, 0);
     if (written - dmgRead > DMG_RING) dmgRead = written - DMG_RING;
     DWORD me = player ? RD32(player, U_ID) : 0xFFFFFFFF;
+
     static DWORD summaryAt, sumHits, sumDealt, sumCrit, sumAlly, sumHidden, sumElement[5], sumStream;
     for (; dmgRead < written; dmgRead++) {
         LONG k = dmgRead % DMG_RING;
+
+
         int kind = damageKindAligned(dmgRing[k].attType, dmgRing[k].attId, dmgRing[k].attTxt, me, dmgRing[k].result,
             dmgRing[k].attAlign, (int) dmgRing[k].attNpc);
+
         int element = damageElement(dmgRing[k].phys, dmgRing[k].fire, dmgRing[k].cold, dmgRing[k].light, dmgRing[k].magic);
+
+
         int stream = kind != DMG_HIDE && damageStream(dmgStreams, DMG_DOT_SLOTS, dmgRing[k].defId, kind, element, now);
+
+
         if (!dmgRing[k].amount) stream = 1;
         if (dmgRing[k].result & DMG_RESULT_KILL) damageDotKill(dmgDot, DMG_DOT_SLOTS, dmgRing[k].defId);
 #ifdef D2MOD_TESTCMDS
@@ -353,6 +434,8 @@ static void updateDamage(void* player, DWORD now) {
             elementName[element], (long) dmgRing[k].phys, (long) dmgRing[k].fire, (long) dmgRing[k].cold, (long) dmgRing[k].light,
             (long) dmgRing[k].magic, (long) dmgRing[k].poison, (long) dmgRing[k].burn, (unsigned long) dmgRing[k].result, stream ? ", stream" : "");
 #endif
+
+
         if (dmgRing[k].attType == UNIT_MONSTER)
             damageDotOwnerNote(dmgDotOwners, 32, &dmgDotOwnerNext, dmgRing[k].attId, kind == DMG_ALLY ? DMG_ALLY : DMG_HIDE);
         if (kind == DMG_HIDE) {
@@ -383,8 +466,11 @@ static void updateDamage(void* player, DWORD now) {
             dmgHits[h].value = dmgRing[k].amount;
         }
     }
+
     static DWORD sumDot, sumDotPoison, sumDotFire, sumDotCold, sumDotOther, sumDotDealt, sumDotAlly, sumDotDead, sumDotHidden, sumDotUnknown;
     LONG dotWritten = InterlockedCompareExchange(&dmgDotWritten, 0, 0);
+
+
     if (!(wanted && poisonPatched)) dmgDotRead = dotWritten;
     if (!wanted) for (int s = 0; s < DMG_DOT_SLOTS; s++) dmgDot[s].used = 0;
     if (dotWritten - dmgDotRead > DMG_DOT_RING) dmgDotRead = dotWritten - DMG_DOT_RING;
@@ -394,6 +480,8 @@ static void updateDamage(void* player, DWORD now) {
             sumDotUnknown++;
             continue;
         }
+
+
         DWORD ownerType = dmgDotRing[k].ownerType, ownerId = dmgDotRing[k].ownerId, ownerTxt = 0xFFFFFFFF;
         if (ownerType == UNIT_MONSTER) {
             void* owner = findUnit(ownerId, UNIT_MONSTER);

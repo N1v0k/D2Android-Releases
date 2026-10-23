@@ -1,4 +1,22 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_SHOP_POTIONS 16
 #define RVA_BuySite          0x7A333
 #define RVA_Send17           0xB6990
@@ -13,6 +31,7 @@
 #define SHOP_GAP_MS          300
 
 enum { JOB_NONE = 0, JOB_RUNNING = 1, JOB_DONE = 2 };
+
 enum {
     SHOP_END_DONE = 0, SHOP_END_GOLD = 1, SHOP_END_NO_WARE = 2, SHOP_END_REFUSED = 3, SHOP_END_CLOSED = 4,
     SHOP_END_BAD_LIST = 5, SHOP_END_STASH_FULL = 6, SHOP_END_NO_OWN_PAGE = 7, SHOP_END_TIME = 8,
@@ -26,6 +45,7 @@ static int shopAvailable;
 static struct {
     DWORD id;
     BYTE cmd, state, a, b, reason;
+
     BYTE want[2], toBelt[2], noWare[2];
     DWORD goldLimit, npc, started, nextAt, sentAt, goldBefore;
     int waiting, kind, countBefore, misses;
@@ -43,10 +63,12 @@ static void checkShopSites(void) {
     int buyOk = readable(buy, 7) && buy[0] == 0xB0 && buy[1] == 0x32 && buy[2] == 0xE8
         && (DWORD) (buy + 7) + *(DWORD*) (buy + 3) == client + RVA_Send17
         && readable(sender, 0x22) && memcmp(sender, send17, sizeof(send17)) == 0 && memcmp(sender + 0x1D, len17, sizeof(len17)) == 0;
+
     int priceOk = fGetItemPrice && readable(call, 5) && call[0] == 0xE8
         && (DWORD) (call + 5) + *(DWORD*) (call + 1) == client + RVA_PriceThunk
         && readable(thunk, 6) && thunk[0] == 0xFF && thunk[1] == 0x25 && readable(*(void**) (thunk + 2), 4)
         && **(DWORD**) (thunk + 2) == (DWORD) fGetItemPrice;
+
     shopAvailable = buyOk && priceOk && npcMenuAvailable && beltMoveAvailable && fSendPacket;
     logLine("shop sites: buy %s, price %s: refill potions %s", buyOk ? "verified" : "NOT as expected",
         priceOk ? "verified" : "NOT as expected", shopAvailable ? "available" : "not offered");
@@ -65,6 +87,7 @@ static void* shopNpc(void) {
     void* npc = currentNpc();
     return readable(npc, 0x64) ? npc : NULL;
 }
+
 
 static void shopCommand(void* player, const BYTE* buf, int n) {
     if (shopJob.state == JOB_RUNNING) {
@@ -91,6 +114,7 @@ static void shopCommand(void* player, const BYTE* buf, int n) {
     else shopJob.npc = RD32(npc, U_ID);
 }
 
+
 static void* shopPotion(void* npc, int kind) {
     void* inventory = RDP(npc, U_INVENTORY);
     void* best = NULL;
@@ -114,6 +138,7 @@ static int shopFreeCells(const Carried* c) {
     return INV_W * INV_H - used;
 }
 
+
 static void updateShop(void* player, DWORD now) {
     if (shopJob.state != JOB_RUNNING) return;
     if (player != shopJob.player) {
@@ -125,6 +150,7 @@ static void updateShop(void* player, DWORD now) {
         shopFinish(SHOP_END_CLOSED);
         return;
     }
+
     if ((int) (now - shopJob.started) > SHOP_JOB_MAX_MS) {
         shopFinish(SHOP_END_TIME);
         return;
@@ -132,6 +158,7 @@ static void updateShop(void* player, DWORD now) {
     Carried c;
     readCarried(player, &c);
     int count[2] = {c.belt[0] + c.inventory[0], c.belt[1] + c.inventory[1]};
+
     DWORD gold = fGetUnitStat(player, 14, 0) + fGetUnitStat(player, 15, 0);
     if (shopJob.waiting == 1) {
         int k = shopJob.kind;
@@ -155,6 +182,7 @@ static void updateShop(void* player, DWORD now) {
     if (shopJob.waiting == 2) {
         int k = shopJob.kind;
         if (c.belt[k] > shopJob.countBefore || (int) (now - shopJob.sentAt) > SHOP_WAIT_MS) {
+
             if (c.belt[k] <= shopJob.countBefore) {
                 logLine("shop: the belt did not take a %s potion", k ? "mana" : "healing");
                 shopJob.toBelt[k] = 0;
@@ -165,6 +193,7 @@ static void updateShop(void* player, DWORD now) {
         return;
     }
     if ((int) (now - shopJob.nextAt) < 0) return;
+
     for (int k = 0; k < 2; k++) {
         if (shopJob.toBelt[k] == 0 || c.inventory[k] == 0) continue;
         shopJob.toBelt[k]--;
@@ -198,6 +227,7 @@ static void updateShop(void* player, DWORD now) {
         shopFinish(SHOP_END_GOLD);
         return;
     }
+
     if (shopFreeCells(&c) == 0) {
         shopFinish(SHOP_END_INVENTORY_FULL);
         return;
@@ -217,6 +247,12 @@ static void updateShop(void* player, DWORD now) {
     shopJob.sentAt = now;
 }
 
+
+
+
+
+
+
 static BYTE shopWares(void) {
     void* npc = shopAvailable ? shopNpc() : NULL;
     if (!npc) return 0;
@@ -233,11 +269,16 @@ static void putShopJob(Packet* p) {
     putU8(p, shopWares());
 }
 
+
+
+
+
 static DWORD shopJobKey(int part) {
     if (part == 0) return shopJob.id;
     if (part == 2) return shopWares();
     return shopJob.cmd | (DWORD) shopJob.state << 8 | (DWORD) shopJob.a << 16 | (DWORD) shopJob.b << 24 | (DWORD) shopJob.reason * 2654435761u;
 }
+
 
 static void shopNewPlayer(void* player) {
     static void* last;

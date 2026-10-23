@@ -1,9 +1,9 @@
-#include <jni.h>
+#include <jni.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #include <malloc.h>
 #include <android/log.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h> // D2Android: fopen/snprintf for the package cache path
+#include <stdio.h>
 #include <dlfcn.h>
 
 #define VK_NO_PROTOTYPES 1
@@ -62,7 +62,7 @@ done:
     return stringArray;
 }
 
-// D2Android: the cache file of the running package – internal and public build have different ids
+
 static const char* vkApiVersionFile() {
     static char path[160];
     if (!path[0]) {

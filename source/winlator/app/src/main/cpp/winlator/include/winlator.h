@@ -1,4 +1,4 @@
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array)[0])
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array)[0])  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #define MIN(a, b) (((a)<(b))?(a):(b))
 #define MAX(a, b) (((a)>(b))?(a):(b))
 #define CLAMP(x, low, high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
@@ -11,7 +11,7 @@
 #define BITMASK_UNSET(bits, flag) bits &= ~flag
 #define GETEXP(x) (31 - __builtin_clz(x))
 
-// D2Android: APP_CACHE_DIR removed, gpu_helper.c finds the cache of the running package
+
 #define LIBVULKAN_PATH "/system/lib64/libvulkan.so"
 
 #define CLOSEFD(x) \

@@ -15,6 +15,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+
+
+
+
+
 public final class D2ExitLog {
     private static final String FILE = "D2Android/Protokoll.txt";
     private static final long MAX_SIZE = 200_000;
@@ -22,17 +27,28 @@ public final class D2ExitLog {
 
     private D2ExitLog() {}
 
+
+
+
+
+
     public static void gameEnded(int status, long backgroundSinceMs, String appReason, long sinceResumeMs) {
         append(D2ExitText.gameEnded(status, backgroundSinceMs, appReason, sinceResumeMs));
     }
+
 
     public static void quit(String how) {
         append("App beendet: " + how);
     }
 
+
     public static void note(String line) {
         append(line);
     }
+
+
+
+
 
     public static String systemExits(Context context) {
         if (Build.VERSION.SDK_INT < 30) return null;
@@ -54,6 +70,7 @@ public final class D2ExitLog {
             if (info.getTimestamp() <= last) continue;
             String details = (info.getDescription() != null ? " – " + info.getDescription() : "")
                 + String.format(Locale.ROOT, " (Wichtigkeit %d, Speicher %d MB)", info.getImportance(), info.getPss() / 1024);
+
             boolean self = info.getReason() == ApplicationExitInfo.REASON_EXIT_SELF;
             append(D2ExitText.appExit(self, time(info.getTimestamp()), reason(info.getReason()), details));
             if (info.getTimestamp() >= newestTime) {
@@ -97,6 +114,7 @@ public final class D2ExitLog {
             }
         }
         catch (IOException ignored) {
+
         }
     }
 }

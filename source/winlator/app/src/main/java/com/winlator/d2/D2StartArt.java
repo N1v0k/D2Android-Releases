@@ -2,20 +2,37 @@ package com.winlator.d2;
 
 import java.io.IOException;
 
+
+
+
+
+
+
+
 final class D2StartArt {
     static final String FRONT_END = "data\\global\\ui\\FrontEnd\\";
+
     static final String CHAR_SELECT_BOX = "data\\global\\ui\\CharSelect\\charselectbox.dc6";
+
     static final int CARD_FRAME_EDGE = 4;
+
     static final int FRAME_OTHER = 0, FRAME_LAST = 1, FRAME_HARDCORE = 2;
+
     static final int SCREEN_W = 800, SCREEN_H = 600, LOGO_X = 400, LOGO_Y = 120;
     private static final String[] CLASS_DIRS = {"amazon", "sorceress", "necromancer", "paladin", "barbarian", "druid", "assassin"};
     private static final String[] CLASS_CODES = {"am", "so", "ne", "pa", "ba", "dz", "as"};
 
+
     final int[] screen;
+
     final D2Sprites.Frame[] blackLeft, blackRight, fireLeft, fireRight;
+
     final D2GameFont.Img button, buttonPressed;
     final D2GameFont font16, formal10, exocet10;
+
     final D2GameFont.Img cardFrame;
+
+
     final java.util.Map<String, String> levels = new java.util.HashMap<>();
     private final D2Sprites sprites;
     private final D2Sprites.Frame[][] figures = new D2Sprites.Frame[CLASS_CODES.length][];
@@ -39,6 +56,7 @@ final class D2StartArt {
         cardFrame = box != null && box.length >= 2 ? joined(box[0], box[1]) : null;
     }
 
+
     static D2StartArt load(D2Sprites sprites) throws IOException {
         return new D2StartArt(sprites);
     }
@@ -52,6 +70,7 @@ final class D2StartArt {
         if (font == null) throw new IOException("start page font missing");
         return font;
     }
+
 
     static int[] tiled(D2Sprites.Frame[] tiles, int w, int h) {
         int[] out = new int[w * h];
@@ -85,6 +104,10 @@ final class D2StartArt {
         return new D2GameFont.Img(w, h, out);
     }
 
+
+
+
+
     static int[] frame(D2GameFont.Img src, int edge, int w, int h) {
         int[] out = new int[w * h];
         int sw = src.width, sh = src.height;
@@ -101,6 +124,7 @@ final class D2StartArt {
         }
         return out;
     }
+
 
     static int tint(int argb, int kind) {
         int a = argb >>> 24, r = argb >> 16 & 0xFF, g = argb >> 8 & 0xFF, b = argb & 0xFF;
@@ -119,6 +143,7 @@ final class D2StartArt {
         return a << 24 | r << 16 | g << 8 | b;
     }
 
+
     private static final String[] SPEAKER = {
         "........K..........",
         ".......KGK.....G...",
@@ -132,6 +157,7 @@ final class D2StartArt {
         "......KGDK......G..",
         ".......KGK.....G...",
         "........K.........."};
+
     private static final String[] SPEAKER_OFF = {
         "........", "........", "..R...R.", "...R.R..", "....R...", "....R...", "...R.R..", "..R...R.", "........",
         "........", "........", "........"};
@@ -144,12 +170,17 @@ final class D2StartArt {
             for (int x = 0; x < w; x++) {
                 char c = row.charAt(x);
                 int argb = c == 'K' ? 0xFF0A0A0A : c == 'G' ? 0xFFC8B074 : c == 'D' ? 0xFF78643C : c == 'R' ? 0xFFB02828 : 0;
+
                 if (!on && (c == 'G' || c == 'D')) argb = dim(argb, 60);
                 out[y * w + x] = argb;
             }
         }
         return new D2GameFont.Img(w, h, out);
     }
+
+
+
+
 
     int[] backdrop(int height) {
         int w = SCREEN_W, h = Math.max(SCREEN_H, height);
@@ -163,6 +194,7 @@ final class D2StartArt {
             int src = k % 2 == 0 ? SCREEN_H - ground + r : SCREEN_H - 1 - r;
             copyRow(screen, src, out, from + y, 40);
         }
+
         for (int i = 0; i < 30; i++) {
             int dim = 100 - 35 * (15 - Math.abs(i - 15)) / 15;
             int y = SCREEN_H - 15 + i;
@@ -179,6 +211,7 @@ final class D2StartArt {
         int r = (argb >> 16 & 0xFF) * percent / 100, g = (argb >> 8 & 0xFF) * percent / 100, b = (argb & 0xFF) * percent / 100;
         return 0xFF000000 | r << 16 | g << 8 | b;
     }
+
 
     synchronized D2Sprites.Frame[] classFigure(int characterClass) {
         if (characterClass < 0 || characterClass >= CLASS_CODES.length) return null;

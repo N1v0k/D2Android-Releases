@@ -2,8 +2,25 @@ package com.winlator.d2;
 
 import java.io.IOException;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2Frame {
+
     public static final int TILE = 12, LINE = 3;
+
+
+
+
+
+
 
     public static int menuInset(int inside, int unit, int k) {
         if (unit <= 0 || k <= 0 || inside < unit) return 0;
@@ -13,6 +30,7 @@ public final class D2Frame {
     private static final String FILE = "data\\global\\ui\\MENU\\boxpieces.dc6";
     private static final int TOP_LEFT = 0, TOP_RIGHT = 1, BOTTOM_LEFT = 8, BOTTOM_RIGHT = 9;
     private static final int TOP = 2, LEFT = 10, RIGHT = 13, BOTTOM = 16;
+
 
     private static final class Piece {
         final int width, height;
@@ -55,10 +73,16 @@ public final class D2Frame {
         }
     }
 
+
     public static D2Frame load(D2Sprites sprites) throws IOException {
         D2Sprites.Frame[] f = sprites.dc6(FILE);
         return f != null && f.length >= 22 ? new D2Frame(f) : null;
     }
+
+
+
+
+
 
     public int[] compose(int width, int height, int fill) {
         int w = Math.max(2 * LINE, width), h = Math.max(2 * LINE, height);
@@ -67,6 +91,7 @@ public final class D2Frame {
             for (int y = 1; y < h - 1; y++) for (int x = 1; x < w - 1; x++) out[y * w + x] = fill;
         }
         int corner = Math.max(LINE, Math.min(TILE, Math.min(w / 2, h / 2)));
+
         for (int x = corner, i = 0; x < w - corner; x += TILE, i++) {
             int n = Math.min(TILE, w - corner - x);
             put(out, w, h, pick(top, i, 1), 0, 0, n, LINE, x, 0);
@@ -77,12 +102,17 @@ public final class D2Frame {
             put(out, w, h, pick(left, i, 3), 0, 0, LINE, n, 0, y);
             put(out, w, h, pick(right, i, 4), 0, 0, LINE, n, w - LINE, y);
         }
+
         put(out, w, h, topLeft, 0, 0, corner, corner, 0, 0);
         put(out, w, h, topRight, TILE - corner, 0, corner, corner, w - corner, 0);
         put(out, w, h, bottomLeft, 0, TILE - corner, corner, corner, 0, h - corner);
         put(out, w, h, bottomRight, TILE - corner, TILE - corner, corner, corner, w - corner, h - corner);
         return out;
     }
+
+
+
+
 
     public int[][] lines() {
         int w = 2 * LINE + 2, h = 2 * TILE + 3 * TILE;
@@ -101,6 +131,12 @@ public final class D2Frame {
         return lines;
     }
 
+
+
+
+
+
+
     public static int[] ring(int diameter, int[][] lines) {
         int d = Math.max(2 * LINE + 2, diameter);
         int[] out = new int[d * d];
@@ -117,10 +153,12 @@ public final class D2Frame {
         return out;
     }
 
+
     private static Piece pick(Piece[] variants, int i, int edge) {
         int hash = (i * 0x9E3779B1 + edge * 0x85EBCA6B) >>> 16;
         return variants[hash % variants.length];
     }
+
 
     private static void put(int[] out, int w, int h, Piece p, int sx, int sy, int n, int m, int dx, int dy) {
         for (int y = 0; y < m; y++) {

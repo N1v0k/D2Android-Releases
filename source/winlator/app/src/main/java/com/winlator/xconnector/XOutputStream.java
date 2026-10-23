@@ -1,4 +1,4 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import com.winlator.xserver.XServer;
 
@@ -12,9 +12,9 @@ import dalvik.annotation.optimization.CriticalNative;
 public class XOutputStream implements XStreamLock {
     private final ReentrantLock lock = new ReentrantLock();
     private final long nativePtr;
-    /** D2Android: while an event is sent (lockForEvent): how long a send may wait for room, ms; -1: blocking */
+
     private int eventTimeoutMs = -1;
-    /** D2Android: what the last event send of the lock holder did (EVENT_SENT, EVENT_DROPPED), read under the lock */
+
     private int eventResult;
     public static final int EVENT_SENT = 0, EVENT_DROPPED = 1;
 
@@ -117,13 +117,13 @@ public class XOutputStream implements XStreamLock {
         destroy(nativePtr);
     }
 
-    /**
-     * D2Android: the lock for sending an event: waits at most lockWaitMs for the stream (null: another thread held
-     * it that long), and its sends wait at most sendWaitMs for the client to make room, then the event is dropped
-     * (xoutput_stream.c, XOutputStream_sendTimed; eventResult says which). A client that reads nothing must not block the
-     * sending thread (UI: ANR; epoll: the whole X server). Close it like lock; nested lock calls stay in event mode.
-     * Taken inside a lock this thread already holds (a reply being written), it stays a blocking send.
-     */
+
+
+
+
+
+
+
     public XStreamLock lockForEvent(int lockWaitMs, int sendWaitMs) {
         try {
             if (!lock.tryLock(lockWaitMs, TimeUnit.MILLISECONDS)) return null;
@@ -137,7 +137,7 @@ public class XOutputStream implements XStreamLock {
         return this;
     }
 
-    /** D2Android: whether the event sent under the lockForEvent this thread holds was dropped (call before closing it) */
+
     public int eventResult() {
         return eventResult;
     }
@@ -146,7 +146,7 @@ public class XOutputStream implements XStreamLock {
     public void close() throws IOException {
         try {
             if (eventTimeoutMs >= 0) {
-                // D2Android: an event's send, not blocking for long
+
                 int result = sendEventData(nativePtr, eventTimeoutMs);
                 if (result < 0) throw new IOException("Failed to send data.");
                 if (result > 0) eventResult = EVENT_DROPPED;
@@ -154,7 +154,7 @@ public class XOutputStream implements XStreamLock {
             else if (!sendData(nativePtr)) throw new IOException("Failed to send data.");
         }
         finally {
-            if (lock.getHoldCount() == 1) eventTimeoutMs = -1; // D2Android: the outermost lock ends the event
+            if (lock.getHoldCount() == 1) eventTimeoutMs = -1;
             lock.unlock();
         }
     }
@@ -191,7 +191,7 @@ public class XOutputStream implements XStreamLock {
     private static native boolean sendData(long nativePtr);
 
     @CriticalNative
-    private static native int sendEventData(long nativePtr, int timeoutMs); // D2Android: changed
+    private static native int sendEventData(long nativePtr, int timeoutMs);
 
     @CriticalNative
     private static native void destroy(long nativePtr);

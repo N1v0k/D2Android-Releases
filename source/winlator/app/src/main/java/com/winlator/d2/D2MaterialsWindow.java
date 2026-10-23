@@ -11,16 +11,27 @@ import com.winlator.R;
 
 import java.util.Locale;
 
+
+
+
+
+
+
 final class D2MaterialsWindow {
+
     interface Host {
         void send(int order, int arg, int count);
         void note(String text);
         String text(int id, Object... args);
+
         boolean backedUp();
+
         void startBackup();
+
         void haptic();
         void schedule(Runnable r, long delayMs);
         void cancel(Runnable r);
+
         boolean sorting();
     }
 
@@ -30,11 +41,14 @@ final class D2MaterialsWindow {
     private final D2Materials.Orders orders = new D2Materials.Orders();
     private boolean open, backupRunning;
     private int tab = D2Materials.TAB_RUNES, selected = -1, choiceKind = -1;
+
     private boolean entryDown, closingTap, longFired, outOfCell, pressing;
     private int downHit = D2Materials.HIT_NONE;
+
     private float scale, viewLeft, viewTop, originX, originY;
     private int gameWidth;
     private D2Materials.Snapshot snapshot;
+
     private boolean placed;
     private final Paint fill = new Paint(), line = new Paint(), picture = new Paint(Paint.FILTER_BITMAP_FLAG),
         grey = new Paint(Paint.FILTER_BITMAP_FLAG);
@@ -50,6 +64,10 @@ final class D2MaterialsWindow {
         grey.setAlpha(150);
     }
 
+
+
+
+
     void layout(D2Materials.Snapshot s, float[] mapping, int gameWidth, int gameHeight, long uiFlags) {
         snapshot = s;
         scale = mapping[0];
@@ -63,9 +81,17 @@ final class D2MaterialsWindow {
         }
     }
 
+
+
+
+
     static boolean visible(D2Materials.Snapshot s, boolean placed, boolean helperOn, long now) {
         return helperOn && placed && s != null && now - s.time < D2Materials.STALE_MS && s.entry();
     }
+
+
+
+
 
     void update(D2Materials.Snapshot s, boolean helperOn, long now) {
         boolean shown = visible(s, placed, helperOn, now);
@@ -88,6 +114,7 @@ final class D2MaterialsWindow {
         if (next != null) host.send(next[0], next[1], next[2]);
     }
 
+
     void backupDone(boolean ok) {
         backupRunning = false;
         if (!ok) {
@@ -103,6 +130,7 @@ final class D2MaterialsWindow {
     }
 
 
+
     private float lx(float x) {
         return (x - viewLeft) / scale - originX;
     }
@@ -111,11 +139,16 @@ final class D2MaterialsWindow {
         return (y - viewTop) / scale - originY;
     }
 
+
     private boolean inInventory(float x, float y) {
         float gx = (x - viewLeft) / scale, gy = (y - viewTop) / scale;
         float right = gameWidth - originX;
         return gx >= right - 400 && gx < right && gy >= originY && gy < originY + 600;
     }
+
+
+
+
 
     boolean takes(float x, float y, boolean onAppButton, boolean helperOn, long now) {
         D2Materials.Snapshot s = snapshot;
@@ -126,6 +159,7 @@ final class D2MaterialsWindow {
         if (D2Materials.inWindow(lx, ly)) return true;
         return !onAppButton && !inInventory(x, y);
     }
+
 
     boolean covers(float x, float y, boolean helperOn, long now) {
         if (scale <= 0 || !visible(snapshot, placed, helperOn, now)) return false;
@@ -182,6 +216,7 @@ final class D2MaterialsWindow {
             close();
             return;
         }
+
         if (choiceKind >= 0) {
             int choice = D2Materials.choiceHit(choiceKind, s.stash[choiceKind], lx, ly);
             if (choice >= 0) {
@@ -211,6 +246,7 @@ final class D2MaterialsWindow {
     }
 
 
+
     private void toView(float lx, float ly, float w, float h) {
         float x = viewLeft + (originX + lx) * scale, y = viewTop + (originY + ly) * scale;
         rect.set(x, y, x + w * scale, y + h * scale);
@@ -220,6 +256,7 @@ final class D2MaterialsWindow {
         D2Materials.Snapshot s = snapshot;
         if (hud == null || scale <= 0 || !visible(s, placed, helperOn, now)) return;
         boolean locked = s.locked() || !s.possible();
+
         toView(D2Materials.ENTRY_X + 1, D2Materials.ENTRY_Y + 1, D2Materials.ENTRY_SIZE - 2, D2Materials.ENTRY_SIZE - 2);
         if (!hud.drawBlankButton(canvas, open || entryDown, rect, locked ? grey : null)) {
             fill.setColor(Color.argb(220, 20, 18, 16));
@@ -239,16 +276,20 @@ final class D2MaterialsWindow {
             canvas.drawRect(rect, line);
         }
         if (!open) return;
+
         toView(D2Materials.WIN_X, D2Materials.WIN_Y, D2Materials.WIN_W, D2Materials.WIN_H);
         fill.setColor(Color.argb(240, 9, 8, 7));
         canvas.drawRect(rect, fill);
         float k = scale;
+
+
         int room = D2Materials.WIN_W - 2 * D2Materials.TEXT_MARGIN;
         float titleY = viewTop + (originY + D2Materials.WIN_Y + 12) * k;
         String name = selected >= 0 ? D2Materials.name(selected, hud.gameText(D2Materials.code(selected))) : null;
         if (name == null) hud.drawText(canvas, host.text(R.string.materials_title).toUpperCase(Locale.ROOT), rect.centerX(), titleY, k);
         else if (hud.textWidth(name) <= room) hud.drawText(canvas, name, rect.centerX(), titleY, k);
         else hud.drawSmallText(canvas, D2Materials.fit(name, hud::smallTextWidth, room), rect.centerX(), titleY, k);
+
         float tabsLeft = D2Materials.WIN_X + (D2Materials.WIN_W - 2 * D2Materials.TAB_W - 6) / 2f;
         for (int t = 0; t < 2; t++) {
             boolean on = t == tab;
@@ -262,6 +303,7 @@ final class D2MaterialsWindow {
             String label = host.text(t == 0 ? R.string.materials_tab_runes : R.string.materials_tab_gems).toUpperCase(Locale.ROOT);
             hud.drawSmallText(canvas, label, rect.centerX(), rect.centerY(), k, on ? 255 : 130);
         }
+
         for (int row = 0; row < 6; row++) {
             for (int column = 0; column < 6; column++) {
                 int kind = D2Materials.kindAt(tab, column, row);
@@ -290,17 +332,22 @@ final class D2MaterialsWindow {
                     count > 0 ? 255 : 110, count > 0 ? 0xFFFFFF : 0x808080);
             }
         }
+
         String info = selected >= 0 ? host.text(R.string.materials_info, s.stash[selected], s.inventory[selected])
             : host.text(R.string.materials_hint);
         info = D2Materials.fit(info, hud::smallTextWidth, room);
         hud.drawSmallText(canvas, info, viewLeft + (originX + D2Materials.WIN_X + D2Materials.WIN_W / 2f) * k,
             viewTop + (originY + D2Materials.INFO_Y) * k, k, 255, 0xC0C0C0);
+
         toView(D2Materials.BUTTON_X, D2Materials.BUTTON_Y, D2Materials.BUTTON_W, D2Materials.BUTTON_H);
+
+
         String deposit = host.text(R.string.materials_deposit_all);
         if (!hud.drawMediumButton(canvas, deposit, pressing && downHit == D2Materials.HIT_DEPOSIT_ALL, rect)) {
             if (hud.hasFrame()) hud.drawFrame(canvas, rect, k, Color.argb(240, 40, 34, 22));
             hud.drawSmallText(canvas, deposit.toUpperCase(Locale.ROOT), rect.centerX(), rect.centerY(), k);
         }
+
         if (choiceKind >= 0) {
             int[] box = D2Materials.choiceAt(choiceKind);
             toView(box[0], box[1], 3 * D2Materials.CHOICE_W, D2Materials.CHOICE_H);
@@ -336,10 +383,12 @@ final class D2MaterialsWindow {
         }
     }
 
+
     String saveWarning(long now) {
         int note = D2Materials.saveWarning(snapshot, now);
         return note == D2Materials.NOTE_NONE ? null : text(note);
     }
+
 
     boolean saveBlocked(D2Materials.Snapshot last) {
         return D2Materials.saveBlocked(last) != D2Materials.NOTE_NONE;

@@ -1,7 +1,13 @@
 
+
+
+
+
+
 #define ITXT_NORMCODE  0x84
 #define ITXT_UBERCODE  0x88
 #define ITXT_ULTRACODE 0x8C
+
 
 static int lootBaseClass(const BYTE* txt) {
     if (!readable((void*) txt, 0x90)) return -1;
@@ -11,6 +17,7 @@ static int lootBaseClass(const BYTE* txt) {
     if (code == *(const DWORD*) (txt + ITXT_NORMCODE)) return 0;
     return -1;
 }
+
 
 static int lootHidden(void* unit) {
     if (!lootMask || !unit || RD32(unit, U_TYPE) != UNIT_ITEM) return 0;

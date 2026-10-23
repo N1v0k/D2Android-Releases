@@ -1,4 +1,4 @@
-package com.winlator.renderer;
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -80,11 +80,11 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         xServer.pointer.addOnPointerMotionListener(this);
     }
 
-    /**
-     * D2Android: counts the renderer's EGL contexts (0 = none yet). Textures, programs and buffers of an older
-     * context are invalid in a new one and are made again (they remember their generation); PresentExtension makes its
-     * copy context anew, shared with the new one, and copies nothing before the first.
-     */
+
+
+
+
+
     public static volatile int contextGeneration;
 
     @Override
@@ -114,13 +114,13 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         viewportNeedsUpdate = true;
     }
 
-    /** D2Android: frames drawn so far (the FPS display in the ornament band counts them per second). */
+
     public static volatile int framesDrawn;
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        framesDrawn++; // D2Android: FPS display
-        com.winlator.d2.D2FrameCounts.glFrames.incrementAndGet(); // D2Android: changed
+        framesDrawn++;
+        com.winlator.d2.D2FrameCounts.glFrames.incrementAndGet();
         if (toggleFullscreen) {
             fullscreen = !fullscreen;
             toggleFullscreen = false;
@@ -184,7 +184,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     @Override
     public void onUpdateWindowContent(Window window) {
-        com.winlator.d2.D2FrameCounts.glContent.incrementAndGet(); // D2Android: changed
+        com.winlator.d2.D2FrameCounts.glContent.incrementAndGet();
         xServerView.requestRender();
     }
 
@@ -204,9 +204,9 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     @Override
     public void onPointerMove(short x, short y) {
-        // D2Android: the app moves the pointer all the time (winhandler: aiming, walking, following) while the game
-        // draws its own cursor into its picture and leaves the X cursor empty; a whole frame for a pointer nobody sees
-        // cost CPU and SurfaceFlinger. Still drawn when the pointer shows or decides the view (magnifier, offset).
+
+
+
         if (!pointerShown() && magnifierZoom == 1.0f && !screenOffsetYRelativeToCursor) {
             com.winlator.d2.D2FrameCounts.glPointerSkipped.incrementAndGet();
             return;
@@ -215,11 +215,11 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         xServerView.requestRender();
     }
 
-    /**
-     * D2Android: whether renderCursor would draw something: the cursor is on and the pointer's window has a
-     * visible cursor (or none: the root cursor). Read without the lock (only decides whether a move is worth a frame;
-     * a change of the cursor itself asks for a frame in onUpdateWindowAttributes).
-     */
+
+
+
+
+
     private boolean pointerShown() {
         if (!cursorVisible) return false;
         Window pointWindow = xServer.inputDeviceManager.getPointWindow();
@@ -230,7 +230,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     private void renderCursorDrawable(Drawable drawable, int x, int y) {
         synchronized (drawable.renderLock) {
             Texture texture = drawable.getTexture();
-            if (texture == null) return; // D2Android: removed while the old scene is still drawn
+            if (texture == null) return;
             texture.updateFromDrawable();
 
             XForm.set(tmpXForm1, x, y, drawable.width * cursorScale, drawable.height * cursorScale);
@@ -251,7 +251,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     private void renderWindowDrawable(Drawable drawable, int x, int y, boolean transparent, FullscreenTransformation fullscreenTransformation) {
         synchronized (drawable.renderLock) {
             Texture texture = drawable.getTexture();
-            if (texture == null) return; // D2Android: removed while the old scene is still drawn
+            if (texture == null) return;
             texture.updateFromDrawable();
 
             if (fullscreenTransformation != null) {

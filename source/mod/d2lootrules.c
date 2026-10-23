@@ -1,5 +1,17 @@
 
+
+
+
+
+
+
+
+
+
+
+
 #include "d2cats.h"
+
 
 #define LOOT_AMMO          0x0001
 #define LOOT_SCROLLS       0x0002
@@ -16,6 +28,7 @@
 #define LOOT_GOLD          0x1000
 #define LOOT_SUPERIOR      0x2000
 #define LOOT_ALL           0x3FFF
+
 
 #define LQ_INFERIOR 1
 #define LQ_NORMAL   2
@@ -48,17 +61,23 @@ static int lootHiddenBy(const LootItem* it, unsigned mask, unsigned goldBelow) {
     case CAT_WEAPON: case CAT_ARMOR:
         if (it->quality == LQ_MAGIC) return (mask & LOOT_MAGIC) != 0;
         if (it->quality != LQ_INFERIOR && it->quality != LQ_NORMAL && it->quality != LQ_SUPERIOR) return 0;
+
         if (it->sockets > 0 || it->ethereal || it->baseClass != 0) return 0;
         return (mask & (it->quality == LQ_INFERIOR ? LOOT_INFERIOR : it->quality == LQ_SUPERIOR ? LOOT_SUPERIOR : LOOT_WHITE)) != 0;
     default: return 0;
     }
 }
 
+
+
+
+
 static void lootExpire(int filterWanted, unsigned* mask, unsigned* goldBelow) {
     if (filterWanted) return;
     *mask = 0;
     *goldBelow = 0;
 }
+
 
 static void lootParse(const BYTE* buf, int n, unsigned* mask, unsigned* goldBelow) {
     if (n >= 15) {

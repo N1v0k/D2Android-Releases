@@ -1,15 +1,39 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_EQUIP 22
 #ifndef EQUIP_STEP_MS
 #define EQUIP_STEP_MS 1000
 #endif
+
+
 #define EQUIP_LATE_MS 5000
 #define EQ_INV_CURSOR 0x20
+
 #define CAP_EQUIP 0x04
+
 #define EQUIP_OK          1
 #define EQUIP_REFUSED     2
 #define EQUIP_CURSOR      3
 #define EQUIP_NOT_STARTED 4
+
 
 enum { EQ_NONE, EQ_TO_CURSOR, EQ_TO_BODY, EQ_OLD_BACK, EQ_UNDO };
 
@@ -20,6 +44,7 @@ static struct { DWORD id, fromX, fromY, since; } equipLate;
 
 static int singlePlayerGame(void);
 static int worldPaused(void);
+
 
 static void checkEquipSites(void) {
     static const BYTE toCursor[] = {0x8B, 0x4D, 0x0C, 0xB0, 0x19, 0xE8};
@@ -47,6 +72,7 @@ static DWORD equipCursorId(void* player) {
     return item ? RD32(item, U_ID) : 0;
 }
 
+
 static void* equipFind(void* player, DWORD id, int body, BYTE loc) {
     void* inventory = RDP(player, U_INVENTORY);
     int guard = 0;
@@ -68,6 +94,7 @@ static int equipSize(void* item, int* w, int* h) {
     *h = txt[ITXT_HEIGHT];
     return *w >= 1 && *h >= 1;
 }
+
 
 static int equipFreePlace(void* player, DWORD skip, int w, int h, DWORD* outX, DWORD* outY) {
     BYTE used[INV_W * INV_H] = {0};
@@ -132,11 +159,13 @@ static void equipDone(int result, const char* why) {
     logLine("equip %lu: %s (result %d)", (unsigned long) equip.id, why, result);
 }
 
+
 static int equipReportDue(void) {
     if (equipReported == equipCounter) return 0;
     equipReported = equipCounter;
     return 1;
 }
+
 
 static void equipStart(void* player, BYTE loc, DWORD id, DWORD now) {
     if (equip.step != EQ_NONE) {
@@ -162,6 +191,7 @@ static void equipStart(void* player, BYTE loc, DWORD id, DWORD now) {
     equip.fromY = RD32(path, IPATH_Y);
     void* old = equipFind(player, 0, 1, loc);
     if (old) {
+
         int w, h;
         DWORD x, y;
         if (!equipSize(old, &w, &h) || !equipFreePlace(player, id, w, h, &x, &y)) {
@@ -176,6 +206,7 @@ static void equipStart(void* player, BYTE loc, DWORD id, DWORD now) {
     logLine("equip %lu to place %u (old %lu): 0x19 from %lu,%lu", (unsigned long) id, loc, (unsigned long) equip.oldId,
         (unsigned long) equip.fromX, (unsigned long) equip.fromY);
 }
+
 
 static void equipLateTick(void* player, DWORD now) {
     if (!equipLate.id) return;
@@ -196,12 +227,14 @@ static void equipLateTick(void* player, DWORD now) {
     else if ((long) (now - equipLate.since) > EQUIP_LATE_MS) equipLate.id = 0;
 }
 
+
 static void equipTick(void* player, DWORD now) {
     if (equip.step == EQ_NONE) {
         equipLateTick(player, now);
         return;
     }
     if (!player) {
+
         equipDone(EQUIP_CURSOR, "left the game");
         return;
     }
@@ -210,6 +243,8 @@ static void equipTick(void* player, DWORD now) {
         return;
     }
     DWORD cursor = equipCursorId(player);
+
+
     long waited = (long) (now - equip.since);
     switch (equip.step) {
     case EQ_TO_CURSOR:
@@ -222,6 +257,7 @@ static void equipTick(void* player, DWORD now) {
         }
         else if (waited > EQUIP_STEP_MS) {
             if (!cursor) {
+
                 equipLate.id = equip.id;
                 equipLate.fromX = equip.fromX;
                 equipLate.fromY = equip.fromY;
@@ -253,6 +289,7 @@ static void equipTick(void* player, DWORD now) {
         }
         else if (waited > EQUIP_STEP_MS) {
             if (cursor == equip.id) {
+
                 equipSendToInventory(equip.id, equip.fromX, equip.fromY);
                 equip.step = EQ_UNDO;
                 equip.since = now;

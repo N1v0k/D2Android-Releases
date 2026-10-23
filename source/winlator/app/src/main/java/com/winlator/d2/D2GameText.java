@@ -11,6 +11,11 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 @SuppressLint("ViewConstructor")
 final class D2GameText extends View {
     private final D2SettingsLook look;
@@ -20,12 +25,16 @@ final class D2GameText extends View {
     private int valueRgb;
     private final List<Bitmap> lines = new ArrayList<>();
     private Bitmap valueBitmap;
+
     private final List<Bitmap> valueLines = new ArrayList<>();
     private int linesFor = -1;
     private final Paint pixels = new Paint(), pressed = new Paint();
     private final RectF where = new RectF();
+
     boolean wrapWidth;
+
     int gain = 100;
+
     private final int gap;
 
     D2GameText(Context context, D2SettingsLook look, D2GameFont font, int rgb, String text) {
@@ -40,6 +49,7 @@ final class D2GameText extends View {
         describe();
     }
 
+
     private void describe() {
         setContentDescription(value == null ? text : text + ", " + value);
     }
@@ -49,6 +59,7 @@ final class D2GameText extends View {
         super.drawableStateChanged();
         invalidate();
     }
+
 
     void setValue(String value, int rgb) {
         this.value = value;
@@ -75,6 +86,7 @@ final class D2GameText extends View {
         valueLines.clear();
         int k = look.scale;
         float all = Math.max(40, width / (float) k);
+
         boolean beside = valueBitmap == null || valueBitmap.getWidth() + 12 <= all / 2;
         float room = beside ? Math.max(40, all - (valueBitmap != null ? valueBitmap.getWidth() + 12 : 0)) : all;
         for (String line : font.wrap(text, room)) lines.add(D2SettingsLook.text(font, line, rgb, gain));
@@ -117,6 +129,7 @@ final class D2GameText extends View {
             canvas.drawBitmap(valueBitmap, null, where, pixels);
         }
     }
+
 
     @SuppressLint("ViewConstructor")
     static final class Stone extends View {

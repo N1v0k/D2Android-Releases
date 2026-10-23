@@ -1,12 +1,34 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Puffer {
+
     public static final double FEIND_ABSTAND = 400;
+
     public static final long SPERRE_MS = 300;
     static final long BESTAETIGUNG_MS = 1500, PAUSE_MS = 60_000;
     static final int VERSUCHE = 3;
     public static final int ENERGIESCHILD = 58, GEWITTER = 57, KAMPFRUF = 155;
+
     public static final int TOTENBESCHWOERER = 2, KNOCHENRUESTUNG = 68;
+
 
     static int[][] gruppen(int klasse) {
         switch (klasse) {
@@ -21,8 +43,13 @@ public final class Puffer {
         }
     }
 
+
     private int zusatzKlasse = -2;
     private int[][] zusatzGruppen;
+
+
+
+
 
     public void zusatz(int klasse, int[] puffer) {
         java.util.List<int[]> out = new java.util.ArrayList<>(java.util.Arrays.asList(gruppen(klasse)));
@@ -35,17 +62,23 @@ public final class Puffer {
         zusatzGruppen = out.toArray(new int[0][]);
     }
 
+
     private int[][] gruppenFuer(int klasse) {
         return klasse == zusatzKlasse && zusatzGruppen != null ? zusatzGruppen : gruppen(klasse);
     }
 
+
     private final long[] tippAm = new long[8], pauseBis = new long[8];
     private final int[] fehl = new int[8];
     private int klasse = -2;
+
     private int angefragt = -1;
+
     public String grund = "";
+
     public int tipps, bestaetigt, pausen;
     public String befund;
+
 
     private static int slot(Zustand z, Zustand.Layout l, Fertigkeiten t, int[] gruppe) {
         int best = -1;
@@ -61,6 +94,11 @@ public final class Puffer {
         }
         return best;
     }
+
+
+
+
+
 
     public String tippen(Zustand z, Zustand.Layout l, Fertigkeiten t, double feindAbstand, long now) {
         if (t == null || !z.fkBekannt || z.puffer == null || z.klasse < 0) return null;
@@ -105,6 +143,13 @@ public final class Puffer {
         return null;
     }
 
+
+
+
+
+
+
+
     public void ausgeloest(boolean gedrueckt, long am) {
         int g = angefragt;
         angefragt = -1;
@@ -112,6 +157,10 @@ public final class Puffer {
         tippAm[g] = am;
         tipps++;
     }
+
+
+
+
 
     public double reserve(Zustand z, Zustand.Layout l, Fertigkeiten t, long now) {
         double r = 0;

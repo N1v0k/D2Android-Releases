@@ -1,6 +1,35 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_RESUME           25
 #define RESUME_STEP          35
 #define RESUME_STEP_MIN      9
+
+
+
+
+
+
+
 #define RESUME_CHAIN_MS      5000
 #define RESUME_CHAIN_TICKS   125
 #define RESUME_CHAIN_MAX_MS  12000
@@ -15,11 +44,13 @@
 #define RESUME_OFF_REPEAT_MS 200
 #define RESUME_MAX_FRAME     1500
 
+
 #define RS_NONE     0
 #define RS_RUNNING  1
 #define RS_SPOT     2
 #define RS_WAYPOINT 3
 #define RS_REFUSED  4
+
 #define RR_NONE        0
 #define RR_MULTIPLAYER 1
 #define RR_NOT_READY   2
@@ -54,6 +85,7 @@ static struct {
     long hopX, hopY;
     int backTries;
     int arrived;
+
     int guardOn;
     LONG onSeq, offSeq;
     DWORD guardUntil, guardHard, offAskedAt;
@@ -70,10 +102,12 @@ static void resumeLog(const char* what) {
     logLine("resume: %s", what);
 }
 
+
 static int resumeWaitOver(DWORD since, DWORD ticks, int ms, DWORD minTicks, int maxMs, DWORD now) {
     int elapsed = (int) (now - since);
     return (elapsed > ms && ticks > minTicks) || elapsed > maxMs;
 }
+
 
 static void resumeBack(BYTE reason, const char* why, DWORD now) {
     rsm.reason = reason;
@@ -82,6 +116,7 @@ static void resumeBack(BYTE reason, const char* why, DWORD now) {
             (unsigned long) (now - rsm.started), (unsigned long) rsm.ticks, (unsigned long) (now - rsm.phaseAt),
             (unsigned long) rsm.phaseTicks);
 }
+
 
 static void resumeDrop(LONG* seq) {
     if (*seq && !srvCancel(*seq)) {
@@ -102,6 +137,7 @@ static void resumeEnd(BYTE state, BYTE reason, const char* what) {
     logLine("resume: %s – state %d, reason %d", what, state, reason);
 }
 
+
 static int resumeHeroAt(void* player, long* x, long* y) {
     void* path = player ? RDP(player, U_PATH) : NULL;
     if (!readable(path, PATH_Y + 4)) return 0;
@@ -110,10 +146,12 @@ static int resumeHeroAt(void* player, long* x, long* y) {
     return *x > 0 && *y > 0;
 }
 
+
 static DWORD resumeSeed(void* player) {
     void* act = player ? RDP(player, U_ACT) : NULL;
     return readable(act, ACT_SEED + 4) ? RD32(act, ACT_SEED) : 0;
 }
+
 
 static int resumeHeroRoom(void* player, WORD* rx, WORD* ry, WORD* rw, WORD* rh) {
     void* path = player ? RDP(player, U_PATH) : NULL;
@@ -126,6 +164,7 @@ static int resumeHeroRoom(void* player, WORD* rx, WORD* ry, WORD* rw, WORD* rh) 
     *rh = (WORD) (RD32(room2, ROOM2_H) * 5);
     return 1;
 }
+
 
 static int resumeRoomSame(void* player) {
     DWORD levelNo;
@@ -140,6 +179,7 @@ static int resumeRoomSame(void* player) {
     }
     return 0;
 }
+
 
 static void* resumeRoom1At(void* player, long x, long y) {
     void* path = player ? RDP(player, U_PATH) : NULL;
@@ -159,6 +199,10 @@ static void* resumeRoom1At(void* player, long x, long y) {
     return NULL;
 }
 
+
+
+
+
 static int resumeWalkable(void* player, long x, long y) {
     int loaded = 1;
     for (int dy = -1; dy <= 1; dy++)
@@ -173,6 +217,7 @@ static int resumeWalkable(void* player, long x, long y) {
 static const int UI_PANELS[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x09, 0x0B, 0x0C, 0x0E, 0x0F, 0x14, 0x16, 0x17, 0x18, 0x19,
     0x1A, 0x21, 0x24, 0x25};
 
+
 static int resumeCalm(void* player) {
     DWORD mode = RD32(player, U_MODE);
     if (mode == 0 || mode == 17 || !isTown(unitLevel(player)) || worldPaused() || equipCursorItem(player)) return 0;
@@ -181,6 +226,7 @@ static int resumeCalm(void* player) {
 }
 
 static void resumeGuardOn(DWORD now);
+
 
 static void resumeCommand(void* player, const BYTE* buf, int n) {
     if (n >= 9 && buf[8] == 0) {
@@ -200,6 +246,7 @@ static void resumeCommand(void* player, const BYTE* buf, int n) {
     rsm.difficulty = buf[27];
     DWORD first, end, firstHere, endHere;
     if (rsm.usedGame) {
+
         logLine("resume: command 25 again in this game, ignored (state %d)", rsm.state);
         return;
     }
@@ -229,6 +276,12 @@ static void resumeCommand(void* player, const BYTE* buf, int n) {
     logLine("resume: to level %u at %u,%u (room %u,%u %ux%u)", rsm.level, rsm.x, rsm.y, rsm.rx, rsm.ry, rsm.rw, rsm.rh);
 }
 
+
+
+
+
+
+
 static int resumeSaveGate(void) {
     return rsm.phase != 0 ? -1 : 0;
 }
@@ -249,9 +302,11 @@ static void resumeArrived(DWORD now, BYTE state, BYTE reason, const char* what) 
     if (!rsm.guardOn) resumeGuardOn(now);
     if (!rsm.offWanted) {
         rsm.guardUntil = now + RESUME_GUARD_MS;
+
         if ((int) (rsm.guardUntil - rsm.guardHard) > 0) rsm.guardHard = rsm.guardUntil;
     }
 }
+
 
 static void resumeJump(void* player, long x, long y, DWORD now) {
     double dx = rsm.x - x, dy = rsm.y - y, d = __builtin_sqrt(dx * dx + dy * dy);
@@ -267,6 +322,7 @@ static void resumeJump(void* player, long x, long y, DWORD now) {
             return;
         }
         if (walk < 0) {
+
             if (!rsm.waitLoad) {
                 rsm.waitLoad = 1;
                 rsm.loadAt = now;
@@ -287,9 +343,11 @@ static void resumeJump(void* player, long x, long y, DWORD now) {
     rsm.phaseTicks = 0;
 }
 
+
 static void updateResume(void* player, DWORD now) {
     DWORD playerId = player ? RD32(player, U_ID) : 0;
     if (player && (player != resumePlayer || playerId != resumePlayerId)) {
+
         logLine("resume: hero unit %p id %lu (before %p id %lu): a new game", player, (unsigned long) playerId,
                 resumePlayer, (unsigned long) resumePlayerId);
         resumePlayer = player;
@@ -300,7 +358,16 @@ static void updateResume(void* player, DWORD now) {
         resumeGames = srvResets;
     }
     if (srvResets != resumeGames) {
+
+
+
+
+
+
+
+
         int out = player && !isTown(unitLevel(player));
+
         int away = out || rsm.phase == 1 || rsm.phase == 2;
         logLine("resume: server queue emptied (hero %p id %lu, %s, phase %d, protection %d)", player,
                 (unsigned long) playerId, out ? "out of town" : "in town or none", rsm.phase, rsm.guardOn);
@@ -320,9 +387,12 @@ static void updateResume(void* player, DWORD now) {
             rsm.reason = RR_NONE;
         }
         else if (rsm.phase >= 3 && (!player || unitLevel(player) != rsm.level)) {
+
             resumeEnd(RS_REFUSED, RR_TIME, "stalled: not on the level any more");
         }
         else if (rsm.phase == 3) {
+
+
             rsm.rejump = 1;
             rsm.phaseAt = now;
             rsm.phaseTicks = 0;
@@ -330,6 +400,8 @@ static void updateResume(void* player, DWORD now) {
         }
         else if (rsm.phase == 4) rsm.phaseAt = now;
         else {
+
+
             rsm.arrived = 1;
             rsm.phase = 2;
             rsm.phaseAt = now;
@@ -340,6 +412,7 @@ static void updateResume(void* player, DWORD now) {
     if (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))) srvCheck();
     if (srvState != 1) return;
     LONG answer, count;
+
     if (resumeDifficulty < 0 && !resumeDiffSeq) resumeDiffSeq = srvSubmit(SRV_CODE_DIFFICULTY, 0, 0);
     if (resumeDiffSeq && srvTake(resumeDiffSeq, &answer, NULL)) {
         resumeDiffSeq = 0;
@@ -348,6 +421,8 @@ static void updateResume(void* player, DWORD now) {
     }
     for (int i = 0; i < 4; i++) if (rsm.dropSeq[i] && srvTake(rsm.dropSeq[i], &answer, NULL)) rsm.dropSeq[i] = 0;
     if (rsm.lastTick && (now - rsm.lastTick > 500 || worldPaused())) {
+
+
         DWORD gap = now - rsm.lastTick;
         if (rsm.guardOn) rsm.guardUntil += gap, rsm.guardHard += gap;
         if (rsm.phase) rsm.phaseAt += gap, rsm.started += gap;
@@ -409,6 +484,7 @@ static void updateResume(void* player, DWORD now) {
             if (!srvTake(rsm.seq, &answer, NULL)) break;
             rsm.seq = 0;
             if (answer != 1) {
+
                 rsm.step = rsm.step > RESUME_STEP_MIN ? (rsm.step + 1) / 2 : 0;
                 if (!rsm.step || !resumeHeroAt(player, &hx, &hy)) { resumeBack(RR_JUMP, "jump refused at the shortest step", now); break; }
                 resumeJump(player, hx, hy, now);
@@ -442,6 +518,7 @@ static void updateResume(void* player, DWORD now) {
                     resumeArrived(now, RS_WAYPOINT, why, "back at the waypoint");
                 }
             }
+
             else if ((int) (now - rsm.phaseAt) > RESUME_ARRIVE_MS && srvCancel(rsm.seq)) rsm.seq = 0;
             break;
         }
@@ -453,6 +530,7 @@ static void updateResume(void* player, DWORD now) {
         rsm.seq = srvSubmit(SRV_CODE_WARP, rsm.level, 0);
         break;
     }
+
     if (rsm.onSeq && srvTake(rsm.onSeq, &answer, &count)) {
         rsm.onSeq = 0;
         resumeLog(answer ? "invulnerable" : "invulnerable: refused");
@@ -468,12 +546,15 @@ static void updateResume(void* player, DWORD now) {
     }
     if (rsm.guardOn && !rsm.offWanted) {
         int attack = mode == 7 || mode == 8 || (mode >= 10 && mode <= 16) || mode == 18;
+
+
         if ((int) (now - rsm.guardUntil) > 0 || (int) (now - rsm.guardHard) > 0 || attack || mode == 0 || mode == 17) {
             rsm.offWanted = 1;
             rsm.offAskedAt = 0;
         }
     }
     if (rsm.guardOn && rsm.offWanted) {
+
         if (!rsm.offSeq && now - rsm.offAskedAt >= RESUME_OFF_REPEAT_MS) {
             rsm.offAskedAt = now;
             rsm.offSeq = srvSubmit(SRV_CODE_INVUL_OFF, 0, 0);
@@ -481,6 +562,7 @@ static void updateResume(void* player, DWORD now) {
         else if (rsm.offSeq && now - rsm.offAskedAt >= 1000 && srvCancel(rsm.offSeq)) rsm.offSeq = 0;
     }
 }
+
 
 static void putResumeFields(Packet* p) {
     void* player = fGetPlayerUnit();

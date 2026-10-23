@@ -15,6 +15,12 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
 public class D2TestBanner extends TextView {
     static final String FILE = "D2Android/testlauf.txt";
     private static final long POLL_MS = 2000;
@@ -42,6 +48,7 @@ public class D2TestBanner extends TextView {
         setFocusable(false);
         setVisibility(GONE);
     }
+
 
     static String read() {
         if (!com.winlator.BuildConfig.D2_INTERNAL) return "";

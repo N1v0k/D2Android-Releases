@@ -23,9 +23,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Runtime {
     public static final String ASSET = "d2/runtime.txz";
     private static final String INFO_ASSET = "d2/runtime-info.txt";
+
     private static final String PREFIX_VERSION = "1";
     public static final String DRIVE_C_SHADOW = "D2Android-Game";
 
@@ -34,6 +46,7 @@ public final class D2Runtime {
     }
 
     private D2Runtime() {}
+
 
 
     public static File rootDir(Context context) {
@@ -52,14 +65,17 @@ public final class D2Runtime {
         return new File(prefixDir(context), "drive_c");
     }
 
+
     public static File downloadsDir() {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
     }
+
 
     static String gameDrivePath(Context context) {
         File game = GameLocator.gameDir(context);
         return game != null ? game.getAbsolutePath() : null;
     }
+
 
     public static String dosPath(Context context, File file) {
         String path = file.getAbsolutePath();
@@ -77,6 +93,7 @@ public final class D2Runtime {
             rest = path.substring(downloads.length());
         }
         else if (game != null && (path.equals(game) || path.startsWith(game + "/"))) {
+
             drive = "E:";
             rest = path.substring(game.length());
         }
@@ -89,7 +106,10 @@ public final class D2Runtime {
     }
 
 
+
+
     public static String bundledVersion(Context context) {
+
         String pkg = info(context, "package");
         if (pkg != null && !pkg.equals(context.getPackageName())) {
             android.util.Log.e("D2Runtime", "runtime is for " + pkg + ", not " + context.getPackageName());
@@ -126,6 +146,10 @@ public final class D2Runtime {
             && new File(rootDir(context), "opt/wine/bin/wine").isFile();
     }
 
+
+
+
+
     public static void install(Context context, Progress progress) throws IOException {
         String version = bundledVersion(context);
         if (version == null) throw new IOException(D2Text.get(context, R.string.launch_no_runtime));
@@ -158,9 +182,11 @@ public final class D2Runtime {
         if (!FileUtils.writeString(installedMarker(context), version + "\n")) throw new IOException(D2Text.get(context, R.string.runtime_finish_failed));
     }
 
+
     private static String readText(File file) {
         return file.isFile() ? FileUtils.readString(file) : null;
     }
+
 
 
     private static File prefixMarker(Context context) {
@@ -172,6 +198,10 @@ public final class D2Runtime {
         return marker != null && marker.trim().equals(PREFIX_VERSION + "/" + bundledVersion(context))
             && new File(prefixDir(context), "system.reg").isFile();
     }
+
+
+
+
 
     public static void setupPrefix(Context context, Progress progress) throws IOException {
         File prefix = prefixDir(context);
@@ -185,6 +215,7 @@ public final class D2Runtime {
             new File(root, "tmp/shm").mkdirs();
             File log = logFile(context, "wineboot.log");
             int status = run(env, root, log, 600, root + "/usr/local/bin/box64", "wine", "wineboot", "-i");
+
             run(env, root, null, 60, root + "/usr/local/bin/box64", "wineserver", "-w");
             if (status != 0 || !new File(prefix, "system.reg").isFile()) {
                 throw new IOException(D2Text.get(context, R.string.runtime_prefix_failed, status));
@@ -216,6 +247,7 @@ public final class D2Runtime {
         }
     }
 
+
     static void configurePrefix(Context context) throws IOException {
         File root = rootDir(context);
         File prefix = prefixDir(context);
@@ -223,12 +255,15 @@ public final class D2Runtime {
 
         refreshDrives(context);
 
+
         File[] dlls = new File(root, "opt/d2/syswow64").listFiles();
         if (dlls == null || dlls.length == 0) throw new IOException(D2Text.get(context, R.string.runtime_no_dxvk));
         for (File dll : dlls) copyFile(dll, new File(windows, "syswow64/" + dll.getName()));
         copyFile(new File(root, "opt/d2/winhandler.exe"), new File(windows, "winhandler.exe"));
 
+
         FileUtils.writeString(new File(prefix, ".update-timestamp"), "disable\n");
+
 
         File[] userFiles = new File(prefix, "drive_c/users/xuser").listFiles();
         if (userFiles != null) {
@@ -247,12 +282,14 @@ public final class D2Runtime {
             user.setStringValue("Software\\Wine\\DllOverrides", "dsound", "builtin");
             user.setStringValue("Software\\Wine\\Drivers", "Audio", "alsa");
             user.setStringValue("Software\\Wine\\Drivers", "Graphics", "x11");
+
             user.setStringValue("Control Panel\\Mouse", "MouseSpeed", "0");
             user.setStringValue("Control Panel\\Mouse", "MouseThreshold1", "0");
             user.setStringValue("Control Panel\\Mouse", "MouseThreshold2", "0");
         }
 
         try (WineRegistryEditor system = new WineRegistryEditor(new File(prefix, "system.reg"))) {
+
             String controlSet = system.getSymlinkValue("System\\CurrentControlSet", "SymbolicLinkValue");
             if (controlSet == null) controlSet = "System\\CurrentControlSet";
             system.setCreateKeyIfNotExist(false);
@@ -261,6 +298,7 @@ public final class D2Runtime {
                 system.setDwordValue(controlSet + "\\Services\\" + service, "Start", 4);
             }
             system.setCreateKeyIfNotExist(true);
+
             final String filterData = "02000000000080000100000000000000307069330200000000000000010000000000000000000000307479330000000038000000480000006175647300001000800000aa00389b710100000000001000800000aa00389b71";
             for (String key : new String[]{
                     "Software\\Classes\\CLSID\\{083863F1-70DE-11D0-BD40-00A0C911CE86}\\Instance\\{E30629D1-27E5-11CE-875D-00608CB78066}",
@@ -273,6 +311,7 @@ public final class D2Runtime {
 
         for (String dir : new String[]{"home/xuser/.cache", "home/xuser/.config"}) new File(root, dir).mkdirs();
     }
+
 
     public static void refreshDrives(Context context) {
         File dosdevices = new File(prefixDir(context), "dosdevices");
@@ -293,6 +332,8 @@ public final class D2Runtime {
     }
 
 
+
+
     public static String screenSize(Activity activity) {
         DisplayMetrics metrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
@@ -304,14 +345,20 @@ public final class D2Runtime {
         return targetWidth + "x" + targetHeight;
     }
 
+
+
+
+
     public static String guestCommand(String screenSize, String dosDir, String program, String args) {
         return "wine explorer /desktop=nogui," + screenSize + " C:\\windows\\winhandler.exe /dir "
             + StringUtils.escapeDOSPath(dosDir) + " \"" + program + "\"" + (args == null || args.isEmpty() ? "" : " " + args);
     }
 
+
     public static EnvVars guestEnv(Context context) {
         String root = rootDir(context).getPath();
         EnvVars env = new EnvVars();
+
         env.put("HOME", root + "/home/xuser");
         env.put("USER", "xuser");
         env.put("TMPDIR", root + "/tmp");
@@ -319,9 +366,11 @@ public final class D2Runtime {
         env.put("LC_ALL", "en_US.UTF-8");
         env.put("PATH", root + "/opt/wine/bin:" + root + "/usr/local/bin:" + root + "/usr/bin");
         env.put("LD_LIBRARY_PATH", root + "/usr/lib");
+
         env.put("ANDROID_SYSVSHM_SERVER", root + UnixSocketConfig.SYSVSHM_SERVER_PATH);
         env.put("ANDROID_ALSA_SERVER", root + UnixSocketConfig.ALSA_SERVER_PATH);
         env.put("ANDROID_ASERVER_USE_SHM", "true");
+
         env.put("BOX64_LD_LIBRARY_PATH", root + "/lib/x86_64-linux-gnu");
         env.put("BOX64_NOBANNER", "1");
         env.put("BOX64_DYNAREC", "1");
@@ -338,10 +387,12 @@ public final class D2Runtime {
         env.put("BOX64_DYNAREC_WAIT", "0");
         env.put("BOX64_DYNAREC_NATIVEFLAGS", "0");
         env.put("BOX64_DYNAREC_WEAKBARRIER", "0");
+
         env.put("WINEPREFIX", root + "/home/xuser/.wine");
         env.put("WINEDEBUG", "-all");
         env.put("WINEESYNC", "1");
         env.put("WINE_DO_NOT_CREATE_DXGI_DEVICE_MANAGER", "1");
+
         env.put("MESA_DEBUG", "silent");
         env.put("MESA_NO_ERROR", "1");
         env.put("MESA_SHADER_CACHE_DISABLE", "false");
@@ -350,11 +401,13 @@ public final class D2Runtime {
         env.put("MESA_VK_WSI_NATIVE_MEM_IMPORTED", "1");
         env.put("TU_DEBUG", "noconform");
         env.put("vblank_mode", "0");
+
         env.put("DXVK_LOG_LEVEL", "none");
         env.put("DXVK_STATE_CACHE_PATH", "Z:\\home\\xuser\\.cache");
         env.put("DXVK_CONFIG_FILE", "Z:\\home\\xuser\\.config\\dxvk.conf");
         return env;
     }
+
 
     public static void prepareSession(Context context) {
         File root = rootDir(context);
@@ -369,6 +422,10 @@ public final class D2Runtime {
         refreshDrives(context);
     }
 
+
+
+
+
     public static void enableDxvkLog(Context context, EnvVars env, boolean warnings) {
         File dir = logFile(context, D2DxvkLog.DIR);
         D2DxvkLog.rotate(dir);
@@ -376,6 +433,7 @@ public final class D2Runtime {
         env.put("DXVK_LOG_LEVEL", warnings ? "warn" : "error");
         env.put("DXVK_LOG_PATH", D2DxvkLog.WINE_PATH);
     }
+
 
     public static File logFile(Context context, String name) {
         File dir = new File(context.getFilesDir(), "logs");

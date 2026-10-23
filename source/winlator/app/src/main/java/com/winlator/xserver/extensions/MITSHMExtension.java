@@ -1,4 +1,4 @@
-package com.winlator.xserver.extensions;
+package com.winlator.xserver.extensions;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
 
@@ -143,8 +143,8 @@ public class MITSHMExtension extends Extension {
                 }
                 break;
             case ClientOpcodes.PUT_IMAGE :
-                // D2Android: locks in the order of XServer.Lockable like lockAll; the original took
-                // SHMSEGMENT_MANAGER first. putImage takes no further X lock, only drawable.renderLock as the last one.
+
+
                 try (XLock lock = xServer.lock(XServer.Lockable.DRAWABLE_MANAGER, XServer.Lockable.GRAPHIC_CONTEXT_MANAGER, XServer.Lockable.SHMSEGMENT_MANAGER)) {
                     putImage(client, inputStream, outputStream);
                 }

@@ -1,12 +1,12 @@
-/* Copied from libion:
- *  https://android.googlesource.com/platform/system/memory/libion/
- *
- * This header was automatically generated from a Linux kernel header
- * of the same name, to make information necessary for userspace to
- * call into the kernel available to libc.  It contains only constants,
- * structures, and macros generated from the original header, and thus,
- * contains no copyrightable information.
- */
+/* Copied from libion: https://android.googlesource.com/platform/system/memory/libion/ */  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
+
+
+
+
+
+
+
+
 
 #ifndef _UAPI_LINUX_ION_NEW_H
 #define _UAPI_LINUX_ION_NEW_H

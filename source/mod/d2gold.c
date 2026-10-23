@@ -1,3 +1,18 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define RVA_GoldDialogAction    0x11C86C
 #define RVA_GoldDialogControls  0x11C874
 #define RVA_GoldDialogAmount    0x11D568
@@ -18,6 +33,7 @@ static void checkGoldSites(void) {
     logLine(goldSitesOk ? "gold dialog sites verified" : "gold dialog sites not as expected: withdraw stays empty");
 }
 
+
 static HWND goldWindow(void) {
     HMODULE gfx = GetModuleHandleA("D2Gfx.dll");
     const BYTE* f = gfx ? (const BYTE*) GetProcAddress(gfx, (LPCSTR) (DWORD_PTR) D2GFX_ORD_GET_HWND) : NULL;
@@ -26,6 +42,7 @@ static HWND goldWindow(void) {
     if ((DWORD) var < (DWORD) gfx || (DWORD) var >= (DWORD) gfx + 0x100000 || !readable(var, 4)) return NULL;
     return *var;
 }
+
 
 static void goldDialogTick(void* player) {
     if (!goldSitesOk) return;

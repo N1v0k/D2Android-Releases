@@ -2,16 +2,34 @@ package com.winlator.d2;
 
 import java.io.File;
 
+
+
+
+
+
+
+
+
+
 public final class D2DxvkLog {
+
     public static final String DIR = "dxvk";
+
     public static final String PREVIOUS = "previous";
+
     public static final String LINK = "home/xuser/.dxvk-log";
     public static final String WINE_PATH = "Z:\\home\\xuser\\.dxvk-log";
 
+
     public static final long MAX_BYTES = 1024L * 1024;
+
     public static final long ZIP_BYTES = 128L * 1024;
 
     private D2DxvkLog() {}
+
+
+
+
 
     public static int limit(File dir, long max) {
         File[] files = dir.listFiles();
@@ -24,10 +42,12 @@ public final class D2DxvkLog {
                 emptied++;
             }
             catch (java.io.IOException ignored) {
+
             }
         }
         return emptied;
     }
+
 
     public static String tail(File dir, int n) {
         File[] files = dir.listFiles();
@@ -37,6 +57,7 @@ public final class D2DxvkLog {
         for (File file : files) {
             if (!file.isFile()) continue;
             String text;
+
             try (java.io.RandomAccessFile in = new java.io.RandomAccessFile(file, "r")) {
                 long length = in.length();
                 int size = (int) Math.min(length, 16384);
@@ -55,6 +76,7 @@ public final class D2DxvkLog {
         }
         return out.toString();
     }
+
 
     public static void rotate(File dir) {
         File previous = new File(dir, PREVIOUS);

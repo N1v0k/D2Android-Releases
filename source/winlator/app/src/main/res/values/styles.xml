@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- D2Android: the dark theme of the app; Winlator's light theme and widget styles are gone -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-23). -->
+
 <resources>
     <style name="AppThemeBase" parent="@style/Theme.AppCompat.Light.NoActionBar">
         <item name="tabSelectedTextColor">?attr/colorPrimaryText</item>

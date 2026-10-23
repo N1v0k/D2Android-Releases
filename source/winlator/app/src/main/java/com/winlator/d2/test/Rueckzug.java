@@ -1,17 +1,31 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
+
+
 public final class Rueckzug {
     public enum Ergebnis {
+
         LAEUFT,
+
         ZURUECK,
+
         ENDE_STADT,
+
         ENDE_DRAUSSEN
     }
+
 
     public enum Grund {
         KEIN_PORTAL, NUR_AKT_1_2, ZU_OFT, NICHT_GESTARTET, STADT_OHNE_PORTAL, STADT_VERLASSEN_OHNE_PORTAL, FALSCHE_STADT,
         GEBIET_VERLASSEN, NICHT_GEHEILT, STADTGANG_ABGEBROCHEN, NICHT_AM_PORTAL
     }
+
 
     public static String text(Grund g) {
         switch (g) {
@@ -29,9 +43,12 @@ public final class Rueckzug {
         }
     }
 
+
     public static final int MAX_RUECKZUEGE = 10;
     public static final long MIN_ABSTAND_MS = 60_000;
+
     public static final int GEHEILT_PCT = 90;
+
     public static final double PORTAL_NAH = 10;
 
     public final Stadtgang stadtgang = new Stadtgang();
@@ -51,21 +68,26 @@ public final class Rueckzug {
         return stadtgang.aktiv();
     }
 
+
     public boolean inStadt() {
         return inStadt;
     }
+
 
     public int anzahl() {
         return anzahl;
     }
 
+
     public String grund() {
         return grund;
     }
 
+
     public Grund grundArt() {
         return grundArt;
     }
+
 
     public static int akt(int gebiet) {
         if (gebiet >= 109) return 5;
@@ -74,6 +96,7 @@ public final class Rueckzug {
         if (gebiet >= 40) return 2;
         return 1;
     }
+
 
     public static int stadt(int akt) {
         switch (akt) {
@@ -85,12 +108,19 @@ public final class Rueckzug {
         }
     }
 
+
+
+
+
+
     public Grund warumNicht(Zustand z, int portale, long now) {
         if (portale <= 0) return Grund.KEIN_PORTAL;
+
         if (akt(z.gebiet) > 2) return Grund.NUR_AKT_1_2;
         if (anzahl >= MAX_RUECKZUEGE || now - letzterStart < MIN_ABSTAND_MS) return Grund.ZU_OFT;
         return null;
     }
+
 
     public void starten(Zustand z, long now) {
         startGebiet = z.gebiet;
@@ -104,22 +134,30 @@ public final class Rueckzug {
         stadtgang.starten(now);
     }
 
+
     public Gehirn.Absicht denken(Zustand z, Zustand.Figur f, long now) {
         return stadtgang.denken(z, f, now);
     }
+
 
     public boolean fensterErlaubt() {
         return stadtgang.aktiv() && stadtgang.fensterErlaubt();
     }
 
+
     public boolean portalGenommen() {
         return stadtgang.aktiv() && stadtgang.portalGetippt();
     }
+
+
+
+
 
     public Ergebnis pruefen(Zustand z, long now) {
         if (startGebiet < 0) return ende(Ergebnis.ENDE_DRAUSSEN, Grund.NICHT_GESTARTET, "");
         boolean stadtJetzt = z.stadt;
         if (stadtJetzt != inStadt) {
+
             if (!stadtgang.portalGetippt()) {
                 return stadtJetzt ? ende(Ergebnis.ENDE_STADT, Grund.STADT_OHNE_PORTAL, "")
                     : ende(Ergebnis.ENDE_DRAUSSEN, Grund.STADT_VERLASSEN_OHNE_PORTAL, "");
@@ -133,6 +171,7 @@ public final class Rueckzug {
         else {
             if (z.gebiet != startGebiet) return ende(Ergebnis.ENDE_DRAUSSEN, Grund.GEBIET_VERLASSEN, " (" + z.gebiet + ")");
         }
+
         if (stadtJetzt && stadtgang.schritt() == Stadtgang.Schritt.ZUM_PORTAL && z.lebenMax > 0 && z.lebenPct < GEHEILT_PCT) {
             return ende(Ergebnis.ENDE_STADT, Grund.NICHT_GEHEILT, " (" + z.lebenPct + " %)");
         }
@@ -140,6 +179,7 @@ public final class Rueckzug {
         if (stadtgang.abbruch != null) {
             return ende(stadtJetzt ? Ergebnis.ENDE_STADT : Ergebnis.ENDE_DRAUSSEN, Grund.STADTGANG_ABGEBROCHEN, ": " + stadtgang.abbruch);
         }
+
         if (stadtJetzt) return ende(Ergebnis.ENDE_STADT, Grund.STADTGANG_ABGEBROCHEN, ": endete in der Stadt");
         if (!z.weltlage() || Math.hypot(z.wx - portalX, z.wy - portalY) > PORTAL_NAH) {
             return ende(Ergebnis.ENDE_DRAUSSEN, Grund.NICHT_AM_PORTAL, "");
@@ -147,6 +187,7 @@ public final class Rueckzug {
         startGebiet = -1;
         return Ergebnis.ZURUECK;
     }
+
 
     public void abbrechen() {
         if (stadtgang.aktiv()) stadtgang.beenden();

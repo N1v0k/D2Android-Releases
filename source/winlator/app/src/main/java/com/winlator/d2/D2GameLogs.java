@@ -6,17 +6,32 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+
+
+
+
+
+
 final class D2GameLogs {
+
     static final int DAYS = 2;
+
     static final int MAX_BYTES = 64 * 1024;
+
     static final int READ_BYTES = 2 * 1024 * 1024;
 
     private static final Pattern NAME = Pattern.compile("D2\\d{6}\\.txt");
+
     private static final Pattern DUMP = Pattern.compile("^\\s+[0-9A-Fa-f]{8}: .*", Pattern.DOTALL);
+
+
     private static final String[] PRIVATE = {"Local IP:", "Computer name:", "COMPUTER NAME:", "USER NAME:"};
+
     private static final String STARTUP = " Realm startup at ";
 
+
     private D2GameLogs() {}
+
 
     static List<String> newest(String[] names) {
         List<String> logs = new ArrayList<>();
@@ -25,6 +40,13 @@ final class D2GameLogs {
         Arrays.sort(sorted);
         return Arrays.asList(sorted).subList(Math.max(0, sorted.length - DAYS), sorted.length);
     }
+
+
+
+
+
+
+
 
     static byte[] compact(byte[] tail, boolean cut) {
         String text = new String(tail, StandardCharsets.ISO_8859_1);

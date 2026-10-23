@@ -1,4 +1,4 @@
-package com.winlator.alsaserver;
+package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.content.Context;
 import android.media.AudioFormat;
@@ -36,10 +36,10 @@ public class ALSAClient {
     private ByteBuffer auxBuffer;
     protected final Options options;
     private static short framesPerBuffer = 256;
-    private final ALSAMute.Track muteTrack = new ALSAMute.Track(); // D2Android: silent in the background
+    private final ALSAMute.Track muteTrack = new ALSAMute.Track();
 
     public static class Options {
-        public short latencyMillis = 16; // D2Android: Winlator's AudioDriverConfigDialog default
+        public short latencyMillis = 16;
         public byte performanceMode = AudioTrack.PERFORMANCE_MODE_LOW_LATENCY;
         public float volume = 1.0f;
 
@@ -122,7 +122,7 @@ public class ALSAClient {
             .build();
 
         bufferCapacity = audioTrack.getBufferCapacityInFrames();
-        // D2Android: a track made while the game is in the background starts muted
+
         float volume = muteTrack.prepared(options.volume);
         if (volume != 1.0f) audioTrack.setVolume(volume);
         audioTrack.play();
@@ -160,7 +160,7 @@ public class ALSAClient {
         if (audioTrack != null) {
             int bytesWritten;
             data.position(0);
-            // D2Android: the game went to the background or came back: mute or unmute on this client's thread
+
             float volume = muteTrack.beforeWrite(options.volume);
             if (volume >= 0f) audioTrack.setVolume(volume);
 
@@ -177,7 +177,7 @@ public class ALSAClient {
             while (data.position() != data.limit());
 
             position += data.position();
-            if (frameBytes > 0) ALSAMute.written(data.position() / frameBytes, sampleRate); // D2Android: for the trace
+            if (frameBytes > 0) ALSAMute.written(data.position() / frameBytes, sampleRate);
             data.rewind();
         }
     }

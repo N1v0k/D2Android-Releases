@@ -7,23 +7,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
+
+
+
+
+
 public final class D2ModItems {
     public static final int CAT_OTHER = 0, CAT_GOLD = 1, CAT_HEAL = 2, CAT_MANA = 3, CAT_REJUV = 4, CAT_POTION_OTHER = 5,
         CAT_TP_SCROLL = 6, CAT_ID_SCROLL = 7, CAT_TP_TOME = 8, CAT_ID_TOME = 9, CAT_RUNE = 10, CAT_GEM = 11,
         CAT_JEWEL = 12, CAT_RING = 13, CAT_AMULET = 14, CAT_CHARM = 15, CAT_WEAPON = 16, CAT_ARMOR = 17, CAT_AMMO = 18,
         CAT_KEY = 19, CAT_QUEST = 20;
+
     public static final int QUALITY_LOW = 1, QUALITY_NORMAL = 2, QUALITY_SUPERIOR = 3, QUALITY_MAGIC = 4, QUALITY_SET = 5,
         QUALITY_RARE = 6, QUALITY_UNIQUE = 7, QUALITY_CRAFTED = 8;
     public static final int KIND_HEAL = 0, KIND_MANA = 1, KIND_REJUV = 2;
     public static final int INVENTORY_WIDTH = 10, INVENTORY_HEIGHT = 4;
+
     public static final int TOME_MAX = 20;
 
     public static final class Item {
         public final long id;
+
         public final String code;
         public final int category, tier, quality, sockets, type, width, height, quantity;
         public final boolean ethereal, socketed, identified, runeword;
+
         public final boolean hiddenByFilter;
+
         public final String name;
 
         Item(long id, String code, int category, int tier, int quality, int flags, int sockets, int type, int size,
@@ -50,26 +61,40 @@ public final class D2ModItems {
             return category == CAT_HEAL || category == CAT_MANA || category == CAT_REJUV;
         }
 
+
         public String oneLine() {
             return name.replace('\n', ' ').trim();
         }
     }
 
+
     public final boolean namesKnown, beltRefillPossible;
+
     public final boolean labelFilterPossible, newLootVisible;
+
     public final boolean takePossible;
+
     public final boolean shopPossible;
+
     public final D2PotionShop.Job shopJob;
+
     public final int shopWares;
+
     public boolean shopSellsPotions() {
         return (shopWares & 3) != 0;
     }
 
+
     public final int beltMoves;
+
     public final int beltRows;
+
     public final int[] belt = new int[3], inventory = new int[3];
+
     public final int tpTome, tpScrolls, idTome, idScrolls;
+
     public final int tpTomeMax, idTomeMax, keyMax;
+
     public final long usedCells;
     public final List<Item> items;
 
@@ -109,7 +134,9 @@ public final class D2ModItems {
                 sockets, type, size, quantity, new String(name, StandardCharsets.UTF_8)));
         }
         items = Collections.unmodifiableList(list);
+
         boolean stacks = (flags & 128) != 0 && b.remaining() >= 3;
+
         boolean job = b.remaining() - (stacks ? 3 : 0) >= 10;
         shopJob = job ? new D2PotionShop.Job(b.getInt() & 0xFFFFFFFFL, u8(b), u8(b), u8(b), u8(b), u8(b)) : null;
         shopWares = job ? u8(b) : 0;
@@ -119,9 +146,11 @@ public final class D2ModItems {
         keyMax = stacks ? b.get(end - 1) & 0xFF : -1;
     }
 
+
     public int tpTomeLimit() {
         return tpTomeMax > 0 ? tpTomeMax : TOME_MAX;
     }
+
 
     public static D2ModItems parse(byte[] data, int length) {
         if (D2ModState.packetType(data, length) != D2ModState.PKT_ITEMS) return null;
@@ -144,6 +173,7 @@ public final class D2ModItems {
         return (usedCells >> (y * INVENTORY_WIDTH + x) & 1) != 0;
     }
 
+
     public boolean fits(int width, int height) {
         for (int y = 0; y + height <= INVENTORY_HEIGHT; y++) {
             for (int x = 0; x + width <= INVENTORY_WIDTH; x++) {
@@ -159,6 +189,7 @@ public final class D2ModItems {
         return INVENTORY_WIDTH * INVENTORY_HEIGHT - Long.bitCount(usedCells & ((1L << (INVENTORY_WIDTH * INVENTORY_HEIGHT)) - 1));
     }
 
+
     public String describe() {
         StringBuilder line = new StringBuilder(String.format(java.util.Locale.ROOT,
             "Mitgeführt: Gürtel %d Reihen, Heil %d+%d, Mana %d+%d, Verjüngung %d+%d, Portal %s+%d, frei %d%s%s  Boden:",
@@ -171,6 +202,7 @@ public final class D2ModItems {
         }
         return line.toString();
     }
+
 
     public static int potionKind(int category) {
         return category == CAT_HEAL ? KIND_HEAL : (category == CAT_MANA ? KIND_MANA : (category == CAT_REJUV ? KIND_REJUV : -1));

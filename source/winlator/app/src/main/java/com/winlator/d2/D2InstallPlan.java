@@ -7,12 +7,27 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+
+
+
+
 public final class D2InstallPlan {
+
     public static final String ROOT_FOLDER = "D2Android";
+
     public static final String INSTALLER_FOLDER = "Installer";
+
     public static final String GAME_FOLDER = "Diablo2";
+
+
+
+
+
     public static final String UNFINISHED_MARKER = ".d2android-installing";
+
     static final String DOWNLOADER_URL = "https://downloader.battle.net/download/getLegacy?os=win&locale=%s&product=%s";
+
 
     public enum Language {
         EN_US("enUS", true),
@@ -27,11 +42,13 @@ public final class D2InstallPlan {
         }
     }
 
+
     public enum Product {
         CLASSIC("D2DV", "D2"),
         LOD("D2XP", "LoD");
 
         public final String code;
+
         public final String folder;
 
         Product(String code, String folder) {
@@ -40,11 +57,20 @@ public final class D2InstallPlan {
         }
     }
 
+
     private static final Pattern DOWNLOADER_TITLE = Pattern.compile("^\\s*(\\d{1,3})\\s*%\\s*[-\u2013\u2014]\\s*Blizzard Downloader.*");
 
     private D2InstallPlan() {}
 
+
+
     public static final int NO_START_SECONDS = 180;
+
+
+
+
+
+
 
     public static String helperState(java.util.List<String> lines) {
         String state = null;
@@ -56,6 +82,13 @@ public final class D2InstallPlan {
         }
         return state;
     }
+
+
+
+
+
+
+
 
     public static String helperResult(java.util.List<String> lines) {
         String last = "no end in the helper log";
@@ -78,6 +111,7 @@ public final class D2InstallPlan {
         return percent <= 100 ? percent : -1;
     }
 
+
     public static Language defaultLanguage(Locale device) {
         String tag = device == null ? "" : device.getLanguage();
         for (Language l : Language.values()) {
@@ -86,6 +120,7 @@ public final class D2InstallPlan {
         for (Language l : Language.values()) if (l.available) return l;
         throw new IllegalStateException("no installable language");
     }
+
 
     public static String formatGb(long bytes, Locale locale) {
         double gb = Math.floor(Math.max(0, bytes) / (1024.0 * 1024 * 1024) * 10) / 10;
@@ -109,9 +144,19 @@ public final class D2InstallPlan {
         return new File(root(downloadDir), GAME_FOLDER);
     }
 
+
+
+
+
+
+
     public static File freeGameDir(File downloadDir) {
         return freeGameDir(downloadDir, null);
     }
+
+
+
+
 
     public static File freeGameDir(File downloadDir, File chosen) {
         File first = gameDir(downloadDir);
@@ -123,6 +168,7 @@ public final class D2InstallPlan {
     }
 
     private static boolean isFree(File dir, File chosen) {
+
         if (chosen != null && dir.getAbsoluteFile().equals(chosen.getAbsoluteFile())) return chosenReusable(dir);
         if (!dir.exists()) return true;
         String[] content = dir.list();
@@ -133,6 +179,7 @@ public final class D2InstallPlan {
         File marker = dir != null ? new File(dir, UNFINISHED_MARKER) : null;
         return marker != null && marker.isFile() && !markerPassed(marker);
     }
+
 
     static final String MARKER_PASSED = "passed";
 
@@ -146,9 +193,18 @@ public final class D2InstallPlan {
         }
     }
 
+
+
+
+
     public static boolean unfinishedInstall(File dir) {
         return isUnfinished(dir);
     }
+
+
+
+
+
 
     public static boolean hasSaves(File dir) {
         File[] entries = dir != null ? dir.listFiles() : null;
@@ -162,6 +218,15 @@ public final class D2InstallPlan {
         return false;
     }
 
+
+
+
+
+
+
+
+
+
     public static boolean stoppedWithSaves(File chosen) {
         return isUnfinished(chosen) && hasSaves(chosen);
     }
@@ -170,17 +235,25 @@ public final class D2InstallPlan {
         return isUnfinished(chosen) && !hasSaves(chosen);
     }
 
+
     public static final String INSTALLED_MARKER = ".d2android-installed";
+
+
+
+
+
 
     public static void markInstalled(File dir, Language language) throws IOException {
         writeLanguage(new File(dir, INSTALLED_MARKER), language);
     }
+
 
     public static Language folderLanguage(File dir) {
         if (dir == null) return null;
         Language l = readLanguage(new File(dir, INSTALLED_MARKER));
         return l != null ? l : readLanguage(new File(dir, UNFINISHED_MARKER));
     }
+
 
     public static final String INSTALLER_LANGUAGE = "language";
 
@@ -189,6 +262,7 @@ public final class D2InstallPlan {
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
         writeLanguage(new File(dir, INSTALLER_LANGUAGE), language);
     }
+
 
     public static Language installerLanguage(File downloadDir) {
         if (!installerFilesThere(downloadDir)) return null;
@@ -208,9 +282,15 @@ public final class D2InstallPlan {
             for (Language l : Language.values()) if (l.locale.equals(text)) return l;
         }
         catch (IOException ignored) {
+
         }
         return null;
     }
+
+
+
+
+
 
     public static File findFinished(File downloadDir, File chosen) {
         File[] dirs = root(downloadDir).listFiles();
@@ -235,6 +315,7 @@ public final class D2InstallPlan {
         return false;
     }
 
+
     private static boolean installerFilesThere(File downloadDir) {
         for (Product p : Product.values()) {
             String[] files = installerDir(downloadDir, p).list();
@@ -243,9 +324,11 @@ public final class D2InstallPlan {
         return false;
     }
 
+
     public static long installerBytes(File downloadDir) {
         return treeBytes(new File(root(downloadDir), INSTALLER_FOLDER));
     }
+
 
     public static long reusableBytes(File dir) {
         return isUnfinished(dir) ? treeBytes(dir) : 0;
@@ -259,10 +342,15 @@ public final class D2InstallPlan {
         return sum;
     }
 
+
     public static boolean awaitsPatch(File dir) {
         return isUnfinished(dir) && new File(dir, INSTALLED_MARKER).isFile() && new File(dir, "d2data.mpq").isFile()
             && new File(dir, "d2exp.mpq").isFile();
     }
+
+
+
+
 
     public static File findAwaitingPatch(File downloadDir, File chosen) {
         File[] dirs = root(downloadDir).listFiles();
@@ -277,11 +365,18 @@ public final class D2InstallPlan {
         return null;
     }
 
+
+
+
+
+
     public static boolean interrupted(File downloadDir) {
         File[] dirs = root(downloadDir).listFiles();
+
         if (dirs != null) for (File d : dirs) if (d.getName().startsWith(GAME_FOLDER) && isUnfinished(d) && !hasSaves(d)) return true;
         return installerFilesThere(downloadDir) && !anyFinishedOwn(downloadDir);
     }
+
 
     public static void discardAll(File downloadDir) {
         File[] dirs = root(downloadDir).listFiles();
@@ -291,16 +386,29 @@ public final class D2InstallPlan {
         installers.delete();
     }
 
+
+
+
+
     public static void beginInstall(File dir, Language language) throws IOException {
+
         if (isUnfinished(dir) && hasSaves(dir)) throw new IOException("saves in " + dir + ", not emptied");
         if (isUnfinished(dir)) deleteContent(dir);
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
         writeLanguage(new File(dir, UNFINISHED_MARKER), language);
     }
 
+
     public static void beginInstall(File dir) throws IOException {
         beginInstall(dir, null);
     }
+
+
+
+
+
+
+
 
     public static boolean installFinished(File dir) {
         File marker = new File(dir, UNFINISHED_MARKER);
@@ -314,11 +422,13 @@ public final class D2InstallPlan {
         return !isUnfinished(dir);
     }
 
+
     public static boolean discardUnfinished(File dir) {
         if (!isUnfinished(dir) || hasSaves(dir)) return false;
         deleteContent(dir);
         return dir.delete();
     }
+
 
     private static void deleteContent(File dir) {
         File[] children = dir.listFiles();

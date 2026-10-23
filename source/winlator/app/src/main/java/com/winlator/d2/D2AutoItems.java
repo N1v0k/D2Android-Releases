@@ -3,12 +3,29 @@ package com.winlator.d2;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2AutoItems {
+
     public static final int POTION_RESERVE = 5;
     public static final int SCROLLS_WITHOUT_TOME = 3;
 
     static final String KEY_PICK_POTIONS = "pickPotions", KEY_PICK_SCROLLS = "pickScrolls", KEY_PICK_RUNES = "pickRunes",
         KEY_PICK_GEMS = "pickGems", KEY_PICK_JEWELRY = "pickJewelry", KEY_BELT_REFILL = "beltRefill";
+
 
     public boolean gold, potions, scrolls, runes, gems, jewelry, beltRefill;
 
@@ -27,9 +44,14 @@ public final class D2AutoItems {
         return context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).getBoolean(key, true);
     }
 
+
     public boolean any() {
         return gold || potions || scrolls || runes || gems || jewelry;
     }
+
+
+
+
 
     public boolean wants(D2ModState s, D2ModState.Thing thing, D2ModItems items) {
         if (thing.kind == D2ModState.ITEM_GOLD) return gold && !s.goldFull;
@@ -63,9 +85,14 @@ public final class D2AutoItems {
         }
     }
 
+
+
+
+
     static int beltKind(int potionKind) {
         return potionKind + 1;
     }
+
 
     static boolean beltRoom(D2ModState s, D2ModItems items, int potionKind) {
         int rows = Math.max(1, Math.min(4, items.beltRows));
@@ -79,14 +106,28 @@ public final class D2AutoItems {
     }
 
 
+
+
     static final long REFILL_INTERVAL_MS = 700;
+
+
+
+
+
     static final long REFILL_REST_MS = 1000;
 
+
     private final int[] columnKind = new int[4];
+
     private long refillAt;
+
+
+
+
     private final long[] refillTriedAt = new long[3], refillRestUntil = new long[3];
     private final int[] refillInventory = new int[3], refillMisses = new int[3];
     private String lastRefill = "–";
+
 
     public void newGame() {
         java.util.Arrays.fill(columnKind, 0);
@@ -98,13 +139,20 @@ public final class D2AutoItems {
         lastRefill = "–";
     }
 
+
     public int[] columnKinds() {
         return columnKind.clone();
     }
 
+
     public String lastRefill() {
         return lastRefill;
     }
+
+
+
+
+
 
     public int beltRefill(D2ModState s, D2ModItems items, long now) {
         if (items == null) return -1;
@@ -117,6 +165,7 @@ public final class D2AutoItems {
             int used = 0;
             for (int row = 0; row < rows; row++) if (s.belt[column + 4 * row] != D2ModState.BELT_NONE) used++;
             if (used >= rows || items.inventory[kind] == 0) continue;
+
             if (now - refillTriedAt[kind] < 3000 && items.inventory[kind] >= refillInventory[kind]) {
                 if (++refillMisses[kind] >= 2) {
                     refillMisses[kind] = 0;

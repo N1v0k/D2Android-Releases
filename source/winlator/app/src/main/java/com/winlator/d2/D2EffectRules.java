@@ -5,18 +5,46 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
+
 final class D2EffectRules {
+
     static final int SHRINE = 0, POTION = 1, OWN = 2, HARM = 3, CURSE = 4, AURA = 5, NONE = -1;
+
     static final int PER_COLUMN = 6, MAX = 2 * PER_COLUMN;
+
     static final int ICON = 32, BOX = ICON + 6, STEP = 56, TOP = 70, LEFT = 6, COLUMN = 44;
 
     static final int[] POTIONS = {100, 106, 180, 178, 179};
+
+
+
+
+
+
     static final int[][] HARMS = {{1, -1}, {2, -1}, {11, 44}, {21, 139}, {24, 87}, {52, 82}, {62, 67}};
     static final String[] HARM_PICTURES = {"wms", "yps", null, null, null, null, null};
+
     static final int[] CURSES = {66, 71, 72, 76, 77, 81, 82, 86, 87, 91};
+
     static final int PALADIN = 3;
 
     private D2EffectRules() {}
+
+
+
+
+
+
 
     static int[][] stateSkills(byte[] skills) {
         if (skills == null || skills.length < 8) return null;
@@ -41,10 +69,12 @@ final class D2EffectRules {
         return skills[4 + id * size + 0x0C] == PALADIN;
     }
 
+
     static int harm(int state) {
         for (int i = 0; i < HARMS.length; i++) if (HARMS[i][0] == state) return i;
         return -1;
     }
+
 
     static int skillOf(int state, int[][] stateSkills) {
         if (stateSkills == null || state < 0 || state >= 256) return -1;
@@ -52,6 +82,10 @@ final class D2EffectRules {
         if (h >= 0) return HARMS[h][1];
         return stateSkills[0][state] >= 0 ? stateSkills[0][state] : stateSkills[1][state];
     }
+
+
+
+
 
     static int group(int state, int[][] stateSkills, int skillClass, boolean timed) {
         if (state >= 128 && state <= 137) return SHRINE;
@@ -63,6 +97,10 @@ final class D2EffectRules {
         if (skillClass == PALADIN && !timed) return AURA;
         return OWN;
     }
+
+
+
+
 
     static int[] order(int[] states, int[] groups, Map<Integer, Long> firstSeen) {
         List<Integer> shown = new ArrayList<>();
@@ -78,13 +116,16 @@ final class D2EffectRules {
         return out;
     }
 
+
     static int[] place(int i) {
         return new int[]{LEFT + (i / PER_COLUMN) * COLUMN, TOP + (i % PER_COLUMN) * STEP};
     }
 
+
     static float gone(int left, int full) {
         return full > 0 ? 1f - Math.min(1f, Math.max(0, left) / (float) full) : 0f;
     }
+
 
     static int percent(int left, int full) {
         return full > 0 ? Math.round(100f * Math.min(left, full) / full) : 0;

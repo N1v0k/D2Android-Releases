@@ -3,13 +3,32 @@ package com.winlator.d2.test;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
 public final class Tueren {
+
     public static final int OPERATE_TUER = 8;
+
     public static final int ART_ANDERES = 0;
+
     public static final double NAH = 8;
+
+
+
+
+
     public static final int OEFFNUNG = 2, ENG = 4, OEFFNUNG_MAX = 6;
+
     public static final double KREUZT = 1.0;
+
     public static final int KNOTEN_VORAUS = 3;
+
     public static final double FEST_NAH = 4;
 
     private Tueren() {}
@@ -18,11 +37,22 @@ public final class Tueren {
         return d.art == ART_ANDERES && d.extra == OPERATE_TUER;
     }
 
+
+
+
+
     public static double[] welt(Zustand z, Zustand.Ding d) {
         double sx = d.x - z.px, sy = d.y - z.py;
         double a = sx / 16, b = sy / 8;
         return new double[]{z.wx + (a + b) / 2, z.wy + (b - a) / 2};
     }
+
+
+
+
+
+
+
 
     public static List<int[]> oeffnung(Karte k, double x, double y, double fx, double fy) {
         List<int[]> out = new ArrayList<>();
@@ -57,6 +87,11 @@ public final class Tueren {
         return out;
     }
 
+
+
+
+
+
     public static Zustand.Ding imWeg(Zustand z, Karte k, List<Wegsuche.Punkt> weg, int knoten, ObjektBenutzen benutzen, boolean festgefahren) {
         if (!z.weltlage() || k == null) return null;
         Zustand.Ding best = null;
@@ -76,9 +111,11 @@ public final class Tueren {
         return best;
     }
 
+
     static boolean kreuzt(List<int[]> oeffnung, double sx, double sy, List<Wegsuche.Punkt> weg, int knoten) {
         double ax = sx, ay = sy;
         for (int i = knoten; i < weg.size() && i <= knoten + KNOTEN_VORAUS; i++) {
+
             double bx = weg.get(i).x, by = weg.get(i).y;
             for (int[] o : oeffnung) if (abstandZurStrecke(o[0] + 0.5, o[1] + 0.5, ax, ay, bx, by) <= KREUZT) return true;
             ax = bx;
@@ -86,6 +123,7 @@ public final class Tueren {
         }
         return false;
     }
+
 
     static double abstandZurStrecke(double px, double py, double ax, double ay, double bx, double by) {
         double vx = bx - ax, vy = by - ay, len2 = vx * vx + vy * vy;

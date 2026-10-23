@@ -16,20 +16,41 @@ import com.winlator.R;
 
 import java.io.File;
 
+
+
+
+
+
+
+
+
+
+
+
 @SuppressLint("ViewConstructor")
 final class D2DirectLoading extends FrameLayout {
     interface Host {
+
         D2ModLink link();
+
         boolean inFront();
+
         File gameDir();
+
         String message(D2DirectStart.Outcome outcome, D2DirectStart.Report report);
+
         void arrived();
+
         boolean worldReady();
+
         void ended(D2DirectStart.Outcome outcome, D2DirectStart.Report report);
     }
 
+
     private static final long POLL_MS = 100;
+
     static final long RESUME_WAIT_MS = 10_000;
+
     private static final long MESSAGE_MS = 4000;
     private final Host host;
     private final String fileName;
@@ -41,6 +62,7 @@ final class D2DirectLoading extends FrameLayout {
     private long lastPoll = SystemClock.uptimeMillis(), inGameMs;
     private boolean ended, inGame, skipShown, arrivedDone, readyLogged;
     private volatile boolean resumeExpected;
+
     private volatile Bitmap[] frames;
     private volatile Bitmap textStart, textWorld, textSkip;
     private volatile D2GameFont smallFont;
@@ -48,6 +70,7 @@ final class D2DirectLoading extends FrameLayout {
     private final Paint plain = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Bitmap message;
     private int shown;
+
 
     D2DirectLoading(Context context, String file, int difficulty, Host host) {
         super(context);
@@ -84,16 +107,17 @@ final class D2DirectLoading extends FrameLayout {
                 textSkip = text(small, D2Text.get(context, R.string.direct_loading_skip), 0x8C8C8C);
                 smallFont = small;
                 frames = b;
-                D2Trace.log("direct start: loading animation read, resume expected " + resumeExpected + "");
+                D2Trace.log("direct start: loading animation read, resume expected " + resumeExpected);
             }
             catch (Exception e) {
-                D2Trace.log("direct start: loading animation not read: " + e + "");
+                D2Trace.log("direct start: loading animation not read: " + e);
                 artFailed();
             }
             handler.post(this::invalidate);
         }, "LoadingArt").start();
         handler.postDelayed(this::poll, POLL_MS);
     }
+
 
     private void artFailed() {
         fallback = true;
@@ -109,6 +133,7 @@ final class D2DirectLoading extends FrameLayout {
     boolean showing() {
         return !ended;
     }
+
 
     boolean messageShown() {
         return message != null;
@@ -127,6 +152,7 @@ final class D2DirectLoading extends FrameLayout {
             inGame = true;
             long inc = Math.min(step, D2DirectStart.Watch.MAX_STEP_MS);
             inGameMs += inc;
+
             if (!readyLogged && host.worldReady()) {
                 D2Trace.log("direct start: game ready (world drawn, interface rebuilt) after " + inGameMs + " ms in the game");
                 readyLogged = true;
@@ -150,6 +176,10 @@ final class D2DirectLoading extends FrameLayout {
         handler.postDelayed(this::poll, POLL_MS);
     }
 
+
+
+
+
     private boolean resumeDone(D2ModLink link) {
         boolean settled = resumeSettled(link), ready = host.worldReady();
         if (!D2LoadingSteps.mayEnd(settled, ready, inGameMs)) return false;
@@ -160,6 +190,7 @@ final class D2DirectLoading extends FrameLayout {
         end(D2DirectStart.Outcome.IN_GAME, null);
         return true;
     }
+
 
     private boolean resumeSettled(D2ModLink link) {
         int decision = D2ResumeHint.decision();
@@ -201,6 +232,7 @@ final class D2DirectLoading extends FrameLayout {
     private D2DirectStart.Outcome pendingOutcome;
     private D2DirectStart.Report pendingReport;
 
+
     void end(D2DirectStart.Outcome outcome, D2DirectStart.Report report) {
         if (ended) return;
         ended = true;
@@ -236,6 +268,7 @@ final class D2DirectLoading extends FrameLayout {
         if (skipH > 0) draw(canvas, textSkip, (w - textSkip.getWidth() * t) / 2, y, t);
     }
 
+
     private String[] plainTexts;
 
     private void drawPlain(Canvas canvas) {
@@ -266,11 +299,13 @@ final class D2DirectLoading extends FrameLayout {
         if (event.getActionMasked() == MotionEvent.ACTION_UP) {
             if (message != null) end(pendingOutcome, pendingReport);
             else if (skipShown) {
+
                 skipShown = false;
                 if (D2ResumeHint.skipNext()) {
                     resumeExpected = false;
                     D2Trace.log("direct start: resume skipped by a tap");
                 }
+
                 else D2Trace.log("direct start: tap too late, resume goes on");
                 invalidate();
             }

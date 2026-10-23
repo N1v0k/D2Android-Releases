@@ -2,10 +2,20 @@ package com.winlator.d2;
 
 import java.util.Arrays;
 
+
+
+
+
+
+
+
+
+
 public final class D2InstallKeys {
     public enum Check { OK, EMPTY, BAD_CHARACTER, BAD_LENGTH }
 
     private D2InstallKeys() {}
+
 
     public static char[] normalize(char[] typed) {
         char[] out = new char[typed.length];
@@ -27,15 +37,18 @@ public final class D2InstallKeys {
         return key.length == 16 || key.length == 26 ? Check.OK : Check.BAD_LENGTH;
     }
 
+
     public static String masked(char[] key) {
         return "\u2022\u2022\u2022\u2022 (" + key.length + ")";
     }
+
 
     public static char[] stdinLine(char[] key) {
         char[] line = Arrays.copyOf(key, key.length + 1);
         line[key.length] = '\n';
         return line;
     }
+
 
     public static byte[] lineBytes(char[] key) {
         byte[] b = new byte[key.length + 1];

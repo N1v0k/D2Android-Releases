@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- D2Android: only what the app still uses; Winlator's UI texts and translations are gone.
-     English is the app's default language (public release); German lives in values-de. -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-23). -->
+
+
 <resources>
     <string name="default_no_override">Default (No override)</string>
+
 
     <string name="channel_name">Game running</string>
     <string name="channel_description">Keeps Diablo II alive in the background so Android does not end the game.</string>
@@ -11,12 +12,14 @@
     <string name="notification_save_and_quit">Save and quit</string>
     <string name="notification_quit">Quit</string>
 
+
     <string name="settings_title">Game settings</string>
     <string name="settings_language">App language</string>
     <string name="settings_language_hint">For the app\'s texts. The game keeps its own language.</string>
     <string name="settings_language_auto">Automatic (like the game)</string>
     <string name="settings_language_de">German</string>
     <string name="settings_language_en">English</string>
+
 
     <string name="settings_size">Picture size</string>
     <string name="settings_size_hint">Larger means bigger text and buttons, but you see less of the world.</string>
@@ -52,6 +55,7 @@
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathak\'s portal stays open</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain stands by the Harrogath waypoint</string>
     <string name="settings_plugy_hint">Works from the next game start. Before that the app backs up your saves to Download/%1$s.</string>
+
     <string name="plugy_stats_plus_hint">Tap: 1 point, double tap: 5 points, long press: all free points</string>
     <string name="settings_background">Background protection</string>
     <string name="settings_background_open">Background protection …</string>
@@ -90,6 +94,7 @@
     <string name="saves_error_import_unfinished">An interrupted import of saved games could not be finished. Backup in Download/%1$s</string>
     <string name="saves_error_broken_zip">The file is not a readable zip archive</string>
 
+
     <string name="background_title">Background protection</string>
     <string name="background_intro">So that Android does not end the game while you use another app. The app saves before every pause – if the game is ended anyway, you only lose your position.</string>
     <string name="background_notify">Notification</string>
@@ -114,6 +119,7 @@
         <item quantity="one">%1$d file packed.</item>
         <item quantity="other">%1$d files packed.</item>
     </plurals>
+
 
     <string name="helper_tab_haeufig">Frequent</string>
     <string name="helper_tab_automatik">Automatic</string>
@@ -300,6 +306,7 @@
     <string name="helper_players_one">1 (as normal)</string>
     <string name="helper_players_more">%1$d – more life, experience and loot</string>
     <string name="done">Done</string>
+
     <string name="btn_attack">Attack</string>
     <string name="btn_take">Take</string>
     <string name="btn_pause">Pause</string>
@@ -320,6 +327,7 @@
     <string name="note_respec_again">Tap again: all attribute points back</string>
     <string name="note_no_free_key">%1$s learned: no free F key</string>
     <string name="note_respec_done">Attribute points returned</string>
+
     <string name="materials_title">Materials</string>
     <string name="materials_tab_runes">Runes</string>
     <string name="materials_tab_gems">Gems</string>
@@ -348,6 +356,7 @@
     <string name="assign_for">Tap the skill for %1$s</string>
     <string name="note_skill_not_for_attack">This skill cannot go on Attack</string>
     <string name="note_slot_free">%1$s is free: tap \"%2$s\", then %1$s</string>
+
     <string name="tree_pick_for">Tap the F button for %1$s</string>
     <string name="tree_pick_skill">the skill</string>
     <string name="tree_pick_done">%1$s is on %2$s</string>
@@ -381,6 +390,7 @@
     <string name="quit_ask_not_saving">The game cannot save right now (materials file). Quitting loses the progress since the last save. Quit anyway?</string>
     <string name="quit_save_unconfirmed">Save not confirmed – tap again to quit without confirmation</string>
 
+
     <string name="effect_armor">+100 % defense</string>
     <string name="effect_combat">+200 % attack rating and damage</string>
     <string name="effect_res_lightning">+75 % lightning resistance</string>
@@ -408,6 +418,7 @@
     <string name="effect_points">Protection %1$d %% left (%2$d of %3$d)</string>
     <string name="effect_while_on">while it is on</string>
     <string name="effect_time_unknown">time left unknown</string>
+
 
     <string name="idle_only_in_game">only in the game</string>
     <string name="idle_only_single">only in single player</string>
@@ -475,6 +486,7 @@
     <string name="strip_saved_ago">Saved %1$s ago</string>
     <string name="strip_players">Players %1$d</string>
 
+
     <string name="menu_helpers">Settings</string>
     <string name="menu_keyboard">Keyboard</string>
     <string name="menu_idle">Idle mode …</string>
@@ -489,6 +501,7 @@
     <string name="grid_gold">Gold %1$s</string>
     <string name="trigger_left">left shoulder key</string>
     <string name="trigger_right">right shoulder key</string>
+
     <string name="trigger_action_skill">Skill (F7 / F8)</string>
     <string name="trigger_action_heal">Healing potion</string>
     <string name="trigger_action_mana">Mana potion</string>
@@ -500,6 +513,7 @@
     <string name="trigger_action_attack">Attack</string>
     <string name="trigger_action_names">Show names (like Alt)</string>
     <string name="trigger_action_attack_take">Attack + interact</string>
+
     <string name="pad_action_skill_key">Skill on F%1$d</string>
     <string name="pad_action_esc">Esc menu</string>
     <string name="pad_action_menu">App menu (≡)</string>
@@ -530,6 +544,7 @@
     <string name="relaunch_saving">Android changed the display (for example the wallpaper). The game is being saved and closed. Please start it again afterwards.</string>
     <string name="game_saving">Saving …</string>
     <string name="launch_starting">Starting Diablo II …</string>
+
     <string name="repair_stash">Stash of %1$s restored: saving was interrupted last time.</string>
     <string name="repair_shared_stash">Shared stash restored: saving was interrupted last time.</string>
     <string name="repair_character">%1$s: saving was interrupted last time. Restored the save of %2$s (PlugY backup); the cut files lie next to it.</string>
@@ -539,6 +554,7 @@
     <string name="btn_heal">Heal</string>
     <string name="btn_mana">Mana</string>
     <string name="btn_rejuv">Rejuv</string>
+
 
     <string name="launch_notify_open">Please answer Android\'s question about notifications (Allow or Don\'t allow), then tap Play.</string>
     <string name="launch_no_storage">Without storage access the app cannot read the game folder.</string>
@@ -581,8 +597,7 @@
     <string name="report_no_browser">No browser found. Report bugs at %1$s</string>
     <string name="idle_touch">touch</string>
     <string name="idle_background">app in the background</string>
-    <string name="launch_starting_program">Starting %1$s …</string>
-    <string name="launch_start_failed">Start failed: %1$s</string>
+
     <string name="settings_game_folder">Game folder</string>
     <string name="folder_choose">Choose game folder</string>
     <string name="folder_line">Game folder: %1$s</string>
@@ -614,6 +629,7 @@
     <string name="folder_pick_unchanged">The chosen folder holds your current game: %1$s. Your game folder and your characters stay as they are. For another game, choose its folder (with Game.exe).</string>
     <string name="folder_gone">The chosen game folder is gone: %1$s</string>
     <string name="folder_no_picker">This phone has no folder picker.</string>
+
     <string name="check_unsupported_title">This device is not supported</string>
     <string name="check_unsupported_gpu">Diablo II runs here only on Qualcomm Snapdragon phones with an Adreno 6xx–8xx GPU. Found: %1$s %2$s, GPU %3$s.</string>
     <string name="check_unsupported_pages">This Android uses 16 KB memory pages; the emulation layer needs 4 KB.</string>
@@ -625,12 +641,15 @@
     <string name="check_space_title">Little free space</string>
     <string name="check_space">Only %1$s free; the first setup needs about 1 GB.</string>
     <string name="check_gpu_unknown">unknown</string>
+
     <string name="settings_about">About this app</string>
     <string name="about_disclaimer">Unofficial fan project, not affiliated with or endorsed by Blizzard Entertainment. Diablo is a trademark of Blizzard Entertainment, Inc. You need your own purchased copy of Diablo II: Lord of Destruction; this app contains no game files.</string>
+
     <string name="licenses_title">Licenses</string>
     <string name="licenses_link">Licenses of the third-party parts</string>
     <string name="licenses_lgpl_note">This app contains parts under the GNU LGPL 2.1 (Winlator, Wine and runtime libraries) and other free licences, listed below. You may change the LGPL parts for your own use and reverse-engineer the app to debug such changes. The source code of the exact versions is provided with each release.</string>
     <string name="licenses_missing">(%1$s is missing in this build)</string>
+
     <string name="launch_install_heading">Install</string>
     <string name="launch_install">Install the game (without a PC)</string>
     <string name="launch_install_resume">Continue installing</string>
@@ -730,6 +749,7 @@
     <string name="install_cancel">Cancel</string>
     <string name="install_cancelled">Download cancelled. Next continues where it stopped.</string>
     <string name="install_fetch_failed">Blizzard could not be reached (%1$s). Check Wi-Fi and tap Next again.</string>
+
     <string name="news_title">What\'s new</string>
     <string name="news_english">The list of changes is in English.</string>
     <string name="news_none">This version has no list of changes.</string>
@@ -740,6 +760,7 @@
     <string name="update_later">Later</string>
     <string name="update_no_browser">No browser found to open the download page.</string>
     <string name="update_waiting">A new version is available. Tap \"Play\" to start the game.</string>
+
     <string name="helper_group_hilfe">Help</string>
     <string name="helper_intro_label">Show the tour</string>
     <string name="helper_intro_lead">Shows the short tour of the buttons again when you are back in the game.</string>
@@ -764,11 +785,13 @@
     <string name="intro_skip_again">Again to skip</string>
     <string name="menu_intro">Tour</string>
     <string name="intro_done">Done</string>
+
     <string name="sort_button">Sort</string>
     <string name="sort_partial">Inventory partly sorted (no room for the rest)</string>
     <string name="sort_not_started">Cannot sort now (fight, open window or item in hand)</string>
     <string name="sort_no_room">No room to sort the inventory</string>
     <string name="sort_cursor">Put the item into the inventory</string>
+
     <string name="helper_lootFilter_label">Loot filter</string>
     <string name="helper_lootFilter_info">Hides the names of worthless stuff on the ground. Valuable things always show. \"Take\" skips hidden things.</string>
     <string name="helper_lootScope_character">Applies to the character playing now.</string>
@@ -793,6 +816,7 @@
     <string name="helper_loot_white">Normal</string>
     <string name="helper_loot_magic">Magic weapons, armor</string>
     <string name="helper_loot_gold">Small gold piles</string>
+
     <string name="menu_build">Build</string>
     <string name="build_title">Build</string>
     <string name="build_no_character">No character in the game. The page shows the build once a character is loaded.</string>
@@ -860,6 +884,7 @@
     <string name="build_respec">All points back</string>
     <string name="build_respec_again">Tap again: all stat and skill points back</string>
     <string name="build_respec_done">All points returned. Spend them following the build (highlighted); items stay red until the stats are back.</string>
+
     <string name="build_spend">Spend all points following the build</string>
     <string name="build_spend_again">Tap again: spend all stat and skill points following the build</string>
     <string name="build_spend_started">The points are spent as soon as the game runs again (top line; a tap there stops it).</string>
@@ -984,11 +1009,13 @@
     <string name="build_assa_blade_strengths">• Blade Fury throws blades at a target from afar.\n• Physical damage: hardly any monster is immune.\n• Blade Sentinel and Blade Shield add more blades.</string>
     <string name="build_assa_blade_weaknesses">• Single targets only.\n• Needs a lot of mana.\n• Only from level 18; until then Fire Blast.</string>
     <string name="build_assa_blade_tips">• Hold the attack, the blades keep flying.\n• From level 30 Venom adds poison to every blade.\n• Burst of Speed and Fade help a lot.</string>
+
     <string name="folder_lock_play">The other Diablo II app (%1$s) is still running and using the game folder, since %2$s. Open it and choose \"Save and quit\" (in the game or in its notification), then tap \"Play\" here again.</string>
     <string name="folder_lock_play_plain">The other Diablo II app is still running and using the game folder. Open it and choose \"Save and quit\" (in the game or in its notification), then tap \"Play\" here again.</string>
     <string name="folder_lock_retry">The other Diablo II app (%1$s) is still running and using the game folder, since %2$s. Open it and choose \"Save and quit\" (in the game or in its notification), then try again here.</string>
     <string name="folder_lock_retry_plain">The other Diablo II app is still running and using the game folder. Open it and choose \"Save and quit\" (in the game or in its notification), then try again here.</string>
     <string name="folder_lock_unusable">The lock file in the game folder cannot be used right now. Loading and sharing are blocked so that no save gets overwritten. Playing still works.</string>
+
     <string name="helper_resume_label">Go on where I was (test)</string>
     <string name="helper_resume_info">After loading the app takes you to the place where you saved. Single player only.</string>
     <string name="resume_go">Continuing at %1$s – tap to cancel</string>
@@ -1012,6 +1039,7 @@
         <item>cancelled</item>
         <item>too late, the game has been running for over a minute</item>
     </string-array>
+
     <string name="difficulty_normal">Normal</string>
     <string name="difficulty_nightmare">Nightmare</string>
     <string name="difficulty_hell">Hell</string>
@@ -1035,6 +1063,7 @@
     <string name="launch_character_hardcore">Hardcore</string>
     <string name="launch_character_dead">fallen</string>
     <string name="launch_character_menu_only">only through the game\'s menu (file name is not the name)</string>
+
     <string name="start_hint">Tap a character: straight into the game</string>
     <string name="start_hint_empty">No character yet: tap \"New character\"</string>
     <string name="start_hint_none">No character to start directly: \"New character\" or \"Classic start\"</string>
@@ -1065,6 +1094,7 @@
     <string name="start_ago_month">%1$d month ago</string>
     <string name="start_ago_months">%1$d months ago</string>
     <string name="start_choose_difficulty">Difficulty for %1$s</string>
+
     <string name="settings_group_steuerung">Controls</string>
     <string name="settings_group_steuerung_desc">Walking, aiming, joystick, keys</string>
     <string name="settings_group_anzeige">Display</string>
@@ -1109,6 +1139,7 @@
     <string name="settings_section_fehlersuche">Troubleshooting</string>
     <string name="settings_section_ueber">About the app</string>
     <string name="settings_edit_buttons">Move buttons</string>
+
     <string name="direct_loading_starting">Diablo II is starting ...</string>
     <string name="direct_loading_world">Entering the world ...</string>
     <string name="direct_loading_skip">Tap: start in town</string>

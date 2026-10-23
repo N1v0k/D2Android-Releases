@@ -10,8 +10,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2GuestProcs {
     private D2GuestProcs() {}
+
 
     public static final class Proc {
         public final int pid;
@@ -30,11 +41,13 @@ public final class D2GuestProcs {
         }
     }
 
+
     public static List<Proc> find(File procDir, File rootfs, int uid, int selfPid, Collection<Integer> skip) {
         List<Proc> out = new ArrayList<>();
         String[] names = procDir.list();
         if (names == null) return out;
         Set<String> roots = prefixes(rootfs);
+
         String tail = "/" + (rootfs.getParentFile() == null ? "" : rootfs.getParentFile().getName() + "/") + rootfs.getName() + "/";
         for (String name : names) {
             if (!name.matches("\\d+")) continue;
@@ -62,6 +75,7 @@ public final class D2GuestProcs {
         return out;
     }
 
+
     static Set<String> prefixes(File rootfs) {
         Set<String> out = new LinkedHashSet<>();
         out.add(rootfs.getAbsolutePath());
@@ -69,6 +83,7 @@ public final class D2GuestProcs {
             out.add(rootfs.getCanonicalPath());
         }
         catch (IOException ignored) {
+
         }
         for (String p : new ArrayList<>(out)) {
             if (p.startsWith("/data/user/0/")) out.add("/data/data/" + p.substring("/data/user/0/".length()));
@@ -88,6 +103,7 @@ public final class D2GuestProcs {
         return cmd.contains(tail);
     }
 
+
     private static boolean environInRoot(File dir, Set<String> roots) {
         String env = read(new File(dir, "environ"));
         if (env == null) return false;
@@ -96,6 +112,7 @@ public final class D2GuestProcs {
         }
         return false;
     }
+
 
     private static String exe(File dir) {
         try {
@@ -106,6 +123,7 @@ public final class D2GuestProcs {
             return null;
         }
     }
+
 
     private static int uid(File dir) {
         String status = read(new File(dir, "status"));

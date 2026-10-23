@@ -7,7 +7,19 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 
+
+
+
+
+
+
+
+
 public final class D2Effects {
+
+
+
+
     public static final class Effect {
         public final int state, left, full;
         public final boolean points;
@@ -24,8 +36,10 @@ public final class D2Effects {
         }
     }
 
+
     private static final class Info {
         final int state, skill;
+
         final String name, picture;
         final int effect;
 
@@ -41,6 +55,7 @@ public final class D2Effects {
             return state >= 128 && state <= 137;
         }
     }
+
 
     private static final Info[] INFO = {
         new Info(128, "ShrId6", R.string.effect_armor, 104, null),
@@ -59,15 +74,20 @@ public final class D2Effects {
         new Info(178, "yps", R.string.effect_antidote, -1, "yps"),
         new Info(179, "wms", R.string.effect_thawing, -1, "wms"),
     };
+
+
     private static final int MAX = D2EffectRules.MAX, ICON = D2EffectRules.ICON;
     private static final int FILL = 0xD8080705, VEIL = 0xA0000000;
+
     private static final int SHRINE_FILL = 0xFF000000;
     private final Paint black = new Paint();
 
     {
         black.setColor(SHRINE_FILL);
     }
+
     private final java.util.Map<Integer, Long> firstSeen = new java.util.HashMap<>();
+
     private int[] shown = new int[0];
 
     private Effect[] current = new Effect[0];
@@ -76,10 +96,12 @@ public final class D2Effects {
     private final RectF[] hits = new RectF[MAX];
     private final int[] hitState = new int[MAX];
     private int hitCount;
+
     private long drawnAt;
     private static final long HITS_VALID_MS = 600;
     private final Paint veil = new Paint(), picture = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final RectF box = new RectF();
+
 
     private android.content.Context context;
     private D2Hud hud;
@@ -93,6 +115,7 @@ public final class D2Effects {
         return context == null ? "" : D2Text.get(context, id, args);
     }
 
+
     private String name(Info info) {
         String name = hud != null ? hud.gameText(info.name) : null;
         return name != null ? name : info.name;
@@ -102,6 +125,7 @@ public final class D2Effects {
         for (int i = 0; i < MAX; i++) hits[i] = new RectF();
         veil.setColor(VEIL);
     }
+
 
     static Effect[] parse(byte[] d, int length) {
         if (length < 10) return new Effect[0];
@@ -114,6 +138,10 @@ public final class D2Effects {
         }
         return out;
     }
+
+
+
+
 
     public void update(Effect[] effects, long now) {
         if (effects == current) return;
@@ -132,8 +160,10 @@ public final class D2Effects {
         firstSeen.keySet().retainAll(on);
         shown = D2EffectRules.order(states, groups, firstSeen);
         current = effects;
+
         if (effects.length == 0) hitCount = 0;
     }
+
 
     private boolean picture(int state) {
         if (info(state) != null) return true;
@@ -143,8 +173,10 @@ public final class D2Effects {
         return skill >= 0 && hud != null && hud.skillIcon(skill) != null;
     }
 
+
     private Bitmap icon(D2Hud hud, int state) {
         Info info = info(state);
+
         Bitmap shrine = info != null && info.shrine() ? hud.shrinePicture(state) : null;
         if (shrine != null) return shrine;
         if (info != null) return info.skill >= 0 ? hud.skillIcon(info.skill) : hud.effectPicture(info.picture);
@@ -157,6 +189,10 @@ public final class D2Effects {
     private static final int[] HARM_TEXTS = {R.string.effect_harm_frozen, R.string.effect_harm_poisoned,
         R.string.effect_harm_chilled, R.string.effect_harm_stunned, R.string.effect_harm_slowed,
         R.string.effect_harm_heal_prevented, R.string.effect_harm_open_wounds};
+
+
+
+
 
     private String describe(Effect e) {
         Info info = info(e.state);
@@ -174,6 +210,7 @@ public final class D2Effects {
         if (e.full > 0) return what + " - " + text(R.string.effect_left, time(e.left))
             + (info != null && info.shrine() ? " " + text(R.string.effect_curse_ends) : "");
         if (info != null) return what;
+
         int skill = D2EffectRules.skillOf(e.state, hud != null ? hud.stateSkills() : null);
         int group = D2EffectRules.group(e.state, hud != null ? hud.stateSkills() : null, hud != null ? hud.skillClassOf(skill) : -1, false);
         return what + " - " + text(group == D2EffectRules.AURA ? R.string.effect_while_on : R.string.effect_time_unknown);
@@ -182,6 +219,11 @@ public final class D2Effects {
     public boolean active(long now) {
         return current.length > 0 || now < messageUntil;
     }
+
+
+
+
+
 
     public boolean tap(float x, float y, long now) {
         int state = hitAt(x, y, now);
@@ -194,11 +236,18 @@ public final class D2Effects {
         return true;
     }
 
+
+
+
+
     public int hitAt(float x, float y, long now) {
         if (now - drawnAt > HITS_VALID_MS) hitCount = 0;
         for (int i = 0; i < hitCount; i++) if (hits[i].contains(x, y) && isOn(current, hitState[i])) return hitState[i];
         return -1;
     }
+
+
+
 
     public void draw(Canvas canvas, D2Hud hud, int gameWidth, int gameHeight, float scale, float x0, float y0, long now) {
         hitCount = 0;
@@ -214,6 +263,7 @@ public final class D2Effects {
             hits[hitCount].set(box);
             hitState[hitCount++] = e.state;
             boolean blink = !e.points && e.full > 0 && e.left <= 100 && (now / 400) % 2 == 0;
+
             boolean shrine = hud.shrinePicture(e.state) != null && info(e.state) != null && info(e.state).shrine();
             if (hud.hasFrame()) hud.drawFrame(canvas, box, scale, shrine ? SHRINE_FILL : FILL);
             else if (shrine) canvas.drawRect(box, black);
@@ -223,6 +273,7 @@ public final class D2Effects {
                 canvas.drawBitmap(icon, null, fit(icon, inner), picture);
             }
             if (e.full > 0) {
+
                 float gone = D2EffectRules.gone(e.left, e.full);
                 canvas.drawRect(inner.left, inner.top, inner.right, inner.top + inner.height() * gone, veil);
                 String under = e.points ? D2EffectRules.percent(e.left, e.full) + "%" : time(e.left);
@@ -237,6 +288,7 @@ public final class D2Effects {
             hud.drawText(canvas, message, cx, cy, scale);
         }
     }
+
 
     static String time(int tenths) {
         int s = (tenths + 9) / 10;

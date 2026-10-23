@@ -1,4 +1,4 @@
-#ifndef MAT4_H
+#ifndef MAT4_H  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #define MAT4_H
 
 #include <malloc.h>
@@ -57,7 +57,7 @@ static inline void mat4_scale(float result[16], float matrix[16], float x, float
     result[12] = matrix[12];
     result[13] = matrix[13];
     result[14] = matrix[14];
-    result[15] = matrix[15];    
+    result[15] = matrix[15];
 }
 
 static inline void mat4_translate(float result[16], float matrix[16], float x, float y, float z) {
@@ -70,7 +70,7 @@ static inline void mat4_translate(float result[16], float matrix[16], float x, f
         result[13] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
         result[14] = matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14];
         result[15] = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
-    } 
+    }
     else {
         a00 = matrix[0]; a01 = matrix[1]; a02 = matrix[2]; a03 = matrix[3];
         a10 = matrix[4]; a11 = matrix[5]; a12 = matrix[6]; a13 = matrix[7];
@@ -84,7 +84,7 @@ static inline void mat4_translate(float result[16], float matrix[16], float x, f
         result[13] = a01 * x + a11 * y + a21 * z + matrix[13];
         result[14] = a02 * x + a12 * y + a22 * z + matrix[14];
         result[15] = a03 * x + a13 * y + a23 * z + matrix[15];
-    }    
+    }
 }
 
 static inline void mat4_rotate(float result[16], float matrix[16], float angle, float x, float y, float z) {
@@ -194,7 +194,7 @@ static inline void mat4_ortho(float matrix[16], float left, float right, float t
 static inline void mat4_perspective(float matrix[16], float fov, float aspect, float vnear, float vfar) {
     float f = 1.0f / tanf(fov * 0.5f);
     float nf = 1 / (vnear - vfar);
-    
+
     matrix[0] = f / aspect;
     matrix[1] = 0;
     matrix[2] = 0;
@@ -248,7 +248,7 @@ static inline void mat4_lookat(float matrix[16], float eye[3], float center[3], 
         x0 = 0;
         x1 = 0;
         x2 = 0;
-    } 
+    }
     else {
         len = 1 / len;
         x0 *= len;
@@ -265,7 +265,7 @@ static inline void mat4_lookat(float matrix[16], float eye[3], float center[3], 
         y0 = 0;
         y1 = 0;
         y2 = 0;
-    } 
+    }
     else {
         len = 1 / len;
         y0 *= len;
@@ -288,7 +288,7 @@ static inline void mat4_lookat(float matrix[16], float eye[3], float center[3], 
     matrix[12] = -(x0 * eyex + x1 * eyey + x2 * eyez);
     matrix[13] = -(y0 * eyex + y1 * eyey + y2 * eyez);
     matrix[14] = -(z0 * eyex + z1 * eyey + z2 * eyez);
-    matrix[15] = 1;   
+    matrix[15] = 1;
 }
 
 static inline void mat4_multiply(float result[16], float ma[16], float mb[16]) {

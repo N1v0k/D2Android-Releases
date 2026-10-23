@@ -3,15 +3,30 @@ package com.winlator.d2;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+
+
+
+
+
+
+
 public final class D2BugReport {
     public static final String NEW_ISSUE = "https://github.com/N1v0k/D2Android-Releases/issues/new";
+
     public static final String TEMPLATE = "bug.yml";
     public static final String FIELD_PHONE = "phone", FIELD_ANDROID = "android", FIELD_VERSION = "version";
+
     static final int MAX_VALUE = 64;
+
     static final int MAX_ENCODED = 192;
+
     public static final int MAX_URL = NEW_ISSUE.length() + 32 + 3 * (MAX_ENCODED + 10);
 
     private D2BugReport() {}
+
+
+
+
 
     public static String url(String appVersion, String manufacturer, String model, String androidRelease, int sdk) {
         StringBuilder b = new StringBuilder(NEW_ISSUE).append("?template=").append(encode(TEMPLATE));
@@ -21,6 +36,7 @@ public final class D2BugReport {
         return b.toString();
     }
 
+
     static String phone(String manufacturer, String model) {
         String maker = clean(manufacturer), name = clean(model);
         if (maker.isEmpty()) return name;
@@ -29,12 +45,16 @@ public final class D2BugReport {
         return maker + " " + name;
     }
 
+
+
     static String android(String release, int sdk) {
         String r = clean(release);
         String api = sdk > 0 ? "API " + sdk : "";
         if (r.isEmpty()) return api;
         return api.isEmpty() ? "Android " + r : "Android " + r + " (" + api + ")";
     }
+
+
 
     static String clean(String s) {
         if (s == null) return "";
@@ -54,6 +74,7 @@ public final class D2BugReport {
         return b.toString();
     }
 
+
     static String encode(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
@@ -62,6 +83,7 @@ public final class D2BugReport {
             throw new IllegalStateException(e);
         }
     }
+
 
     static String fit(String value) {
         String v = clean(value);

@@ -1,4 +1,4 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
 
@@ -133,11 +133,11 @@ public abstract class DrawRequests {
 
         if (srcDrawable.isOffscreenStorage() && (srcDrawable.getData() == null || srcDrawable.isUseSharedData())) {
             dstDrawable.setData(null);
-            // D2Android: both show the source's texture now; the target's own one goes if nobody holds it
+
             final com.winlator.renderer.Texture released = dstDrawable.setTexture(srcDrawable.getTexture());
             if (released != null) client.xServer.getRenderer().xServerView.queueEvent(released::destroy);
 
-            if (srcDrawableId != client.xServer.activity.getFrameRatingWindowId()) { // D2Android: XServerHost
+            if (srcDrawableId != client.xServer.activity.getFrameRatingWindowId()) {
                 Window srcWindow =  client.xServer.windowManager.getWindow(srcDrawableId);
                 client.xServer.activity.changeFrameRatingVisibility(srcWindow, true);
             }

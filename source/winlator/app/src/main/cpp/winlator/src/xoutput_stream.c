@@ -1,4 +1,4 @@
-#include <errno.h>
+#include <errno.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #include <malloc.h>
 #include <poll.h>
 #include <sys/socket.h>
@@ -46,13 +46,13 @@ static void XOutputStream_destroy(XOutputStream* outputStream) {
     MEMFREE(outputStream);
 }
 
-/*
- * D2Android:. Sends the whole buffer. A short write (a signal while the socket's buffer was full, e.g. the freezer
- * of a suspend, or a buffer larger than the socket's) used to count as success and drop the rest, so the
- * client got half an answer or event and its X protocol went out of step; an EINTR before the first byte failed the
- * whole send (IOException, killConnection). Now the rest goes out in a loop, EINTR is retried and only a real error
- * (EPIPE, ECONNRESET, EAGAIN on a non-blocking socket ...) is false. The ancillary fd goes with the first part only.
- */
+
+
+
+
+
+
+
 static jboolean XOutputStream_send(XOutputStream* outputStream) {
     if (outputStream->buffer.position == 0) return JNI_TRUE;
     int total = outputStream->buffer.position;
@@ -88,14 +88,14 @@ static long long monotonicMs(void) {
     return (long long) now.tv_sec * 1000 + now.tv_nsec / 1000000;
 }
 
-/*
- * D2Android:. Sends an event without blocking for long: the client's socket is blocking, and a client that reads
- * nothing (a guest stopped in the background, a hung one) let write block the sending thread for good (the UI thread:
- * ANR; the epoll thread: the whole X server). Waits for room at most timeoutMs. Returns 0 sent, 1 dropped (not a byte
- * of the event went out in that time: the client misses this one event, the protocol stays intact), -1 a real error.
- * Once a part went out the rest is written to the end however long it takes (half an event would break the protocol;
- * the game must not end, so the client is not cut off). With an ancillary fd: the blocking send as before.
- */
+
+
+
+
+
+
+
+
 static int XOutputStream_sendTimed(XOutputStream* outputStream, int timeoutMs) {
     if (outputStream->buffer.position == 0) return 0;
     if (outputStream->ancillaryFd > 0) return XOutputStream_send(outputStream) ? 0 : -1;
@@ -203,7 +203,7 @@ Java_com_winlator_xconnector_XOutputStream_sendData(jlong nativePtr) {
     return XOutputStream_send((XOutputStream*)nativePtr);
 }
 
-// D2Android: changed
+
 JNIEXPORT jint JNICALL
 Java_com_winlator_xconnector_XOutputStream_sendEventData(jlong nativePtr, jint timeoutMs) {
     return XOutputStream_sendTimed((XOutputStream*)nativePtr, timeoutMs);

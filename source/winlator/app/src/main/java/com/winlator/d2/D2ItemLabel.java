@@ -3,25 +3,49 @@ package com.winlator.d2;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
+
 public final class D2ItemLabel {
     private D2ItemLabel() {}
 
     public static final int VARIANT_CUT = 0, VARIANT_AFFIXES = 1, VARIANT_TWO_LINES = 2;
+
     public static final int VARIANT = VARIANT_CUT;
+
+
+
+
 
     public static final int WHITE = 0xFFFFFF, GREY = 0x696969, BLUE = 0x6969FF, YELLOW = 0xFFFF64, GREEN = 0x00FF00,
         GOLD = 0xC7B377, ORANGE = 0xFFA800;
 
+
+
+
+
     static final boolean OWN_NAME_LAST = true;
+
+
+
+
 
     public static boolean drawable(String text) {
         for (int i = 0; i < text.length(); i++) if (text.charAt(i) > 0xFF) return false;
         return true;
     }
 
+
     public interface Width {
         int of(String text);
     }
+
 
     public static int colour(int quality, int category, boolean ethereal, boolean socketed, boolean runeword) {
         if (category == D2ModItems.CAT_RUNE) return ORANGE;
@@ -35,6 +59,11 @@ public final class D2ItemLabel {
             default: return ethereal || socketed ? GREY : WHITE;
         }
     }
+
+
+
+
+
 
     public static String text(String name, int quality, boolean runeword, String baseName, Width width, int budget, int variant) {
         List<String> lines = new ArrayList<>();
@@ -70,6 +99,11 @@ public final class D2ItemLabel {
         }
     }
 
+
+
+
+
+
     public static final class Cache {
         private static final int MAX = 64;
         private final java.util.LinkedHashMap<String, String> texts = new java.util.LinkedHashMap<String, String>(16, 0.75f, true) {
@@ -94,7 +128,14 @@ public final class D2ItemLabel {
         }
     }
 
+
     public static final float TAB_MAX_BUTTONS = 2.0f;
+
+
+
+
+
+
 
     public static boolean tabGrowsRight(float cx, float r, float screenW, float margin, float fullWidth) {
         boolean outRight = cx >= screenW / 2;
@@ -104,14 +145,17 @@ public final class D2ItemLabel {
         return out >= in ? outRight : !outRight;
     }
 
+
     public static float tabMaxWidth(float cx, float r, float screenW, float margin, boolean right) {
         float room = right ? screenW - margin - (cx - r) : cx + r - margin;
         return Math.min(TAB_MAX_BUTTONS * 2 * r, Math.max(room, 2 * r));
     }
 
+
     static String plainBase(String baseName) {
         if (baseName == null) return null;
         String s = baseName;
+
         while (s.startsWith("[") && s.length() >= 4 && s.charAt(3) == ']') s = s.substring(4);
         int next = s.indexOf('[');
         if (next > 0) s = s.substring(0, next);
@@ -123,7 +167,9 @@ public final class D2ItemLabel {
         return width.of(text) <= budget;
     }
 
+
     static final String CUT_MARK = "...";
+
 
     static String cut(String text, Width width, int budget) {
         if (fits(text, width, budget)) return text;

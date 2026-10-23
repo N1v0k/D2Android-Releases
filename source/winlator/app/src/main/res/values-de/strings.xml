@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <resources>
     <string name="d2_shortcut_game_settings">Spieleinstellungen</string>
     <string name="default_no_override">Standard (nicht überschreiben)</string>
@@ -15,6 +16,7 @@
     <string name="settings_language_auto">Automatisch (wie das Spiel)</string>
     <string name="settings_language_de">Deutsch</string>
     <string name="settings_language_en">Englisch</string>
+
 
     <string name="settings_size">Bildgröße</string>
     <string name="settings_size_hint">Größer heißt: größere Schrift und Knöpfe, aber du siehst weniger von der Welt.</string>
@@ -50,6 +52,7 @@
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathaks Portal bleibt offen</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain steht beim Wegpunkt in Harrogath</string>
     <string name="settings_plugy_hint">Gilt ab dem nächsten Spielstart. Vorher sichert die App deine Spielstände nach Download/%1$s.</string>
+
     <string name="plugy_stats_plus_hint">Tipp: 1 Punkt, Doppeltipp: 5 Punkte, lange drücken: alle freien Punkte</string>
     <string name="settings_background">Hintergrund-Schutz</string>
     <string name="settings_background_open">Hintergrund-Schutz …</string>
@@ -88,6 +91,7 @@
     <string name="saves_error_import_unfinished">Ein abgebrochener Spielstand-Import ließ sich nicht abschließen. Sicherung unter Download/%1$s</string>
     <string name="saves_error_broken_zip">Die Datei ist kein lesbares Zip-Archiv</string>
 
+
     <string name="background_title">Hintergrund-Schutz</string>
     <string name="background_intro">Damit Android das Spiel nicht beendet, während du eine andere App benutzt. Die App speichert vor jeder Pause – wird das Spiel trotzdem beendet, verlierst du nur deine Position.</string>
     <string name="background_notify">Benachrichtigung</string>
@@ -112,6 +116,7 @@
         <item quantity="one">%1$d Datei gepackt.</item>
         <item quantity="other">%1$d Dateien gepackt.</item>
     </plurals>
+
 
     <string name="helper_tab_haeufig">Häufig</string>
     <string name="helper_tab_automatik">Automatik</string>
@@ -298,6 +303,7 @@
     <string name="helper_players_one">1 (wie normal)</string>
     <string name="helper_players_more">%1$d – mehr Leben, Erfahrung und Beute</string>
     <string name="done">Fertig</string>
+
     <string name="btn_attack">Angriff</string>
     <string name="btn_take">Nehmen</string>
     <string name="btn_pause">Pause</string>
@@ -318,6 +324,7 @@
     <string name="note_respec_again">Nochmal tippen: alle Attributpunkte zurück</string>
     <string name="note_no_free_key">%1$s gelernt: keine F-Taste frei</string>
     <string name="note_respec_done">Attributpunkte zurückgegeben</string>
+
     <string name="materials_title">Materialien</string>
     <string name="materials_tab_runes">Runen</string>
     <string name="materials_tab_gems">Edelsteine</string>
@@ -346,6 +353,7 @@
     <string name="assign_for">Fertigkeit für %1$s antippen</string>
     <string name="note_skill_not_for_attack">Diese Fertigkeit geht nicht auf Angriff</string>
     <string name="note_slot_free">%1$s ist frei: \"%2$s\" antippen, dann %1$s</string>
+
     <string name="tree_pick_for">F-Knopf für %1$s antippen</string>
     <string name="tree_pick_skill">die Fertigkeit</string>
     <string name="tree_pick_done">%1$s liegt auf %2$s</string>
@@ -379,6 +387,7 @@
     <string name="quit_ask_not_saving">Das Spiel kann gerade nicht speichern (Materialien-Lager). Beenden verliert den Fortschritt seit dem letzten Speichern. Trotzdem beenden?</string>
     <string name="quit_save_unconfirmed">Speichern nicht bestätigt – nochmal tippen zum Beenden ohne Bestätigung</string>
 
+
     <string name="effect_armor">+100 % Verteidigung</string>
     <string name="effect_combat">+200 % Angriffswert und Schaden</string>
     <string name="effect_res_lightning">+75 % Blitzwiderstand</string>
@@ -406,6 +415,7 @@
     <string name="effect_points">Schutz noch %1$d %% (%2$d von %3$d)</string>
     <string name="effect_while_on">solange sie wirkt</string>
     <string name="effect_time_unknown">Restzeit unbekannt</string>
+
 
     <string name="idle_only_in_game">nur im Spiel</string>
     <string name="idle_only_single">nur im Einzelspieler</string>
@@ -473,6 +483,7 @@
     <string name="strip_saved_ago">Gespeichert vor %1$s</string>
     <string name="strip_players">Spieler %1$d</string>
 
+
     <string name="menu_helpers">Einstellungen</string>
     <string name="menu_keyboard">Tastatur</string>
     <string name="menu_idle">Idle-Modus …</string>
@@ -487,6 +498,7 @@
     <string name="grid_gold">Gold %1$s</string>
     <string name="trigger_left">linke Schultertaste</string>
     <string name="trigger_right">rechte Schultertaste</string>
+
     <string name="trigger_action_skill">Fertigkeit (F7 / F8)</string>
     <string name="trigger_action_heal">Heiltrank</string>
     <string name="trigger_action_mana">Manatrank</string>
@@ -498,6 +510,7 @@
     <string name="trigger_action_attack">Angriff</string>
     <string name="trigger_action_names">Namen zeigen (wie Alt)</string>
     <string name="trigger_action_attack_take">Angriff + Interagieren</string>
+
     <string name="pad_action_skill_key">Fertigkeit auf F%1$d</string>
     <string name="pad_action_esc">Esc-Menü</string>
     <string name="pad_action_menu">App-Menü (≡)</string>
@@ -528,6 +541,7 @@
     <string name="relaunch_saving">Android hat die Darstellung geändert (zum Beispiel das Hintergrundbild). Das Spiel wird gespeichert und beendet. Bitte starte es danach neu.</string>
     <string name="game_saving">Speichere …</string>
     <string name="launch_starting">Starte Diablo II …</string>
+
     <string name="repair_stash">Truhe von %1$s wiederhergestellt: Das letzte Speichern war unterbrochen.</string>
     <string name="repair_shared_stash">Geteilte Truhe wiederhergestellt: Das letzte Speichern war unterbrochen.</string>
     <string name="repair_character">%1$s: Das letzte Speichern war unterbrochen. Stand von %2$s wiederhergestellt (PlugY-Sicherung); die abgebrochenen Dateien liegen daneben.</string>
@@ -537,6 +551,7 @@
     <string name="btn_heal">Heil</string>
     <string name="btn_mana">Mana</string>
     <string name="btn_rejuv">Verjüngung</string>
+
 
     <string name="launch_notify_open">Bitte beantworte die Frage von Android nach Benachrichtigungen (Erlauben oder Nicht erlauben), dann auf Spielen tippen.</string>
     <string name="launch_no_storage">Ohne Speicherzugriff kann die App den Spielordner nicht lesen.</string>
@@ -579,8 +594,7 @@
     <string name="report_no_browser">Kein Browser gefunden. Fehler meldest du unter %1$s</string>
     <string name="idle_touch">Berührung</string>
     <string name="idle_background">App im Hintergrund</string>
-    <string name="launch_starting_program">Starte %1$s …</string>
-    <string name="launch_start_failed">Start fehlgeschlagen: %1$s</string>
+
     <string name="settings_game_folder">Spielordner</string>
     <string name="folder_choose">Spielordner wählen</string>
     <string name="folder_line">Spielordner: %1$s</string>
@@ -612,6 +626,7 @@
     <string name="folder_pick_unchanged">Im gewählten Ordner liegt dein bisheriges Spiel: %1$s. Dein Spielordner und deine Charaktere bleiben, wie sie sind. Für ein anderes Spiel wähle dessen Ordner (mit Game.exe).</string>
     <string name="folder_gone">Der gewählte Spielordner ist nicht mehr da: %1$s</string>
     <string name="folder_no_picker">Dieses Handy hat keine Ordnerauswahl.</string>
+
     <string name="check_unsupported_title">Dieses Gerät wird nicht unterstützt</string>
     <string name="check_unsupported_gpu">Diablo II läuft hier nur auf Qualcomm-Snapdragon-Handys mit Adreno-6xx–8xx-Grafik. Gefunden: %1$s %2$s, Grafik %3$s.</string>
     <string name="check_unsupported_pages">Dieses Android nutzt 16-KB-Speicherseiten; die Emulation braucht 4 KB.</string>
@@ -623,12 +638,15 @@
     <string name="check_space_title">Wenig freier Speicher</string>
     <string name="check_space">Nur %1$s frei; die Ersteinrichtung braucht etwa 1 GB.</string>
     <string name="check_gpu_unknown">unbekannt</string>
+
     <string name="settings_about">Über die App</string>
     <string name="about_disclaimer">Inoffizielles Fan-Projekt, nicht mit Blizzard Entertainment verbunden oder von Blizzard unterstützt. Diablo ist eine Marke von Blizzard Entertainment, Inc. Du brauchst dein eigenes, gekauftes Diablo II: Lord of Destruction; die App enthält keine Spieldateien.</string>
+
     <string name="licenses_title">Lizenzen</string>
     <string name="licenses_link">Lizenzen der fremden Bestandteile</string>
     <string name="licenses_lgpl_note">Diese App enthält Teile unter der GNU LGPL 2.1 (Winlator, Wine und Laufzeit-Bibliotheken) und weiteren freien Lizenzen, unten aufgeführt. Du darfst die LGPL-Teile für deinen eigenen Gebrauch ändern und die App zur Fehlersuche bei solchen Änderungen zurückentwickeln. Der Quellcode der genauen Fassungen liegt jedem Release bei.</string>
     <string name="licenses_missing">(%1$s fehlt in diesem Build)</string>
+
     <string name="launch_install_heading">Installieren</string>
     <string name="launch_install">Spiel installieren (ohne PC)</string>
     <string name="launch_install_resume">Installation fortsetzen</string>
@@ -728,6 +746,7 @@
     <string name="install_cancel">Abbrechen</string>
     <string name="install_cancelled">Download abgebrochen. Weiter setzt dort fort, wo er stand.</string>
     <string name="install_fetch_failed">Blizzard nicht erreichbar (%1$s). WLAN prüfen und erneut auf Weiter tippen.</string>
+
     <string name="news_title">Neuigkeiten</string>
     <string name="news_english">Die Liste der Änderungen ist auf Englisch.</string>
     <string name="news_none">Diese Version hat keine Liste der Änderungen.</string>
@@ -738,6 +757,7 @@
     <string name="update_later">Später</string>
     <string name="update_no_browser">Kein Browser für die Download-Seite gefunden.</string>
     <string name="update_waiting">Eine neue Version ist verfügbar. Tippe auf „Spielen“, um das Spiel zu starten.</string>
+
     <string name="helper_group_hilfe">Hilfe</string>
     <string name="helper_intro_label">Einführung zeigen</string>
     <string name="helper_intro_lead">Zeigt die kurze Einführung in die Knöpfe noch einmal, wenn du wieder im Spiel bist.</string>
@@ -762,11 +782,13 @@
     <string name="intro_skip_again">Nochmal: überspringen</string>
     <string name="menu_intro">Einführung</string>
     <string name="intro_done">Fertig</string>
+
     <string name="sort_button">Ordnen</string>
     <string name="sort_partial">Inventar nur teilweise geordnet (kein Platz für den Rest)</string>
     <string name="sort_not_started">Ordnen geht gerade nicht (Kampf, offenes Fenster oder Gegenstand in der Hand)</string>
     <string name="sort_no_room">Kein Platz zum Ordnen</string>
     <string name="sort_cursor">Gegenstand ins Inventar legen</string>
+
     <string name="helper_lootFilter_label">Lootfilter</string>
     <string name="helper_lootFilter_info">Versteckt die Namen von wertlosem Zeug am Boden. Wertvolles zeigt er immer. „Nehmen“ überspringt Verstecktes.</string>
     <string name="helper_lootScope_character">Gilt für den Charakter, der gerade spielt.</string>
@@ -791,6 +813,7 @@
     <string name="helper_loot_white">Normal</string>
     <string name="helper_loot_magic">Magische Waffen, Rüstungen</string>
     <string name="helper_loot_gold">Kleine Goldhaufen</string>
+
     <string name="menu_build">Build</string>
     <string name="build_title">Build</string>
     <string name="build_no_character">Kein Charakter im Spiel. Die Seite zeigt den Build, sobald ein Charakter geladen ist.</string>
@@ -858,6 +881,7 @@
     <string name="build_respec">Alle Punkte zurück</string>
     <string name="build_respec_again">Nochmal tippen: alle Wert- und Fertigkeitspunkte zurück</string>
     <string name="build_respec_done">Alle Punkte zurückgegeben. Nach dem Build neu verteilen (hervorgehoben); angelegte Teile bleiben rot, bis die Werte vergeben sind.</string>
+
     <string name="build_spend">Alle Punkte nach dem Build verteilen</string>
     <string name="build_spend_again">Nochmal tippen: alle Wert- und Fertigkeitspunkte nach dem Build verteilen</string>
     <string name="build_spend_started">Die Punkte werden verteilt, sobald das Spiel weiterläuft (Zeile oben; ein Tipp dort hält an).</string>
@@ -982,11 +1006,13 @@
     <string name="build_assa_blade_strengths">• Klingenwut wirft aus der Ferne Klingen auf ein Ziel.\n• Physischer Schaden: Kaum ein Monster ist immun.\n• Klingen-Wächter und Klingenschild bringen mehr Klingen.</string>
     <string name="build_assa_blade_weaknesses">• Nur einzelne Ziele.\n• Braucht viel Mana.\n• Erst ab Stufe 18, bis dahin Feuer-Stoß.</string>
     <string name="build_assa_blade_tips">• Den Angriff halten, die Klingen fliegen weiter.\n• Ab Stufe 30 fügt Giftgeifer jeder Klinge Gift hinzu.\n• Beschleunigung Tempo und Verblassen helfen viel.</string>
+
     <string name="folder_lock_play">Die andere Diablo-II-App (%1$s) läuft noch und nutzt den Spielordner, seit %2$s. Öffne sie und wähle „Speichern und beenden“ (im Spiel oder in ihrer Benachrichtigung), dann hier erneut „Spielen“.</string>
     <string name="folder_lock_play_plain">Die andere Diablo-II-App läuft noch und nutzt den Spielordner. Öffne sie und wähle „Speichern und beenden“ (im Spiel oder in ihrer Benachrichtigung), dann hier erneut „Spielen“.</string>
     <string name="folder_lock_retry">Die andere Diablo-II-App (%1$s) läuft noch und nutzt den Spielordner, seit %2$s. Öffne sie und wähle „Speichern und beenden“ (im Spiel oder in ihrer Benachrichtigung), dann versuche es hier erneut.</string>
     <string name="folder_lock_retry_plain">Die andere Diablo-II-App läuft noch und nutzt den Spielordner. Öffne sie und wähle „Speichern und beenden“ (im Spiel oder in ihrer Benachrichtigung), dann versuche es hier erneut.</string>
     <string name="folder_lock_unusable">Die Sperrdatei im Spielordner lässt sich gerade nicht nutzen. Laden und Teilen sind deshalb gesperrt, damit kein Spielstand überschrieben wird. Spielen geht weiter.</string>
+
     <string name="helper_resume_label">Dort weiterspielen, wo ich war (Test)</string>
     <string name="helper_resume_info">Nach dem Laden bringt dich die App an die Stelle, an der du gespeichert hast. Nur im Einzelspieler.</string>
     <string name="resume_go">Weiter bei %1$s – Tippen bricht ab</string>
@@ -1010,6 +1036,7 @@
         <item>abgebrochen</item>
         <item>zu spät, das Spiel läuft schon länger als eine Minute</item>
     </string-array>
+
     <string name="difficulty_normal">Normal</string>
     <string name="difficulty_nightmare">Albtraum</string>
     <string name="difficulty_hell">Hölle</string>
@@ -1033,6 +1060,7 @@
     <string name="launch_character_hardcore">Hardcore</string>
     <string name="launch_character_dead">gefallen</string>
     <string name="launch_character_menu_only">nur über das Menü des Spiels (Dateiname ist nicht der Name)</string>
+
     <string name="start_hint">Charakter antippen: direkt ins Spiel</string>
     <string name="start_hint_empty">Noch kein Charakter: tippe auf „Neuer Charakter“</string>
     <string name="start_hint_none">Kein Charakter direkt startbar: „Neuer Charakter“ oder „Klassisch starten“</string>
@@ -1063,6 +1091,7 @@
     <string name="start_ago_month">vor %1$d Monat</string>
     <string name="start_ago_months">vor %1$d Monaten</string>
     <string name="start_choose_difficulty">Schwierigkeitsgrad für %1$s</string>
+
     <string name="settings_group_steuerung">Steuerung</string>
     <string name="settings_group_steuerung_desc">Laufen, Zielen, Joystick, Tasten</string>
     <string name="settings_group_anzeige">Anzeige</string>
@@ -1107,6 +1136,7 @@
     <string name="settings_section_fehlersuche">Fehlersuche</string>
     <string name="settings_section_ueber">Über die App</string>
     <string name="settings_edit_buttons">Knöpfe verschieben</string>
+
     <string name="direct_loading_starting">Diablo II startet ...</string>
     <string name="direct_loading_world">Betrete die Welt ...</string>
     <string name="direct_loading_skip">Tippen: in der Stadt beginnen</string>

@@ -14,7 +14,14 @@ import com.winlator.R;
 import java.util.Collections;
 import java.util.List;
 
+
+
+
+
+
+
 final class D2IntroView {
+
     static final class Spot {
         final float cx, cy, r;
         final RectF rect;
@@ -41,16 +48,23 @@ final class D2IntroView {
     }
 
     interface Host {
+
         List<Spot> spots(D2Intro.Step step);
+
         D2Hud hud();
+
         float textScale();
+
         void modPause(boolean on);
+
         boolean appPaused();
+
         List<float[]> keepClear();
     }
 
     private static final int DARK = Color.argb(168, 0, 0, 0), RING_DARK = Color.rgb(85, 77, 46), RING_GOLD = Color.rgb(199, 179, 119),
         BOX_FILL = Color.argb(238, 10, 8, 6), PLATE = Color.argb(220, 10, 8, 6);
+
     private static final int TEXT_BUDGET = 300, PAD = 12, TITLE_H = 18, LINE_H = 13, FOOTER_H = 22;
 
     private final Context context;
@@ -63,15 +77,19 @@ final class D2IntroView {
     private D2Intro.Tour tour;
     private boolean ownPause;
     private long pausedAt;
+
     private final D2Intro.Skip skipGuard = new D2Intro.Skip();
     private boolean interrupted;
+
     private D2Intro.Step textStep;
     private String title, count, nextText, skipText, skipAgainText;
     private List<String> lines = Collections.emptyList();
     private float textK = -1;
+
     private List<Spot> spots = Collections.emptyList();
     private D2Intro.Step spotStep;
     private long spotsAt;
+
     private float boxK = -1;
     private int boxW, boxH;
 
@@ -87,9 +105,11 @@ final class D2IntroView {
         return tour != null;
     }
 
+
     boolean pausing() {
         return tour != null && ownPause;
     }
+
 
     void start(List<D2Intro.Step> steps, boolean pause, long now) {
         D2Settings.setIntroSeen(context, true);
@@ -106,9 +126,16 @@ final class D2IntroView {
         D2Trace.log("intro: start, " + steps.size() + " steps" + (pause ? ", paused" : ""));
     }
 
+
+
+
+
+
     void tick(long now, boolean inGame, boolean windowFocus) {
         if (tour == null) return;
         if (!inGame || !windowFocus || host.appPaused()) {
+
+
             end(inGame ? "focus or pause" : "game gone");
             int count = D2Intro.interruptionsAfter(true, D2Settings.introInterruptions(context));
             D2Settings.setIntroInterruptions(context, count);
@@ -124,6 +151,21 @@ final class D2IntroView {
         }
     }
 
+
+
+
+
+    void interruptForPlaytester() {
+        if (tour == null) return;
+        end("playtester");
+        interrupted = true;
+        D2Settings.setIntroSeen(context, false);
+    }
+
+
+
+
+
     boolean skip() {
         if (tour == null) return false;
         if (tour.last()) endSeen("done with back");
@@ -131,11 +173,13 @@ final class D2IntroView {
         return true;
     }
 
+
     boolean takeInterrupted() {
         boolean was = interrupted;
         interrupted = false;
         return was;
     }
+
 
     private void endSeen(String why) {
         D2Settings.setIntroInterruptions(context, D2Intro.interruptionsAfter(false, 0));
@@ -146,15 +190,18 @@ final class D2IntroView {
         if (tour == null) return;
         D2Trace.log("intro: end (" + why + ") at " + tour.count());
         tour = null;
+
         if (ownPause && !host.appPaused()) host.modPause(false);
         ownPause = false;
     }
+
 
     boolean onTouch(MotionEvent event) {
         if (tour == null) return false;
         if (event.getActionMasked() == MotionEvent.ACTION_UP) {
             float x = event.getX(), y = event.getY();
             if (!tour.last() && skip.contains(x, y)) {
+
                 if (skipGuard.press(SystemClock.uptimeMillis(), false)) endSeen("skipped");
             }
             else if (D2Intro.TAP_ANYWHERE || next.contains(x, y)) {
@@ -173,6 +220,7 @@ final class D2IntroView {
         texts(t, hud, k);
         long now = SystemClock.uptimeMillis();
         if (t.step() != spotStep || now - spotsAt > 250 || k != boxK || width != boxW || height != boxH) place(t, k, width, height, now);
+
         dark.reset();
         dark.addRect(0, 0, width, height, Path.Direction.CW);
         for (Spot s : spots) {
@@ -183,11 +231,13 @@ final class D2IntroView {
         canvas.drawPath(dark, fill);
         for (Spot s : spots) {
             if (s.rect != null) {
+
                 tmp.set(s.rect.left - 3 * k, s.rect.top - 3 * k, s.rect.right + 3 * k, s.rect.bottom + 3 * k);
                 hud.drawFrame(canvas, tmp, k, Color.TRANSPARENT);
                 continue;
             }
             if (s.hidden) {
+
                 fill.setColor(PLATE);
                 canvas.drawCircle(s.cx, s.cy, s.r, fill);
                 if (s.label != null) hud.drawSmallText(canvas, s.label, s.cx, s.cy, k);
@@ -208,6 +258,7 @@ final class D2IntroView {
             hud.drawSmallText(canvas, line, x + hud.smallTextWidth(line) * k / 2, y + LINE_H * k / 2, k);
             y += LINE_H * k;
         }
+
         float fy = box.bottom - (PAD + FOOTER_H / 2f) * k;
         hud.drawSmallText(canvas, count, x + hud.smallTextWidth(count) * k / 2, fy, k, 160);
         float nw = (hud.smallTextWidth(nextText) + 16) * k;
@@ -215,6 +266,7 @@ final class D2IntroView {
         hud.drawFrame(canvas, next, k, PLATE);
         hud.drawSmallText(canvas, nextText, next.centerX(), fy, k);
         if (!t.last()) {
+
             boolean armed = skipGuard.armed(now);
             String text = armed ? skipAgainText : skipText;
             float sw = (hud.smallTextWidth(text) + 12) * k;
@@ -224,6 +276,7 @@ final class D2IntroView {
         }
         else skip.setEmpty();
     }
+
 
     private void place(D2Intro.Tour t, float k, int width, int height, long now) {
         spots = t.step() == D2Intro.Step.WELCOME ? Collections.<Spot>emptyList() : host.spots(t.step());
@@ -249,6 +302,7 @@ final class D2IntroView {
         float[] at = D2Intro.boxAt(width, height, bw, bh, 8 * dp, bounds, host.keepClear());
         box.set(at[0], at[1], at[0] + bw, at[1] + bh);
     }
+
 
     private void texts(D2Intro.Tour t, D2Hud hud, float k) {
         D2Intro.Step step = t.step();
@@ -282,6 +336,7 @@ final class D2IntroView {
             case TAKE: return R.string.intro_take_text;
             case POTIONS: return R.string.intro_potions_text;
             case SKILLS: return R.string.intro_skills_text;
+
             case BAR: return com.winlator.BuildConfig.D2_INTERNAL ? R.string.intro_bar_text_internal : R.string.intro_bar_text;
             default: return R.string.intro_welcome_text;
         }

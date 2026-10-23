@@ -4,14 +4,26 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 
+
+
+
+
+
 final class D2TeleportMarker {
+
     static final int GOLD = 0xFF7B704D, DARK_GOLD = 0xFF554D2E, EDGE = 0xFF141414;
+
     static final int RED = 0xFFB0281E;
+
     static final float RX = 18, RY = 9;
 
     private static final RectF oval = new RectF();
 
     private D2TeleportMarker() {}
+
+
+
+
 
     static void draw(Canvas canvas, float cx, float cy, float k, boolean impossible, Paint fill, Paint stroke) {
         float width = stroke.getStrokeWidth(), rx = RX * k, ry = RY * k;
@@ -27,6 +39,7 @@ final class D2TeleportMarker {
         stroke.setColor(impossible ? EDGE : DARK_GOLD);
         canvas.drawOval(oval, stroke);
         if (impossible) {
+
             float dx = rx * 0.45f, dy = ry * 0.45f;
             for (int pass = 0; pass < 2; pass++) {
                 stroke.setStrokeWidth((pass == 0 ? 3.5f : 2f) * k);
@@ -46,8 +59,13 @@ final class D2TeleportMarker {
         stroke.setStrokeWidth(width);
     }
 
+
+
+
+
     static void drawCorrection(Canvas canvas, float wx, float wy, float tx, float ty, float k, Paint stroke) {
         float dx = wx - tx, dy = wy - ty;
+
         float e = (float) Math.sqrt(dx * dx / (RX * RX * k * k) + dy * dy / (RY * RY * k * k));
         if (e <= 1) return;
         float width = stroke.getStrokeWidth(), sx = tx + dx / e, sy = ty + dy / e;

@@ -1,9 +1,20 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
 final class D2StallWatch {
     static final long STALL_MS = 5000;
     private long presents = -1, since;
     private boolean reported;
+
+
+
+
 
     long check(long nowMs, boolean watching, long presentsNow) {
         if (!watching || presentsNow != presents) {

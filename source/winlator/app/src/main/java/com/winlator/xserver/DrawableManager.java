@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.util.SparseArray;
 
@@ -33,7 +33,7 @@ public class DrawableManager extends XResourceManager implements XResourceManage
     public void removeDrawable(int id) {
         Drawable drawable = drawables.get(id);
 
-        // D2Android: destroyed only if no other drawable still shows it (shared by XComposite or copyArea)
+
         final Texture texture = drawable.releaseTexture();
         if (texture != null) xServer.getRenderer().xServerView.queueEvent(texture::destroy);
 

@@ -8,6 +8,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+
+
+
+
+
+
+
 public final class D2PlugY {
     private static final String ASSET_DIR = "d2/plugy";
 
@@ -22,10 +29,12 @@ public final class D2PlugY {
         }
     }
 
+
     public static void install(Context context, File shadowDir, boolean enabled) throws IOException {
         File dll = new File(shadowDir, "PlugY.dll");
         D2Settings.setRespecStarted(context, false);
         if (!enabled || !isBundled(context)) {
+
             if (dll.exists() && !dll.delete()) throw new IOException("PlugY.dll lässt sich nicht entfernen");
             return;
         }
@@ -40,7 +49,23 @@ public final class D2PlugY {
         D2Settings.setRespecStarted(context, respec);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     static final int UNASSIGN_KEY = 0x87;
+
+
+
+
 
     static String ini(boolean bigStash, boolean respec, boolean statsPages) {
         String unassign = respec ? "1" : "0";
@@ -77,17 +102,30 @@ public final class D2PlugY {
             + "MoveCainNearHarrogathWaypoint=0\r\n";
     }
 
+
+
+
+
+
+
+
     static final String[] EXTRA_KEYS = {"ActiveSharedGold", "ActiveLadderRunewords", "ActiveDisplayItemLevel",
         "ActiveDisplayBaseStatsValue", "ActiveWorldEvent", "ActiveUberQuest", "ActiveCowPortalWhenCowKingWasKilled",
         "ActiveDoNotCloseNihlathakPortal", "MoveCainNearHarrogathWaypoint"};
     static final boolean[] EXTRA_DEFAULTS = {true, true, true, false, false, false, false, false, false};
+
     static final int FIRST_GAME_CHANGE = 4;
+
 
     static boolean[] extras(Context context) {
         boolean[] on = new boolean[EXTRA_KEYS.length];
         for (int i = 0; i < on.length; i++) on[i] = D2Settings.plugyExtra(context, EXTRA_KEYS[i], EXTRA_DEFAULTS[i]);
         return on;
     }
+
+
+
+
 
     static String ini(boolean bigStash, boolean respec, boolean statsPages, boolean[] on) {
         String ini = ini(bigStash, respec, statsPages);

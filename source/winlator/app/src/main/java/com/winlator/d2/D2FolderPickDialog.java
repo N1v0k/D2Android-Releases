@@ -12,8 +12,13 @@ import com.winlator.R;
 
 import java.io.File;
 
+
+
+
+
 final class D2FolderPickDialog {
     private D2FolderPickDialog() {}
+
 
     static void show(Activity activity, File picked, GameVersion.Result check, String before, Runnable pickAgain) {
         boolean usable = check != null && (check.status == GameVersion.Status.OK || check.status == GameVersion.Status.MODIFIED);
@@ -25,8 +30,7 @@ final class D2FolderPickDialog {
             : check != null && check.dir != null ? D2FolderPick.shortPath(check.dir.getAbsolutePath(), root) : pickedPath;
         String why = check != null ? GameLocator.message(activity, check) : "";
         D2Trace.log("folder picked: " + D2FolderPick.traceName(picked != null ? picked.getPath() : null) + " -> " + outcome
-            + (check != null ? " (" + check.status + ", game " + D2FolderPick.traceName(check.dir != null ? check.dir.getPath() : null) + ")" : "")
-            + "");
+            + (check != null ? " (" + check.status + ", game " + D2FolderPick.traceName(check.dir != null ? check.dir.getPath() : null) + ")" : ""));
         if (activity.isFinishing() || activity.isDestroyed()) return;
         String title, text;
         switch (outcome) {

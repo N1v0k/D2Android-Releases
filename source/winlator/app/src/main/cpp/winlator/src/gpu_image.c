@@ -1,4 +1,4 @@
-#include <android/log.h>
+#include <android/log.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #include <android/hardware_buffer.h>
 #include <android/native_window.h>
 
@@ -29,9 +29,9 @@ int AHardwareBuffer_getFd(AHardwareBuffer* hardwareBuffer) {
 EGLImageKHR createImageKHR(AHardwareBuffer* hardwareBuffer, int textureId) {
     const EGLint attribList[] = {EGL_IMAGE_PRESERVED_KHR, EGL_TRUE, EGL_NONE};
 
-    // D2Android: no AHardwareBuffer_acquire here. The EGLImage holds its own reference to the buffer while it
-    // exists; GPUImage owns only the one from AHardwareBuffer_allocate, released in destroyHardwareBuffer after
-    // destroyImageKHR. The extra acquire had no release (not even on the early returns below) and kept every buffer.
+
+
+
     EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID(hardwareBuffer);
     if (!clientBuffer) return NULL;
 

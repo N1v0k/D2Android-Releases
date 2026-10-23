@@ -1,4 +1,4 @@
-#ifndef WINLATOR_STRING_UTILS_H
+#ifndef WINLATOR_STRING_UTILS_H  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #define WINLATOR_STRING_UTILS_H
 
 #include <ctype.h>
@@ -313,6 +313,7 @@ static inline uint32_t fnv1aHash32(const void* data, int len) {
     }
     return hash;
 }
+
 
 static inline uint64_t murmurHash64(const char* key, size_t len, uint64_t seed) {
     const uint64_t kMul = 0xc6a4a7935bd1e995UL;

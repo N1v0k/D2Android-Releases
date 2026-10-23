@@ -3,11 +3,22 @@ package com.winlator.d2;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
+
+
 final class D2ShrinePictures {
     static final int FIRST = 128, LAST = 137;
+
     static final int FRAME = 8;
+
     static final String[] FALLBACK = {"ShrineArmor", "ShrineCombat", "ShrineResistLightning", "ShrineResistFire",
         "ShrineResistCold", "ShrineResistPoison", "ShrineSkill", "ShrineManaRegen", "ShrineStamina", "ShrineExperience"};
+
 
     static final class Picture {
         final int width, height;
@@ -21,6 +32,7 @@ final class D2ShrinePictures {
     }
 
     private D2ShrinePictures() {}
+
 
     static String[] files(byte[] statesTxt, byte[] overlayTxt) {
         String[] out = FALLBACK.clone();
@@ -48,6 +60,7 @@ final class D2ShrinePictures {
         return out;
     }
 
+
     static Picture[] load(D2Sprites s) throws IOException {
         String[] names = files(s.read("data\\global\\excel\\states.txt"), s.read("data\\global\\excel\\overlay.txt"));
         int[] palette = s.palette();
@@ -60,6 +73,7 @@ final class D2ShrinePictures {
                 out[i] = new Picture(f.width, f.height, D2Dcc.toArgb(f, palette));
             }
             catch (IOException e) {
+
             }
         }
         return out;

@@ -3,13 +3,37 @@ package com.winlator.d2;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2PointAuto {
     static final long CONFIRM_MS = 2000;
     static final int TRIES = 2;
+
     static final int KEYS = 4;
 
+
     public interface Out {
+
         void bind(int skill, int key);
+
 
         void noKey(int skill);
     }
@@ -22,6 +46,7 @@ public final class D2PointAuto {
     private int sentSkill = -1, sentKey = -1, tries;
     private long sentAt;
 
+
     public void reset() {
         whoClass = -1;
         whoName = null;
@@ -31,6 +56,15 @@ public final class D2PointAuto {
         tries = 0;
     }
 
+
+
+
+
+
+
+
+
+
     public void step(D2PointPlan.Build build, D2Points points, int characterClass, String name, int[] hotkeySkill,
                      boolean ready, long now, Out out) {
         if (points == null || characterClass < 0 || name == null || points.firstSkill < 0) {
@@ -38,6 +72,7 @@ public final class D2PointAuto {
             return;
         }
         if (characterClass != whoClass || !name.equals(whoName) || points.firstSkill != firstSkill || base == null) {
+
             reset();
             whoClass = characterClass;
             whoName = name;
@@ -45,6 +80,7 @@ public final class D2PointAuto {
             base = points.baseLevels.clone();
             return;
         }
+
         for (int i = 0; i < base.length && i < points.baseLevels.length; i++) {
             int skill = firstSkill + i;
             if (base[i] == 0 && points.baseLevels[i] > 0 && isKey(build, skill) && !pending.contains(skill)) pending.add(skill);
@@ -53,6 +89,7 @@ public final class D2PointAuto {
         if (pending.isEmpty() || build == null) return;
         int skill = pending.peek();
         if (onKey(hotkeySkill, skill) >= 0) {
+
             pending.poll();
             sentSkill = -1;
             tries = 0;
@@ -84,21 +121,25 @@ public final class D2PointAuto {
         out.noKey(skill);
     }
 
+
     static boolean isKey(D2PointPlan.Build build, int skill) {
         if (build == null) return false;
         for (D2PointPlan.Key k : build.keys) if (k.skill == skill) return true;
         return false;
     }
 
+
     static int onKey(int[] hotkeySkill, int skill) {
         for (int i = 0; hotkeySkill != null && i < hotkeySkill.length; i++) if (hotkeySkill[i] == skill) return i;
         return -1;
     }
 
+
     static int freeKey(int[] hotkeySkill) {
         for (int i = 0; hotkeySkill != null && i < KEYS && i < hotkeySkill.length; i++) if (hotkeySkill[i] < 0) return i;
         return -1;
     }
+
 
     @Override
     public String toString() {

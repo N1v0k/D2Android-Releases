@@ -2,19 +2,36 @@ package com.winlator.d2.test;
 
 import com.winlator.d2.D2Tabellen;
 
+
+
+
+
+
+
 public final class Ausruestung {
+
     public static final double GEWINN = 1.2;
+
     public static final int MINDERWERTIG = 1, NORMAL = 2, UEBERLEGEN = 3, MAGISCH = 4;
 
+
     public static final class Figur {
+
         public int klasse;
         public int stufe;
+
         public int staerke, geschick;
+
         public int grundStaerke = -1, grundGeschick = -1;
+
         public boolean linkeHandLeer;
     }
 
     private Ausruestung() {}
+
+
+
+
 
     public static String nichtAnlegbar(D2Tabellen t, Figur f, String code, boolean aetherisch) {
         D2Tabellen.Waffe w = t != null ? t.waffe(code) : null;
@@ -32,9 +49,15 @@ public final class Ausruestung {
         return null;
     }
 
+
     static boolean zweihaendig(D2Tabellen.Waffe w, Figur f) {
         return w.twoHanded && !(w.oneOrTwoHanded && f.klasse == 4);
     }
+
+
+
+
+
 
     public static double wert(D2Tabellen t, Figur f, String code, int qualitaet) {
         D2Tabellen.Waffe w = t != null ? t.waffe(code) : null;
@@ -46,6 +69,7 @@ public final class Ausruestung {
         return schaden * attribute * tempo * qualitaetsfaktor(qualitaet);
     }
 
+
     static double qualitaetsfaktor(int qualitaet) {
         if (qualitaet == MINDERWERTIG) return 0.7;
         if (qualitaet == UEBERLEGEN) return 1.1;
@@ -53,9 +77,17 @@ public final class Ausruestung {
         return 1.0;
     }
 
+
     public static final int RECHTE_HAND = 4, LINKE_HAND = 5;
+
     static final int KATEGORIE_WAFFE = 16;
+
     static final int FLAG_AETHERISCH = 1;
+
+
+
+
+
 
     public static Figur figur(Zustand.Figur figur, int klasse, int[] grundwerte) {
         Figur f = new Figur();
@@ -71,6 +103,7 @@ public final class Ausruestung {
         return f;
     }
 
+
     public static Zustand.Figur.Teil amKoerper(Zustand.Figur figur, int platz) {
         for (Zustand.Figur.Teil t : figur.gegenstaende) {
             if (t.platz == Zustand.Figur.PLATZ_KOERPER && t.koerperplatz == platz) return t;
@@ -78,9 +111,15 @@ public final class Ausruestung {
         return null;
     }
 
+
+
+
+
+
     public static Zustand.Figur.Teil bessereWaffe(D2Tabellen t, Zustand.Figur figur, Figur f) {
         return bessereWaffe(t, figur, f, java.util.Collections.emptySet());
     }
+
 
     public static Zustand.Figur.Teil bessereWaffe(D2Tabellen t, Zustand.Figur figur, Figur f, java.util.Set<Long> ausser) {
         if (t == null || figur.zeiger != 0 || (figur.voll & Zustand.Figur.VOLL_GEGENSTAENDE) != 0) return null;
@@ -99,6 +138,10 @@ public final class Ausruestung {
         }
         return beste;
     }
+
+
+
+
 
     public static boolean besser(D2Tabellen t, Figur f, String neu, int neuQualitaet, boolean neuAetherisch, String alt,
                                  int altQualitaet) {

@@ -1,3 +1,22 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <windows.h>
@@ -8,6 +27,7 @@
 #include <stdarg.h>
 
 
+
 #define GAMELOOP_PATCH_RVA      0x45280
 #define RVA_GetPlayerUnit       0x613C0
 #define RVA_GetUiVar_I          0x17C50
@@ -15,6 +35,10 @@
 #define RVA_SetSelectedUnit_I   0x17060
 #define RVA_ClickMap            0x2B420
 #define SELECTED_CALL_RVA       0x2B494
+
+
+
+
 #define RVA_ClickTakenThisFrame 0x11D2CC
 #define RVA_ClickTakenCheck     0x2B42F
 #define RVA_FindServerSideUnit  0x620D0
@@ -31,19 +55,28 @@
 #define RVA_ScreenSizeY         0xF7038
 #define RVA_MouseX              0x11C950
 #define RVA_MouseY              0x11C94C
+
 #define RVA_DrawStatueLeft      0x6D549
 #define RVA_DrawStatueRight     0x6D626
 #define RVA_GfxDrawThunk        0xCFCE
 #define RVA_DrawCursorCall      0x14EF9
 #define RVA_DrawCursorCall2     0x14D77
+
+
+
+
 #define RVA_DrawHelpButtonCall  0x1D5C7
 #define RVA_DrawHelpButton      0xAB830
 #define RVA_DrawQuestButtonCall 0x1D5FC
 #define RVA_DrawQuestButton     0x8CEF0
 #define RVA_UiVarHelpButton     0x11C918
+
+
+
 #define RVA_HelpButtonDown      0xAA640
 #define RVA_HelpButtonUp        0xAB621
 #define RVA_HelpButtonLock      0x11CAE8
+
 #define RVA_QuestButtonDownHit  0x8C62F
 #define RVA_QuestButtonUpHit    0x8E210
 #define RVA_QuestButtonHit      0x8B3D0
@@ -56,16 +89,28 @@
 #ifndef DURA_WARN_PERCENT
 #define DURA_WARN_PERCENT 20
 #endif
+
+
 #define RVA_UiVarGameMenu       0x11C8B4
+
+
 #define RVA_UiVars              0x11C890
 #define UI_SHOWITEMS            0x0D
+
+
+
 #define RVA_EscCloseList        0xD4078
 #define RVA_EscCloseListRead    0x1851D
+
+
+
 #define RVA_LabelsTipClearCall  0x4EA3B
 #define RVA_SetHoverTextThunk   0xD28C
 #define RVA_GetItemUseSound     0xB9A30
 #define RVA_PlaySound           0x26270
 #define RVA_SoundCheckVar       0x11D2F0
+
+
 #define RVA_NpcMenuTable        0xF1A90
 #define RVA_NpcMenuCount        0xF21E0
 #define RVA_NpcMenuSearch       0x7B580
@@ -79,8 +124,11 @@
 #define NPCMENU_SIZE            0x27
 #define RVA_DrawGameMenuCall    0x1D43F
 #define RVA_DrawGameMenu        0xC34D0
+
 #define RVA_HotkeySkill         0x101410
 #define RVA_HotkeyLeft          0x101500
+
+
 #define RVA_GameRunDrainCall    0x931D4
 #define RVA_GameRunDrain        0x91B30
 #define STAT_STAMINA            10
@@ -88,17 +136,30 @@
 #define STAT_SKILLPOINTS        5
 #define STAT_QUANTITY           70
 #define STAT_MAXSTAMINA         11
+
+
 #define STATE_HEALTHPOT         100
 #define STATE_MANAPOT           106
 #define STATE_STAMINAPOT        180
+
 #define RVA_GfxLoadRenderer     0xAA03
 #define RVA_GfxLoadLibraryIat   0xD11C
+
+
+
+
+
 #define RVA_StormStreamFill     0x2B620
 #define RVA_StormStreamFillRead 0x2B632
 #define RVA_StormStreamFillExit 0x2B76B
 #define RVA_StormStreamLock     0x55934
+
+
 #define RVA_GameSaveFlag        0xBE6D4
+
 #define RVA_GamePlugYPacket     0x676C3
+
+
 #define RVA_RevealAutomapRoom   0x73160
 #define RVA_InitAutomapLayer    0x733D0
 #define RVA_NewAutomapCell      0x703C0
@@ -119,6 +180,7 @@
 #define ORD_AddRoomData         10890
 #define ORD_RemoveRoomData      10208
 #define ORD_GetLevelText        10142
+
 #define ORD_GetLevelDef         10087
 #define ORD_GetObjectTxt        10319
 #define ORD_DrawText            10076
@@ -131,6 +193,7 @@
 #define ORD_SendPacket          10015
 
 static const BYTE GAMELOOP_ORIGINAL[7] = {0x83, 0xEC, 0x20, 0x89, 0x4C, 0x24, 0x0C};
+
 
 #define U_TYPE        0x00
 #define U_TXTNO       0x04
@@ -159,6 +222,7 @@ static const BYTE GAMELOOP_ORIGINAL[7] = {0x83, 0xEC, 0x20, 0x89, 0x4C, 0x24, 0x
 #define ROOM2_LEVEL   0x58
 #define LEVEL_NO      0x1D0
 #define ACT_ROOM1     0x10
+
 #define ACT_SEED      0x0C
 #define ACT_MISC      0x48
 #define MISC_LEVELS   0x47C
@@ -205,6 +269,7 @@ static const BYTE GAMELOOP_ORIGINAL[7] = {0x83, 0xEC, 0x20, 0x89, 0x4C, 0x24, 0x
 #define RDP(p, off)  (*(void**)((BYTE*)(p) + (off)))
 
 
+
 #define APP_PORT 7958
 #define MOD_PORT 7959
 #define PROTOCOL_VERSION 2
@@ -225,9 +290,15 @@ static const BYTE GAMELOOP_ORIGINAL[7] = {0x83, 0xEC, 0x20, 0x89, 0x4C, 0x24, 0x
 #define CMD_NPC 8
 #define CMD_PLUGY 10
 #define CMD_SELECT_SKILL 13
+
 #define CMD_PLAYERS 9
 #define CMD_PAUSE 6
 #define CMD_HUD 5
+
+
+
+
+
 
 #define STATUS_WAITING 0
 #define STATUS_HOOKED 1
@@ -239,6 +310,7 @@ static const BYTE GAMELOOP_ORIGINAL[7] = {0x83, 0xEC, 0x20, 0x89, 0x4C, 0x24, 0x
 #define MAX_OBJECTS 24
 #define MAX_CORPSES 24
 #define MAX_CANDIDATES 256
+
 
 
 typedef void* (__stdcall *GetPlayerUnit_t)(void);
@@ -263,8 +335,10 @@ static UnitCoord_t fGetUnitX, fGetUnitY;
 static FindUnit_t fFindServerSideUnit, fFindClientSideUnit;
 static ClickMap_t fClickMap;
 static DWORD fSetSelectedUnit;
+
 static volatile int forcing, unitActions;
 static void* forcedUnit;
+
 static BYTE* selectedTrampoline;
 static DWORD highlightType, highlightId = 0xFFFFFFFF, highlightUntil;
 static struct {
@@ -272,6 +346,7 @@ static struct {
     DWORD type, id, expireAt;
     long lastX, lastY;
 } held;
+
 static struct {
     int active;
     int dx, dy;
@@ -279,9 +354,13 @@ static struct {
     int pressPending;
     DWORD clickWait;
     int stopping;
+    int pressDx, pressDy;
+    DWORD pressAt;
+    int turnPresses;
 } walk;
 static int clickFlagKnown;
 static DWORD fGetUiVar, fGetUnitName;
+
 static struct {
     DWORD rva, target;
     BYTE original[5], replacement[5];
@@ -296,25 +375,38 @@ static struct {
     {RVA_DrawCursorCall2, RVA_GfxDrawThunk, {0}, {0x83, 0xC4, 0x18, 0x90, 0x90}, 0},
     {RVA_DrawHelpButtonCall, RVA_DrawHelpButton, {0}, {0x90, 0x90, 0x90, 0x90, 0x90}, 0},
     {RVA_DrawQuestButtonCall, RVA_DrawQuestButton, {0}, {0x90, 0x90, 0x90, 0x90, 0x90}, 0},
+
     {RVA_QuestButtonDownHit, RVA_QuestButtonHit, {0}, {0x33, 0xC0, 0x83, 0xC4, 0x08}, 0},
     {RVA_QuestButtonUpHit, RVA_QuestButtonHit, {0}, {0x33, 0xC0, 0x83, 0xC4, 0x08}, 0},
 };
+
+
 #define HUD_SITES 11
 static int hudAvailable, hudHidden, duraAvailable, duraHidden, cursorAvailable, cursorHidden, edgeAvailable,
     edgeHidden;
 static DWORD hudHideUntil, duraHideUntil, cursorHideUntil, edgeHideUntil;
+
+
 static DWORD labelsUntil;
+
 static DWORD playtestUntil;
 static int labelsAvailable, labelsApplied;
+
 static int escListAvailable, escListPatched;
+
 static int labelTipsKept;
+
 static DWORD game, staminaUntil, staminaCheckedAt;
 static BYTE drainCallOriginal[5];
 static int staminaChecked, staminaAvailable, staminaUnlimited;
+
 static BYTE menuCallOriginal[5];
 static int pauseAvailable, pauseWanted, pauseApplied, menuHidden, soundAvailable;
+
 static int pauseOverOwnMenu;
+
 static int menuHandedOver;
+
 static volatile int plugyLoaded;
 static DWORD pauseRefreshedAt;
 static GetUnitStat_t fGetUnitStat;
@@ -324,15 +416,42 @@ static SendPacket_t fSendPacket;
 
 static SOCKET sock = INVALID_SOCKET, cmdSock = INVALID_SOCKET;
 static struct sockaddr_in appAddr;
+
+static int appPort = APP_PORT, modPort = MOD_PORT, portsRead;
 static volatile LONG status = STATUS_WAITING;
 static char statusText[96] = "startet";
 static DWORD lastSend, lastTick, seq;
+
+
+
+
+
+
+
+
 static volatile LONG outOfGameSeen;
+
+
 volatile LONG worldFrames;
 static int worldHooked;
 static volatile LONG heroVarOk;
+
 static BYTE lastDrink, commandsReceived;
 static char logPath[MAX_PATH];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #define LOG_LINE 2048
 static CRITICAL_SECTION logLock;
@@ -340,6 +459,7 @@ static volatile LONG logReady;
 static HANDLE logFile = INVALID_HANDLE_VALUE;
 static char logBuf[64 * 1024];
 static int logLen;
+
 
 static void writeLogBuffer(void) {
     if (!logLen) return;
@@ -354,6 +474,7 @@ static void flushLog(void) {
     writeLogBuffer();
     LeaveCriticalSection(&logLock);
 }
+
 
 static int formatLogLine(char* line, const char* fmt, va_list args) {
     SYSTEMTIME t;
@@ -370,6 +491,7 @@ static int formatLogLine(char* line, const char* fmt, va_list args) {
     line[n++] = '\n';
     return n;
 }
+
 
 static void appendLogLine(const char* line, int n) {
     if (logLen + n > (int) sizeof(logBuf)) writeLogBuffer();
@@ -389,12 +511,14 @@ static void logLine(const char* fmt, ...) {
     LeaveCriticalSection(&logLock);
 }
 
+
 static void openLog(void) {
     logFile = CreateFileA(logPath, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
                           OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     InitializeCriticalSection(&logLock);
     logReady = 1;
 }
+
 
 static int tryLogLock(int maxMs) {
     for (int i = 0; ; i++) {
@@ -403,6 +527,8 @@ static int tryLogLock(int maxMs) {
         Sleep(1);
     }
 }
+
+
 
 static void logProcessEnd(int processEnds, ...) {
     char line[LOG_LINE];
@@ -424,6 +550,29 @@ static void logProcessEnd(int processEnds, ...) {
 static LPTOP_LEVEL_EXCEPTION_FILTER logPreviousFilter;
 static volatile LONG logInFilter;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static DWORD gameThreadId, exeBase;
 static const char* volatile crashStep;
 #define STEP(call) do { crashStep = #call; call; } while (0)
@@ -440,12 +589,14 @@ static void noteCommand(int cmd) {
     periodicSince[0] = periodicSince[1] = 0;
 }
 
+
 static int crashReadable(const void* p, DWORD size) {
     MEMORY_BASIC_INFORMATION m;
     if (!p || !VirtualQuery(p, &m, sizeof(m)) || m.State != MEM_COMMIT) return 0;
     if (!m.Protect || (m.Protect & (PAGE_NOACCESS | PAGE_GUARD))) return 0;
     return (DWORD) p + size <= (DWORD) m.BaseAddress + m.RegionSize;
 }
+
 
 static DWORD crashModule(DWORD addr, char* name, int size) {
     MEMORY_BASIC_INFORMATION m;
@@ -472,12 +623,14 @@ static DWORD crashModule(DWORD addr, char* name, int size) {
     return (DWORD) base;
 }
 
+
 static void crashWhere(char* out, int size, DWORD addr) {
     char name[40];
     DWORD base = crashModule(addr, name, sizeof(name));
     if (base) snprintf(out, size, "%s+%lX", name, (unsigned long) (addr - base));
     else snprintf(out, size, "%08lX", (unsigned long) addr);
 }
+
 
 static void logCrashLines(EXCEPTION_POINTERS* info, int first) {
     EXCEPTION_RECORD* rec = info ? info->ExceptionRecord : NULL;
@@ -526,8 +679,10 @@ static void logCrashLines(EXCEPTION_POINTERS* info, int first) {
     logLine("crash: stack at %08lX (%d words):%s", ctx->Esp, words, words ? stack : " not readable");
 }
 
+
 static LONG WINAPI logCrashFilter(EXCEPTION_POINTERS* info) {
     LONG result = EXCEPTION_CONTINUE_SEARCH;
+
     if (InterlockedExchange(&logInFilter, 1)) return result;
     DWORD code = info && info->ExceptionRecord ? info->ExceptionRecord->ExceptionCode : 0;
     if (logReady && code != EXCEPTION_STACK_OVERFLOW && tryLogLock(100)) {
@@ -541,16 +696,22 @@ static LONG WINAPI logCrashFilter(EXCEPTION_POINTERS* info) {
     return result;
 }
 
+
 static void keepCrashFilter(void) {
     LPTOP_LEVEL_EXCEPTION_FILTER current = SetUnhandledExceptionFilter(logCrashFilter);
     if (current != logCrashFilter) logPreviousFilter = current;
 }
+
 
 static BYTE potionsWorking(void* player) {
     if (!fGetUnitState) return 0;
     return (fGetUnitState(player, STATE_HEALTHPOT) ? 4 : 0) | (fGetUnitState(player, STATE_MANAPOT) ? 8 : 0)
         | (fGetUnitState(player, STATE_STAMINAPOT) ? 16 : 0);
 }
+
+
+
+
 
 static DWORD traceSecond, traceCount, traceSkipped;
 
@@ -580,6 +741,7 @@ static void setStatus(LONG code, const char* text) {
 }
 
 
+
 typedef struct {
     BYTE data[4096];
     int len;
@@ -596,17 +758,21 @@ static void putHeader(Packet* p, int type) {
     putU16(p, (unsigned) InterlockedExchangeAdd((volatile LONG*) &seq, 1));
 }
 
+
 static volatile LONG socketsBroken;
 
 static void sendPacket(Packet* p) {
     if (sock == INVALID_SOCKET) return;
     if (sendto(sock, (const char*) p->data, p->len, 0, (struct sockaddr*) &appAddr, sizeof(appAddr)) == SOCKET_ERROR) {
         int error = WSAGetLastError();
+
         if ((error == WSANOTINITIALISED || error == WSAENOTSOCK) && InterlockedExchange(&socketsBroken, 1) == 0) {
             logLine("sockets lost (error %d)", error);
         }
     }
 }
+
+
 
 
 static DWORD getUiVar(DWORD no) {
@@ -626,6 +792,7 @@ static const char* itemCode(void* item) {
     return txt ? (const char*) (txt + ITXT_CODE) : "";
 }
 
+
 static int potionKind(const char* code) {
     if (code[0] == 'h' && code[1] == 'p' && code[2] >= '1' && code[2] <= '5') return 1;
     if (code[0] == 'm' && code[1] == 'p' && code[2] >= '1' && code[2] <= '5') return 2;
@@ -637,16 +804,19 @@ static int isStaminaPotion(const char* code) {
     return code[0] == 'v' && code[1] == 'p' && code[2] == 's';
 }
 
+
 static int potionTier(const char* code) {
     if (code[0] == 'r' && code[1] == 'v') return code[2] == 's' ? 1 : 2;
     return code[2] - '0';
 }
+
 
 static int groundItemKind(const char* code) {
     if (code[0] == 'g' && code[1] == 'l' && code[2] == 'd') return 1;
     int potion = potionKind(code);
     if (potion >= 1 && potion <= 3) return 2;
     if (code[0] == 'r' && code[1] >= '0' && code[1] <= '3' && code[2] >= '0' && code[2] <= '9') return 3;
+
     if (code[0] == 'g' && strchr("cfslzp", code[1]) && code[1] && code[2] && strchr("vybgrw", code[2])) return 4;
     if (code[0] == 's' && code[1] == 'k' && code[2] && strchr("cfulz", code[2])) return 4;
     return 0;
@@ -667,10 +837,15 @@ static DWORD unitLevel(void* unit) {
     return level ? RD32(level, LEVEL_NO) : 0;
 }
 
+
+
 #include "d2companions.h"
 
 static const wchar_t* localeText(WORD id);
 static int npcMenuAvailable;
+
+
+
 
 static int isHelperUnitName(const wchar_t* name) {
     if (!npcMenuAvailable) return lstrcmpiW(name, L"an evil force") == 0 || lstrcmpiW(name, L"eine b\u00f6se Macht") == 0;
@@ -681,9 +856,11 @@ static int isHelperUnitName(const wchar_t* name) {
     return 0;
 }
 
+
 #include "d2monrules.h"
 
 static int readable(const void* p, UINT_PTR size);
+
 
 static BYTE* monStatsRow(void* unit) {
     void* data = RDP(unit, U_DATA);
@@ -691,6 +868,10 @@ static BYTE* monStatsRow(void* unit) {
     if (!readable(row, MONSTATS_FLAGS + 4)) return NULL;
     return RD16(row, MONSTATS_ID) == (WORD) RD32(unit, U_TXTNO) ? row : NULL;
 }
+
+
+
+
 
 static void* findMercenary(void* player) {
     void* act = RDP(player, U_ACT);
@@ -707,6 +888,7 @@ static void* findMercenary(void* player) {
     return NULL;
 }
 
+
 static int isValidMonster(void* unit, int town) {
     static const DWORD bad[] = {227, 283, 326, 327, 328, 329, 330, 410, 411, 412, 413, 414, 415, 416, 366, 406,
         351, 352, 353, 266, 408, 516, 517, 518, 519, 522, 523, 543, 545};
@@ -717,9 +899,15 @@ static int isValidMonster(void* unit, int town) {
     if ((txt == 258 || txt == 261) && mode == 14) return 0;
     for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) if (txt == bad[i]) return 0;
     if (isMercenary(txt)) return 0;
+
+
+
     if (isSummon(txt)) return 0;
     if (!town && fGetUnitStat(unit, 172, 0) == 2) return 0;
+
+
     BYTE* row = monStatsRow(unit);
+
     if (row) return monsterRowVerdict(RD32(row, MONSTATS_FLAGS), RD16(row, MONSTATS_NAMESTR), town);
     const wchar_t* name = unitName(unit);
     if (name && isHelperUnitName(name)) return 0;
@@ -729,6 +917,7 @@ static int isValidMonster(void* unit, int town) {
 typedef struct {
     long offX, offY;
 } View;
+
 
 static void toScreen(const View* view, double x, double y, int* sx, int* sy) {
     long ix = (long) x, iy = (long) y;
@@ -771,6 +960,7 @@ static void putName(Packet* p, void* unit) {
 }
 
 
+
 static void* findUnit(DWORD id, DWORD type) {
     void* unit = fFindServerSideUnit(id, type);
     return unit ? unit : fFindClientSideUnit(id, type);
@@ -781,6 +971,7 @@ static void setSelectedUnit(void* unit) {
     __asm__ volatile ("call *%2" : "+a"(a), "+c"(c) : "r"(fSetSelectedUnit) : "edx", "memory", "cc");
 }
 
+
 static void* originalSelectedUnit(void) {
     if (!selectedTrampoline) return fGetSelectedUnit();
     void* (__stdcall *original)(void) = (void* (__stdcall *)(void)) selectedTrampoline;
@@ -789,11 +980,14 @@ static void* originalSelectedUnit(void) {
 
 static int teleportIgnoresHover(void* hovered);
 
+
+
 static void* __cdecl selectedUnitIntercept(void) {
     if (forcing) return forcedUnit;
     void* hovered = originalSelectedUnit();
     return teleportIgnoresHover(hovered) ? NULL : hovered;
 }
+
 
 static void* __cdecl selectedUnitHighlight(void) {
     if (forcing) return forcedUnit;
@@ -803,6 +997,17 @@ static void* __cdecl selectedUnitHighlight(void) {
     }
     return originalSelectedUnit();
 }
+
+
+
+
+
+
+
+
+
+
+
 
 static DWORD hideLabelsForClick(void) {
     if (!labelsAvailable) return 0;
@@ -816,6 +1021,14 @@ static void restoreLabels(DWORD old) {
     if (labelsAvailable) ((DWORD*) (client + RVA_UiVars))[UI_SHOWITEMS] = old;
 }
 
+
+
+
+
+
+
+
+
 static int clickFree(DWORD* waitingSince, DWORD now) {
     if (!clickFlagKnown || RD32(client, RVA_ClickTakenThisFrame) == 0) {
         *waitingSince = 0;
@@ -825,6 +1038,7 @@ static int clickFree(DWORD* waitingSince, DWORD now) {
         *waitingSince = now | 1;
         return 0;
     }
+
     if ((int) (now - *waitingSince) < 250) return 0;
     trace("click flag still set after %d ms: cleared", (int) (now - *waitingSince));
     *(DWORD*) (client + RVA_ClickTakenThisFrame) = 0;
@@ -861,6 +1075,7 @@ static void clickUnit(void* unit, int clickType, int shift) {
     *mouseY = oldY;
 }
 
+
 static void clickGround(int clickType, long x, long y) {
     DWORD* mouseX = (DWORD*) (client + RVA_MouseX);
     DWORD* mouseY = (DWORD*) (client + RVA_MouseY);
@@ -878,15 +1093,30 @@ static void clickGround(int clickType, long x, long y) {
     *mouseY = oldY;
 }
 
+
+
+
+
+
+
+
+
 static void walkPoint(void* player, long* x, long* y) {
     *x = fGetUnitX(player);
     *y = fGetUnitY(player);
     fMapToAbsScreen(x, y);
     *x -= (long) fGetMouseXOffset();
     *y -= (long) fGetMouseYOffset();
-    *x += walk.dx;
-    *y += walk.dy;
     long w = (long) RD32(client, RVA_ScreenSizeX), h = (long) RD32(client, RVA_ScreenSizeY);
+    double scale = 1;
+    if (w > 0 && h > 0 && *x >= 1 && *x <= w - 2 && *y >= 1 && *y <= h - 2) {
+        if (walk.dx > 0 && *x + walk.dx > w - 2) scale = (double) (w - 2 - *x) / walk.dx;
+        if (walk.dx < 0 && *x + walk.dx < 1) scale = (double) (1 - *x) / walk.dx;
+        if (walk.dy > 0 && *y + walk.dy > h - 2 && (double) (h - 2 - *y) / walk.dy < scale) scale = (double) (h - 2 - *y) / walk.dy;
+        if (walk.dy < 0 && *y + walk.dy < 1 && (double) (1 - *y) / walk.dy < scale) scale = (double) (1 - *y) / walk.dy;
+    }
+    *x += (long) (walk.dx * scale);
+    *y += (long) (walk.dy * scale);
     if (w > 0 && h > 0) {
         if (*x < 1) *x = 1;
         if (*x > w - 2) *x = w - 2;
@@ -895,8 +1125,10 @@ static void walkPoint(void* player, long* x, long* y) {
     }
 }
 
+
 static void stopWalk(void* player) {
     if (walk.stopping == 2 && player) {
+
         long x, y;
         walk.dx = walk.dy = 0;
         walkPoint(player, &x, &y);
@@ -906,9 +1138,12 @@ static void stopWalk(void* player) {
     if (!walk.active) return;
     walk.active = 0;
     if (walk.pressPending) {
+
         walk.pressPending = 0;
         return;
     }
+
+
     long x = 0, y = 0;
     if (player) {
         walk.dx = walk.dy = 0;
@@ -925,15 +1160,25 @@ static void releaseHeld(const char* why) {
     clickUnit(findUnit(held.id, held.type), held.button ? 5 : 2, held.shift);
 }
 
+
 static DWORD playerMode(void) {
     void* player = fGetPlayerUnit();
     return player ? RD32(player, U_MODE) : 0xFFFFFFFF;
 }
 
+
 static int playerBusy(void) {
     DWORD mode = playerMode();
     return (mode >= 7 && mode <= 16) || mode == 18;
 }
+
+
+
+
+
+
+
+
 
 static struct {
     int active, button, shift, waitSwing, click;
@@ -953,6 +1198,12 @@ static void setPendingPress(int button, int phase, int shift, DWORD type, DWORD 
     pendingPress.clickWait = 0;
 }
 
+
+
+
+
+
+
 #define NO_REPRESS 0xFFFFFFFF
 static DWORD heldRepressId = NO_REPRESS, heldRepressWait;
 
@@ -967,8 +1218,15 @@ static void pressUnit(void* unit, int button, int click, int shift, DWORD type, 
     clickUnit(unit, button ? 3 : 0, shift);
 }
 
+
 static DWORD lastUpId = 0xFFFFFFFF, lastUpAt;
 static int lastUpKnown;
+
+
+
+
+
+
 
 static int holdPressesAgain(int button, DWORD type, DWORD id, DWORD now) {
     if (held.active || pendingPress.active) return 0;
@@ -1035,6 +1293,10 @@ static void unitAction(int button, int phase, int shift, DWORD type, DWORD id, D
     pressUnit(unit, button, phase == PHASE_CLICK, shift, type, id, now);
 }
 
+
+
+
+
 static int heldClickType(DWORD now) {
     int press = held.button ? 3 : 0;
     if (heldRepressId == NO_REPRESS || heldRepressId != held.id) {
@@ -1047,6 +1309,7 @@ static int heldClickType(DWORD now) {
     return press;
 }
 
+
 static void updateHeld(DWORD now) {
     if (pendingPress.active) {
         if ((int) (now - pendingPress.expireAt) > 0) {
@@ -1055,6 +1318,7 @@ static void updateHeld(DWORD now) {
                 (int) (now - pendingPress.since));
             return;
         }
+
         if (pendingPress.waitSwing && playerBusy() && (int) (now - pendingPress.since) <= 1500) return;
         if (!clickFree(&pendingPress.clickWait, now)) return;
         pendingPress.active = 0;
@@ -1081,6 +1345,15 @@ static void updateHeld(DWORD now) {
     }
 }
 
+
+
+
+
+
+
+
+
+
 #define RVA_ClickBlocked 0x11C8B4
 static volatile int replaying;
 static int realHeld;
@@ -1092,6 +1365,7 @@ static struct {
 } gameLost;
 BYTE* clickMapTrampoline __attribute__((used));
 
+
 static int clickTakenNow(void) {
     return clickFlagKnown && RD32(client, RVA_ClickTakenThisFrame) != 0;
 }
@@ -1100,15 +1374,27 @@ static int clickBlocked(void) {
     return RD32(client, RVA_ClickBlocked) != 0;
 }
 
+
 static void replayClick(int clickType, long x, long y, DWORD flags) {
     replaying = 1;
     fClickMap(clickType, x, y, flags);
     replaying = 0;
 }
 
+
+
+
+
+
+
 static int modHoldsButton(int bit) {
     return (held.active && (held.button ? 2 : 1) == bit) || (pendingPress.active && (pendingPress.button ? 2 : 1) == bit);
 }
+
+
+
+
+
 
 static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
     if (forcing || replaying || !clickFlagKnown || clickBlocked() || clickType > 5) return;
@@ -1135,6 +1421,7 @@ static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
             trace("click: the game's %s press (%lu) at %lu,%lu", bit == 2 ? "right" : "left",
                 (unsigned long) clickType, (unsigned long) x, (unsigned long) y);
             realHeld |= bit;
+
             if ((gameLost.type >= 3 ? 2 : 1) == bit) gameLost.active = gameLost.releaseDue = 0;
         }
     }
@@ -1144,6 +1431,9 @@ static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
         realHeld &= ~bit;
         if (gameLost.active && (gameLost.type >= 3 ? 2 : 1) == bit) gameLost.released = 1;
         if (held.active) {
+
+
+
             trace("click: the game's release (%lu) while the mod holds %lu: its press follows again",
                 (unsigned long) clickType, (unsigned long) held.id);
             heldRepressId = held.id;
@@ -1152,12 +1442,17 @@ static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
     }
 }
 
+
+
 static volatile int clickMapType = -1;
+
 
 __attribute__((force_align_arg_pointer, used)) void __cdecl d2ClickMapEntered(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
     clickMapType = (int) clickType;
     noteGameClick(clickType, x, y, flags);
 }
+
+
 
 __asm__(
     ".text\n"
@@ -1175,6 +1470,10 @@ __asm__(
     "    popal\n"
     "    jmp *_clickMapTrampoline\n");
 extern void d2ClickMapStub(void);
+
+
+
+
 
 static void installClickMapEntryHook(void) {
     BYTE* site = (BYTE*) (client + RVA_ClickMap);
@@ -1198,8 +1497,14 @@ static void installClickMapEntryHook(void) {
     logLine("click entry hook installed");
 }
 
+
+
+
+
+
 static void repressLost(DWORD now) {
     if ((gameLost.active || gameLost.releaseDue) && modHoldsButton(gameLost.type >= 3 ? 2 : 1)) {
+
         trace("click: the mod holds a unit with that button: the lost press is not pressed again");
         gameLost.active = gameLost.releaseDue = 0;
         return;
@@ -1210,6 +1515,7 @@ static void repressLost(DWORD now) {
         trace("click: release of the replayed press");
         replayClick(gameLost.type + 2, gameLost.x, gameLost.y, gameLost.flags);
         if (held.active) {
+
             heldRepressId = held.id;
             heldRepressWait = 0;
         }
@@ -1233,6 +1539,7 @@ static void repressLost(DWORD now) {
     else realHeld |= gameLost.type >= 3 ? 2 : 1;
 }
 
+
 static void pressWalk(void* player, DWORD now) {
     if (!clickFree(&walk.clickWait, now)) {
         if (!walk.pressPending) trace("walk: press waits for the next frame (the game took a click in this one)");
@@ -1244,7 +1551,38 @@ static void pressWalk(void* player, DWORD now) {
     long x, y;
     walkPoint(player, &x, &y);
     clickGround(0, x, y);
+    walk.pressDx = walk.dx;
+    walk.pressDy = walk.dy;
+    walk.pressAt = now;
 }
+
+
+
+
+
+
+
+
+
+
+#define TURN_PRESS_MS  80
+#define TURN_PRESS_COS 0.990
+
+static int turnPressDue(DWORD now) {
+    double dot = (double) walk.dx * walk.pressDx + (double) walk.dy * walk.pressDy;
+    double lens = __builtin_sqrt(((double) walk.dx * walk.dx + (double) walk.dy * walk.dy)
+        * ((double) walk.pressDx * walk.pressDx + (double) walk.pressDy * walk.pressDy));
+    if (lens <= 0 || dot >= TURN_PRESS_COS * lens) return 0;
+    if ((int) (now - walk.pressAt) < (dot < 0 ? TURN_PRESS_MS / 2 : TURN_PRESS_MS)) return 0;
+    return !clickTakenNow() && !realHeld && !gameLost.active && !gameLost.releaseDue;
+}
+
+
+
+
+
+
+
 
 #define STOP_STEP_PX 24.0
 
@@ -1261,6 +1599,8 @@ static void endWalk(void) {
 
 static void finishStop(void* player, DWORD now) {
     if (realHeld || gameLost.active || gameLost.releaseDue) {
+
+
         trace(walk.stopping == 1 ? "walk: stop dropped, the game's own press is held"
                                  : "walk: release of the stop left out, the game's own press is held");
         walk.stopping = 0;
@@ -1269,6 +1609,7 @@ static void finishStop(void* player, DWORD now) {
     }
     if (!clickFree(&walk.clickWait, now)) return;
     long x, y;
+
     double len = __builtin_sqrt((double) walk.dx * walk.dx + (double) walk.dy * walk.dy);
     if (len > STOP_STEP_PX) {
         walk.dx = (int) (walk.dx * STOP_STEP_PX / len);
@@ -1283,7 +1624,7 @@ static void finishStop(void* player, DWORD now) {
 static void walkAction(void* player, int phase, int dx, int dy, DWORD now) {
     if (!unitActions) return;
     if (phase == PHASE_UP) {
-        if (walk.active) trace("walk: stop (app)");
+        if (walk.active) trace("walk: stop (app), %d presses for turns", walk.turnPresses);
         endWalk();
         return;
     }
@@ -1292,6 +1633,7 @@ static void walkAction(void* player, int phase, int dx, int dy, DWORD now) {
     walk.expireAt = now + 600;
     if (walk.active) return;
     trace("walk: start %d,%d (holding %lu, active %d)", dx, dy, (unsigned long) held.id, held.active);
+
     if (pendingPress.active) trace("press on %lu dropped (app: walk)", (unsigned long) pendingPress.id);
     pendingPress.active = 0;
     releaseHeld("app: walk");
@@ -1300,8 +1642,10 @@ static void walkAction(void* player, int phase, int dx, int dy, DWORD now) {
     walk.active = 1;
     walk.pressPending = 0;
     walk.clickWait = 0;
+    walk.turnPresses = 0;
     pressWalk(player, now);
 }
+
 
 static void updateWalk(void* player, DWORD now) {
     if (walk.stopping) {
@@ -1318,16 +1662,26 @@ static void updateWalk(void* player, DWORD now) {
         pressWalk(player, now);
         return;
     }
+    if (turnPressDue(now)) {
+        if ((double) walk.dx * walk.pressDx + (double) walk.dy * walk.pressDy < 0)
+            trace("walk: turned back, pressed again");
+        walk.turnPresses++;
+        pressWalk(player, now);
+        return;
+    }
     long x, y;
     walkPoint(player, &x, &y);
     clickGround(1, x, y);
 }
 
 
+
+
 static int readsHelpLock(DWORD rva) {
     BYTE* at = (BYTE*) (client + rva);
     return at[0] == 0xA1 && *(DWORD*) (at + 1) == client + RVA_HelpButtonLock && at[5] == 0x85 && at[6] == 0xC0;
 }
+
 
 static void checkHudSites(void) {
     int ok = 1;
@@ -1341,6 +1695,8 @@ static void checkHudSites(void) {
     hudAvailable = ok;
     duraAvailable = hudSites[4].verified;
     cursorAvailable = hudSites[5].verified && hudSites[6].verified;
+
+
     BYTE* helpCmp = (BYTE*) (client + RVA_DrawHelpButtonCall - 8);
     edgeAvailable = hudSites[7].verified && hudSites[8].verified && hudSites[9].verified && hudSites[10].verified
         && helpCmp[0] == 0x39 && helpCmp[1] == 0x1D
@@ -1352,6 +1708,9 @@ static void checkHudSites(void) {
 }
 
 static void patchSite(int i, int hide);
+
+
+
 
 static void applyEdgeButtons(int hide) {
     if (edgeAvailable) {
@@ -1382,6 +1741,7 @@ static void applyDurability(int hide) {
     duraHidden = hide;
 }
 
+
 static void applyHud(int hide) {
     for (int i = 0; i < 4; i++) {
         if (!hudSites[i].verified) continue;
@@ -1395,6 +1755,7 @@ static void applyHud(int hide) {
     hudHidden = hide;
     logLine(hide ? "own HUD: statues and orbs left out" : "own HUD off: original statues and orbs");
 }
+
 
 
 static void checkPauseSite(void) {
@@ -1417,16 +1778,25 @@ static void setMenuHidden(int hide) {
     menuHidden = hide;
 }
 
+
+
+
+
+
+
+
 static void updatePause(void* player, DWORD now) {
     static DWORD lastCallAt;
     static void* lastPlayer;
     if (!pauseAvailable) return;
     DWORD* menu = (DWORD*) (client + RVA_UiVarGameMenu);
+
     if (pauseApplied && player && player == lastPlayer && now - lastCallAt > 1000) pauseRefreshedAt += now - lastCallAt;
     lastCallAt = now;
     lastPlayer = player;
     if (*menu == 0) menuHandedOver = 0;
     if (pauseWanted && (int) (now - pauseRefreshedAt) >= 5000) {
+
         pauseWanted = 0;
         if (pauseApplied) {
             setMenuHidden(0);
@@ -1438,21 +1808,30 @@ static void updatePause(void* player, DWORD now) {
     }
     if (pauseWanted && player) {
         if (!pauseApplied) {
+
+
+
             endWalk();
             pendingPress.active = 0;
             releaseHeld("pause");
             pauseApplied = 1;
+
             pauseOverOwnMenu = *menu != 0 && !menuHandedOver;
             logLine(pauseOverOwnMenu ? "paused over the game's own menu" : "paused");
         }
         else if (*menu == 0) {
+
             pauseOverOwnMenu = 0;
             logLine("menu variable cleared while paused: set again");
         }
+
         *menu = 1;
         setMenuHidden(1);
     }
     else if (pauseApplied) {
+
+
+
         if (!pauseWanted && !pauseOverOwnMenu) *menu = 0;
         setMenuHidden(0);
         pauseApplied = 0;
@@ -1462,7 +1841,9 @@ static void updatePause(void* player, DWORD now) {
 }
 
 
+
 static int readable(const void* p, UINT_PTR size);
+
 
 static void checkClickFlagSite(void) {
     BYTE* at = (BYTE*) (client + RVA_ClickTakenCheck);
@@ -1470,16 +1851,22 @@ static void checkClickFlagSite(void) {
     logLine(clickFlagKnown ? "click flag site verified" : "click flag site not as expected: presses are not delayed");
 }
 
+
 static void checkLabelsSite(void) {
     BYTE* at = (BYTE*) (client + RVA_GetUiVar_I + 0x24);
     labelsAvailable = readable(at, 7) && at[0] == 0x8B && at[1] == 0x04 && at[2] == 0x85 && *(DWORD*) (at + 3) == client + RVA_UiVars;
     logLine(labelsAvailable ? "item names site verified" : "item names site not as expected: the app holds Alt");
+
     BYTE* read = (BYTE*) (client + RVA_EscCloseListRead);
     DWORD* entry = (DWORD*) (client + RVA_EscCloseList) + UI_SHOWITEMS;
     escListAvailable = labelsAvailable && readable(read, 7) && read[0] == 0x39 && read[1] == 0x3C && read[2] == 0xB5
         && *(DWORD*) (read + 3) == client + RVA_EscCloseList && readable(entry, 4) && *entry == 1;
     logLine(escListAvailable ? "esc list site verified" : "esc list site not as expected: Esc stays blocked while item names are shown");
 }
+
+
+
+
 
 static void setEscClosesLabels(int closes) {
     if (!escListAvailable || escListPatched == !closes) return;
@@ -1495,6 +1882,12 @@ static void setEscClosesLabels(int closes) {
     escListPatched = !closes;
     logLine(closes ? "esc list: item names closed by Esc again" : "esc list: item names off the Esc list");
 }
+
+
+
+
+
+
 
 static void keepLabelTips(void) {
     BYTE* at = (BYTE*) (client + RVA_LabelsTipClearCall);
@@ -1515,9 +1908,11 @@ static void keepLabelTips(void) {
     logLine(labelTipsKept ? "label tooltip site patched: tooltips stay with item names" : "label tooltip site not as expected: no tooltips with item names");
 }
 
+
 static void updateLabels(DWORD now) {
     if (!labelsAvailable) return;
     DWORD* var = (DWORD*) (client + RVA_UiVars) + UI_SHOWITEMS;
+
     static DWORD seen;
     if (*var != seen) trace("show-items %lu -> %lu (game)", (unsigned long) seen, (unsigned long) *var);
     int want = (int) (now - labelsUntil) < 0;
@@ -1528,6 +1923,7 @@ static void updateLabels(DWORD now) {
         setEscClosesLabels(0);
     }
     else if (labelsApplied) {
+
         *var = (GetAsyncKeyState(VK_MENU) & 0x8000) ? 1 : 0;
         labelsApplied = 0;
         setEscClosesLabels(1);
@@ -1537,7 +1933,9 @@ static void updateLabels(DWORD now) {
 }
 
 
+
 static int readable(const void* p, UINT_PTR size);
+
 
 static void checkStaminaSite(void) {
     game = (DWORD) GetModuleHandleA("D2Game.dll");
@@ -1548,6 +1946,10 @@ static void checkStaminaSite(void) {
     if (staminaAvailable) memcpy(drainCallOriginal, at, 5);
     logLine(staminaAvailable ? "stamina site verified" : "stamina site not as expected: no unlimited stamina");
 }
+
+
+
+
 
 static void applyStamina(int unlimited) {
     static const BYTE stillRunning[5] = {0xB8, 0x01, 0x00, 0x00, 0x00};
@@ -1575,6 +1977,11 @@ static void updateStamina(DWORD now) {
     if (want != staminaUnlimited) applyStamina(want);
 }
 
+
+
+
+
+
 static int plugySaveChecked;
 static int plugySavePatched;
 
@@ -1597,6 +2004,15 @@ static void updatePlugYSave(void) {
     FlushInstructionCache(GetCurrentProcess(), at, 2);
     logLine("PlugY save site patched: saving includes the stash pages");
 }
+
+
+
+
+
+
+
+
+
 
 #define RVA_PlugYWindowStartX 0x31B48
 #define PLUGY_STATS_PAGE_WIDTH 320
@@ -1625,6 +2041,11 @@ static void updatePlugYPages(void) {
     DWORD* startX = *(DWORD**) (plugy + RVA_PlugYWindowStartX);
     if (!startX || !readable(startX, 4) || *startX > 4000) return;
     DWORD limit = *startX + PLUGY_STATS_PAGE_WIDTH;
+
+
+
+
+
     int done = 1;
     for (int i = 0; i < 2; i++) {
         BYTE* at = plugy + plugyPageChecks[i] + 2;
@@ -1654,6 +2075,15 @@ static void updatePlugYPages(void) {
 }
 
 
+
+
+
+
+
+
+
+
+
 typedef void* (__stdcall *GetLevel_t)(void*, DWORD);
 typedef void (__stdcall *InitLevel_t)(void*);
 typedef void (__stdcall *RoomData_t)(void*, DWORD, DWORD, DWORD, void*);
@@ -1678,6 +2108,7 @@ static AddCell_t fAddAutomapCell;
 static DrawText_t fDrawText;
 static TextWidth_t fGetTextWidth;
 static SetTextSize_t fSetTextSize;
+
 static DWORD* objectTxtCount;
 static int mapAvailable, mapShown;
 static DWORD mapUntil, mapTick;
@@ -1697,17 +2128,46 @@ typedef struct {
 } MapLabel;
 static MapLabel labels[MAX_LABELS];
 static int labelCount;
+
 static MapLabel exits[MAX_LABELS];
 static int exitCount;
 
+#include "d2reveal.c"
+
+
+
+
+
+
+
 static struct {
     void* act;
-    DWORD seed, first, next, end, since, spent;
+    DWORD seed, first, end, since, ticks, levelTicks[REVEAL_LEVELS];
+    unsigned long long spent, levelSpent[REVEAL_LEVELS], lastTickUs, lastOwnUs;
+    int paceReady, settled;
+    RevealPlan plan;
+    RevealPace pace;
 } reveal;
+
+
+static unsigned long long revealNowUs(void) {
+    static LARGE_INTEGER freq;
+    LARGE_INTEGER count;
+    if (!freq.QuadPart && (!QueryPerformanceFrequency(&freq) || !freq.QuadPart)) freq.QuadPart = 1;
+    if (freq.QuadPart == 1 || !QueryPerformanceCounter(&count)) return (unsigned long long) GetTickCount() * 1000;
+    unsigned long long c = (unsigned long long) count.QuadPart, f = (unsigned long long) freq.QuadPart;
+    return c / f * 1000000 + c % f * 1000000 / f;
+}
+
+
+static int revealDone(void) {
+    return reveal.act && reveal.settled;
+}
 
 static int bytesAre(DWORD at, const BYTE* expected, int length) {
     return readable((void*) at, length) && memcmp((void*) at, expected, length) == 0;
 }
+
 
 static int addressAt(DWORD module, DWORD rva, DWORD target) {
     return readable((void*) (module + rva), 4) && *(DWORD*) (module + rva) == module + target;
@@ -1724,6 +2184,10 @@ static void* initLayer(DWORD layerNo) {
     return (void*) a;
 }
 
+
+
+
+
 static const wchar_t* levelName(DWORD levelNo) {
     BYTE* txt = fGetLevelText(levelNo);
     return readable(txt, LTXT_NAME + 2) ? (const wchar_t*) (txt + LTXT_NAME) : NULL;
@@ -1735,6 +2199,7 @@ static DWORD levelLayer(DWORD levelNo) {
 }
 
 static void __cdecl automapDrawn(void);
+
 
 static void checkMapSites(void) {
     HMODULE win = GetModuleHandleA("D2Win.dll");
@@ -1763,6 +2228,7 @@ static void checkMapSites(void) {
     static const BYTE textSize[] = {0x83, 0xEC, 0x5C, 0x53, 0x55, 0x57};
     static const BYTE revealRoom[] = {0x51, 0x53, 0x55, 0x56, 0x8B, 0x74, 0x24, 0x14, 0x33, 0xED, 0x57};
     static const BYTE addCell[] = {0x51, 0x53, 0x55, 0x56, 0x8B, 0xEA, 0x8B, 0x75, 0x00, 0x33, 0xDB};
+
     int checks[] = {
         fGetLevel && bytesAre((DWORD) fGetLevel, getLevel, sizeof(getLevel)),
         fInitLevel && bytesAre((DWORD) fInitLevel, initLevel, sizeof(initLevel)),
@@ -1774,6 +2240,8 @@ static void checkMapSites(void) {
             && bytesAre((DWORD) fGetLevelText + 0x1C, levelTextSize, sizeof(levelTextSize)),
         fGetObjectTxt && bytesAre((DWORD) fGetObjectTxt, objectTxt, sizeof(objectTxt))
             && bytesAre((DWORD) fGetObjectTxt + 0x3C, objectTxtSize, sizeof(objectTxtSize)),
+
+
         fDrawText && (bytesAre((DWORD) fDrawText, drawText, sizeof(drawText))
             || (RD8(fDrawText, 0) == 0xE9 && bytesAre((DWORD) fDrawText + 5, drawText + 5, sizeof(drawText) - 5))),
         fGetTextWidth && bytesAre((DWORD) fGetTextWidth, textWidth, sizeof(textWidth)),
@@ -1795,6 +2263,7 @@ static void checkMapSites(void) {
         && RD8(client, RVA_InitAutomapLayer) == 0x56 && addressAt(client, RVA_InitAutomapLayer + 3, RVA_AutomapLayerList)
         && addressAt(client, RVA_InitAutomapLayer + 0x25, RVA_AutomapLayer)
         && RD8(client, RVA_NewAutomapCell) == 0x8B && addressAt(client, RVA_NewAutomapCell + 2, RVA_AutomapCellPool);
+
     int client2 = callAt(client, RVA_DrawAutomapCall, RVA_DrawAutomap)
         && addressAt(client, 0x70D6C, RVA_AutomapDivisor) && addressAt(client, 0x70D7C, RVA_AutomapOffsetX)
         && addressAt(client, 0x70D8E, RVA_AutomapOffsetY) && addressAt(client, 0x70E60, RVA_AutomapMode)
@@ -1805,6 +2274,7 @@ static void checkMapSites(void) {
         logLine("map hack sites not as expected (functions failed %X, D2Client %d/%d): no map hack", failed, client1, client2);
         return;
     }
+
     BYTE* at = (BYTE*) (client + RVA_DrawAutomapCall);
     DWORD old;
     if (!VirtualProtect(at, 5, PAGE_EXECUTE_READWRITE, &old)) return;
@@ -1814,6 +2284,10 @@ static void checkMapSites(void) {
     mapAvailable = 1;
     logLine("map hack sites verified, automap drawing hooked (%lu objects)", (unsigned long) *objectTxtCount);
 }
+
+
+
+
 
 static MapLabel* addLabel(DWORD from, DWORD to, int kind, long x, long y, long weight, long x0, long y0, long x1, long y1,
                           DWORD layer, const wchar_t* name) {
@@ -1850,6 +2324,7 @@ static MapLabel* addLabel(DWORD from, DWORD to, int kind, long x, long y, long w
     return l;
 }
 
+
 static void addCell(void* layer, DWORD cellNo, long x, long y) {
     BYTE* cell = fNewAutomapCell();
     if (!cell) return;
@@ -1858,6 +2333,7 @@ static void addCell(void* layer, DWORD cellNo, long x, long y) {
     *(WORD*) (cell + 8) = (WORD) (((x + y) * 8) / 10 - 3);
     fAddAutomapCell(cell, (BYTE*) layer + 0x10);
 }
+
 
 static DWORD warpDestination(void* room2, DWORD txt) {
     DWORD first = 0;
@@ -1873,6 +2349,7 @@ static DWORD warpDestination(void* room2, DWORD txt) {
     return guard == 1 ? first : 0;
 }
 
+
 static void revealPresets(void* room2, DWORD levelNo, void* layer, DWORD layerNo) {
     long baseX = (long) RD32(room2, ROOM2_X) * 5, baseY = (long) RD32(room2, ROOM2_Y) * 5;
     int guard = 0;
@@ -1883,9 +2360,11 @@ static void revealPresets(void* room2, DWORD levelNo, void* layer, DWORD layerNo
             BYTE* objTxt = fGetObjectTxt(txt);
             if (!readable(objTxt, 0x1C0)) continue;
             DWORD cellNo = RD32(objTxt, OTXT_AUTOMAP);
+
             if (txt == 267 || txt == 366 || (txt == 402 && levelNo != 74)) cellNo = 0;
             if (cellNo > 0 && cellNo < 1258) addCell(layer, cellNo, x, y);
             if (objTxt[OTXT_SUBCLASS] & 64) addLabel(levelNo, 0, LABEL_WAYPOINT, x, y, 1, x, y, x, y, layerNo, (const wchar_t*) (objTxt + OTXT_NAME));
+
             if (objTxt[OTXT_SUBCLASS] & 32) trace("well preset: level %lu txt %lu at %ld,%ld", (unsigned long) levelNo, (unsigned long) txt, x, y);
         }
         else if (type == UNIT_TILE) {
@@ -1894,6 +2373,7 @@ static void revealPresets(void* room2, DWORD levelNo, void* layer, DWORD layerNo
         }
     }
 }
+
 
 static int walkable(void* room1, long x, long y) {
     BYTE* grid = RDP(room1, ROOM1_COLL);
@@ -1914,6 +2394,13 @@ static int gridReadable(void* room1) {
         && readable(RDP(grid, 0x20), stride * h * 2);
 }
 
+#include "d2crossing.c"
+
+
+
+
+
+
 static void borderPassages(void* act, void* room2, DWORD levelNo, DWORD layerNo) {
     void** around = (void**) RDP(room2, ROOM2_NEAR);
     DWORD count = RD32(room2, ROOM2_NNEAR);
@@ -1929,6 +2416,7 @@ static void borderPassages(void* act, void* room2, DWORD levelNo, DWORD layerNo)
         if (to == levelNo || to == 0 || to > 136) continue;
         long nx = (long) RD32(other, ROOM2_X), ny = (long) RD32(other, ROOM2_Y);
         long nw = (long) RD32(other, ROOM2_W), nh = (long) RD32(other, ROOM2_H);
+
         int vertical;
         long inside, outside, from, end;
         if (rx + rw == nx || nx + nw == rx) {
@@ -1954,6 +2442,12 @@ static void borderPassages(void* act, void* room2, DWORD levelNo, DWORD layerNo)
         }
         void* otherRoom1 = RDP(other, ROOM2_ROOM1);
         if (gridReadable(otherRoom1)) {
+            BYTE* hereGrid = RDP(room1, ROOM1_COLL), * thereGrid = RDP(otherRoom1, ROOM1_COLL);
+            CrossRoom here = {(const unsigned short*) RDP(hereGrid, 0x20), (long) RD32(hereGrid, 8), (long) RD32(room1, ROOM1_SUBX),
+                (long) RD32(room1, ROOM1_SUBX + 4), (long) RD32(room1, ROOM1_SUBX + 8), (long) RD32(room1, ROOM1_SUBX + 12), COLL_BLOCKED};
+            CrossRoom there = {(const unsigned short*) RDP(thereGrid, 0x20), (long) RD32(thereGrid, 8),
+                (long) RD32(otherRoom1, ROOM1_SUBX), (long) RD32(otherRoom1, ROOM1_SUBX + 4),
+                (long) RD32(otherRoom1, ROOM1_SUBX + 8), (long) RD32(otherRoom1, ROOM1_SUBX + 12), COLL_BLOCKED};
             long run = -1;
             for (long t = from; t <= end; t++) {
                 int open = t < end && (vertical ? walkable(room1, inside, t) && walkable(otherRoom1, outside, t)
@@ -1961,7 +2455,11 @@ static void borderPassages(void* act, void* room2, DWORD levelNo, DWORD layerNo)
                 if (open && run < 0) run = t;
                 if (!open && run >= 0) {
                     long length = t - run, middle = run + length / 2;
-                    MapLabel* l = length < 2 ? NULL : addLabel(levelNo, to, LABEL_PASSAGE, vertical ? inside : middle,
+                    int blocked = length < 2 ? -1 : crossingBlocked(&here, &there, vertical, inside, outside, run, t - 1);
+                    if (blocked > 0)
+                        logLine("map: border %lu -> %lu at %s %ld, %ld-%ld open but %s: no passage", (unsigned long) levelNo,
+                            (unsigned long) to, vertical ? "x" : "y", inside, run, t - 1, blocked == 1 ? "no way on behind it" : "a pocket on this side");
+                    MapLabel* l = blocked != 0 ? NULL : addLabel(levelNo, to, LABEL_PASSAGE, vertical ? inside : middle,
                         vertical ? middle : inside, length, vertical ? inside : run, vertical ? run : inside,
                         vertical ? inside : t - 1, vertical ? t - 1 : inside, layerNo, levelName(to));
                     if (l) {
@@ -1976,17 +2474,26 @@ static void borderPassages(void* act, void* room2, DWORD levelNo, DWORD layerNo)
     }
 }
 
-static int revealLevel(void* act, DWORD levelNo) {
+
+
+
+
+
+
+
+static int revealRooms(void* act, DWORD levelNo, int* next, unsigned long long start, unsigned budget) {
     void* misc = RDP(act, ACT_MISC);
-    if (!readable(misc, MISC_LEVELS + 4)) return -1;
+    if (!readable(misc, MISC_LEVELS + 4)) return 1;
     BYTE* level = fGetLevel(misc, levelNo);
-    if (!readable(level, LEVEL_NO + 4) || RD32(level, LEVEL_NO) != levelNo) return -1;
+    if (!readable(level, LEVEL_NO + 4) || RD32(level, LEVEL_NO) != levelNo) return 1;
     if (!RDP(level, LEVEL_ROOM2)) fInitLevel(level);
     DWORD layerNo = levelLayer(levelNo);
     void* layer = layerNo != 0xFFFFFFFF ? initLayer(layerNo) : NULL;
-    if (!layer) return -1;
-    int rooms = 0;
-    for (void* room2 = RDP(level, LEVEL_ROOM2); readable(room2, 0x60) && rooms < 2048; room2 = RDP(room2, ROOM2_NEXT), rooms++) {
+    if (!layer) return 1;
+    int index = 0, from = *next;
+    for (void* room2 = RDP(level, LEVEL_ROOM2); readable(room2, 0x60) && index < 2048; room2 = RDP(room2, ROOM2_NEXT), index++) {
+        if (index < from) continue;
+        if (index > from && revealNowUs() - start >= budget) return 0;
         DWORD x = RD32(room2, ROOM2_X), y = RD32(room2, ROOM2_Y);
         int added = 0;
         if (!RDP(room2, ROOM2_ROOM1)) {
@@ -2000,8 +2507,9 @@ static int revealLevel(void* act, DWORD levelNo) {
             borderPassages(act, room2, levelNo, layerNo);
         }
         if (added) fRemoveRoomData(act, levelNo, x, y, RDP(room2, ROOM2_ROOM1));
+        *next = index + 1;
     }
-    return rooms;
+    return 1;
 }
 
 static int actOf(DWORD levelNo, DWORD* first, DWORD* end) {
@@ -2016,10 +2524,15 @@ static int actOf(DWORD levelNo, DWORD* first, DWORD* end) {
     return 0;
 }
 
-static void mergePassages(void) {
+
+
+
+
+
+static void mergePassages(DWORD levelNo) {
     for (int i = 0; i < labelCount; i++) {
         MapLabel* a = &labels[i];
-        if (a->kind != LABEL_PASSAGE) continue;
+        if (a->kind != LABEL_PASSAGE || a->from != levelNo) continue;
         for (int j = i + 1; j < labelCount; j++) {
             MapLabel* b = &labels[j];
             if (b->kind != LABEL_PASSAGE || b->from != a->from || b->to != a->to
@@ -2040,15 +2553,37 @@ static void mergePassages(void) {
 
 static int singlePlayerGame(void);
 
+
+
+
+
+
 static void updateMap(void* player, DWORD now) {
     if (!mapAvailable) return;
+
+    unsigned long long tickUs = revealNowUs();
+    if (!reveal.paceReady) {
+        char fps[16] = "";
+        DWORD n = GetEnvironmentVariableA("DXVK_FRAME_RATE", fps, sizeof(fps));
+        revealPaceStart(&reveal.pace, n > 0 && n < sizeof(fps) ? revealFpsFromText(fps) : 0);
+        reveal.paceReady = 1;
+        logLine("map: reveal budget %u%% of the frame, frame rate limit %u fps", REVEAL_SHARE_PCT, reveal.pace.limitFps);
+    }
+    else {
+        unsigned long long gap = tickUs - reveal.lastTickUs;
+        revealPaceNote(&reveal.pace, gap < 0xFFFFFFFFull ? (unsigned) gap : 0xFFFFFFFFu, (unsigned) reveal.lastOwnUs);
+    }
+    reveal.lastTickUs = tickUs;
+    reveal.lastOwnUs = 0;
     int want = (int) (now - mapUntil) < 0;
 #ifdef D2MOD_MAPHACK_ALWAYS
     want = 1;
 #endif
     if (!singlePlayerGame()) want = 0;
     mapShown = want;
+
     if ((int) (now - playtestUntil) < 0 && singlePlayerGame()) want = 1;
+
     if (now - mapTick > 2000) reveal.act = NULL;
     mapTick = now;
     void* act = player ? RDP(player, U_ACT) : NULL;
@@ -2058,32 +2593,66 @@ static void updateMap(void* player, DWORD now) {
     if (act != reveal.act || seed != reveal.seed || first != reveal.first) {
         reveal.act = act;
         reveal.seed = seed;
-        reveal.first = reveal.next = first;
+        reveal.first = first;
         reveal.end = end;
         reveal.since = now;
-        reveal.spent = 0;
+        reveal.spent = reveal.ticks = 0;
+        revealPlanStart(&reveal.plan, first, end);
+        for (DWORD lv = first; lv < end && lv - first < REVEAL_LEVELS; lv++) {
+            reveal.plan.layer[lv - first] = levelLayer(lv);
+            reveal.levelSpent[lv - first] = 0;
+            reveal.levelTicks[lv - first] = 0;
+        }
+        reveal.settled = 0;
         labelCount = 0;
         exitCount = 0;
     }
-    if (!want || reveal.next >= reveal.end || now - reveal.since < 1500) return;
+
     void* shown = RDP(client, RVA_AutomapLayer);
-    DWORD shownNo = readable(shown, 4) ? RD32(shown, 0) : levelLayer(levelNo);
-    DWORD start = GetTickCount();
-    do {
-        DWORD lv = reveal.next++, t = GetTickCount();
-        int rooms = revealLevel(act, lv);
-        trace("map: level %lu, %d rooms, %lu ms, %d labels", (unsigned long) lv, rooms, (unsigned long) (GetTickCount() - t), labelCount);
-    } while (reveal.next < reveal.end && GetTickCount() - start < 25);
-    initLayer(shownNo);
-    reveal.spent += GetTickCount() - start;
-    if (reveal.next >= reveal.end) {
-        memcpy(exits, labels, sizeof(MapLabel) * labelCount);
-        exitCount = labelCount;
-        mergePassages();
-        logLine("map: act with levels %lu-%lu revealed in %lu ms, %d labels", (unsigned long) reveal.first,
-            (unsigned long) (reveal.end - 1), (unsigned long) reveal.spent, labelCount);
+    if (!want || revealPlanFinished(&reveal.plan) || now - reveal.since < 1500 || !readable(shown, 4)) return;
+    DWORD shownNo = RD32(shown, 0);
+    unsigned long long start = revealNowUs();
+    unsigned budget = revealBudgetUs(&reveal.pace);
+    int worked = 0;
+    while (revealNowUs() - start < budget) {
+        DWORD lv = revealPlanLevel(&reveal.plan, levelNo, shownNo);
+        if (!lv) break;
+        int i = (int) (lv - reveal.first);
+
+        if (worked && reveal.plan.room[i] == 0) break;
+        if (!worked) reveal.ticks++;
+        worked = 1;
+        unsigned long long t = revealNowUs();
+        int done = revealRooms(act, lv, &reveal.plan.room[i], start, budget);
+        reveal.levelSpent[i] += revealNowUs() - t;
+        reveal.levelTicks[i]++;
+        if (!done) break;
+
+        for (int k = 0; k < labelCount && exitCount < MAX_LABELS; k++)
+            if (labels[k].from == lv) exits[exitCount++] = labels[k];
+        mergePassages(lv);
+        trace("map: level %lu, %d rooms, %lu ms in %lu ticks, %d labels", (unsigned long) lv, reveal.plan.room[i],
+            (unsigned long) (reveal.levelSpent[i] / 1000), (unsigned long) reveal.levelTicks[i], labelCount);
+        revealPlanLevelDone(&reveal.plan, lv);
+    }
+    if (worked) {
+
+        if (readable(RDP(client, RVA_AutomapLayer), 4) && RD32(RDP(client, RVA_AutomapLayer), 0) != shownNo) initLayer(shownNo);
+        reveal.lastOwnUs = revealNowUs() - start;
+        reveal.spent += reveal.lastOwnUs;
+    }
+    int settled = revealPlanSettled(&reveal.plan, levelNo, shownNo);
+    if (settled && !reveal.settled) {
+        int waiting = 0;
+        for (DWORD lv = reveal.first; lv < reveal.end; lv++) waiting += !revealPlanIsDone(&reveal.plan, lv);
+        logLine("map: act with levels %lu-%lu revealed on layer %lu in %lu ms (%lu ticks, %lu ms after the act came; frame %lu us, "
+            "budget %u us), %d labels, %d levels wait for the player in their own layer", (unsigned long) reveal.first,
+            (unsigned long) (reveal.end - 1), (unsigned long) shownNo, (unsigned long) (reveal.spent / 1000),
+            (unsigned long) reveal.ticks, (unsigned long) (now - reveal.since), (unsigned long) revealFrameUs(&reveal.pace),
+            revealBudgetUs(&reveal.pace), labelCount, waiting);
         for (int i = 0; i < labelCount; i++) {
             MapLabel* l = &labels[i];
+            if (l->layer != shownNo) continue;
             char name[64];
             int n = WideCharToMultiByte(CP_UTF8, 0, l->name, -1, name, sizeof(name), NULL, NULL);
             if (n <= 0) name[0] = 0;
@@ -2091,7 +2660,9 @@ static void updateMap(void* player, DWORD now) {
                 l->sumX / l->weight, l->sumY / l->weight, (unsigned long) l->layer, l->weight, name);
         }
     }
+    reveal.settled = settled;
 }
+
 
 static int hasReverse(const MapLabel* label) {
     for (int i = 0; i < labelCount; i++) {
@@ -2102,6 +2673,11 @@ static int hasReverse(const MapLabel* label) {
     }
     return 0;
 }
+
+
+
+
+
 
 static void drawLabels(void) {
     void* layer = RDP(client, RVA_AutomapLayer);
@@ -2136,16 +2712,19 @@ static void drawLabels(void) {
         int width = fGetTextWidth(l->name);
         long tx = sx - width / 2, ty = sy + (mini ? 3 : 6);
         if (tx < left || tx + width > right || ty - (mini ? 7 : 14) < top || ty > bottom) continue;
+
         fDrawText(l->name, (int) tx + 1, (int) ty + 1, 6, 0);
         fDrawText(l->name, (int) tx, (int) ty, l->kind == LABEL_WAYPOINT ? 3 : 4, 0);
     }
     fSetTextSize(oldFont);
 }
 
+
 __attribute__((force_align_arg_pointer)) static void __cdecl automapDrawn(void) {
     ((void (__cdecl *)(void)) (client + RVA_DrawAutomap))();
     if (mapShown) drawLabels();
 }
+
 
 
 static void checkSoundSites(void) {
@@ -2156,6 +2735,7 @@ static void checkSoundSites(void) {
         && *(DWORD*) (play + 1) == client + RVA_SoundCheckVar;
     logLine(soundAvailable ? "sound sites verified" : "sound sites not as expected: drinking without sound");
 }
+
 
 static int playUseSound(void* item) {
     if (!soundAvailable || !item) return -1;
@@ -2171,7 +2751,9 @@ static int playUseSound(void* item) {
     return sound;
 }
 
+
 static void restartEffect(DWORD state);
+
 
 static int beltHasKind(void* player, int kind) {
     void* inventory = RDP(player, U_INVENTORY);
@@ -2185,17 +2767,30 @@ static int beltHasKind(void* player, int kind) {
     return 0;
 }
 
+
+
+
+
+
 static BYTE potionTierAt[2];
 static DWORD potionDrankAt[2];
 #define POTION_OWN_MAX 4
 static struct { DWORD at; BYTE hero; } potionOwn[2][POTION_OWN_MAX];
 static int potionOwnCount[2];
+
 static int potionConfirmed[2] = {-1, -1}, potionLower[2] = {-1, -1};
+
+
+
+
+
+
 
 static BYTE potionTierKnown(int k) {
     if (potionLower[k] >= 0 && potionConfirmed[k] - potionLower[k] > potionOwnCount[k]) return 0;
     return potionTierAt[k];
 }
+
 
 static int potionActive(void* player, int k) {
     if (fGetUnitState && fGetUnitState(player, k ? STATE_MANAPOT : STATE_HEALTHPOT)) return 1;
@@ -2206,6 +2801,13 @@ static void potionOwnShift(int k) {
     for (int i = 1; i < potionOwnCount[k]; i++) potionOwn[k][i - 1] = potionOwn[k][i];
     potionOwnCount[k]--;
 }
+
+
+
+
+
+
+
 
 static void trackPotionTiers(void* player, const int count[2]) {
     int* confirmed = potionConfirmed;
@@ -2241,6 +2843,11 @@ static void trackPotionTiers(void* player, const int count[2]) {
     }
 }
 
+
+
+
+
+
 static void drinkPotion(void* player, int kind, int allowInventory, int toMerc, int largest, int onlyBigger) {
     void* inventory = RDP(player, U_INVENTORY);
     if (!inventory) return;
@@ -2267,7 +2874,9 @@ static void drinkPotion(void* player, int kind, int allowInventory, int toMerc, 
         int inInventory = allowInventory && location == 0x00;
         if (belt || inInventory) {
             const char* code = itemCode(item);
+
             if (kind == 5 ? isStaminaPotion(code) : potionKind(code) == kind) {
+
                 int tier = potionTier(code);
                 int better = largest ? tier > bestTier || (tier == bestTier && belt && !bestBelt)
                                      : (belt && !bestBelt) || (belt == bestBelt && tier < bestTier);
@@ -2290,6 +2899,7 @@ static void drinkPotion(void* player, int kind, int allowInventory, int toMerc, 
     lastDrink = bestBelt ? 1 : 2;
     if (k >= 0) {
         if (!toMerc) {
+
             if (!potionActive(player, k)) potionTierAt[k] = (BYTE) bestTier;
             else if (potionTierAt[k] && bestTier > potionTierAt[k]) potionTierAt[k] = (BYTE) bestTier;
             potionDrankAt[k] = GetTickCount();
@@ -2299,6 +2909,7 @@ static void drinkPotion(void* player, int kind, int allowInventory, int toMerc, 
         potionOwn[k][potionOwnCount[k]].hero = (BYTE) !toMerc;
         potionOwnCount[k]++;
     }
+
     if (!toMerc) restartEffect(kind == 1 ? STATE_HEALTHPOT : kind == 2 ? STATE_MANAPOT : kind == 5 ? STATE_STAMINAPOT : 0);
     BYTE packet[13] = {0};
     if (bestBelt) {
@@ -2335,6 +2946,7 @@ static void checkNpcMenuSites(void) {
     }
 }
 
+
 static BYTE* npcMenuEntry(void) {
     if (!npcMenuAvailable || !getUiVar(8)) return NULL;
     void* (*currentNpc)(void) = (void* (*)(void)) (client + RVA_GetCurrentNpc);
@@ -2354,6 +2966,7 @@ static const wchar_t* localeText(WORD id) {
     return (const wchar_t*) a;
 }
 
+
 static void chooseNpcEntry(int index) {
     BYTE* e = npcMenuEntry();
     if (!e || index < 0 || index >= (int) *(DWORD*) (e + 4) - 1 || index >= 5) return;
@@ -2363,6 +2976,10 @@ static void chooseNpcEntry(int index) {
     DWORD a;
     __asm__ volatile ("call *%1" : "=a"(a) : "r"(handler) : "ebx", "ecx", "edx", "esi", "edi", "memory", "cc");
 }
+
+
+
+
 
 static void* findPortal(void* player, int* where, int* charges) {
     void* inventory = RDP(player, U_INVENTORY);
@@ -2392,6 +3009,7 @@ static void* findPortal(void* player, int* where, int* charges) {
     return best;
 }
 
+
 static void openPortal(void* player) {
     int belt = 0;
     void* item = findPortal(player, &belt, NULL);
@@ -2412,6 +3030,10 @@ static void openPortal(void* player) {
     logLine("portal from the %s, sound %d", belt ? "belt" : "inventory", sound);
 }
 
+
+
+
+
 static void setPlayers(int count) {
     BYTE* thunk = (BYTE*) (client + RVA_SetPlayersThunk);
     DWORD type = RD32(client, RVA_GameType);
@@ -2428,6 +3050,13 @@ static void setPlayers(int count) {
     logLine("players set to %d", count);
 }
 
+
+
+
+
+
+
+
 static void resumeCommand(void* player, const BYTE* buf, int n);
 static int resumeSaveGate(void);
 static void putResumeFields(Packet* p);
@@ -2443,6 +3072,7 @@ static void plugyCommand(BYTE code) {
         logLine("PlugY command 0x%02X dropped (%s)", code, plugyLoaded ? "unknown" : "no PlugY");
         return;
     }
+
     BYTE* hook = (BYTE*) ((DWORD) GetModuleHandleA("D2Game.dll") + RVA_GamePlugYPacket);
     if (!GetModuleHandleA("D2Game.dll") || !readable(hook, 2) || hook[0] != 0x57 || hook[1] != 0xE8) {
         logLine("PlugY command 0x%02X dropped (server not hooked by PlugY)", code);
@@ -2453,7 +3083,14 @@ static void plugyCommand(BYTE code) {
     if (code != 0x24) logLine("PlugY command 0x%02X", code);
 }
 
+
+
+
+
+
 static WORD skillId(void* skill);
+
+
 
 static int classSkill(DWORD cls, WORD skill) {
     static const WORD first[7] = {6, 36, 66, 96, 126, 221, 251};
@@ -2463,6 +3100,8 @@ static int classSkill(DWORD cls, WORD skill) {
 static void selectSkill(void* player, int left, WORD skill) {
     void* info = RDP(player, U_INFO);
     if (!readable(info, 0x10)) return;
+
+
     if (!classSkill(RD32(player, U_TXTNO), skill)) {
         logLine("select: skill %u not in the class's tree, nothing sent", skill);
         return;
@@ -2483,6 +3122,9 @@ static void selectSkill(void* player, int left, WORD skill) {
     logLine("select: skill %u %s", skill, left ? "left" : "right");
 }
 
+
+
+
 static void putPlayerName(Packet* p, void* player) {
     void* pdata = RDP(player, U_DATA);
     for (int k = 0; k < 16; k++) putU8(p, readable(pdata, 16) ? RD8(pdata, k) : 0);
@@ -2490,6 +3132,7 @@ static void putPlayerName(Packet* p, void* player) {
 
 #include "d2labels.c"
 #include "d2take.c"
+
 static int shopAvailable;
 static DWORD shopJobKey(int part);
 static void putShopJob(Packet* p);
@@ -2500,6 +3143,8 @@ static void putShopJob(Packet* p);
 #include "d2buffs.c"
 #include "d2equip.c"
 #include "d2sort.c"
+
+
 #define CMD_STASH 21
 static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2);
 static void stashBusyDrop(void);
@@ -2536,11 +3181,17 @@ static void handleCommands(void* player, int stale) {
         if (stale) continue;
         commandsReceived++;
         if (n < 8 || buf[0] != 'D' || buf[1] != '2' || buf[2] != 'A' || buf[3] != 'C') continue;
+
+
         if (player && !singlePlayerGame()) continue;
         int cmd = buf[5];
         noteCommand(cmd);
+
         if (pauseApplied && (cmd == CMD_DRINK || cmd == CMD_WALK || cmd == CMD_UNIT || cmd == CMD_PORTAL || cmd == CMD_BELT || cmd == CMD_TAKE
             || cmd == CMD_SHOP_POTIONS)) continue;
+
+
+
         if (sortBusy() && (cmd == CMD_TAKE || cmd == CMD_BELT || cmd == CMD_EQUIP || cmd == CMD_PORTAL || cmd == CMD_UNIT
             || cmd == CMD_SHOP_POTIONS || cmd == CMD_STASH)) {
             if (cmd == CMD_STASH) stashBusyDrop();
@@ -2562,33 +3213,48 @@ static void handleCommands(void* player, int stale) {
         if (cmd == CMD_TELEPORT) teleportCommand(buf, n);
         if (cmd == CMD_DRINK && n >= 9 && player) {
             int kind = buf[8] == 1 ? 2 : (buf[8] == 2 ? 3 : (buf[8] == 3 ? 5 : 1));
+
+
             int toMerc = n >= 10 && (buf[9] & 2);
             if (toMerc && kind == 1 && !beltHasKind(player, 1)) kind = 3;
+
             int largest = n >= 10 && (buf[9] & 4), onlyBigger = n >= 10 && (buf[9] & 8);
+
             drinkPotion(player, kind, toMerc ? 0 : !(n >= 10 && (buf[9] & 1)) && !sortBusy(), toMerc, largest, onlyBigger);
         }
 #ifdef D2MOD_TESTCMDS
+
         else if (cmd == 92 && player) srvTestWanted = 1;
+
+
         else if (cmd == 102) {
             int lines = n >= 9 && buf[8] ? buf[8] : 5;
             for (int i = 1; i <= lines; i++) logLine("test crash: line %d of %d", i, lines);
             volatile int* nowhere = NULL;
             *nowhere = 1;
         }
+
         else if (cmd == 90 && player && n >= 13 && buf[8] == 5) {
             srvProbeX = *(WORD*) (buf + 9);
             srvProbeY = *(WORD*) (buf + 11);
             srvProbeWanted = 5;
         }
         else if (cmd == 90 && player && n >= 9) srvProbeWanted = buf[8] | (n >= 10 ? buf[9] << 8 : 0);
+
+
         else if (cmd == 100 && player) statProbe(player);
+
         else if (cmd == 95 && player && n >= 9) fakeEffect(buf[8], n >= 10 ? buf[9] : 0);
+
         else if (cmd == 93 && player) sortFaultNext = 1;
+
+
         else if (cmd == 91 && n >= 10) stashTest(buf[8], buf[9]);
         else if (cmd == 94 && player && n > 8 && fSendPacket) {
             fSendPacket((size_t) (n - 8), 1, buf + 8);
             logLine("test: packet %02X, %d bytes", buf[8], n - 8);
         }
+
         else if (cmd == 96 && player && fGetUnitState) {
             char line[512];
             int len = snprintf(line, sizeof(line), "states:");
@@ -2601,6 +3267,7 @@ static void handleCommands(void* player, int stale) {
                 (unsigned long) (fGetUnitStat(player, STAT_MAXSTAMINA, 0) >> 8),
                 (working & 4) != 0, (working & 8) != 0, (working & 16) != 0);
         }
+
         else if (cmd == 97 && player) {
             void* path = RDP(player, U_PATH);
             void* room1 = path ? RDP(path, PATH_ROOM1) : NULL;
@@ -2648,6 +3315,7 @@ static void handleCommands(void* player, int stale) {
                 }
             }
         }
+
         else if (cmd == 98 && n >= 17) {
             DWORD where = *(DWORD*) (buf + 8), length = *(DWORD*) (buf + 12);
             BYTE module = buf[16];
@@ -2665,6 +3333,7 @@ static void handleCommands(void* player, int stale) {
                 logLine("test dump %08lX + %lu: %lu bytes", (unsigned long) (DWORD) at, (unsigned long) length, (unsigned long) written);
             }
         }
+
         else if (cmd == 99 && n >= 16 && buf[12] <= 32 && 16 + buf[12] <= n) {
             BYTE* at = (BYTE*) (client + *(DWORD*) (buf + 8));
             DWORD old;
@@ -2684,6 +3353,9 @@ static void handleCommands(void* player, int stale) {
             static int lastHudBits = -1;
             if (buf[8] != lastHudBits) trace("hud bits %d -> %d", lastHudBits, buf[8]);
             lastHudBits = buf[8];
+
+
+
             DWORD t = GetTickCount(), off = t - 60000;
             hudHideUntil = (buf[8] & 1) ? t + 2000 : off;
             duraHideUntil = (buf[8] & 2) ? t + 2000 : off;
@@ -2704,7 +3376,9 @@ static void handleCommands(void* player, int stale) {
             takeSentAt = GetTickCount();
             takeUnit(player, buf[8], *(DWORD*) (buf + 12), GetTickCount());
         }
+
         else if (cmd == CMD_EQUIP && n >= 16 && player) equipStart(player, buf[8], *(DWORD*) (buf + 12), GetTickCount());
+
         else if (cmd == CMD_SORT && n >= 10 && player) sortStart(player, buf[8], buf[9], GetTickCount());
         else if (cmd == 25 && player) resumeCommand(player, buf, n);
         else if (cmd == CMD_STASH && n >= 20 && player) stashCommand(player, buf[8], *(LONG*) (buf + 12), *(LONG*) (buf + 16));
@@ -2721,10 +3395,12 @@ static void handleCommands(void* player, int stale) {
 }
 
 
+
 typedef struct {
     void* unit;
     int x, y, distance;
 } Candidate;
+
 
 static int isOwnCorpse(void* unit, void* player) {
     if (unit == player) return 0;
@@ -2744,6 +3420,7 @@ static void addCandidate(Candidate* list, int* count, void* unit, int x, int y, 
     c->distance = dx * dx + dy * dy;
 }
 
+
 static int keepNearest(Candidate* list, int count, int keep) {
     if (count <= keep) return count;
     for (int i = 0; i < keep; i++) {
@@ -2756,6 +3433,7 @@ static int keepNearest(Candidate* list, int count, int keep) {
     return keep;
 }
 
+
 static int readable(const void* p, UINT_PTR size) {
     return p && !IsBadReadPtr(p, size);
 }
@@ -2766,6 +3444,11 @@ static WORD skillId(void* skill) {
     return readable(skillInfo, 2) ? *(WORD*) skillInfo : 0xFFFF;
 }
 
+
+
+
+
+
 static int isUsableCorpse(void* unit, int town) {
     static const DWORD used[] = {1, 96, 99, 104, 107, 118};
     if (town || !fGetUnitState || RD32(unit, U_MODE) != 12) return 0;
@@ -2773,6 +3456,35 @@ static int isUsableCorpse(void* unit, int town) {
     for (unsigned i = 0; i < sizeof(used) / sizeof(used[0]); i++) if (fGetUnitState(unit, used[i])) return 0;
     return 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static int isOpenQuestEntrance(const BYTE* txt, DWORD mode) {
+    BYTE operate = txt[OTXT_OPERATEFN];
+    return mode != 0 && txt[OTXT_SUBCLASS] == 0 && (operate == 43 || operate == 70 || operate == 73);
+}
+
+
+
+
+
+
+
+
+
+
 
 static const struct { WORD state, frames; } EFFECTS[] = {
     {128, 2400}, {129, 2400}, {130, 3600}, {131, 3600}, {132, 3600}, {133, 3600}, {134, 2400}, {135, 2400},
@@ -2782,7 +3494,19 @@ static const struct { WORD state, frames; } EFFECTS[] = {
 #define EFFECT_COUNT (sizeof(EFFECTS) / sizeof(EFFECTS[0]))
 #define STATE_COUNT  183
 #define EFFECTS_SENT 32
+
+
+
+
+
+
 static const BYTE EFFECTS_LEFT_OUT[] = {0, 18, 54, 86, 92, 105};
+
+
+
+
+
+
 static const BYTE EFFECTS_POINTS[] = {14, 151};
 #define STAT_BONEARMOR    132
 #define STAT_BONEARMORMAX 133
@@ -2793,11 +3517,15 @@ static DWORD effectFull[256];
 static BYTE effectOn[256];
 static BYTE effectSynced[256];
 static DWORD effectLoggedAt[256];
+
+
 static DWORD effectPointsLeft, effectPointsMost, effectPointsAt;
 #ifdef D2MOD_TESTCMDS
+
 static DWORD effectFakeLeft[256];
 static BYTE effectFake[256];
 #endif
+
 
 static DWORD effectDefaultFrames(DWORD state) {
     for (unsigned i = 0; i < EFFECT_COUNT; i++) if (EFFECTS[i].state == state) return EFFECTS[i].frames;
@@ -2813,6 +3541,7 @@ static int effectPoints(DWORD state) {
     for (unsigned i = 0; i < sizeof(EFFECTS_POINTS); i++) if (EFFECTS_POINTS[i] == state) return 1;
     return 0;
 }
+
 
 static BYTE effectsCapabilities2(void) {
     return 4;
@@ -2830,19 +3559,37 @@ static void fakeEffect(DWORD state, DWORD seconds) {
 }
 #endif
 
+
+
+
+
+
+
+
+
+
 static int singlePlayerGame(void) {
     DWORD type = RD32(client, RVA_GameType);
     return type == 0 || type == 1;
 }
 
 static int worldPaused(void) {
+
+
+
+
     if (!singlePlayerGame()) return 0;
     return pauseApplied || (fGetUiVar && (getUiVar(0x09) || getUiVar(0x0B)));
 }
 
+
 static DWORD effectFullMs(DWORD state) {
     return effectFull[state] ? effectFull[state] : effectDefaultFrames(state) * 40u;
 }
+
+
+
+
 
 static void restartEffect(DWORD state) {
     if (state >= 256 || !effectOn[state]) return;
@@ -2851,6 +3598,11 @@ static void restartEffect(DWORD state) {
     effectElapsed[state] = 0;
     logLine("effect again: state %lu, %lu ms left before", (unsigned long) state, (unsigned long) left);
 }
+
+
+
+
+
 
 static void syncEffect(DWORD state, DWORD serverLeft) {
     if (state >= 256 || !effectOn[state]) return;
@@ -2870,6 +3622,7 @@ static void syncEffect(DWORD state, DWORD serverLeft) {
     else effectElapsed[state] = full > serverLeft ? full - serverLeft : full;
 }
 
+
 static void effectSwitch(DWORD state, int on, DWORD now) {
     if (on) {
         effectElapsed[state] = 0;
@@ -2877,11 +3630,16 @@ static void effectSwitch(DWORD state, int on, DWORD now) {
         effectSynced[state] = 0;
         if (effectPoints(state)) effectPointsAt = effectPointsLeft = effectPointsMost = 0;
     }
+
     if (!effectDefaultFrames(state) && now - effectLoggedAt[state] < 10000 && effectLoggedAt[state]) return;
     effectLoggedAt[state] = now;
     if (on) logLine("effect on: state %lu", (unsigned long) state);
     else logLine("effect off: state %lu after %lu ms", (unsigned long) state, (unsigned long) effectElapsed[state]);
 }
+
+
+
+
 
 static void trackEffects(void* player, DWORD dt, int scanAll) {
     int paused = worldPaused();
@@ -2916,6 +3674,11 @@ static void trackEffects(void* player, DWORD dt, int scanAll) {
     }
 }
 
+
+
+
+
+
 static void putEffect(Packet* p, void* player, DWORD state) {
     (void) player;
     if (effectPoints(state)) {
@@ -2931,6 +3694,11 @@ static void putEffect(Packet* p, void* player, DWORD state) {
     putU16(p, (WORD) (full ? left / 100 : 0));
     putU16(p, (WORD) (full / 100));
 }
+
+
+
+
+
 
 static void putEffects(Packet* p, void* player) {
     BYTE* count = p->data + p->len;
@@ -2955,12 +3723,20 @@ static void putEffects(Packet* p, void* player) {
     }
 }
 
+
+
+
+
+
+
+
 static void sendEffects(void* player) {
     static DWORD lastAt, lastTrack, lastRaw = 0xFFFFFFFF, lastType = 0xFFFFFFFF;
     DWORD now = GetTickCount();
     DWORD dt = lastTrack && now - lastTrack < 1000 ? now - lastTrack : 0;
     lastTrack = now;
     trackEffects(player, dt, now - lastAt >= 500);
+
     int pointsChanged = pointsTick(player) | equipReportDue() | sortReportDue(player);
     if (now - lastAt < 500 && !pointsChanged) return;
     lastAt = now;
@@ -2975,11 +3751,18 @@ static void sendEffects(void* player) {
     lastType = type;
     Packet p;
     putHeader(&p, PKT_EFFECTS);
+
+
+
     putU8(&p, raw >= 1 && raw <= 8 ? (BYTE) raw : (raw == 0 && singlePlayerGame() ? 1 : 0));
     putEffects(&p, player);
+
+
     DWORD heroMode = RD32(player, U_MODE);
     putU8(&p, (singlePlayerGame() ? 1 : 0) | (heroMode == 0 || heroMode == 17 ? 2 : 0) | (heroMode == 17 ? 4 : 0));
     putPlayerName(&p, player);
+
+
     void* merc = findMercenary(player);
     DWORD mercLife = merc ? fGetUnitStat(merc, 6, 0) >> 8 : 0;
     putU8(&p, merc ? 1 : 0);
@@ -2989,13 +3772,20 @@ static void sendEffects(void* player) {
     sendPacket(&p);
 }
 
+
+
+
+
 static void sendGoals(void* player, DWORD levelNo) {
-    static DWORD lastLevel, lastCount = 0xFFFF, lastAt;
+    static DWORD lastLevel, lastCount = 0xFFFF, lastAt, lastStand = 0xFF;
     DWORD now = GetTickCount();
     if ((int) (now - playtestUntil) >= 0) return;
-    if (levelNo == lastLevel && (DWORD) exitCount == lastCount && now - lastAt < 5000) return;
+
+    DWORD stand = mapAvailable ? (revealDone() ? 2 : 1) : 0;
+    if (levelNo == lastLevel && (DWORD) exitCount == lastCount && stand == lastStand && now - lastAt < 5000) return;
     lastLevel = levelNo;
     lastCount = (DWORD) exitCount;
+    lastStand = stand;
     lastAt = now;
     void* path = RDP(player, U_PATH);
     void* room1 = path ? RDP(path, PATH_ROOM1) : NULL;
@@ -3004,7 +3794,7 @@ static void sendGoals(void* player, DWORD levelNo) {
     Packet p;
     putHeader(&p, PKT_GOALS);
     putU16(&p, levelNo);
-    putU8(&p, mapAvailable ? (reveal.next >= reveal.end && reveal.act ? 2 : 1) : 0);
+    putU8(&p, (BYTE) stand);
     putU16(&p, level ? RD32(level, 0x1C) * 5 : 0);
     putU16(&p, level ? RD32(level, 0x20) * 5 : 0);
     putU16(&p, level ? RD32(level, 0x24) * 5 : 0);
@@ -3029,6 +3819,7 @@ static void sendGoals(void* player, DWORD levelNo) {
     p.data[countAt] = (BYTE) count;
     sendPacket(&p);
 }
+
 
 static DWORD seenId[32], seenMode[32], seenNext;
 
@@ -3060,6 +3851,9 @@ static void collectAndSend(void* player) {
     putU32(&p, uiHigh);
     putU16(&p, levelNo);
     putU8(&p, isTown(levelNo) ? 1 : 0);
+
+
+
     putU8(&p, (unitActions ? 5 : 0) | (selectedTrampoline ? 2 : 0) | (hudAvailable ? 8 : 0) | (hudHidden ? 16 : 0)
         | (pauseAvailable ? 32 : 0) | (pauseApplied ? 64 : 0) | (duraHidden ? 128 : 0));
 
@@ -3073,11 +3867,13 @@ static void collectAndSend(void* player) {
     DWORD mana = fGetUnitStat(player, 8, 0) >> 8, maxMana = fGetUnitStat(player, 9, 0) >> 8;
     putU8(&p, maxLife ? (life * 100 / maxLife > 100 ? 100 : life * 100 / maxLife) : 0);
     putU8(&p, maxMana ? (mana * 100 / maxMana > 100 ? 100 : mana * 100 / maxMana) : 0);
+
     void* hovered = fGetSelectedUnit();
     putU8(&p, hovered ? RD32(hovered, U_TYPE) : 0xFF);
     putU32(&p, hovered ? RD32(hovered, U_ID) : 0xFFFFFFFF);
     putU8(&p, lastDrink);
     putU8(&p, commandsReceived);
+
 
     BYTE belt[16] = {0};
     void* inventory = RDP(player, U_INVENTORY);
@@ -3094,6 +3890,7 @@ static void collectAndSend(void* player) {
     }
     for (int i = 0; i < 16; i++) putU8(&p, belt[i]);
 
+
     static Candidate monsterList[MAX_CANDIDATES], itemList[MAX_CANDIDATES], objectList[MAX_CANDIDATES], corpseList[MAX_CANDIDATES];
     int nMonsters = 0, nItems = 0, nObjects = 0, nCorpses = 0, rawMonsters = 0;
     Candidate corpse = {0};
@@ -3102,6 +3899,7 @@ static void collectAndSend(void* player) {
         for (void* unit = RDP(room, ROOM1_UNITS); unit && units < 4096; unit = RDP(unit, U_LISTNEXT), units++) {
             DWORD type = RD32(unit, U_TYPE);
             if (type == UNIT_PLAYER && !corpse.unit && isOwnCorpse(unit, player)) {
+
                 double cx, cy;
                 unitPosition(unit, &cx, &cy);
                 if (cx == 0 && cy == 0) continue;
@@ -3135,8 +3933,11 @@ static void collectAndSend(void* player) {
             else if (type == UNIT_OBJECT && nObjects < MAX_CANDIDATES) {
                 void* data = RDP(unit, U_DATA);
                 BYTE* txt = data ? (BYTE*) RDP(data, ODATA_TXT) : NULL;
+
                 DWORD omode = RD32(unit, U_MODE);
+
                 if (txt && (txt[OTXT_SUBCLASS] & (1 | 32))) {
+
                     DWORD oid = RD32(unit, U_ID), slot = 32;
                     for (DWORD k = 0; k < 32; k++) if (seenId[k] == oid + 1) slot = k;
                     if (slot == 32 || seenMode[slot] != omode) {
@@ -3152,11 +3953,15 @@ static void collectAndSend(void* player) {
                     }
                 }
                 if (!txt || !txt[OTXT_SELECTABLE0 + (omode < 8 ? omode : 0)]) continue;
-                int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0;
+
+
+
+                int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0 || isOpenQuestEntrance(txt, omode);
                 if (RD32(unit, U_MODE) != 0 && !alwaysUsable) continue;
                 addCandidate(objectList, &nObjects, unit, ux, uy, psx, psy);
             }
             else if (type == UNIT_TILE && nObjects < MAX_CANDIDATES) {
+
                 addCandidate(objectList, &nObjects, unit, ux, uy, psx, psy);
             }
         }
@@ -3181,6 +3986,7 @@ static void collectAndSend(void* player) {
         putU32(&p, RD32(unit, U_ID));
         putU16(&p, (WORD) (short) monsterList[i].x);
         putU16(&p, (WORD) (short) monsterList[i].y);
+
         DWORD hp = fGetUnitStat(unit, 6, 0), maxHp = fGetUnitStat(unit, 7, 0);
         DWORD percent = maxHp ? (DWORD) ((unsigned long long) hp * 100 / maxHp) : 100;
         putU8(&p, percent > 100 ? 100 : percent);
@@ -3197,6 +4003,7 @@ static void collectAndSend(void* player) {
         putU8(&p, groundItemKind(itemCode(unit)));
         putU8(&p, data ? RD32(data, IDATA_QUALITY) : 0);
     }
+
     if (corpse.unit && nObjects == MAX_OBJECTS) nObjects--;
     putU8(&p, nObjects + (corpse.unit ? 1 : 0));
     if (corpse.unit) {
@@ -3216,6 +4023,8 @@ static void collectAndSend(void* player) {
         else if (subclass & 1) kind = 2;
         else if (subclass & 64) kind = 3;
         else if (subclass & 4) kind = 5;
+
+        else if (txt && isOpenQuestEntrance(txt, RD32(unit, U_MODE))) kind = 5;
         else if (subclass & 32) kind = 4;
         else if (operate == 1 || operate == 3 || operate == 4 || operate == 5 || operate == 7 || operate == 14
             || operate == 19 || operate == 20 || operate == 33 || operate == 48 || operate == 51 || operate == 68) kind = 1;
@@ -3225,6 +4034,7 @@ static void collectAndSend(void* player) {
         putU8(&p, kind);
         putU8(&p, operate);
     }
+
     void* info = RDP(player, U_INFO);
     if (!readable(info, 0x10)) info = NULL;
     putU8(&p, (BYTE) RD32(player, U_TXTNO));
@@ -3235,8 +4045,10 @@ static void collectAndSend(void* player) {
         putU16(&p, skill >= 0xFFFF ? 0xFFFF : (WORD) skill);
         putU8(&p, RD32(client, RVA_HotkeyLeft + i * 4) == 1 ? 1 : 0);
     }
+
     BYTE duraLoc[12], duraState[12];
     int nDura = 0;
+
     DWORD handQuantity[2] = {0xFFFF, 0xFFFF};
     void* equipment = RDP(player, U_INVENTORY);
     int steps = 0;
@@ -3245,6 +4057,7 @@ static void collectAndSend(void* player) {
         if (!readable(data, 0x70)) break;
         if (RD8(data, IDATA_NODEPAGE) == 3) {
             BYTE location = RD8(data, IDATA_BODYLOC);
+
             if (location == 4 || location == 5) {
                 DWORD quantity = fGetUnitStat(item, STAT_QUANTITY, 0);
                 if (quantity > 0) handQuantity[location - 4] = quantity > 0xFFFE ? 0xFFFE : quantity;
@@ -3268,27 +4081,39 @@ static void collectAndSend(void* player) {
         putU8(&p, duraLoc[i]);
         putU8(&p, duraState[i]);
     }
+
     putU16(&p, life > 0xFFFF ? 0xFFFF : (WORD) life);
     putU16(&p, maxLife > 0xFFFF ? 0xFFFF : (WORD) maxLife);
     putU16(&p, mana > 0xFFFF ? 0xFFFF : (WORD) mana);
     putU16(&p, maxMana > 0xFFFF ? 0xFFFF : (WORD) maxMana);
+
+
+
+
+
     DWORD purseLevel = fGetUnitStat(player, 12, 0), purseGold = fGetUnitStat(player, 14, 0);
     int purseFull = purseLevel > 0 && purseGold >= 10000 * purseLevel;
     putU8(&p, (RD32(client, RVA_AlwaysRun) ? 1 : 0) | (cursorAvailable ? 2 : 0) | (cursorHidden ? 4 : 0)
         | (RD32(client, RVA_NpcDialog) ? 8 : 0) | (worldHooked && heroVarOk ? 16 : 0)
         | (worldHooked && heroVarOk && worldFrames > 0 ? 32 : 0) | (purseFull ? 64 : 0));
+
     int charges = 0;
     findPortal(player, NULL, &charges);
     putU8(&p, charges > 255 ? 255 : charges);
+
     BYTE* npcMenu = npcMenuEntry();
     int npcLines = npcMenu ? (int) *(DWORD*) (npcMenu + 4) - 1 : 0;
     if (npcLines > 5) npcLines = 5;
+
+
     putU8(&p, nCorpses);
     for (int i = 0; i < nCorpses; i++) {
         putU32(&p, RD32(corpseList[i].unit, U_ID));
         putU16(&p, (WORD) (short) corpseList[i].x);
         putU16(&p, (WORD) (short) corpseList[i].y);
     }
+
+
     BYTE tierBelt[3] = {0}, tierInv[3] = {0}, countBelt[3] = {0}, countInv[3] = {0};
     BYTE largestBelt[3] = {0}, largestInv[3] = {0};
     int potionSteps = 0, staminaPotions = 0, rejuvInv = 0, potionCount[2] = {0, 0};
@@ -3334,16 +4159,26 @@ static void collectAndSend(void* player) {
         putU8(&p, countBelt[k]);
         putU8(&p, countInv[k]);
     }
+
+
     DWORD stamina = fGetUnitStat(player, STAT_STAMINA, 0) >> 8, maxStamina = fGetUnitStat(player, STAT_MAXSTAMINA, 0) >> 8;
     putU16(&p, stamina > 0xFFFF ? 0xFFFF : (WORD) stamina);
     putU16(&p, maxStamina > 0xFFFF ? 0xFFFF : (WORD) maxStamina);
     putU8(&p, staminaPotions > 255 ? 255 : staminaPotions);
+
+
     putU8(&p, (staminaAvailable ? 1 : 0) | (staminaUnlimited ? 2 : 0) | potionsWorking(player) | 32 | 64 | 128);
+
+
+
+
     putU8(&p, (fGetUnitStat(player, STAT_STATPOINTS, 0) > 0 ? 1 : 0) | (fGetUnitStat(player, STAT_SKILLPOINTS, 0) > 0 ? 2 : 0)
         | (plugyLoaded ? 4 : 0) | (labelsAvailable ? 8 : 0) | (labelTipsKept ? 16 : 0) | (mapAvailable ? 32 : 0)
         | (mapAvailable && mapShown ? 64 : 0) | (edgeHidden ? 128 : 0));
     putU16(&p, handQuantity[0]);
     putU16(&p, handQuantity[1]);
+
+
     if ((int) (GetTickCount() - playtestUntil) < 0) {
         DWORD x = RD32(path, PATH_X), y = RD32(path, PATH_Y);
         putU16(&p, x >> 16);
@@ -3356,6 +4191,9 @@ static void collectAndSend(void* player) {
         putU32(&p, fGetUnitStat(player, 14, 0));
         putU32(&p, fGetUnitStat(player, 15, 0));
     }
+
+
+
     trackPotionTiers(player, potionCount);
     for (int k = 1; k <= 2; k++) {
         putU8(&p, largestBelt[k]);
@@ -3364,8 +4202,10 @@ static void collectAndSend(void* player) {
     }
     putU8(&p, rejuvInv > 255 ? 255 : rejuvInv);
     putHoverItem(&p, player);
+
     putU8(&p, path && readable((BYTE*) path + PATH_DIR, 1) && RD8(path, PATH_DIR) < 64 ? RD8(path, PATH_DIR) : 0xFF);
     sendPacket(&p);
+
     void* itemUnits[MAX_ITEMS];
     for (int i = 0; i < nItems; i++) itemUnits[i] = itemList[i].unit;
     logNewItems(itemUnits, nItems);
@@ -3385,7 +4225,42 @@ static void collectAndSend(void* player) {
 static void installClickHook(void);
 static void installHighlightHook(void);
 
+
+
+
+
+
+
 static DWORD gameSeed;
+
+#include "d2hudkeep.c"
+
+
+
+static void keepSettingsOverPause(DWORD now) {
+    DWORD ended = lastTick;
+    int kept = 0;
+    hudHideUntil = hudKept(hudHideUntil, ended, now, &kept);
+    duraHideUntil = hudKept(duraHideUntil, ended, now, &kept);
+    cursorHideUntil = hudKept(cursorHideUntil, ended, now, &kept);
+    staminaUntil = hudKept(staminaUntil, ended, now, &kept);
+    labelsUntil = hudKept(labelsUntil, ended, now, &kept);
+    mapUntil = hudKept(mapUntil, ended, now, &kept);
+    playtestUntil = hudKept(playtestUntil, ended, now, &kept);
+    edgeHideUntil = hudKept(edgeHideUntil, ended, now, &kept);
+    compareUntil = hudKept(compareUntil, ended, now, &kept);
+    diffUntil = hudKept(diffUntil, ended, now, &kept);
+    damageNumbersUntil = hudKept(damageNumbersUntil, ended, now, &kept);
+    damageDpsUntil = hudKept(damageDpsUntil, ended, now, &kept);
+    damageElementUntil = hudKept(damageElementUntil, ended, now, &kept);
+    damageAppDpsUntil = hudKept(damageAppDpsUntil, ended, now, &kept);
+    labelFilterUntil = hudKept(labelFilterUntil, ended, now, &kept);
+
+    for (int f = 0; f < 3; f++)
+        diffFrameTables[f].until = hudKeptTable(diffFrameTables[f].have, diffFrameTables[f].until, ended, now, &kept);
+    valueUntil = hudKeptTable(valueHave, valueUntil, ended, now, &kept);
+    if (kept) logLine("hud: %d settings of the app kept over the pause of %lu ms", kept, (unsigned long) (now - ended));
+}
 
 static void noteGame(void* player, DWORD now) {
     void* act = player ? RDP(player, U_ACT) : NULL;
@@ -3394,11 +4269,20 @@ static void noteGame(void* player, DWORD now) {
     trace("game: new or back after %lu ms (seed %08lX, was %08lX): unit caches cleared", (unsigned long) (now - lastTick),
         (unsigned long) seed, (unsigned long) gameSeed);
     gameSeed = seed;
+    keepSettingsOverPause(now);
     forgetItems();
     memset(seenId, 0, sizeof(seenId));
     memset(seenMode, 0, sizeof(seenMode));
     seenNext = 0;
 }
+
+
+
+
+
+
+
+
 
 #define RVA_WorldUiCall  0x453CB
 #define RVA_WorldUi      0x1D3E0
@@ -3413,6 +4297,7 @@ __asm__(
     "    jmp *_worldDrawUi\n"
 );
 
+
 static int inModule(HMODULE module, DWORD addr) {
     const BYTE* base = (const BYTE*) module;
     if (!base || !readable(base, 0x40)) return 0;
@@ -3422,9 +4307,15 @@ static int inModule(HMODULE module, DWORD addr) {
     return addr >= (DWORD) base && addr < (DWORD) base + size;
 }
 
+
+
+
+
+
 static void installWorldDrawHook(void) {
     BYTE* site = (BYTE*) (client + RVA_WorldUiCall);
     const BYTE* fn = (const BYTE*) (client + RVA_WorldUi);
+
     DWORD target = readable(site - 1, 6) && site[0] == 0xE8 ? (DWORD) site + 5 + *(DWORD*) (site + 1) : 0;
     int game = target == client + RVA_WorldUi, plugy = !game && target && inModule(GetModuleHandleA("PlugY.dll"), target);
     if (!target || (!game && !plugy) || site[-1] != 0x52 || !readable(fn, 9) || fn[0] != 0x51 || fn[1] != 0xA1
@@ -3443,6 +4334,8 @@ static void installWorldDrawHook(void) {
     logLine("world: picture count at D2Client+0x453CB installed (on to %s %08lX)", plugy ? "PlugY" : "the game",
             (unsigned long) target);
 }
+
+
 
 static void noteWorldFrames(DWORD now) {
     static DWORD firstTickAt, ticks;
@@ -3466,9 +4359,11 @@ static void noteWorldFrames(DWORD now) {
     }
 }
 
+
 static void gameTick(void) {
     static int moreHooks;
     if (!moreHooks) {
+
         moreHooks = 1;
         crashStep = "first tick: hooks and site checks";
         installClickHook();
@@ -3523,12 +4418,20 @@ static void gameTick(void) {
         DWORD* shown = (DWORD*) (client + RVA_UiVarHelpButton);
         static DWORD shownSaved;
         int want = (int) (now - edgeHideUntil) < 0;
+
+
+
+
         if (edgeHidden && *shown) shownSaved = *shown;
         if (want != edgeHidden) {
             if (want) shownSaved = *shown;
             else *shown = shownSaved;
             STEP(applyEdgeButtons(want));
         }
+
+
+
+
         if (edgeHidden) {
             *shown = 0;
             *(DWORD*) (client + RVA_HelpButtonLock) = 1;
@@ -3563,6 +4466,7 @@ static void gameTick(void) {
         gameLost.active = gameLost.releaseDue = 0;
         realHeld = 0;
         heldRepressId = NO_REPRESS;
+
         if (!player) walk.stopping = 0;
     }
     if (now - lastSend < 40) return;
@@ -3570,11 +4474,14 @@ static void gameTick(void) {
     if (player) STEP(collectAndSend(player));
 }
 
+
+
 __attribute__((force_align_arg_pointer)) void __cdecl onGameLoop(void) {
     if (!gameThreadId) gameThreadId = GetCurrentThreadId();
     gameTick();
     crashStep = NULL;
 }
+
 
 void gameLoopHook(void);
 __asm__(
@@ -3590,6 +4497,7 @@ __asm__(
     "    pushl %eax\n"
     "    ret\n"
 );
+
 
 
 static int resolve(void) {
@@ -3617,6 +4525,7 @@ static int resolve(void) {
     return fGetUnitStat && fGetItemText && fMapToAbsScreen && fSendPacket;
 }
 
+
 static void installClickHook(void) {
     BYTE* site = (BYTE*) (client + SELECTED_CALL_RVA);
     DWORD target = (DWORD) site + 5 + *(DWORD*) (site + 1);
@@ -3632,6 +4541,10 @@ static void installClickHook(void) {
     unitActions = 1;
     logLine("click hook installed");
 }
+
+
+
+
 
 static void installHighlightHook(void) {
     BYTE* site = (BYTE*) (client + RVA_GetSelectedUnit);
@@ -3677,6 +4590,7 @@ static int installHook(void) {
     *(DWORD*) (code + 1) = (DWORD) gameLoopHook - ((DWORD) site + 5);
     code[5] = 0x90;
     code[6] = 0x90;
+
     *(volatile WORD*) site = 0xFEEB;
     FlushInstructionCache(GetCurrentProcess(), site, 7);
     memcpy(site + 2, code + 2, 5);
@@ -3686,7 +4600,43 @@ static int installHook(void) {
     return 1;
 }
 
+
+
+
+static int portFromEnv(const char* name, int fallback) {
+    char value[16] = "";
+    SetLastError(0);
+    DWORD n = GetEnvironmentVariableA(name, value, sizeof(value));
+    if (n == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND) return fallback;
+    int port = 0, ok = n > 0 && n < sizeof(value);
+    for (DWORD i = 0; ok && i < n; i++) {
+        if (value[i] < '0' || value[i] > '9') ok = 0;
+        else if ((port = port * 10 + (value[i] - '0')) > 65535) ok = 0;
+    }
+    if (!ok || port < 1) {
+        if (n >= sizeof(value)) value[0] = 0;
+        logLine("%s=\"%s\" invalid, port %d", name, value, fallback);
+        return fallback;
+    }
+    logLine("%s=%d", name, port);
+    return port;
+}
+
+static void readPorts(void) {
+    if (portsRead) return;
+    portsRead = 1;
+    appPort = portFromEnv("D2MOD_APP_PORT", APP_PORT);
+    modPort = portFromEnv("D2MOD_CMD_PORT", MOD_PORT);
+    if (appPort == modPort) {
+
+        logLine("D2MOD_APP_PORT and D2MOD_CMD_PORT both %d: ports %d/%d", appPort, APP_PORT, MOD_PORT);
+        appPort = APP_PORT;
+        modPort = MOD_PORT;
+    }
+}
+
 static void openSockets(void) {
+    readPorts();
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         logLine("WSAStartup failed");
@@ -3695,14 +4645,14 @@ static void openSockets(void) {
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     memset(&appAddr, 0, sizeof(appAddr));
     appAddr.sin_family = AF_INET;
-    appAddr.sin_port = htons(APP_PORT);
+    appAddr.sin_port = htons((u_short) appPort);
     appAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     cmdSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     struct sockaddr_in local;
     memset(&local, 0, sizeof(local));
     local.sin_family = AF_INET;
-    local.sin_port = htons(MOD_PORT);
+    local.sin_port = htons((u_short) modPort);
     local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     u_long nonBlocking = 1;
     if (cmdSock == INVALID_SOCKET || bind(cmdSock, (struct sockaddr*) &local, sizeof(local)) != 0
@@ -3711,7 +4661,7 @@ static void openSockets(void) {
         if (cmdSock != INVALID_SOCKET) closesocket(cmdSock);
         cmdSock = INVALID_SOCKET;
     }
-    logLine("sockets ready (app %d, commands %d)", APP_PORT, cmdSock != INVALID_SOCKET ? MOD_PORT : -1);
+    logLine("sockets ready (app %d, commands %d)", appPort, cmdSock != INVALID_SOCKET ? modPort : -1);
 }
 
 static void sendStatus(void) {
@@ -3723,6 +4673,11 @@ static void sendStatus(void) {
     for (int i = 0; i < len; i++) putU8(&p, (BYTE) statusText[i]);
     sendPacket(&p);
 }
+
+
+
+
+
 
 #define RVA_WinFocusedControl 0x8DB44
 #define CONTROL_EDITBOX 1
@@ -3752,6 +4707,8 @@ static void checkMenuField(int force) {
                 field[2] = bottom - h;
                 field[3] = w;
                 field[4] = h;
+
+
                 if (menuFieldSecret(control[CONTROL_EDITFLAGS / 4])) field[0] |= 2;
                 else {
                     WCHAR wide[MENU_TEXT_MAX / 2 + 1];
@@ -3775,6 +4732,16 @@ static void checkMenuField(int force) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
 #define RVA_LaunchBattleNet   0x12350
 #define RVA_LaunchMultiplayer 0xF790
 #define MENU_ENTRY_SIZE       0x30
@@ -3792,6 +4759,7 @@ static BOOL __stdcall lockedMenuPress(void* event) {
     if (InterlockedIncrement(&menuLockPresses) <= 3) logLine("multiplayer menu: press ignored (single player only)");
     return TRUE;
 }
+
 
 static void lockMultiplayerMenu(void) {
     if (menuLockChecked) return;
@@ -3818,6 +4786,14 @@ static void lockMultiplayerMenu(void) {
     VirtualProtect(first, 0x21300 - 0x21120, old, &old);
     logLine("multiplayer menu: Battle.net and Other Multiplayer locked");
 }
+
+
+
+
+
+
+
+
 
 #define RVA_LaunchExitEntry 0x21210
 #define RVA_LaunchExit      0xA580
@@ -3849,6 +4825,10 @@ static void fixStormStreamRace(void);
 typedef HMODULE (WINAPI* LoadLibraryA_t)(LPCSTR);
 static LoadLibraryA_t gameLoadLibraryA;
 static void logStormStreamSkips(void);
+
+
+
+
 
 #define RVA_PlayerUnitVar 0x11D050
 static void* volatile* heroVar(void) {
@@ -3884,12 +4864,15 @@ static DWORD WINAPI setupThread(LPVOID arg) {
     }
     lockMultiplayerMenu();
     unbindMainMenuEsc();
+
     if (!menuLockChecked || !exitEscChecked)
         logLine(gameLoadLibraryA ? "setup: D2Launch not loaded yet, the menu patches follow when Game.exe loads it"
                                  : "setup: D2Launch after D2Client and no LoadLibraryA hook: menus not patched");
     Sleep(500);
     if (!resolve()) setStatus(STATUS_FAILED, "functions not found");
     else if (installHook()) setStatus(STATUS_HOOKED, "connected");
+
+
     void* volatile* hero = heroVar();
     if (hero) InterlockedExchange(&heroVarOk, 1);
     directHeroVar = hero;
@@ -3926,6 +4909,9 @@ static DWORD WINAPI setupThread(LPVOID arg) {
         }
         logStormStreamSkips();
         if (socketsBroken) {
+
+
+
             openSockets();
             socketsBroken = 0;
         }
@@ -3935,6 +4921,7 @@ static DWORD WINAPI setupThread(LPVOID arg) {
     }
     return 0;
 }
+
 
 
 static void loadPlugY(void) {
@@ -3959,6 +4946,7 @@ static void loadPlugY(void) {
     logLine("PlugY loaded and initialised");
 }
 
+
 static HMODULE WINAPI loadRendererThenPlugY(LPCSTR name) {
     HMODULE renderer = LoadLibraryA(name);
     logLine("renderer %s loaded", name ? name : "?");
@@ -3969,6 +4957,11 @@ static HMODULE WINAPI loadRendererThenPlugY(LPCSTR name) {
     }
     return renderer;
 }
+
+
+
+
+
 
 static void installPlugYHook(void) {
     char path[MAX_PATH];
@@ -3997,6 +4990,16 @@ static void installPlugYHook(void) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
 #define RVA_LaunchMovieCheck 0x12114
 static const BYTE launchMovieCheck[] = {0x85, 0xC0, 0x74, 0x6C, 0xE8};
 typedef HMODULE (WINAPI* LoadLibraryA_t)(LPCSTR);
@@ -4020,6 +5023,13 @@ static void skipIntroMovies(HMODULE launch) {
     logLine("D2Launch: opening movies skipped");
 }
 
+
+
+
+
+
+
+
 static HMODULE WINAPI loadModuleHook(LPCSTR name) {
     HMODULE module = gameLoadLibraryA(name);
     if (module && name) {
@@ -4032,6 +5042,7 @@ static HMODULE WINAPI loadModuleHook(LPCSTR name) {
     }
     return module;
 }
+
 
 static LoadLibraryA_t* gameLoadLibrarySlot(void) {
     BYTE* base = (BYTE*) GetModuleHandleA(NULL);
@@ -4057,9 +5068,11 @@ static void installIntroSkip(void) {
     skipIntroWanted = GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
     HMODULE launch = GetModuleHandleA("D2Launch.dll");
     if (launch) {
+
         if (skipIntroWanted) logLine("opening movies: D2Launch already running (loaded late), not changed");
         return;
     }
+
     LoadLibraryA_t* slot = gameLoadLibrarySlot();
     if (!slot || !*slot) {
         logLine("D2Launch: LoadLibraryA import of Game.exe not found, opening movies play, menus only patched if D2Launch comes before D2Client");
@@ -4078,8 +5091,21 @@ static void installIntroSkip(void) {
 }
 
 
+
 static volatile LONG stormFixDone, stormStreamSkips;
 static LONG stormStreamSkipsLogged;
+
+
+
+
+
+
+
+
+
+
+
+
 
 static void fixStormStreamRace(void) {
     if (stormFixDone) return;
@@ -4128,6 +5154,7 @@ static void fixStormStreamRace(void) {
             locked ? "holding the stream lock" : "before the stream lock exists");
 }
 
+
 static void logStormStreamSkips(void) {
     LONG n = stormStreamSkips;
     if (n == stormStreamSkipsLogged) return;
@@ -4154,6 +5181,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
         if (thread) CloseHandle(thread);
     }
     else if (reason == DLL_PROCESS_DETACH && logReady) {
+
         logProcessEnd(reserved != NULL);
     }
     return TRUE;

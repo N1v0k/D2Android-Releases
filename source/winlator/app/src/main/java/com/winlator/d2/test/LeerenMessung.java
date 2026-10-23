@@ -2,13 +2,22 @@ package com.winlator.d2.test;
 
 import java.util.Locale;
 
+
+
+
+
+
+
 public final class LeerenMessung {
+
     static final double SPRUNG = 20;
+
     static final long LUECKE_MS = 1000;
 
     private long letzt = -1, ohneKampfMs, rueckzugMs;
     private double weg, wx = Double.NaN, wy;
     private int hindernisseStart;
+
 
     public void start(long now, int hindernisse) {
         letzt = now;
@@ -18,6 +27,7 @@ public final class LeerenMessung {
         wx = Double.NaN;
         hindernisseStart = hindernisse;
     }
+
 
     public void zustand(long now, boolean kampf, double x, double y) {
         if (letzt < 0) return;
@@ -32,6 +42,10 @@ public final class LeerenMessung {
         wx = x;
         wy = y;
     }
+
+
+
+
 
     public void rueckzug(long now) {
         if (letzt < 0) return;
@@ -51,6 +65,10 @@ public final class LeerenMessung {
     public double weg() {
         return weg;
     }
+
+
+
+
 
     public String text(long aktivMs, int kills, int hindernisse) {
         long ohneRueckzug = Math.max(0, aktivMs - rueckzugMs);

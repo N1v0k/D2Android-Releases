@@ -24,18 +24,45 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+
+
+
+
+
 public final class D2Saves {
+
     public static final String BACKUP_FOLDER = "D2Android/Sicherungen";
     private static final long MAX_FILE = 8L << 20, MAX_TOTAL = 64L << 20;
+
+
+
+
+
     private static final String TEMP = ".d2android-new", ASIDE = ".d2android-old";
+
+
+
+
     static final String JOURNAL = ".d2android-import";
     private static final String TAG = "D2Saves";
+
     static int killAfter = -1;
 
+
+
+
+
+
+
+
+
     private static boolean importing, launchedOnce;
+
     private static int launching;
     private static long launchedAt;
+
     static long launchGraceMs = 15_000;
+
 
     public static synchronized boolean beginImport() {
         if (importing || launching > 0 || (launchedOnce && System.nanoTime() - launchedAt < launchGraceMs * 1_000_000L)) return false;
@@ -47,15 +74,18 @@ public final class D2Saves {
         importing = false;
     }
 
+
     public static synchronized boolean importRunning() {
         return importing;
     }
+
 
     public static synchronized boolean beginLaunch() {
         if (importing) return false;
         launching++;
         return true;
     }
+
 
     public static synchronized void launched() {
         if (launching > 0) launching--;
@@ -69,10 +99,15 @@ public final class D2Saves {
 
     private D2Saves() {}
 
+
+
+
+
     public static final class Failure extends IOException {
         public enum Reason { UNREADABLE, CANNOT_CREATE, ZIP_TOO_LARGE, NO_CHARACTER, CANNOT_REPLACE, CANNOT_WRITE, FILE_TOO_LARGE, IMPORT_UNFINISHED, BROKEN_ZIP }
 
         public final Reason reason;
+
         public final String subject;
 
         Failure(Reason reason, String subject) {
@@ -81,6 +116,7 @@ public final class D2Saves {
             this.subject = subject;
         }
     }
+
 
     public static File newestCharacter(File dir) {
         File[] files = dir != null ? dir.listFiles() : null;
@@ -92,6 +128,11 @@ public final class D2Saves {
         }
         return newest;
     }
+
+
+
+
+
 
     public static boolean completeCharacter(File d2s) {
         long length = d2s != null ? d2s.length() : 0;
@@ -108,6 +149,7 @@ public final class D2Saves {
         return completeCharacter(d, d.length);
     }
 
+
     static boolean completeCharacter(byte[] d, int n) {
         if (n < 16 || n > d.length || le32(d, 0) != 0xAA55AA55 || le32(d, 8) != n) return false;
         int sum = 0;
@@ -118,6 +160,7 @@ public final class D2Saves {
     private static int le32(byte[] d, int at) {
         return (d[at] & 0xFF) | (d[at + 1] & 0xFF) << 8 | (d[at + 2] & 0xFF) << 16 | (d[at + 3] & 0xFF) << 24;
     }
+
 
     public static long newestCharacterFile(File dir) {
         File[] files = dir != null ? dir.listFiles() : null;
@@ -130,12 +173,14 @@ public final class D2Saves {
         return newest;
     }
 
+
     public static long newestSaveFile(File dir) {
         File[] files = dir != null ? dir.listFiles() : null;
         long newest = 0;
         if (files != null) for (File f : files) if (isSaveFile(f.getName())) newest = Math.max(newest, f.lastModified());
         return newest;
     }
+
 
     public static File saveDir(File gameDir) {
         File[] entries = gameDir.listFiles();
@@ -145,12 +190,22 @@ public final class D2Saves {
         return new File(gameDir, "save");
     }
 
+
+
+
+
+
+
     static boolean isSaveFile(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
         if (lower.isEmpty() || lower.startsWith(".") || lower.contains("/") || lower.contains("\\") || lower.contains("..")) return false;
         return lower.endsWith(".d2s") || lower.endsWith(".d2x") || lower.endsWith(".key") || lower.endsWith(".map")
             || lower.endsWith(".sss") || lower.endsWith(".d2l") || lower.matches(".*\\.ma[0-9]");
     }
+
+
+
+
 
     public static synchronized int zip(File saveDir, File out) throws IOException {
         if (!recover(saveDir)) throw new Failure(Failure.Reason.IMPORT_UNFINISHED, null);
@@ -177,15 +232,23 @@ public final class D2Saves {
         return count;
     }
 
+
     public static String zipName(String prefix) {
         return prefix + "-" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(new Date()) + ".zip";
     }
+
 
     public static File backup(File saveDir, String reason) throws IOException {
         File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), BACKUP_FOLDER);
         File out = new File(folder, zipName("Sicherung-" + reason));
         return zip(saveDir, out) > 0 ? out : null;
     }
+
+
+
+
+
+
 
     public static int importZip(InputStream source, File saveDir) throws IOException {
         Map<String, byte[]> files = new LinkedHashMap<>();
@@ -197,6 +260,7 @@ public final class D2Saves {
                 if (entry.isDirectory()) continue;
                 String path = entry.getName().replace('\\', '/');
                 String name = path.substring(path.lastIndexOf('/') + 1);
+
                 if (!isSaveFile(name) || path.toLowerCase(Locale.ROOT).contains("backup/")) continue;
                 ByteArrayOutputStream data = new ByteArrayOutputStream();
                 copy(zip, data, MAX_FILE);
@@ -207,6 +271,8 @@ public final class D2Saves {
             }
         }
         catch (java.util.zip.ZipException | java.io.EOFException | IllegalArgumentException e) {
+
+
             Failure broken = new Failure(Failure.Reason.BROKEN_ZIP, null);
             broken.initCause(e);
             throw broken;
@@ -220,6 +286,13 @@ public final class D2Saves {
         return files.size();
     }
 
+
+
+
+
+
+
+
     private static void replace(Map<String, byte[]> files, File saveDir) throws IOException {
         File journal = new File(saveDir, JOURNAL);
         List<String> aside = new ArrayList<>(), installed = new ArrayList<>();
@@ -232,6 +305,8 @@ public final class D2Saves {
                 }
                 step();
             }
+
+
             File[] existing = saveDir.listFiles();
             if (existing != null) {
                 Arrays.sort(existing);
@@ -239,6 +314,7 @@ public final class D2Saves {
                     String name = old.getName();
                     int dot = name.lastIndexOf('.');
                     if (!old.isFile() || !isSaveFile(name) || dot <= 0) continue;
+
                     if (!containsIgnoreCase(files, name) && !containsIgnoreCase(files, name.substring(0, dot) + ".d2s")) continue;
                     File moved = new File(saveDir, name + ASIDE);
                     if (moved.exists() || !old.renameTo(moved)) throw new Failure(Failure.Reason.CANNOT_REPLACE, name);
@@ -257,6 +333,8 @@ public final class D2Saves {
             }
         }
         catch (IOException | RuntimeException e) {
+
+
             boolean undone = true;
             for (int i = installed.size() - 1; i >= 0 && undone; i--) {
                 undone = new File(saveDir, installed.get(i)).renameTo(new File(saveDir, installed.get(i) + TEMP));
@@ -266,8 +344,17 @@ public final class D2Saves {
             recover(saveDir);
             throw e;
         }
+
         recover(saveDir);
     }
+
+
+
+
+
+
+
+
 
     public static synchronized boolean recover(File saveDir) {
         File journal = new File(saveDir, JOURNAL);
@@ -308,6 +395,7 @@ public final class D2Saves {
             }
             else if (name.endsWith(ASIDE) && isSaveFile(strip(name, ASIDE))) {
                 File original = new File(saveDir, strip(name, ASIDE));
+
                 if (original.exists()) Log.w(TAG, "import: kept " + name + ", " + original.getName() + " exists as well");
                 else if (!file.renameTo(original)) done = false;
                 else step();
@@ -315,6 +403,7 @@ public final class D2Saves {
         }
         return done;
     }
+
 
     private static void writeJournal(File journal, java.util.Collection<String> news, List<String> olds) throws IOException {
         File temp = new File(journal.getPath() + TEMP);
@@ -342,6 +431,7 @@ public final class D2Saves {
     private static String strip(String name, String suffix) {
         return name.substring(0, name.length() - suffix.length());
     }
+
 
     static final class Killed extends Error {}
 

@@ -3,16 +3,39 @@ package com.winlator.d2.test;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Fertigkeiten {
     public static final int RECORD_SIZE = 572;
+
     public static final int RANGE_NONE = 0, RANGE_H2H = 1, RANGE_RNG = 2, RANGE_BOTH = 3;
+
     public static final int CLASS_NONE = -1;
+
     static final int FIRE_BOLT = 36, FIRE_BOLT_MISSILE = 58;
+
 
     public static final class Fertigkeit {
         public final int id, klasse, reichweite, geschoss, zustand, mindeststufe, minMana, manaShift, mana, lvlMana;
+
         public final boolean angriffOhneMana;
+
         public final int[] voraussetzungen;
+
+
+
+
         public final int zweiteHand;
 
         Fertigkeit(int id, int klasse, int reichweite, int geschoss, int zustand, int mindeststufe, int minMana,
@@ -32,9 +55,14 @@ public final class Fertigkeiten {
             this.zweiteHand = zweiteHand;
         }
 
+
         public boolean zweiWaffen() {
             return zweiteHand != 0;
         }
+
+
+
+
 
         public int kosten256(int stufe) {
             int level = Math.max(1, stufe);
@@ -42,13 +70,16 @@ public final class Fertigkeiten {
             return Math.max(cost, minMana << 8);
         }
 
+
         public double kosten(int stufe) {
             return kosten256(stufe) / 256.0;
         }
 
+
         public boolean kostenOhneStufe() {
             return lvlMana <= 0;
         }
+
 
         public boolean hatZustand() {
             return zustand >= 0;
@@ -74,6 +105,10 @@ public final class Fertigkeiten {
     private Fertigkeiten(Fertigkeit[] liste) {
         this.liste = liste;
     }
+
+
+
+
 
     public static Fertigkeiten lesen(byte[] bin) {
         if (bin == null || bin.length < 4) return null;
@@ -101,6 +136,11 @@ public final class Fertigkeiten {
         return new Fertigkeiten(liste);
     }
 
+
+
+
+
+
     public JSONObject alsJson(int klasse, long ms) {
         try {
             JSONArray a = new JSONArray();
@@ -119,6 +159,7 @@ public final class Fertigkeiten {
             return null;
         }
     }
+
 
     public static Fertigkeiten ausJson(JSONObject o) {
         JSONArray a = o != null ? o.optJSONArray("liste") : null;
@@ -142,6 +183,7 @@ public final class Fertigkeiten {
         return new Fertigkeiten(liste);
     }
 
+
     public Fertigkeit get(int id) {
         return id >= 0 && id < liste.length ? liste[id] : null;
     }
@@ -150,12 +192,14 @@ public final class Fertigkeiten {
         return liste.length;
     }
 
+
     private static int[] voraussetzungen(int a, int b, int c) {
         int n = (a > 0 ? 1 : 0) + (b > 0 ? 1 : 0) + (c > 0 ? 1 : 0), i = 0;
         int[] out = new int[n];
         for (int v : new int[]{a, b, c}) if (v > 0) out[i++] = v;
         return out;
     }
+
 
     private static int zweiteHand(byte[] b, int at) {
         for (int k = 0; k < 3; k++) {
@@ -168,6 +212,7 @@ public final class Fertigkeiten {
     private static int u16(byte[] b, int at) {
         return (b[at] & 0xFF) | (b[at + 1] & 0xFF) << 8;
     }
+
 
     private static int u16orNone(byte[] b, int at) {
         int v = u16(b, at);

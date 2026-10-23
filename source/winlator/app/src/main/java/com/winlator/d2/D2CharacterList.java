@@ -11,6 +11,13 @@ import com.winlator.R;
 
 import java.util.List;
 
+
+
+
+
+
+
+
 final class D2CharacterList {
     interface Listener {
         void start(D2SaveHeader.Info character, int difficulty);
@@ -22,10 +29,12 @@ final class D2CharacterList {
 
     private D2CharacterList() {}
 
+
     static boolean anyStartable(List<D2SaveHeader.Info> characters) {
         for (D2SaveHeader.Info c : characters) if (c.refusal() == D2SaveHeader.Refusal.NONE) return true;
         return false;
     }
+
 
     static void fill(Context context, LinearLayout block, List<D2SaveHeader.Info> characters, Listener listener) {
         block.removeAllViews();

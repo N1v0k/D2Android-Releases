@@ -2,8 +2,19 @@ package com.winlator.d2;
 
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2LevelNames {
     static final int RECORD = 544, ID = 0x00, NAME = 0xF5, NAME_LENGTH = 40;
+
 
     private static volatile D2LevelNames current;
 
@@ -14,6 +25,7 @@ public final class D2LevelNames {
         this.keys = keys;
         this.strings = strings;
     }
+
 
     public static D2LevelNames read(byte[] levels, D2Strings strings) {
         if (levels == null || levels.length < 4 + 3 * RECORD) return null;
@@ -28,9 +40,12 @@ public final class D2LevelNames {
             while (end < at + NAME + NAME_LENGTH && levels[end] != 0) end++;
             keys[i] = new String(levels, at + NAME, end - at - NAME, StandardCharsets.ISO_8859_1);
         }
+
         if (!"Blood Moor".equals(keys[2])) return null;
+
         return new D2LevelNames(keys, strings);
     }
+
 
     static D2LevelNames load(D2Sprites sprites) {
         try {
@@ -41,6 +56,7 @@ public final class D2LevelNames {
         }
     }
 
+
     public String name(int level) {
         if (level < 0 || level >= keys.length || keys[level].isEmpty()) return null;
         String text = strings != null ? strings.get(keys[level]) : null;
@@ -50,6 +66,7 @@ public final class D2LevelNames {
     static void setCurrent(D2LevelNames names) {
         current = names;
     }
+
 
     static D2LevelNames current() {
         return current;

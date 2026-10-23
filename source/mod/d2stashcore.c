@@ -1,4 +1,19 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define STASH_KINDS 68
 #define STASH_MAX 65535u
 #define STASH_HEADER "D2Android-Materialien 1\n"
@@ -22,12 +37,18 @@ typedef struct {
     unsigned deposits[STASH_KINDS];
 } StashState;
 
+
 static int stashKind(const char* code) {
     if (code[3] != ' ' && code[3] != 0) return -1;
     for (int i = 0; i < STASH_KINDS; i++)
         if (code[0] == stashCodes[i][0] && code[1] == stashCodes[i][1] && code[2] == stashCodes[i][2]) return i;
     return -1;
 }
+
+
+
+
+
 
 #define STASH_D2S_VERSION 0x60
 static int stashD2sHeader(const unsigned char* head, unsigned got, int* hardcore) {
@@ -49,6 +70,7 @@ static unsigned stashFnv(const char* s, int len) {
     return h;
 }
 
+
 static int stashFormat(const unsigned* v, char* buf, int size) {
     int n = snprintf(buf, (size_t) size, "%s", STASH_HEADER);
     for (int i = 0; i < STASH_KINDS && n >= 0 && n < size; i++)
@@ -58,6 +80,7 @@ static int stashFormat(const unsigned* v, char* buf, int size) {
     int m = snprintf(buf + n, (size_t) (size - n), "sum=%08x\n", sum);
     return m < 0 || n + m >= size ? -1 : n + m;
 }
+
 
 static int stashParse(const char* buf, int len, unsigned* v) {
     int hl = (int) strlen(STASH_HEADER);
@@ -96,12 +119,14 @@ static int stashParse(const char* buf, int len, unsigned* v) {
     return 0;
 }
 
+
 static void stashLoaded(StashState* s, const unsigned* v) {
     for (int i = 0; i < STASH_KINDS; i++) {
         s->count[i] = s->disk[i] = v[i];
         s->deposits[i] = 0;
     }
 }
+
 
 __attribute__((unused)) static int stashDeposit(StashState* s, int kind) {
     if (kind < 0 || kind >= STASH_KINDS || s->count[kind] >= STASH_MAX) return 0;
@@ -110,15 +135,18 @@ __attribute__((unused)) static int stashDeposit(StashState* s, int kind) {
     return 1;
 }
 
+
 __attribute__((unused)) static int stashWithdraw(StashState* s, int kind) {
     if (kind < 0 || kind >= STASH_KINDS || !s->count[kind]) return 0;
     s->count[kind]--;
     return 1;
 }
 
+
 static void stashPreValues(const StashState* s, unsigned* out) {
     for (int i = 0; i < STASH_KINDS; i++) out[i] = s->disk[i] + s->deposits[i];
 }
+
 
 static void stashDiskIsPre(StashState* s, const unsigned* pre) {
     for (int i = 0; i < STASH_KINDS; i++) {
@@ -127,12 +155,18 @@ static void stashDiskIsPre(StashState* s, const unsigned* pre) {
     }
 }
 
+
+
+
+
+
 static int stashHasChanges(const StashState* s, int unsaved) {
     if (unsaved) return 1;
     for (int i = 0; i < STASH_KINDS; i++)
         if (s->deposits[i] || s->count[i] != s->disk[i]) return 1;
     return 0;
 }
+
 
 static void stashDiskIsExact(StashState* s) {
     for (int i = 0; i < STASH_KINDS; i++) {

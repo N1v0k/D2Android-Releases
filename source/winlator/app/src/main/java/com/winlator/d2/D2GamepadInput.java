@@ -6,20 +6,41 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class D2GamepadInput {
+
     private static final long TICK_MS = 16;
+
     static volatile String lastDevice, lastButton;
 
     private final D2TouchOverlay overlay;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final D2Gamepad.Stick stick = new D2Gamepad.Stick();
     private final boolean[] down = new boolean[D2Gamepad.COUNT];
+
     private final boolean[] pressedInLayer2 = new boolean[D2Gamepad.COUNT];
+
     private final boolean[] swallowed = new boolean[D2Gamepad.COUNT];
     private final boolean[] longDone = new boolean[D2Gamepad.COUNT];
     private final Runnable[] longPress = new Runnable[D2Gamepad.COUNT];
+
     private final boolean[] deferred = new boolean[D2Gamepad.COUNT];
     private boolean triggerKeys, hatLeft, hatRight, hatUp, hatDown;
+
     private float lx, ly, rx, ry;
     private final Runnable tick = this::tick;
 
@@ -27,12 +48,16 @@ final class D2GamepadInput {
         this.overlay = overlay;
     }
 
+
     boolean onKey(KeyEvent event) {
         if (!fromPad(event.getSource(), event.getDevice(), true)) return false;
         if (!overlay.padEnabled()) return false;
         int button = D2Gamepad.buttonOf(event.getKeyCode(), event.getFlags());
         if (button == D2Gamepad.NONE) return (event.getFlags() & D2Gamepad.FLAG_FALLBACK) != 0;
-        if (D2SpieltestPort.active()) return true;
+        if (D2SpieltestPort.playing()) {
+            releaseAll();
+            return true;
+        }
         int action = event.getAction();
         if (action != KeyEvent.ACTION_DOWN && action != KeyEvent.ACTION_UP) return true;
         if (action == KeyEvent.ACTION_DOWN && event.getRepeatCount() > 0) return true;
@@ -42,9 +67,15 @@ final class D2GamepadInput {
         return true;
     }
 
+
     boolean onMotion(MotionEvent event) {
         if (!fromPad(event.getSource(), event.getDevice(), false)) return false;
-        if (!overlay.padEnabled() || D2SpieltestPort.active() || event.getAction() != MotionEvent.ACTION_MOVE) return true;
+        if (D2SpieltestPort.playing()) {
+            releaseAll();
+            return true;
+        }
+        if (!overlay.padEnabled() || event.getAction() != MotionEvent.ACTION_MOVE) return true;
+
         if (!triggerKeys) {
             float lt = Math.max(event.getAxisValue(MotionEvent.AXIS_LTRIGGER), event.getAxisValue(MotionEvent.AXIS_BRAKE));
             float rt = Math.max(event.getAxisValue(MotionEvent.AXIS_RTRIGGER), event.getAxisValue(MotionEvent.AXIS_GAS));
@@ -57,6 +88,7 @@ final class D2GamepadInput {
         if ((hx > 0.5f) != hatRight) axisButton(event, D2Gamepad.DPAD_RIGHT, hatRight = hx > 0.5f);
         if ((hy < -0.5f) != hatUp) axisButton(event, D2Gamepad.DPAD_UP, hatUp = hy < -0.5f);
         if ((hy > 0.5f) != hatDown) axisButton(event, D2Gamepad.DPAD_DOWN, hatDown = hy > 0.5f);
+
         lx = event.getAxisValue(MotionEvent.AXIS_X);
         ly = event.getAxisValue(MotionEvent.AXIS_Y);
         rx = event.getAxisValue(MotionEvent.AXIS_Z);
@@ -71,6 +103,19 @@ final class D2GamepadInput {
         return true;
     }
 
+    private boolean testerSeen;
+
+
+
+
+
+    void playtesterCheck() {
+        boolean playing = D2SpieltestPort.playing();
+        if (playing && !testerSeen) releaseAll();
+        testerSeen = playing;
+    }
+
+
     void releaseAll() {
         for (int b = 0; b < D2Gamepad.COUNT; b++) {
             if (longPress[b] != null) handler.removeCallbacks(longPress[b]);
@@ -81,6 +126,7 @@ final class D2GamepadInput {
                 deferred[b] = false;
                 continue;
             }
+
             boolean holds = !swallowed[b] && b != D2Gamepad.LT && D2Gamepad.beltRow(b) < 0 && !D2Gamepad.hasLongPress(b);
             swallowed[b] = false;
             if (holds) overlay.padButton(b, overlay.padAction(b, pressedInLayer2[b]), false);
@@ -97,6 +143,8 @@ final class D2GamepadInput {
     private static boolean fromPad(int source, InputDevice device, boolean key) {
         int pad = InputDevice.SOURCE_GAMEPAD, joystick = InputDevice.SOURCE_JOYSTICK;
         if ((source & pad) == pad || (source & joystick) == joystick) return true;
+
+
         return key && device != null && ((device.getSources() & pad) == pad || (device.getSources() & joystick) == joystick);
     }
 
@@ -145,6 +193,7 @@ final class D2GamepadInput {
         overlay.padButton(button, overlay.padAction(button, pressedInLayer2[button]), pressed);
     }
 
+
     private void heldSorts(int button, boolean pressed) {
         if (pressed) {
             deferred[button] = true;
@@ -165,6 +214,10 @@ final class D2GamepadInput {
         overlay.padButton(button, act, true);
         overlay.padButton(button, act, false);
     }
+
+
+
+
 
     private void longOrShort(int button, boolean pressed) {
         boolean view = button == D2Gamepad.VIEW;
@@ -205,7 +258,15 @@ final class D2GamepadInput {
         if (sticksActive()) handler.postDelayed(tick, TICK_MS);
     }
 
+
+
+
+
     private void tick() {
+        if (D2SpieltestPort.playing()) {
+            releaseAll();
+            return;
+        }
         if (!sticksActive()) {
             overlay.padTick(false, false, stick.dirX, stick.dirY, 0, 0, 0, 0);
             return;

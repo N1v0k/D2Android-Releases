@@ -7,6 +7,11 @@ import android.view.MotionEvent;
 
 import java.lang.reflect.Method;
 
+
+
+
+
+
 final class Touch implements Finger {
     static final int FINGERS = 10;
     private final Object manager;

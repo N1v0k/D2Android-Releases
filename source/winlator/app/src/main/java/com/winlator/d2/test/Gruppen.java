@@ -5,13 +5,25 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
 public final class Gruppen {
+
     public static final int CHAMPION = 1, BOSS = 2, DIENER = 4, SUPERUNIQUE = 8;
     static final double ABSTAND = 160, STARK_AB = 6;
 
     public static final class Gruppe {
         public final List<Zustand.Ding> mitglieder = new ArrayList<>();
         public double staerke, abstand = Double.MAX_VALUE, mitteX, mitteY;
+
         public int art;
 
         public int anzahl() {
@@ -21,6 +33,7 @@ public final class Gruppen {
         public boolean stark() {
             return art != 0 || staerke >= STARK_AB;
         }
+
 
         public int nahe(Zustand z, double r) {
             int n = 0;
@@ -32,6 +45,7 @@ public final class Gruppen {
             for (Zustand.Ding d : mitglieder) if (d.id == id) return true;
             return false;
         }
+
 
         public String text() {
             String s = "Gruppe " + anzahl() + ", Stärke " + String.format(Locale.GERMAN, "%.1f", staerke);
@@ -51,6 +65,7 @@ public final class Gruppen {
         return 1;
     }
 
+
     private static int art(int flags) {
         if ((flags & SUPERUNIQUE) != 0) return SUPERUNIQUE;
         if ((flags & BOSS) != 0) return BOSS;
@@ -61,6 +76,10 @@ public final class Gruppen {
     private static int rang(int art) {
         return art == SUPERUNIQUE ? 3 : art == BOSS ? 2 : art == CHAMPION ? 1 : 0;
     }
+
+
+
+
 
     public static List<Gruppe> bilden(Zustand z, Set<Long> ohne) {
         List<Zustand.Ding> feinde = new ArrayList<>();
@@ -105,6 +124,7 @@ public final class Gruppen {
         }
         return i;
     }
+
 
     public static Gruppe von(List<Gruppe> gruppen, long id) {
         for (Gruppe g : gruppen) if (g.enthaelt(id)) return g;

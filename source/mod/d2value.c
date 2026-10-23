@@ -1,4 +1,18 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_VALUE      26
 #define VALUE_HOLD_MS  3000
 #define ITXT_NORMCODE  0x84
@@ -12,6 +26,7 @@ static ValueRules valueRules;
 static int valueAvailable, valueHave, valueOn;
 static DWORD valueUntil;
 static wchar_t valueLine[24];
+
 
 static void checkValueSites(void) {
     BYTE* txt = compareAvailable && fGetItemText ? (BYTE*) fGetItemText(0) : NULL;
@@ -38,9 +53,11 @@ static void valueCommand(const BYTE* buf, int n) {
     valueUntil = GetTickCount() + VALUE_HOLD_MS;
 }
 
+
 static int valueCapable(void) {
     return valueAvailable;
 }
+
 
 static int valueWanted(DWORD now) {
     valueOn = valueAvailable && valueHave && (int) (now - valueUntil) < 0;
@@ -50,6 +67,7 @@ static int valueWanted(DWORD now) {
 static int valueIsType(void* item, int type) {
     return fItemIsType(item, (DWORD) type) != 0;
 }
+
 
 static int itemValue(void* item) {
     BYTE* txt = (BYTE*) fGetItemText(RD32(item, U_TXTNO));
@@ -84,6 +102,7 @@ static int itemValue(void* item) {
     return note;
 }
 
+
 static int valueLineAdd(void) {
     if (!valueOn || !hoverText || !hoverText[0]) return 0;
     if (RD32(client, RVA_HoverGrid) != 1 && RD32(client, RVA_HoverBody) != 1) return 0;
@@ -91,6 +110,8 @@ static int valueLineAdd(void) {
     if (!readable(item, 0x18) || RD32(item, U_TYPE) != UNIT_ITEM) return 0;
     int note = itemValue(item);
     if (note < 0) return 0;
+
+
     int n = wsprintfW(valueLine, gameGerman() ? L"\x00FF" L"c4Bewertung %d/10\n" : L"\x00FF" L"c4Rating %d/10\n", note);
     int length = lstrlenW(hoverText);
     if (n <= 0 || length + n >= HOVER_CHARS) return 0;
@@ -98,6 +119,7 @@ static int valueLineAdd(void) {
     memcpy(hoverText, valueLine, n * sizeof(wchar_t));
     return n;
 }
+
 
 static void valueLineRemove(int added) {
     if (added <= 0 || memcmp(hoverText, valueLine, added * sizeof(wchar_t))) return;

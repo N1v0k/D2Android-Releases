@@ -1,4 +1,4 @@
-package com.winlator.renderer;
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.opengl.GLES20;
 
@@ -27,11 +27,11 @@ public class VertexAttribute {
         needsUpdate = true;
     }
 
-    /** D2Android: the renderer context the buffer belongs to */
+
     private int generation;
 
     public void update() {
-        // D2Android: a buffer of an older renderer context is made and filled again
+
         boolean stale = bufferId != 0 && generation != GLRenderer.contextGeneration;
         if ((!needsUpdate && !stale) || buffer == null) return;
         if (bufferId == 0 || stale) {

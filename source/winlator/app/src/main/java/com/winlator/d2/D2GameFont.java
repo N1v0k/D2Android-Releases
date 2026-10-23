@@ -2,7 +2,14 @@ package com.winlator.d2;
 
 import java.io.IOException;
 
+
+
+
+
+
+
 final class D2GameFont {
+
     static final class Img {
         final int width, height;
         final int[] argb;
@@ -26,6 +33,7 @@ final class D2GameFont {
         height = h;
     }
 
+
     static D2GameFont load(D2Sprites sprites, String name) throws IOException {
         D2Sprites.Frame[] glyphs = sprites.dc6("data\\local\\font\\latin\\" + name + ".dc6");
         if (glyphs == null || glyphs.length < 256) return null;
@@ -37,13 +45,24 @@ final class D2GameFont {
         return new D2GameFont(glyphs, widths);
     }
 
+
     int width(String text) {
         return D2FontText.width(widths, text);
     }
 
+
+
+
+
+
+
     Img render(String text, int rgb) {
         return render(text, rgb, 100);
     }
+
+
+
+
 
     Img render(String text, int rgb, int gainPercent) {
         text = D2FontText.map(text);
@@ -70,6 +89,7 @@ final class D2GameFont {
         return new Img(w, h, out);
     }
 
+
     static int[] inkRows(Img img) {
         int first = -1, last = -1;
         for (int y = 0; y < img.height; y++) {
@@ -83,6 +103,7 @@ final class D2GameFont {
         }
         return first < 0 ? new int[]{0, img.height} : new int[]{first, last + 1};
     }
+
 
     java.util.List<String> wrap(String text, float maxWidth) {
         java.util.List<String> out = new java.util.ArrayList<>();
@@ -100,6 +121,7 @@ final class D2GameFont {
         }
         return out;
     }
+
 
     static D2GameFont of(D2Sprites.Frame[] glyphs, int[] widths) {
         return new D2GameFont(glyphs, widths);

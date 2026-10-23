@@ -1,3 +1,33 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define PKT_DIRECT             15
 #define DIRECT_MARKER          "d2android-direct"
 #define RVA_LaunchSinglePlayer 0x13A00
@@ -15,7 +45,9 @@
 #define D2GFX_GET_HWND         10007
 #define DIRECT_NEW             ":neu"
 #define CHAR_NAME              0x000
+
 #define CHAR_STATUS            0x324
+
 #define CHAR_NEXT              0x34C
 #define CHAR_NAME_MAX          16
 #define RVA_WinFirstControl    0x8DB34
@@ -24,6 +56,7 @@
 #define CONTROL_PRESS          0x34
 #define CONTROL_NEXT           0x3C
 #define DIRECT_MSG             (WM_APP + 0x700)
+
 #define DIRECT_ROUND_MS        50
 #define DIRECT_MENU_LOOKS      2400
 #define DIRECT_STEP_LOOKS      400
@@ -35,6 +68,7 @@
 #define DIRECT_AFTER_ROUNDS    100
 #define DIRECT_REPORT_ROUNDS   20
 #define DIRECT_WATCH_MS        200
+
 
 enum { DS_OFF, DS_RUNNING, DS_IN_GAME, DS_STOPPED, DS_LEFT };
 enum { DSTEP_WINDOW, DSTEP_MAIN_MENU, DSTEP_SELECTION, DSTEP_DIFFICULTY, DSTEP_NEW, DSTEP_WORLD };
@@ -51,6 +85,7 @@ static WNDPROC directOriginalProc;
 static volatile LONG directPosted;
 static volatile LONG directLoading;
 static volatile LONG directPressedOk;
+
 static int directChecked;
 static int directInStep;
 static int directMenuSeen, directLooks, directListLooks, directDialog, directPressedDiff;
@@ -60,12 +95,14 @@ static DWORD* directTitlePressed;
 static int directHeroSeen;
 static volatile LONG directMenuNow;
 
+
 static void directStop(int state, int reason, const char* why) {
     if (InterlockedExchange(&directEnded, 1)) return;
     InterlockedExchange(&directReason, reason);
     InterlockedExchange(&directState, state);
     logLine(state == DS_IN_GAME ? "direct start: %s" : "direct start: stopped, %s; the menus stay", why);
 }
+
 
 static int directLine(char** at, char* out, int max) {
     char* s = *at;
@@ -78,6 +115,8 @@ static int directLine(char** at, char* out, int max) {
     out[len] = 0;
     return len;
 }
+
+
 
 static int directReadMarker(void) {
     char path[MAX_PATH];
@@ -111,6 +150,7 @@ static int directReadMarker(void) {
     return 1;
 }
 
+
 static int directSitesOk(void) {
     DWORD L = directLaunch;
     const BYTE* single = (const BYTE*) (L + RVA_LaunchSinglePlayer);
@@ -133,6 +173,7 @@ static int directSitesOk(void) {
         && readable((const void*) (directWin + RVA_WinFirstControl), 4);
 }
 
+
 static DWORD* directControl(DWORD rva) {
     DWORD* c = *(DWORD**) (directWin + RVA_WinFirstControl);
     for (int i = 0; c && i < 200; i++) {
@@ -142,6 +183,7 @@ static DWORD* directControl(DWORD rva) {
     }
     return NULL;
 }
+
 
 static int directFind(BYTE** entry) {
     BYTE* e = *(BYTE**) (directLaunch + RVA_LaunchCharList);
@@ -168,6 +210,7 @@ static void directPress(DWORD rva) {
     ((PressFn) (directLaunch + rva))(NULL);
 }
 
+
 static void directSelect(DWORD* ok) {
     InterlockedExchange(&directStepNo, DSTEP_SELECTION);
     BYTE* e = NULL;
@@ -181,6 +224,8 @@ static void directSelect(DWORD* ok) {
         return;
     }
     unsigned status = *(const WORD*) (e + CHAR_STATUS);
+
+
     if ((status & 0x0C) == 0x0C) { directStop(DS_STOPPED, DR_NOT_PLAYABLE, "a dead hardcore character"); return; }
     int open = ((status >> 8) & 0x1F) / (status & 0x20 ? 5 : 4);
     if (directDifficulty > open) { directStop(DS_STOPPED, DR_DIFFICULTY, "difficulty not open for this character"); return; }
@@ -194,6 +239,8 @@ static void directSelect(DWORD* ok) {
     if (!directDialog && directState == DS_RUNNING) InterlockedExchange(&directStepNo, DSTEP_WORLD);
 }
 
+
+
 static void directPressDifficulty(DWORD* diff, int expected) {
     InterlockedExchange(&directStepNo, DSTEP_DIFFICULTY);
     if (!(diff[CONTROL_FLAGS / 4] & CONTROL_ENABLED)) {
@@ -206,6 +253,11 @@ static void directPressDifficulty(DWORD* diff, int expected) {
     directPress(RVA_LaunchDiffPress0 - 0x10 * directDifficulty);
     if (directState == DS_RUNNING) InterlockedExchange(&directStepNo, DSTEP_WORLD);
 }
+
+
+
+
+
 
 static int directPressedNew;
 
@@ -249,11 +301,13 @@ static void directStepNew(void) {
     }
 }
 
+
 static void directStep(void) {
     if (directState != DS_RUNNING) return;
     if (!directChecked) {
         directChecked = directSitesOk() ? 1 : -1;
         if (directChecked < 0) { directStop(DS_STOPPED, DR_VERSION, "D2Launch not as known (another version?)"); return; }
+
         const BYTE* t = (const BYTE*) (directLaunch + RVA_LaunchTitlePress);
         directTitleOk = readable(t, 13) && t[0] == 0xE8 && (DWORD) (t + 5) + *(const DWORD*) (t + 1) == directLaunch + RVA_LaunchToMainMenu
             && t[5] == 0xB8 && *(const DWORD*) (t + 6) == 1 && t[10] == 0xC2 && t[11] == 4 && t[12] == 0;
@@ -266,10 +320,12 @@ static void directStep(void) {
         else if (!directPressedDiff && directControl(diffPress)) directPressDifficulty(directControl(diffPress), 0);
         return;
     }
+
     if (++directLooks > (directMenuSeen ? DIRECT_STEP_LOOKS : DIRECT_MENU_LOOKS)) {
         directStop(DS_STOPPED, DR_TIME, directMenuSeen ? "no progress" : "no main menu");
         return;
     }
+
     DWORD* title = !directMenuSeen && directTitleOk && directTitlePresses < 3 ? directControl(RVA_LaunchTitlePress) : NULL;
     if (title && title != directTitlePressed) {
         directTitlePressed = title;
@@ -317,6 +373,10 @@ static LRESULT CALLBACK directProc(HWND window, UINT msg, WPARAM w, LPARAM l) {
     return CallWindowProcA(directOriginalProc, window, msg, w, l);
 }
 
+
+
+
+
 static HWND directGfxWindow(void) {
     static const BYTE* fn;
     static int checked;
@@ -332,6 +392,7 @@ static HWND directGfxWindow(void) {
     const HWND* var = fn ? *(HWND* const*) (fn + 1) : NULL;
     return var && readable(var, 4) ? *var : NULL;
 }
+
 
 typedef struct { int anyClass; HWND window; } DirectWindowSearch;
 
@@ -356,6 +417,7 @@ static void directSend(void) {
     sendPacket(&p);
 }
 
+
 static DWORD WINAPI directThread(LPVOID arg) {
     (void) arg;
     int loadRounds = 0, pendingRounds = 0, ended = 0, lastSent = -DIRECT_REPORT_ROUNDS;
@@ -365,11 +427,13 @@ static DWORD WINAPI directThread(LPVOID arg) {
             if (!directLaunch) directLaunch = (DWORD) GetModuleHandleA("D2Launch.dll");
             if (!directWin) directWin = (DWORD) GetModuleHandleA("D2Win.dll");
             void* volatile* hero = directHeroVar;
+
             if (directPressedOk && ((hero && *hero) || (!hero && lastTick))) directStop(DS_IN_GAME, DR_NONE, "in the game");
             else if (directLoading && ++loadRounds > DIRECT_LOAD_ROUNDS) directStop(DS_STOPPED, DR_TIME, "no game after the start");
         }
         if (directState == DS_RUNNING && !directWindow) {
             DirectWindowSearch search = {rounds >= DIRECT_CLASS_ROUNDS, NULL};
+
             HWND own = directGfxWindow();
             DWORD ownPid = 0;
             if (own && IsWindow(own)) GetWindowThreadProcessId(own, &ownPid);
@@ -395,6 +459,10 @@ static DWORD WINAPI directThread(LPVOID arg) {
             }
             else if (++pendingRounds > DIRECT_PENDING_ROUNDS) directStop(DS_STOPPED, DR_TIME, "the game does not look");
         }
+
+
+
+
         if (directState == DS_IN_GAME && directHeroVar) {
             void* volatile* hero = directHeroVar;
             if (*hero) {
@@ -402,6 +470,8 @@ static DWORD WINAPI directThread(LPVOID arg) {
                 InterlockedExchange(&directMenuNow, 0);
             }
             else if (directHeroSeen && directMenuNow) {
+
+
                 directHeroSeen = 0;
                 InterlockedExchange(&directStepNo, 0);
                 InterlockedExchange(&directState, DS_LEFT);
@@ -416,6 +486,7 @@ static DWORD WINAPI directThread(LPVOID arg) {
         int watching = directState == DS_IN_GAME && directHeroVar;
         if (directState != DS_RUNNING && !ended) ended = rounds ? rounds : 1;
         if (watching && ended && rounds - ended >= DIRECT_AFTER_ROUNDS) {
+
             sentState = directState;
             sentStep = directStepNo;
             lastSent = rounds;
@@ -433,6 +504,7 @@ static DWORD WINAPI directThread(LPVOID arg) {
     }
     return 0;
 }
+
 
 static void directBegin(void) {
     if (!directReadMarker()) return;

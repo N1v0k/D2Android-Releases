@@ -2,8 +2,16 @@ package com.winlator.d2;
 
 import java.util.Set;
 
+
+
+
+
 public final class D2MenuRow {
     private D2MenuRow() {}
+
+
+
+
 
     public static String[] lines(String label, java.util.function.ToIntFunction<String> width, float max) {
         if (width.applyAsInt(label) <= max || label.indexOf(' ') < 0) return new String[]{label};
@@ -14,15 +22,29 @@ public final class D2MenuRow {
         return new String[]{label.substring(0, best), label.substring(best + 1)};
     }
 
+
     public static final String QUESTS = "quests";
+
+
+
+
+
 
     public static boolean questNews(boolean edgeButtonsHidden, boolean questLogButton) {
         return edgeButtonsHidden && questLogButton;
     }
 
+
     public static boolean shownFolded(String id, boolean toggle, boolean pinned, boolean questNews) {
         return toggle || pinned || (questNews && QUESTS.equals(id));
     }
+
+
+
+
+
+
+
 
     public static float[] rightEdges(String[] ids, float[] halfWidths, int toggle, Set<String> pinned, boolean open,
                                      float right, float gap) {

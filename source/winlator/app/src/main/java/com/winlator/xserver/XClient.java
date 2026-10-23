@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.os.Looper;
 
@@ -60,15 +60,18 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
     }
 
     public void sendEvent(Event event) {
-        // D2Android: an event waits at most a while for a client that reads nothing (stopped in the background,
-        // hung), then it is dropped: the UI thread must not hang (ANR), nor the epoll thread (the whole X server); the
-        // client is not cut off, the game must not end.
+
+
+
         if (neverDropped(event)) {
             sendEventBlocking(event);
             return;
         }
         boolean ui = Looper.myLooper() == Looper.getMainLooper();
         int sendWaitMs = ui ? EVENT_WAIT_UI_MS : EVENT_WAIT_MS;
+
+
+
         if (eventsBlocked && !isRelease(event)) sendWaitMs = 0;
         int lockWaitMs = sendWaitMs > 0 ? sendWaitMs : EVENT_LOCK_WAIT_BLOCKED_MS;
         int result;
@@ -96,22 +99,23 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
             eventsBlocked = false;
             return;
         }
+
         if (result == XOutputStream.EVENT_DROPPED) eventsBlocked = true;
         noteDroppedEvent(event, result == XOutputStream.EVENT_DROPPED
             ? (sendWaitMs > 0 ? "it read nothing for " + sendWaitMs + " ms" : "its socket is still full, no wait")
             : "the stream was busy for " + lockWaitMs + " ms");
     }
 
-    /**
-     * D2Android: Present events are never dropped: the guest's Vulkan WSI cannot make up a lost
-     * IdleNotify/CompleteNotify (a swap chain image would stay taken, the picture would stand). They come from the
-     * Present threads, never from the UI thread, only while the client presents itself (so it reads), and block as before.
-     */
+
+
+
+
+
     private static boolean neverDropped(Event event) {
         return event instanceof PresentIdleNotify || event instanceof PresentCompleteNotify || event instanceof PresentConfigureNotify;
     }
 
-    /** D2Android: a key or button let go: dropped, it would hang in the game */
+
     private static boolean isRelease(Event event) {
         return event instanceof KeyRelease || event instanceof ButtonRelease;
     }
@@ -125,15 +129,15 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
         }
     }
 
-    /** D2Android: how long an event waits for room in the client's socket, on the UI thread and elsewhere */
+
     static final int EVENT_WAIT_UI_MS = 500, EVENT_WAIT_MS = 2000;
-    /** D2Android: the wait for the stream lock while the client's socket is known full */
+
     static final int EVENT_LOCK_WAIT_BLOCKED_MS = 50;
     private final java.util.concurrent.atomic.AtomicInteger droppedTotal = new java.util.concurrent.atomic.AtomicInteger();
-    /** D2Android: the last event to this client was dropped for a full socket: the next one does not wait */
+
     private volatile boolean eventsBlocked;
 
-    /** D2Android: the trace line, for the first dropped event and then every 100th of this client */
+
     private void noteDroppedEvent(Event event, String why) {
         int total = droppedTotal.incrementAndGet();
         if (total == 1 || total % 100 == 0) {

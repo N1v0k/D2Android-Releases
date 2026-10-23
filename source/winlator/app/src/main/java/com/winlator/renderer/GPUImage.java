@@ -1,4 +1,4 @@
-package com.winlator.renderer;
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import androidx.annotation.Keep;
 
@@ -39,7 +39,7 @@ public class GPUImage extends Texture {
     @Override
     public void allocateTexture(short width, short height, ByteBuffer data) {
         if (isAllocated()) return;
-        // D2Android: made again for a new renderer context: the old image goes first
+
         if (imageKHRPtr != 0) {
             destroyImageKHR(imageKHRPtr);
             imageKHRPtr = 0;
@@ -94,7 +94,7 @@ public class GPUImage extends Texture {
         final Texture texture = drawable.getTexture();
         if (!(texture instanceof GPUImage)) {
             GPUImage gpuImage = new GPUImage(drawable, cpuAccess, useHALPixelFormatBGRA8888);
-            // D2Android: the old texture goes only if no other drawable holds it
+
             final Texture released = drawable.setTexture(gpuImage);
             if (released != null) xServer.getRenderer().xServerView.queueEvent(released::destroy);
             return gpuImage;

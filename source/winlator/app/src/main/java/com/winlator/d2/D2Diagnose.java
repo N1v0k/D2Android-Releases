@@ -27,9 +27,16 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+
+
+
+
+
 public final class D2Diagnose {
+
     private static final String[] GAME_LOGS = {"d2android-mod.log", "d2android-loader.log", "PlugY.log",
         "d2android-mod.prev.log", "d2android-loader.prev.log"};
+
     private static final String PREV_TRACE = "app-trace.prev.txt";
 
     private D2Diagnose() {}
@@ -49,9 +56,11 @@ public final class D2Diagnose {
                     File shadow = shadowDir(activity);
                     if (shadow != null) for (String name : GAME_LOGS) add(out, new File(shadow, name), name);
                     add(out, new File(activity.getFilesDir(), PREV_TRACE), PREV_TRACE);
+
                     for (String name : new String[] {D2GuestOutput.FILE, D2GuestOutput.PREV}) {
                         add(out, D2Runtime.logFile(activity, name), name, D2GuestOutput.ZIP_BYTES);
                     }
+
                     File dxvk = D2Runtime.logFile(activity, D2DxvkLog.DIR);
                     for (String sub : new String[] {"", D2DxvkLog.PREVIOUS}) {
                         File[] files = new File(dxvk, sub).listFiles();
@@ -60,6 +69,7 @@ public final class D2Diagnose {
                             if (file.isFile()) addText(out, file, "dxvk/" + (sub.isEmpty() ? "" : sub + "/") + file.getName(), D2DxvkLog.ZIP_BYTES);
                         }
                     }
+
                     if (shadow != null) for (String name : D2GameLogs.newest(shadow.list())) addGameLog(out, new File(shadow, name), name);
                     add(out, new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "D2Android/Protokoll.txt"), "Protokoll.txt");
                     out.putNextEntry(new ZipEntry("info.txt"));
@@ -82,6 +92,10 @@ public final class D2Diagnose {
         }, "D2Diagnose").start();
     }
 
+
+
+
+
     public static void reportBug(Activity activity) {
         String version = null;
         try {
@@ -98,6 +112,12 @@ public final class D2Diagnose {
         }
     }
 
+
+
+
+
+
+
     public static synchronized void keepTraceOfEndedRun(Context context) {
         File file = new File(context.getFilesDir(), PREV_TRACE);
         File part = new File(context.getFilesDir(), PREV_TRACE + ".part");
@@ -109,6 +129,7 @@ public final class D2Diagnose {
             part.delete();
         }
     }
+
 
     private static void addGameLog(ZipOutputStream out, File file, String name) throws IOException {
         if (!file.isFile()) return;
@@ -123,6 +144,7 @@ public final class D2Diagnose {
         out.write(D2GameLogs.compact(tail, read < length));
         out.closeEntry();
     }
+
 
     private static File shadowDir(Context context) {
         File dir = new File(D2Runtime.driveC(context), D2Runtime.DRIVE_C_SHADOW);
@@ -144,6 +166,7 @@ public final class D2Diagnose {
         }
         return b.toString();
     }
+
 
     private static D2DeviceInfo.Facts deviceFacts(Context context) {
         D2DeviceInfo.Facts f = new D2DeviceInfo.Facts();
@@ -173,9 +196,11 @@ public final class D2Diagnose {
             f.ramLow = memory.lowMemory;
         }
         if (D2TouchOverlay.isGameRunning()) {
+
             long guestPss = 0, guestRss = 0;
             boolean pss = true;
             int count = 0;
+
             for (com.winlator.core.ProcessHelper.PStat process : D2GuestList.find(new File("/proc"), D2Runtime.rootDir(context),
                     android.os.Process.myUid(), android.os.Process.myPid()).processes) {
                 if (!process.guestProcess) continue;
@@ -195,6 +220,7 @@ public final class D2Diagnose {
         return f;
     }
 
+
     private static long pss(int pid) {
         try {
             return D2DeviceInfo.pssBytes(new String(java.nio.file.Files.readAllBytes(new File("/proc/" + pid + "/smaps_rollup").toPath()), "UTF-8"));
@@ -203,6 +229,7 @@ public final class D2Diagnose {
             return -1;
         }
     }
+
 
     private static int vulkanVersion(Context context) {
         try {
@@ -219,6 +246,7 @@ public final class D2Diagnose {
     private static void add(ZipOutputStream out, File file, String name) throws IOException {
         add(out, file, name, 8L * 1024 * 1024);
     }
+
 
     private static void addText(ZipOutputStream out, File file, String name, long max) throws IOException {
         if (!file.isFile()) return;
@@ -237,9 +265,11 @@ public final class D2Diagnose {
         out.closeEntry();
     }
 
+
     private static void add(ZipOutputStream out, File file, String name, long max) throws IOException {
         if (!file.isFile()) return;
         out.putNextEntry(new ZipEntry(name));
+
         long skip = Math.max(0, file.length() - max);
         try (InputStream in = new FileInputStream(file)) {
             long skipped = 0;

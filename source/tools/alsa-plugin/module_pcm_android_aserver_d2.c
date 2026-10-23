@@ -1,10 +1,10 @@
-/* D2Android: copy of Winlator's android_alsa/module_pcm_android_aserver.c (github.com/brunodev85/winlator,
- * commit b6b2259, LGPL-2.1, matches the binary in Winlator 11.2's rootfs_patches.tzst) as its own plugin type
- * "android_aserver_d2"; changes are marked "D2Android:". Built for aarch64 by tools/build-runtime.py (called from build-runtime.sh). */
+// Modified by D2Android (changes 2026-10-09 to 2026-10-23).
+
+
 #include <stdio.h>
-#include <stdlib.h> // D2Android: atoi/getenv
-#include <stdbool.h> 
-#include <stdint.h> 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <alsa/asoundlib.h>
 #include <alsa/pcm_external.h>
 #include <sys/types.h>
@@ -72,7 +72,7 @@ static int android_aserver_recv_fd(int fd) {
 
 static char parse_data_type(snd_pcm_format_t format) {
     char data_type;
-    
+
     switch (format) {
         case SND_PCM_FORMAT_U8:
             data_type = DATA_TYPE_U8;
@@ -88,17 +88,17 @@ static char parse_data_type(snd_pcm_format_t format) {
             break;
         case SND_PCM_FORMAT_FLOAT_BE:
             data_type = DATA_TYPE_FLOATBE;
-            break;            
+            break;
         default:
-            data_type = -EINVAL;            
+            data_type = -EINVAL;
     }
-    
+
     return data_type;
 }
 
 static int android_aserver_min_buffer_size(snd_pcm_ioplug_t* io, char channels, snd_pcm_format_t format, int rate) {
     snd_pcm_android_aserver_t* android_aserver = io->private_data;
-    
+
     int request_length = 6;
     char request_data[request_length + MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_MIN_BUFFER_SIZE;
@@ -106,52 +106,52 @@ static int android_aserver_min_buffer_size(snd_pcm_ioplug_t* io, char channels, 
     request_data[5] = channels;
     request_data[6] = parse_data_type(format);
     *(int*)(request_data + 7) = rate;
-    
+
     int res = write(android_aserver->fd, &request_data, request_length + MIN_REQUEST_LENGTH);
     if (res < 0) return 0;
-    
+
     int min_buffer_size;
     res = read(android_aserver->fd, &min_buffer_size, 4);
     if (res != 4) return 0;
-    
+
     return min_buffer_size;
 }
 
 static int android_aserver_close(snd_pcm_ioplug_t* io) {
     snd_pcm_android_aserver_t* android_aserver = io->private_data;
     if (!android_aserver) return 0;
-        
+
     if (android_aserver->fd >= 0) {
         int request_length = 0;
         char request_data[MIN_REQUEST_LENGTH];
         request_data[0] = REQUEST_CODE_CLOSE;
         *(int*)(request_data + 1) = request_length;
-    
+
         int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
         if (res > 0) close(android_aserver->fd);
     }
-    
+
     if (android_aserver->shm_ptr) {
         munmap(android_aserver->shm_ptr, android_aserver->shm_size);
         android_aserver->shm_ptr = NULL;
         android_aserver->shm_size = 0;
     }
-    
+
     free(android_aserver);
     return 0;
 }
 
 static int android_aserver_start(snd_pcm_ioplug_t* io) {
     snd_pcm_android_aserver_t* android_aserver = io->private_data;
-    
+
     int request_length = 0;
     char request_data[MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_START;
     *(int*)(request_data + 1) = request_length;
-    
+
     int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
     if (res < 0) return -EINVAL;
-    
+
     return 0;
 }
 
@@ -162,10 +162,10 @@ static int android_aserver_stop(snd_pcm_ioplug_t* io) {
     char request_data[MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_STOP;
     *(int*)(request_data + 1) = request_length;
-    
+
     int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
     if (res < 0) return -EINVAL;
-    
+
     return 0;
 }
 
@@ -176,17 +176,17 @@ static int android_aserver_pause(snd_pcm_ioplug_t* io, int enable) {
     char request_data[MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_PAUSE;
     *(int*)(request_data + 1) = request_length;
-    
+
     int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
     if (res < 0) return -EINVAL;
-    
+
     return 0;
 }
 
 static int android_aserver_prepare(snd_pcm_ioplug_t* io) {
     snd_pcm_android_aserver_t* android_aserver = io->private_data;
     android_aserver->frame_bytes = (snd_pcm_format_physical_width(io->format) * io->channels) / 8;
-    
+
     int request_length = 10;
     char request_data[request_length + MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_PREPARE;
@@ -195,22 +195,22 @@ static int android_aserver_prepare(snd_pcm_ioplug_t* io) {
     request_data[6] = parse_data_type(io->format);
     *(int*)(request_data + 7) = io->rate;
     *(int*)(request_data + 11) = io->buffer_size;
-    
+
     int res = write(android_aserver->fd, &request_data, request_length + MIN_REQUEST_LENGTH);
     if (res < 0) return -EINVAL;
-    
+
     if (android_aserver->use_shm) {
         if (android_aserver->shm_ptr) {
             munmap(android_aserver->shm_ptr, android_aserver->shm_size);
             android_aserver->shm_ptr = NULL;
             android_aserver->shm_size = 0;
-        } 
-        
+        }
+
         int fd = android_aserver_recv_fd(android_aserver->fd);
         if (fd >= 0) {
             int shm_size = io->buffer_size * android_aserver->frame_bytes + BUFFER_OFFSET;
             void* shm_ptr = mmap(NULL, shm_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
-            
+
             if (shm_ptr != MAP_FAILED) {
                 memset(shm_ptr, 0, shm_size);
                 android_aserver->shm_ptr = shm_ptr;
@@ -219,15 +219,15 @@ static int android_aserver_prepare(snd_pcm_ioplug_t* io) {
             else android_aserver->use_shm = false;
             close(fd);
         }
-    }    
-    
+    }
+
     return 0;
 }
 
 static snd_pcm_sframes_t android_aserver_pointer(snd_pcm_ioplug_t* io) {
     snd_pcm_android_aserver_t* android_aserver = io->private_data;
     uint32_t position;
-    
+
     if (android_aserver->use_shm) {
         position = *(uint32_t*)(android_aserver->shm_ptr);
     }
@@ -236,14 +236,14 @@ static snd_pcm_sframes_t android_aserver_pointer(snd_pcm_ioplug_t* io) {
         char request_data[MIN_REQUEST_LENGTH];
         request_data[0] = REQUEST_CODE_POINTER;
         *(int*)(request_data + 1) = request_length;
-        
+
         int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
         if (res < 0) return 0;
-        
+
         res = read(android_aserver->fd, &position, 4);
         if (res != 4) return 0;
     }
-    
+
     return position;
 }
 
@@ -256,12 +256,12 @@ static snd_pcm_sframes_t android_aserver_transfer(snd_pcm_ioplug_t* io, const sn
     char request_data[MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_WRITE;
     *(int*)(request_data + 1) = request_length;
-    
+
     if (android_aserver->use_shm) memcpy(android_aserver->shm_ptr + BUFFER_OFFSET, data, request_length);
-    
+
     int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
     if (res < 0) return 0;
-    
+
     if (android_aserver->use_shm) {
         char success = 0;
         res = read(android_aserver->fd, &success, 1);
@@ -269,9 +269,9 @@ static snd_pcm_sframes_t android_aserver_transfer(snd_pcm_ioplug_t* io, const sn
     }
     else {
         res = write(android_aserver->fd, data, request_length);
-        if (res < 0) return 0;        
+        if (res < 0) return 0;
     }
-    
+
     return size;
 }
 
@@ -282,72 +282,72 @@ static int android_aserver_drain(snd_pcm_ioplug_t* io) {
     char request_data[MIN_REQUEST_LENGTH];
     request_data[0] = REQUEST_CODE_DRAIN;
     *(int*)(request_data + 1) = request_length;
-    
+
     int res = write(android_aserver->fd, &request_data, MIN_REQUEST_LENGTH);
     if (res < 0) return -EINVAL;
-    
+
     return 0;
 }
 
 static int android_aserver_hw_params(snd_pcm_ioplug_t* io, snd_pcm_hw_params_t* params) {
 	int err;
-    
+
     snd_pcm_format_t format;
     err = snd_pcm_hw_params_get_format(params, &format);
     if (err < 0) return err;
-    
+
     unsigned int channels;
     err = snd_pcm_hw_params_get_channels(params, &channels);
     if (err < 0) return err;
-    
+
     unsigned int rate;
     err = snd_pcm_hw_params_get_rate(params, &rate, 0);
 	if (err < 0) return err;
-    
+
     int min_buffer_size = android_aserver_min_buffer_size(io, channels, format, rate);
     if (min_buffer_size == 0) return 0;
-    
+
     int frame_bytes = (snd_pcm_format_physical_width(format) * channels) / 8;
-    
+
     snd_pcm_uframes_t buffer_size = min_buffer_size / frame_bytes;
     snd_pcm_uframes_t period_size = buffer_size / frame_bytes;
-    
+
     snd_pcm_hw_params_t* refined_params;
     snd_pcm_hw_params_alloca(&refined_params);
-    
+
     err = snd_pcm_hw_params_any(io->pcm, refined_params);
     if (err < 0) return err;
-    
+
     snd_pcm_access_mask_t* access = alloca(snd_pcm_access_mask_sizeof());
     err = snd_pcm_hw_params_get_access_mask(params, access);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_access_mask(io->pcm, refined_params, access);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_format(io->pcm, refined_params, format);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_channels(io->pcm, refined_params, channels);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_rate(io->pcm, refined_params, rate, 0);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_period_size(io->pcm, refined_params, period_size, 0);
     if (err < 0) return err;
 
     err = snd_pcm_hw_params_set_periods_integer(io->pcm, refined_params);
     if (err < 0) return err;
-    
+
     err = snd_pcm_hw_params_set_buffer_size(io->pcm, refined_params, buffer_size);
     if (err < 0) return err;
-    
+
     snd_pcm_hw_params_copy(params, refined_params);
     return 0;
 }
 
-static int android_aserver_set_hw_constraint(snd_pcm_ioplug_t* io) {    
+static int android_aserver_set_hw_constraint(snd_pcm_ioplug_t* io) {
     static const unsigned int access_list[] = {SND_PCM_ACCESS_RW_INTERLEAVED};
     static const unsigned int format_list[] = {SND_PCM_FORMAT_U8, SND_PCM_FORMAT_S16_LE, SND_PCM_FORMAT_S16_BE, SND_PCM_FORMAT_FLOAT_LE, SND_PCM_FORMAT_FLOAT_BE};
     int err;
@@ -361,19 +361,19 @@ static int android_aserver_set_hw_constraint(snd_pcm_ioplug_t* io) {
     err = snd_pcm_ioplug_set_param_minmax(io, SND_PCM_IOPLUG_HW_CHANNELS, 1, 2);
     if (err < 0) return err;
 
-    // D2Android: D2_ALSA_RATE=<Hz> offers only that rate, so winealsa mixes at the game's 22050 Hz and Wine's
-    // dsound needs no FIR resampling; unset = Winlator's range as before
+
+
     unsigned int rate_min = 8000, rate_max = 48000;
     char* fixed_rate = getenv("D2_ALSA_RATE");
     if (fixed_rate && atoi(fixed_rate) >= 8000 && atoi(fixed_rate) <= 48000) rate_min = rate_max = (unsigned int)atoi(fixed_rate);
     err = snd_pcm_ioplug_set_param_minmax(io, SND_PCM_IOPLUG_HW_RATE, rate_min, rate_max);
     if (err < 0) return err;
-    
+
     err = snd_pcm_ioplug_set_param_minmax(io, SND_PCM_IOPLUG_HW_PERIOD_BYTES, 64, 64 * 1024);
     if (err < 0) return err;
 
     err = snd_pcm_ioplug_set_param_minmax(io, SND_PCM_IOPLUG_HW_PERIODS, 2, 64);
-    if (err < 0) return err;    
+    if (err < 0) return err;
     return 0;
 }
 
@@ -392,84 +392,84 @@ static snd_pcm_ioplug_callback_t android_aserver_callback = {
 
 static int android_aserver_connect() {
     char* path = getenv("ANDROID_ALSA_SERVER");
-    
+
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) return -1;
-    
+
     struct sockaddr_un server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sun_family = AF_LOCAL;
-    
+
     strncpy(server_addr.sun_path, path, sizeof(server_addr.sun_path) - 1);
-    
+
     int res;
     do {
         res = 0;
         if (connect(fd, (struct sockaddr*)&server_addr, sizeof(struct sockaddr_un)) < 0) res = -errno;
-    } 
-    while (res == -EINTR);    
-    
+    }
+    while (res == -EINTR);
+
     if (res < 0) {
         close(fd);
         return -1;
     }
 
-    return fd;        
+    return fd;
 }
 
 static int android_aserver_create(snd_pcm_t** pcmp, const char* name, snd_pcm_stream_t stream, int mode) {
     snd_pcm_android_aserver_t* android_aserver;
-    
+
     if (stream != SND_PCM_STREAM_PLAYBACK) return -ENOTSUP;
-    
+
     android_aserver = calloc(1, sizeof(snd_pcm_android_aserver_t));
     if (!android_aserver) return -ENOMEM;
-    
+
     android_aserver->io.version = SND_PCM_IOPLUG_VERSION;
     android_aserver->io.name = "ALSA <-> Android AServer PCM Plugin";
     android_aserver->io.callback = &android_aserver_callback;
     android_aserver->io.mmap_rw = 0;
     android_aserver->io.private_data = android_aserver;
-    
+
     int res = -EINVAL;
     android_aserver->fd = android_aserver_connect();
     if (android_aserver->fd < 0) goto error;
-    
+
     char* use_shm_value = getenv("ANDROID_ASERVER_USE_SHM");
     android_aserver->use_shm = use_shm_value && (strcmp(use_shm_value, "true") == 0 || strcmp(use_shm_value, "1") == 0);
-    
+
     res = snd_pcm_ioplug_create(&android_aserver->io, name, stream, mode);
     if (res < 0) goto error;
-    
+
     res = android_aserver_set_hw_constraint(&android_aserver->io);
     if (res < 0) {
         snd_pcm_ioplug_delete(&android_aserver->io);
         goto error;
     }
-    
+
     *pcmp = android_aserver->io.pcm;
     return 0;
-    
+
 error:
     if (android_aserver->fd >= 0) close(android_aserver->fd);
     free(android_aserver);
-    return res;    
+    return res;
 }
 
-// D2Android: own type, Winlator's plugin stays as is
+
 SND_PCM_PLUGIN_DEFINE_FUNC(android_aserver_d2) {
     snd_config_iterator_t i, next;
-    
+
     snd_config_for_each(i, next, conf) {
         snd_config_t* n = snd_config_iterator_entry(i);
         const char* id;
-        
+
         if (snd_config_get_id(n, &id) < 0) continue;
         if (strcmp(id, "type") == 0 || strcmp(id, "hint") == 0) continue;
-        
+
         return -EINVAL;
     }
-    
+
     int err = android_aserver_create(pcmp, name, stream, mode);
     return err;
 }

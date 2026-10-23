@@ -7,11 +7,20 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
 final class D2StallSnapshot {
+
     static final int MAX_THREADS = 20;
+
     static final int PER_LINE = 4;
 
     private D2StallSnapshot() {}
+
 
     static List<String> threads(File proc, int pid) {
         File[] tasks = new File(proc, pid + "/task").listFiles();
@@ -28,10 +37,12 @@ final class D2StallSnapshot {
             String[] rest = stat.substring(close + 2).trim().split("\\s+");
             String state = rest.length > 0 ? rest[0] : "?";
             long ticks = 0;
+
             try {
                 if (rest.length > 12) ticks = Long.parseLong(rest[11]) + Long.parseLong(rest[12]);
             }
             catch (NumberFormatException ignored) {
+
             }
             String wchan = read(new File(task, "wchan"));
             wchan = wchan == null || wchan.trim().isEmpty() ? "-" : wchan.trim();
@@ -46,6 +57,7 @@ final class D2StallSnapshot {
         return out;
     }
 
+
     static List<String> packed(List<String> threads) {
         List<String> out = new ArrayList<>();
         for (int i = 0; i < threads.size(); i += PER_LINE) {
@@ -53,6 +65,7 @@ final class D2StallSnapshot {
         }
         return out;
     }
+
 
     static int gamePid(File proc, int[] pids) {
         for (int pid : pids) {

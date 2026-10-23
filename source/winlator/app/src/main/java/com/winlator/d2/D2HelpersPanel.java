@@ -9,19 +9,36 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2HelpersPanel {
     private static final int OPTION_ID = 100;
+
     static final String KEY_TAB = "helpersTab";
 
     private D2HelpersPanel() {}
+
 
     public static LinearLayout create(Context context, Runnable onChange, java.util.function.Consumer<String> onAimChange) {
         return create(context, onChange, onAimChange, false);
     }
 
+
     public static LinearLayout create(Context context, Runnable onChange, java.util.function.Consumer<String> onAimChange, boolean scroll) {
         return create(context, onChange, onAimChange, scroll, null);
     }
+
+
+
+
 
     public static LinearLayout create(Context context, Runnable onChange, java.util.function.Consumer<String> onAimChange, boolean scroll,
                                       String lootScope) {
@@ -33,9 +50,18 @@ public final class D2HelpersPanel {
         return create(context, onChange, onAimChange, scroll, lootScope, onEditButtons, null);
     }
 
+
     public interface Host {
         View view(D2HelperEntries.Entry e);
     }
+
+
+
+
+
+
+
+
 
     public static LinearLayout create(Context context, Runnable onChange, java.util.function.Consumer<String> onAimChange, boolean scroll,
                                       String lootScope, Runnable onEditButtons, Host host) {
@@ -64,6 +90,7 @@ public final class D2HelpersPanel {
         groupHolder.addView(groups);
 
         boolean inGame = host == null && scroll;
+
         android.widget.FrameLayout searchBox = new android.widget.FrameLayout(context);
         searchBox.addView(search, new android.widget.FrameLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -76,12 +103,14 @@ public final class D2HelpersPanel {
             root.removeAllViews();
             D2SettingsLook look = D2SettingsLook.get();
             if (look != null && back[0] == backLink) {
+
                 back[0] = inGame ? framedText(context, look, D2Text.get(context, com.winlator.R.string.settings_overview_stone),
                     () -> backLink.performClick())
                     : new D2GameText.Stone(context, look, true, D2Text.get(context, com.winlator.R.string.settings_overview_stone),
                     () -> backLink.performClick());
             }
             if (look != null && searchHint[0] == null) {
+
                 searchHint[0] = new D2GameText(context, look, look.formal10, GREY, D2Text.get(context, com.winlator.R.string.settings_search_hint));
                 searchHint[0].setPadding(dp(context, 4), dp(context, 14), 0, 0);
                 searchHint[0].setVisibility(search.length() == 0 ? View.VISIBLE : View.GONE);
@@ -103,6 +132,7 @@ public final class D2HelpersPanel {
             detach(groupHolder);
             View body = holder != null ? holder : content;
             detach(body);
+
             LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                 host != null ? 0 : LinearLayout.LayoutParams.WRAP_CONTENT, host != null ? 1 : 0);
             if (!twoPanes[0]) {
@@ -140,6 +170,7 @@ public final class D2HelpersPanel {
             String query = search.getText().toString().trim();
             boolean overview = page[0] == null;
             back[0].setVisibility(overview && query.isEmpty() ? View.GONE : View.VISIBLE);
+
             searchBox.setVisibility(overview || twoPanes[0] ? View.VISIBLE : View.GONE);
             content.removeAllViews();
             java.util.List<D2HelperEntries.Entry> entries = visible(context, inGame, host != null);
@@ -167,6 +198,7 @@ public final class D2HelpersPanel {
                 if (page[0] == null || twoPanes[0]) show[0].run();
             }
         });
+
         if (host != null) root.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             boolean now = twoPanes(context);
             if (now == twoPanes[0]) return;
@@ -181,6 +213,7 @@ public final class D2HelpersPanel {
             open, () -> page[0]));
         build.run();
         show[0].run();
+
         if (D2SettingsLook.get() == null) D2SettingsLook.load(context, () -> {
             build.run();
             show[0].run();
@@ -192,10 +225,12 @@ public final class D2HelpersPanel {
         if (view.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) view.getParent()).removeView(view);
     }
 
+
     private static boolean twoPanes(Context context) {
         android.content.res.Configuration c = context.getResources().getConfiguration();
         return c.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE && c.screenWidthDp >= D2HelperEntries.TWO_COLUMNS_DP;
     }
+
 
     private static final class Nav {
         final java.util.function.BooleanSupplier away;
@@ -212,6 +247,7 @@ public final class D2HelpersPanel {
         }
     }
 
+
     public static boolean back(View panel) {
         Object tag = panel != null ? panel.getTag() : null;
         if (!(tag instanceof Nav) || !((Nav) tag).away.getAsBoolean()) return false;
@@ -219,15 +255,21 @@ public final class D2HelpersPanel {
         return true;
     }
 
+
     public static void open(View panel, String group) {
         Object tag = panel != null ? panel.getTag() : null;
         if (tag instanceof Nav && group != null && D2HelperEntries.SETTINGS_GROUPS.contains(group)) ((Nav) tag).open.accept(group);
     }
 
+
     public static String group(View panel) {
         Object tag = panel != null ? panel.getTag() : null;
         return tag instanceof Nav ? ((Nav) tag).current.get() : null;
     }
+
+
+
+
 
     private static java.util.List<D2HelperEntries.Entry> visible(Context context, boolean inGame, boolean withHost) {
         java.util.List<D2HelperEntries.Entry> out = new java.util.ArrayList<>();
@@ -238,6 +280,10 @@ public final class D2HelpersPanel {
         }
         return out;
     }
+
+
+
+
 
     private static void overview(Context context, LinearLayout content, java.util.List<D2HelperEntries.Entry> entries,
                                  String selected, java.util.function.Consumer<String> open) {
@@ -260,6 +306,10 @@ public final class D2HelpersPanel {
         }
     }
 
+
+
+
+
     private static void group(Context context, LinearLayout content, String group, java.util.List<D2HelperEntries.Entry> entries,
                               Runnable onChange, java.util.function.Consumer<String> onAimChange, Runnable refresh,
                               String lootScope, Runnable onEditButtons, Host host) {
@@ -277,6 +327,7 @@ public final class D2HelpersPanel {
                 block.add(v);
                 rows += D2HelperEntries.rows(e);
             }
+
             if (block.isEmpty()) continue;
             block.add(0, heading(context, text(context, D2HelperEntries.sectionTitle(section))));
             blocks.add(block);
@@ -284,6 +335,7 @@ public final class D2HelpersPanel {
         }
         columns(context, content, blocks, heights, false);
     }
+
 
     private static void hits(Context context, LinearLayout content, String query, java.util.List<D2HelperEntries.Entry> entries,
                              Runnable onChange, java.util.function.Consumer<String> onAimChange, Runnable refresh, String lootScope,
@@ -295,6 +347,7 @@ public final class D2HelpersPanel {
         for (D2HelperEntries.Hit hit : found) {
             View v = element(context, hit.entry, onChange, onAimChange, refresh, lootScope, onEditButtons, host);
             if (v == null) continue;
+
             String here = t.get(D2HelperEntries.groupTitle(hit.group)) + (D2SettingsLook.get() != null ? " - " : " › ")
                 + t.get(D2HelperEntries.sectionTitle(hit.section));
             if (!here.equals(place)) content.addView(heading(context, here));
@@ -304,6 +357,7 @@ public final class D2HelpersPanel {
         }
         if (!any) content.addView(note(context, D2Text.get(context, com.winlator.R.string.settings_no_hits)));
     }
+
 
     private static void columns(Context context, LinearLayout content, java.util.List<java.util.List<View>> blocks,
                                 java.util.List<Integer> heights, boolean twoColumns) {
@@ -325,6 +379,7 @@ public final class D2HelpersPanel {
         right.setOrientation(LinearLayout.VERTICAL);
         for (int i = 0; i < blocks.size(); i++) for (View v : blocks.get(i)) (i < split ? left : right).addView(v);
         row.addView(left, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
         View line = new View(context);
         line.setBackgroundColor(D2Style.FRAME);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(context, 1), LinearLayout.LayoutParams.MATCH_PARENT);
@@ -335,20 +390,29 @@ public final class D2HelpersPanel {
         content.addView(row, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
     }
 
+
     private static String text(Context context, String name) {
         int id = context.getResources().getIdentifier(name, "string", context.getPackageName());
         return id == 0 ? name : D2Text.get(context, id);
     }
 
+
+
     private static boolean hidden(Context context, D2HelperEntries.Entry e) {
         if ("compareEquipped".equals(e.key)) return !D2Settings.compareCapable(context);
+
         if ("lootFilter".equals(e.key) || "lootHide".equals(e.key)) return !D2Settings.lootCapable(context);
+
         if ("valueLine".equals(e.key)) return !D2Settings.valueCapable(context);
+
         if ("materials".equals(e.key)) return !D2Settings.materialsCapable(context);
+
         if ("diffLines".equals(e.key)) return !D2Settings.diffCapable(context);
+
         if ("damageStyle".equals(e.key) || "damageDps".equals(e.key)) return !D2Settings.damageCapable(context);
         return false;
     }
+
 
     private static View element(Context context, D2HelperEntries.Entry e, Runnable onChange, java.util.function.Consumer<String> onAimChange, Runnable refresh,
                                 String lootScope, Runnable onEditButtons, Host host) {
@@ -359,6 +423,7 @@ public final class D2HelpersPanel {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
         box.addView(row);
+
         boolean parent = e.key != null && (e.key.equals("aimAssist") || e.key.equals("mapFightHide") || e.key.equals("padEnabled"));
         Runnable changed = parent ? () -> {
             if (onChange != null) onChange.run();
@@ -396,10 +461,12 @@ public final class D2HelpersPanel {
                 below = pad(context, e, onChange);
                 break;
             default:
+
                 boolean report = D2HelperEntries.ACTION_REPORT.equals(e.action);
                 boolean intro = D2HelperEntries.ACTION_INTRO.equals(e.action);
                 main = button(context, e.label, () -> {
                     if (intro) {
+
                         D2Settings.requestIntro(context);
                         if (onChange != null) onChange.run();
                         android.widget.Toast.makeText(context, D2Text.get(context, com.winlator.R.string.helper_intro_toast), android.widget.Toast.LENGTH_SHORT).show();
@@ -436,10 +503,15 @@ public final class D2HelpersPanel {
             box.addView(info);
         }
         if (below != null) box.addView(below);
+
         String needs = D2HelperEntries.dependsOn(e.key);
         if (needs != null && !bool(context, needs)) setEnabled(box, false);
         return box;
     }
+
+
+
+
 
     private static View host(Context context, D2HelperEntries.Entry e, Runnable onEditButtons) {
         if ("editButtons".equals(e.key) && onEditButtons != null) {
@@ -455,6 +527,8 @@ public final class D2HelpersPanel {
         LinearLayout box = new LinearLayout(context);
         box.setOrientation(LinearLayout.VERTICAL);
         box.addView(name(context, e.label));
+
+
         int scope = D2HelperEntries.scope(e.key);
         int note = scope == D2HelperEntries.BEFORE_START ? com.winlator.R.string.settings_only_before_start
             : scope == D2HelperEntries.NEXT_START ? com.winlator.R.string.settings_next_start_page
@@ -478,7 +552,9 @@ public final class D2HelpersPanel {
     }
 
 
+
     private static final int GOLD = 0xC8B074, WHITE = 0xD2CEC6, GREY = 0x8C8C8C, DARK_GREY = 0x707070;
+
 
     private static View name(Context context, String text) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -488,6 +564,7 @@ public final class D2HelpersPanel {
         return view;
     }
 
+
     private static View note(Context context, String text) {
         D2SettingsLook look = D2SettingsLook.get();
         if (look == null) return hint(context, text);
@@ -496,6 +573,11 @@ public final class D2HelpersPanel {
         view.setPadding(dp(context, 10), 0, dp(context, 4), dp(context, 4));
         return view;
     }
+
+
+
+
+
 
     private static View button(Context context, String text, Runnable action) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -513,6 +595,10 @@ public final class D2HelpersPanel {
         return box;
     }
 
+
+
+
+
     static View framedText(Context context, D2SettingsLook look, String text, Runnable action) {
         D2GameText view = new D2GameText(context, look, look.font16, GOLD, text);
         view.wrapWidth = true;
@@ -528,6 +614,7 @@ public final class D2HelpersPanel {
         return view;
     }
 
+
     private static View heading(Context context, String text) {
         D2SettingsLook look = D2SettingsLook.get();
         if (look == null) return subheading(context, text);
@@ -535,6 +622,7 @@ public final class D2HelpersPanel {
         view.setPadding(0, dp(context, 12), 0, dp(context, 2));
         return view;
     }
+
 
     private static View title(Context context, String text, boolean big, boolean gold) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -546,11 +634,16 @@ public final class D2HelpersPanel {
             if (!gold) view.setTextColor(D2Style.TEXT);
             return view;
         }
+
         if (big) return new D2GameText(context, look, look.font30, gold ? GOLD : WHITE, text);
         D2GameText view = new D2GameText(context, look, look.font24, gold ? GOLD : WHITE, text);
         view.gain = D2SettingsLook.TITLE_GAIN;
         return view;
     }
+
+
+
+
 
     private static View toggle(Context context, String label, boolean checked, String key, Runnable onChange) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -560,6 +653,10 @@ public final class D2HelpersPanel {
             if (onChange != null) onChange.run();
         });
     }
+
+
+
+
 
     static View gameSwitch(Context context, D2SettingsLook look, String label, boolean checked, java.util.function.Consumer<Boolean> set) {
         D2GameText view = new D2GameText(context, look, look.font16, WHITE, label);
@@ -578,6 +675,7 @@ public final class D2HelpersPanel {
         });
         return view;
     }
+
 
     private static View cycle(Context context, D2HelperEntries.Entry e, Runnable onChange, String lootScope) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -619,12 +717,14 @@ public final class D2HelpersPanel {
         return view;
     }
 
+
     static String text(String raw) {
         return raw.replace("{SECONDS}", String.valueOf(D2LabelFilter.SECONDS))
             .replace("{RESERVE}", String.valueOf(D2AutoItems.POTION_RESERVE))
             .replace("{LIFE}", String.valueOf(D2Settings.AUTO_LIFE_DEFAULT))
             .replace("{MANA}", String.valueOf(D2Settings.AUTO_MANA_DEFAULT));
     }
+
 
     static boolean bool(Context c, String key) {
         switch (key) {
@@ -635,6 +735,7 @@ public final class D2HelpersPanel {
             case "xpBar": return D2Settings.xpBar(c);
             case "xpLevel": return D2Settings.xpLevel(c);
             case "hiFps": case "hiBattery": case "hiPlayers": case "hiClock": case "hiLevel": case "hiDps": case "hiGold":
+
                 return D2Settings.highlighted(c, java.util.Arrays.asList(D2InfoGrid.HIGHLIGHT_KEYS).indexOf(key));
             case "hidePointer": return D2Settings.hidePointer(c);
             case "aimAssist": return D2Settings.aimAssist(c);
@@ -665,6 +766,7 @@ public final class D2HelpersPanel {
             default: throw new IllegalArgumentException("no switch " + key);
         }
     }
+
 
     private static int[] choiceValues(String key) {
         switch (key) {
@@ -704,6 +806,7 @@ public final class D2HelpersPanel {
         }
     }
 
+
     private static int choiceBase(String key) {
         switch (key) {
             case "hud": return OPTION_ID;
@@ -727,6 +830,7 @@ public final class D2HelpersPanel {
         RadioGroup group = new RadioGroup(context);
         int[] values = choiceValues(e.key);
         int base = choiceBase(e.key);
+
         int current = choiceValue(context, e.key, lootScope), checked = e.key.equals("potions") ? values.length - 1 : 0;
         for (int i = 0; i < e.options.length; i++) {
             option(context, group, base + i, e.options[i]);
@@ -735,11 +839,13 @@ public final class D2HelpersPanel {
         group.check(base + checked);
         boolean loot = "lootFilter".equals(e.key);
         group.setOnCheckedChangeListener((g, id) -> {
+
             if (loot) D2LabelFilter.putPreset(context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE), lootScope, values[id - base]);
             else D2Settings.putInt(context, e.key, values[id - base]);
             if (onChange != null) onChange.run();
         });
         if (!loot) return group;
+
         LinearLayout box = new LinearLayout(context);
         box.setOrientation(LinearLayout.VERTICAL);
         TextView whose = new TextView(context);
@@ -751,6 +857,7 @@ public final class D2HelpersPanel {
     }
 
     private static LinearLayout pins(Context context, D2HelperEntries.Entry e, Runnable onChange, String lootScope) {
+
         boolean loot = "lootHide".equals(e.key);
         android.content.SharedPreferences prefs = context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE);
         java.util.Set<String> pinned = loot ? null : D2Settings.pinnedMenu(context);
@@ -758,6 +865,7 @@ public final class D2HelpersPanel {
         grid.setOrientation(LinearLayout.VERTICAL);
         D2SettingsLook look = D2SettingsLook.get();
         if (look != null) {
+
             for (int i = 0; i < e.options.length / 2; i++) {
                 final String key = e.options[2 * i];
                 int bit = loot ? D2LabelFilter.OWN_BITS[java.util.Arrays.asList(D2LabelFilter.OWN_KEYS).indexOf(key)] : 0;
@@ -790,6 +898,7 @@ public final class D2HelpersPanel {
             box.setChecked(loot ? (D2LabelFilter.own(prefs, lootScope) & bit) != 0 : pinned.contains(key));
             box.setOnCheckedChangeListener((view, on) -> {
                 if (loot) {
+
                     int own = D2LabelFilter.own(prefs, lootScope);
                     D2LabelFilter.putOwn(prefs, lootScope, on ? own | bit : own & ~bit);
                 }
@@ -800,6 +909,10 @@ public final class D2HelpersPanel {
         }
         return grid;
     }
+
+
+
+
 
     private static LinearLayout triggers(Context context, D2HelperEntries.Entry e, Runnable onChange) {
         LinearLayout table = new LinearLayout(context);
@@ -836,6 +949,7 @@ public final class D2HelpersPanel {
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
             View name = name(context, e.options[2 * i + 1]);
             row.addView(name, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
             for (int side = 0; side < 2; side++) {
@@ -845,6 +959,7 @@ public final class D2HelpersPanel {
                 radio.setChecked(current[side] == action);
                 radio.setContentDescription(e.options[2 * i + 1] + " " + (side == 0 ? "L" : "R"));
                 radio.setOnClickListener((v) -> {
+
                     for (int k = 0; k < radios[col].length; k++) radios[col][k].setChecked(k == index);
                     D2Settings.setTrigger(context, col == 0, action);
                     if (onChange != null) onChange.run();
@@ -857,6 +972,10 @@ public final class D2HelpersPanel {
         }
         return table;
     }
+
+
+
+
 
     private static LinearLayout pad(Context context, D2HelperEntries.Entry e, Runnable onChange) {
         LinearLayout table = new LinearLayout(context);
@@ -903,9 +1022,11 @@ public final class D2HelpersPanel {
         return table;
     }
 
+
     private static void choosePadAction(Context context, int button, boolean layer2, TextView cell, Runnable onChange) {
         String[] names = new String[D2TriggerAction.PAD.length];
         for (int i = 0; i < names.length; i++) names[i] = padActionName(context, D2TriggerAction.PAD[i]);
+
         int current = D2Gamepad.parseMap(D2Settings.padMap(context))[layer2 ? 1 : 0][button];
         float density = context.getResources().getDisplayMetrics().density;
         TextView title = new TextView(context);
@@ -940,6 +1061,7 @@ public final class D2HelpersPanel {
         if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(density));
     }
 
+
     private static String padActionName(Context context, int action) {
         if (D2TriggerAction.isSkillKey(action)) {
             return D2Text.get(context, com.winlator.R.string.pad_action_skill_key, D2TriggerAction.skillKeyIndex(action) + 1);
@@ -970,6 +1092,7 @@ public final class D2HelpersPanel {
             : D2Text.get(context, com.winlator.R.string.helper_value_below, v);
         switch (e.key) {
             case "aimRangeMelee":
+
                 return slider(context, e.label, v -> Math.min(v, D2Settings.aimRange(context)) + " %", D2Settings.AIM_RANGE_MELEE_MIN, D2Settings.AIM_RANGE_MELEE_MAX, 5,
                     D2Settings.aimRangeMelee(context), e.key, onChange, onAimChange);
             case "aimRange":
@@ -1036,6 +1159,7 @@ public final class D2HelpersPanel {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(dp(context, 8), dp(context, 4), 0, 0);
         D2SettingsLook look = D2SettingsLook.get();
+
         D2GameText gameLabel = look != null ? new D2GameText(context, look, look.font16, WHITE, name) : null;
         TextView label = look == null ? new TextView(context) : null;
         if (label != null) {

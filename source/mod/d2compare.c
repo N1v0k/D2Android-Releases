@@ -1,4 +1,18 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define RVA_DrawHoverCall   0x1D791
 #define RVA_DrawHoverThunk  0xD35E
 #define RVA_ItemHover       0x97820
@@ -15,6 +29,7 @@
 #define ORD_TextSize        10179
 #define ORD_BodyLocItem     10292
 #define ORD_ItemIsType      10601
+
 
 #define ITYPE_SHIELD 2
 #define ITYPE_ARMOR 3
@@ -45,6 +60,7 @@ static wchar_t* hoverText;
 static int compareAvailable, compareApplied, compareOn;
 static DWORD compareUntil;
 
+
 static int valueLineAdd(void);
 static void valueLineRemove(int added);
 static int valueWanted(DWORD now);
@@ -61,6 +77,8 @@ static void checkCompareSites(void) {
     fItemIsType = (ItemIsType_t) GetProcAddress((HMODULE) common, (LPCSTR) ORD_ItemIsType);
     static const BYTE hoverStart[] = {0xB8, 0x50, 0x66, 0x00, 0x00, 0xE8};
     BYTE* thunk = (BYTE*) (client + RVA_DrawHoverThunk);
+
+
     DWORD text = 0;
     int win1 = readable(set, 0x64) && set[0x19] == 0xB9 && set[0x43] == 0x89 && set[0x44] == 0x1D && set[0x49] == 0xA3
         && set[0x4E] == 0x89 && set[0x4F] == 0x0D && set[0x54] == 0x89 && set[0x55] == 0x15 && set[0x5A] == 0xC7;
@@ -72,6 +90,7 @@ static void checkCompareSites(void) {
     }
     int client1 = callAt(client, RVA_DrawHoverCall, RVA_DrawHoverThunk) && readable(thunk, 6) && thunk[0] == 0xFF
         && thunk[1] == 0x25 && readable(*(void**) (thunk + 2), 4) && **(DWORD**) (thunk + 2) == (DWORD) fDrawHover;
+
     int client2 = bytesAre(client + RVA_ItemHover, hoverStart, sizeof(hoverStart))
         && addressAt(client, 0x97DF8, RVA_HoverBody) && addressAt(client, 0x97E01, RVA_HoverGrid)
         && addressAt(client, 0x97E0E, RVA_HoverItem) && addressAt(client, 0x97FA6, RVA_HoverAnchor)
@@ -85,6 +104,7 @@ static void checkCompareSites(void) {
     logLine(compareAvailable ? "compare sites verified" : "compare sites not as expected (D2Win %d, call %d, D2Client %d): no comparison",
         win1, client1, client2);
 }
+
 
 static int compareSlots(void* item, void* inventory, void* found[2]) {
     found[0] = found[1] = NULL;
@@ -106,6 +126,7 @@ static int compareSlots(void* item, void* inventory, void* found[2]) {
         }
         return (found[0] != NULL) + (found[1] != NULL);
     }
+
     int weapon = fItemIsType(item, ITYPE_WEAPON);
     int offhand = fItemIsType(item, ITYPE_SHIELD) || fItemIsType(item, ITYPE_BOWQUIVER) || fItemIsType(item, ITYPE_XBOWQUIVER);
     if (!weapon && !offhand) return 0;
@@ -120,6 +141,7 @@ static int compareSlots(void* item, void* inventory, void* found[2]) {
     }
     return 0;
 }
+
 
 static void hoverBox(const wchar_t* text, long x, long y, DWORD centered, long* box) {
     long sw = (long) RD32(client, RVA_ScreenSizeX), sh = (long) RD32(client, RVA_ScreenSizeY);
@@ -137,14 +159,18 @@ static void hoverBox(const wchar_t* text, long x, long y, DWORD centered, long* 
     box[3] = h;
 }
 
+
+
 static int gameGerman(void) {
     const wchar_t* t = npcMenuAvailable ? localeText(5382) : NULL;
     return t && t[0] == L'e' && t[1] == L'i' && t[2] == L'n' && t[3] == L'e' && t[4] == L' ';
 }
 
 static const wchar_t* equippedHeader(void) {
+
     return gameGerman() ? L"\x00FF" L"c5Angelegt" : L"\x00FF" L"c5Equipped";
 }
+
 
 static int buildEquipped(void* player, void* equipped, int* size) {
     *(DWORD*) (client + RVA_HoverGrid) = 0;
@@ -152,6 +178,7 @@ static int buildEquipped(void* player, void* equipped, int* size) {
     *(void**) (client + RVA_HoverItem) = equipped;
     *(void**) (client + RVA_HoverItem2) = equipped;
     hoverText[0] = 0;
+
     DWORD trade = RD32(client, RVA_TradeMode);
     *(DWORD*) (client + RVA_TradeMode) = 0;
     ((ItemHover_t) (client + RVA_ItemHover))(player, 0);
@@ -160,6 +187,7 @@ static int buildEquipped(void* player, void* equipped, int* size) {
     const wchar_t* header = equippedHeader();
     int length = lstrlenW(hoverText);
     if (length + lstrlenW(header) + 1 < HOVER_CHARS) {
+
         hoverText[length] = L'\n';
         lstrcpyW(hoverText + length + 1, header);
     }
@@ -169,6 +197,7 @@ static int buildEquipped(void* player, void* equipped, int* size) {
     return 1;
 }
 
+
 static void drawAt(long left, long top, const int* size) {
     DWORD* hover = (DWORD*) (hoverText + HOVER_CHARS);
     hover[0] = (DWORD) left;
@@ -176,6 +205,7 @@ static void drawAt(long left, long top, const int* size) {
     hover[3] = 0;
     fDrawHover();
 }
+
 
 static int drawBeside(const long* first, const int* size, int side) {
     long sw = (long) RD32(client, RVA_ScreenSizeX);
@@ -185,11 +215,17 @@ static int drawBeside(const long* first, const int* size, int side) {
     return 1;
 }
 
+
+
+
+
 static int drawAboveOrBelow(const long* first, const int* size) {
     long sw = (long) RD32(client, RVA_ScreenSizeX), sh = (long) RD32(client, RVA_ScreenSizeY);
     long left = first[0];
     if (left + size[0] > sw) left = sw - size[0];
     if (left < 0) left = 0;
+
+
     long top = first[1] - COMPARE_GAP - size[1];
     if (top < -5) {
         top = first[1] + first[3] + COMPARE_GAP;
@@ -215,6 +251,7 @@ static void drawComparison(void) {
         lastItem = item;
     }
     if (!count) return;
+
     static DWORD saved[0x814 / 4];
     DWORD vars[5] = {RD32(client, RVA_HoverGrid), RD32(client, RVA_HoverBody), RD32(client, RVA_HoverItem),
         RD32(client, RVA_HoverItem2), RD32(client, RVA_HoverSlot)}, anchor[6];
@@ -224,6 +261,7 @@ static void drawComparison(void) {
     long first[4];
     hoverBox(hoverText, (long) hover[0], (long) hover[1], hover[3], first);
     int size[2];
+
     if (buildEquipped(player, equipped[0], size)) {
         if (drawBeside(first, size, -1)) {
             if (count == 2 && buildEquipped(player, equipped[1], size) && !drawBeside(first, size, 1))
@@ -245,8 +283,12 @@ static void drawComparison(void) {
     memcpy(hoverText, saved, sizeof(saved));
 }
 
+
 __attribute__((force_align_arg_pointer)) static void __cdecl hoverDrawn(void) {
+
+
     int added = valueLineAdd();
+
     int diffAdded = diffLinesAdd();
     fDrawHover();
     if (compareOn) drawComparison();
@@ -264,6 +306,7 @@ static void applyCompare(int on) {
     compareApplied = on;
     logLine(on ? "tooltip hook on (comparison %d)" : "tooltip hook off (comparison %d)", compareOn);
 }
+
 
 static void updateCompare(DWORD now) {
     if (!compareAvailable) return;

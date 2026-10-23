@@ -1,4 +1,4 @@
-package com.winlator.xenvironment;
+package com.winlator.xenvironment;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.content.Context;
 
@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 
-/**
- * D2Android: the Linux root of the runtime (files/rootfs, see D2Runtime). Winlator's image
- * version files, Wine selection and user paths are gone.
- */
+
+
+
+
 public class RootFS {
     private final File rootDir;
 

@@ -1,4 +1,17 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_TELEPORT 27
 #define PKT_TELEPORT 11
 #define TELE_STEPS 48
@@ -7,6 +20,12 @@
 #define TELE_CORRECTED 1
 #define TELE_NONE 2
 
+
+
+
+
+
+
 #define TELE_ALLOWED (0x0010 | 0x8000)
 static int teleWanted, teleActive;
 static int teleDx, teleDy, teleDist;
@@ -14,11 +33,20 @@ static DWORD teleAskedAt, teleChecks, teleMicrosMax, teleMicrosSum;
 static long teleAnsweredX = -1, teleAnsweredY = -1;
 static long teleAnsweredSx, teleAnsweredSy;
 static int teleAnsweredFound;
+
+
+
+
+
 static int teleBusy, teleAnsweredBusy = -1;
 static BYTE teleBusyStarts;
+
+
 static long teleSeenX = -1, teleSeenY = -1;
+
 static long teleTraced[6] = {-1, -1, -1, -1, -1, -1};
 static DWORD teleTracedAt;
+
 
 static void teleportCommand(const BYTE* buf, int n) {
     if (n < 12) return;
@@ -29,6 +57,7 @@ static void teleportCommand(const BYTE* buf, int n) {
     teleActive = 1;
     teleAskedAt = GetTickCount();
 }
+
 
 static void* teleportRoom(void* level, long x, long y) {
     int i = 0;
@@ -41,6 +70,8 @@ static void* teleportRoom(void* level, long x, long y) {
     }
     return NULL;
 }
+
+
 
 static WORD teleportFlags(void* level, long x, long y) {
     void* r1 = teleportRoom(level, x, y);
@@ -59,9 +90,19 @@ static int teleportFree(void* level, long x, long y) {
     return f != 0xFFFF && !(f & (WORD) ~TELE_ALLOWED);
 }
 
+
+
+
+
+
 static int teleportFits(int (*isFree)(void*, long, long), void* ctx, long x, long y) {
     return isFree(ctx, x, y) && isFree(ctx, x - 1, y) && isFree(ctx, x + 1, y) && isFree(ctx, x, y - 1) && isFree(ctx, x, y + 1);
 }
+
+
+
+
+
 
 static int teleportSearch(double px, double py, double wx, double wy, int steps, int (*isFree)(void*, long, long), void* ctx,
                           long* tx, long* ty) {
@@ -79,6 +120,7 @@ static int teleportSearch(double px, double py, double wx, double wy, int steps,
 static int teleportFreeIn(void* level, long x, long y) {
     return teleportFree(level, x, y);
 }
+
 
 static void teleportTick(void* player) {
     if (!teleActive) return;
@@ -112,6 +154,7 @@ static void teleportTick(void* player) {
     QueryPerformanceCounter(&t0);
     double len = __builtin_sqrt((double) teleDx * teleDx + (double) teleDy * teleDy);
     if (len < 1) return;
+
     double sx = teleDx / len * teleDist, sy = teleDy / len * teleDist;
     double wx = sy / 16 + sx / 32, wy = sy / 16 - sx / 32;
     int steps = (int) (2 * __builtin_sqrt(wx * wx + wy * wy) + 0.5);

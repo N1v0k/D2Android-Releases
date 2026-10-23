@@ -1,9 +1,8 @@
 package com.winlator.d2;
 
 /*
- * Java port of the fragment shader "Hyllian's xBR-lv2" (CORNER_C, SMOOTH_TIPS, default parameters), from
- * https://github.com/libretro/glsl-shaders/blob/master/xbr/shaders/xbr-lv2.glsl (SHA-256
- * 9cf5b08c7378305b558204354e898f6837c481fd5b4371dfbe6b5092cffe5062), licence MIT:
+ * Java port of the fragment shader "Hyllian's xBR-lv2" from https://github.com/libretro/glsl-shaders
+ * (xbr/shaders/xbr-lv2.glsl), licence MIT:
  *
  *   Hyllian's xBR-lv2 Shader
  *   Copyright (C) 2011-2016 Hyllian - sergiogdb@gmail.com
@@ -28,18 +27,40 @@ package com.winlator.d2;
  *
  *   Incorporates some of the ideas from SABR shader. Thanks to Joshua Street.
  */
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Xbr {
     private static final float EQ_THRESHOLD = 15f, LV2_COEFFICIENT = 2f;
+
     private static final float WR = 14.352f, WG = 28.176f, WB = 5.472f;
+
+
     private static final float[] AO = {1, -1, -1, 1}, BO = {1, 1, -1, -1}, CO = {1.5f, 0.5f, -0.5f, 0.5f};
     private static final float[] BX = {0.5f, 2, -0.5f, -2}, CX = {1, 1, -0.5f, 0};
     private static final float[] BY = {2, 0.5f, -2, -0.5f}, CY = {2, 0, -1, 0.5f};
     private static final float CI = 0.25f;
 
+
     public static final float FILL = 0.9f;
 
     private D2Xbr() {
     }
+
+
+
+
+
+
+
 
     public static int[] fit(int w, int h, float bw, float bh) {
         float s = Math.min(bw / w, bh / h);
@@ -47,6 +68,10 @@ public final class D2Xbr {
         if (n >= 1 && n >= s * FILL) return new int[]{n, w * n, h * n};
         return new int[]{n + 1, Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s))};
     }
+
+
+
+
 
     public static int[] scale(int[] argb, int w, int h, int n) {
         if (w <= 0 || h <= 0 || n < 1 || argb.length < w * h) throw new IllegalArgumentException("bad picture or factor");
@@ -162,6 +187,7 @@ public final class D2Xbr {
         return 1 - eq(a, b);
     }
 
+
     private static float step(float edge, float x) {
         return x >= edge ? 1 : 0;
     }
@@ -170,9 +196,11 @@ public final class D2Xbr {
         return v < 0 ? 0 : v > 1 ? 1 : v;
     }
 
+
     private static void mix(float[] v, float[] to, float t) {
         for (int i = 0; i < 4; i++) v[i] = v[i] + (to[i] - v[i]) * t;
     }
+
 
     private static float cdf(float[] a, float[] b) {
         return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) + Math.abs(a[3] - b[3]);

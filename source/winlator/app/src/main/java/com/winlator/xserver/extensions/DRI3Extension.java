@@ -1,4 +1,4 @@
-package com.winlator.xserver.extensions;
+package com.winlator.xserver.extensions;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
 
@@ -167,7 +167,7 @@ public class DRI3Extension extends Extension {
             short totalWidth = (short)(stride / 4);
             Drawable drawable = xServer.drawableManager.createDrawable(pixmapId, totalWidth, height, depth);
             drawable.setData(buffer);
-            final Texture released = drawable.setTexture(null); // D2Android: its unused first texture
+            final Texture released = drawable.setTexture(null);
             if (released != null) xServer.getRenderer().xServerView.queueEvent(released::destroy);
             drawable.setOnDestroyListener(onDestroyDrawableListener);
             xServer.pixmapManager.createPixmap(drawable);

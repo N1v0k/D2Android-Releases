@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+
+
+
+
 public final class Zustand {
     public static final int MONSTER_TOWN_NPC = 16;
     public static final int ITEM_GOLD = 1, ITEM_POTION = 2, ITEM_RUNE = 3, ITEM_GEM = 4;
@@ -33,43 +38,89 @@ public final class Zustand {
     public long ms;
     public int seq, gebiet, px, py, gw, gh, lebenPct, manaPct, leben, lebenMax, heilGuertel;
     public boolean stadt, pause, panel, npc, heilWirkt;
+
+
+
+
+
     public int klasse = -1, links = -1, rechts = -1, mana, manaMax, manaGuertel;
     public boolean manaWirkt, fkBekannt;
     public final int[] fkFertigkeit = new int[16];
     public final boolean[] fkLinks = new boolean[16];
+
+
+
+
     public int[] puffer;
+
+
+
+
     public int[] anlegen;
+
     public byte[] punkte6;
+
     public long punkte6Nr = -1;
     public final int[] fkStufe = new int[16];
     public String fenster = "0";
+
+
+
+
     public int hover = -1;
     public long hoverId;
+
     public static final class Beute {
         public long id;
         public int kategorie, qualitaet, flags, sockel, stufe, breite, hoehe;
+
         public int wertklasse = -1;
     }
+
     public final Map<Long, Beute> beute = new HashMap<>();
+
     public long zellen = -1;
+
+
+
+
     public int waffen = -1;
+
 
     public boolean wirkt(int state) {
         if (puffer == null) return false;
         for (int p : puffer) if (p == state) return true;
         return false;
     }
+
     public double wx = Double.NaN, wy = Double.NaN;
     public int modus = -1, stufe = -1;
     public long erfahrung = -1, gold = -1;
 
+
     public static final long GOLD_JE_STUFE = 10_000;
+
+
+
+
 
     public boolean goldVoll() {
         return gold >= 0 && stufe > 0 && gold >= GOLD_JE_STUFE * stufe;
     }
     public final List<Ding> monster = new ArrayList<>(), items = new ArrayList<>(), objekte = new ArrayList<>(), leichen = new ArrayList<>();
+
+
+
+
     public final Set<Long> ausgelassen = new HashSet<>();
+
+
+
+
+
+    public boolean istAusgelassen(Ding d) {
+        return d.art != 6 && d.art != 7 && ausgelassen.contains(d.id);
+    }
     public String zeile;
 
     public static Zustand parse(JSONObject o, String line) {
@@ -182,6 +233,7 @@ public final class Zustand {
         return !Double.isNaN(wx);
     }
 
+
     public boolean steht() {
         return modus == 1 || modus == 5;
     }
@@ -190,9 +242,14 @@ public final class Zustand {
         return modus == 2 || modus == 3 || modus == 6;
     }
 
+
     public double bodenAbstand(Ding d) {
         return Math.hypot(d.x - px, 2.0 * (d.y - py));
     }
+
+
+
+
 
     public boolean tot() {
         return lebenMax > 0 && leben <= 0 && (modus < 0 || modus == 0 || modus == 17);
@@ -202,11 +259,16 @@ public final class Zustand {
         return Math.hypot(d.x - px, d.y - py);
     }
 
+
     public List<Ding> feinde() {
         List<Ding> out = new ArrayList<>();
         for (Ding d : monster) if ((d.extra & MONSTER_TOWN_NPC) == 0 && d.leben > 0) out.add(d);
         return out;
     }
+
+
+
+
 
     public double weltVerschoben(Zustand vorher) {
         if (vorher == null) return Double.NaN;
@@ -218,10 +280,13 @@ public final class Zustand {
         for (List<Ding> list : java.util.Arrays.asList(items, objekte, leichen)) {
             for (Ding d : list) {
                 Ding a = alt.get(d.id);
+
                 if (a != null) shifts.add(Math.hypot((d.x - px) - (a.x - vorher.px), (d.y - py) - (a.y - vorher.py)));
             }
         }
         if (shifts.isEmpty()) {
+
+
             Map<Long, Ding> m = new HashMap<>();
             for (Ding d : vorher.monster) m.put(d.id, d);
             for (Ding d : monster) {
@@ -233,6 +298,7 @@ public final class Zustand {
         shifts.sort(Double::compare);
         return shifts.get(shifts.size() / 2);
     }
+
 
     public static final class Ziele {
         public static final int ENTRANCE = 0, PASSAGE = 1, WAYPOINT = 2;
@@ -275,6 +341,10 @@ public final class Zustand {
         }
     }
 
+
+
+
+
     public static final class Figur {
         public static final int ORT_PERSON = 1, ORT_TRUHE = 2, ORT_WEGPUNKT = 3;
         public static final int PLATZ_INVENTAR = 0, PLATZ_GUERTEL = 1, PLATZ_KOERPER = 2, PLATZ_WUERFEL = 3, PLATZ_TRUHE = 4, PLATZ_LADEN = 5;
@@ -282,6 +352,7 @@ public final class Zustand {
         public static final class Ort {
             public int art, txt, x, y;
             public long id;
+
 
             public boolean geladen() {
                 return id != 0;
@@ -299,16 +370,20 @@ public final class Zustand {
         }
 
         public int gen, stufe, wertePunkte, fertigkeitPunkte;
+
         public int voll;
         public static final int VOLL_ORTE = 1, VOLL_GEGENSTAENDE = 2, VOLL_LADEN = 4;
         public long ms, modMs, gold, goldTruhe, zeiger;
         public String name = "";
         public int[] werte = new int[4];
         public final List<Ort> orte = new ArrayList<>();
+
         public int[] leiche;
         public final List<Teil> gegenstaende = new ArrayList<>(), laden = new ArrayList<>();
 
+
         public static final int KATEGORIE_WAFFE = 16, RECHTE_HAND = 4, LINKE_HAND = 5;
+
 
         public int waffenInHaenden() {
             int n = 0;
@@ -318,7 +393,9 @@ public final class Zustand {
             return n;
         }
 
+
         public static final String TEST_PREFIX = "st-";
+
 
         public boolean istTestfigur(String figur) {
             return figur != null && figur.startsWith(TEST_PREFIX) && figur.equals(name);
@@ -379,14 +456,24 @@ public final class Zustand {
             }
         }
 
+
+
+
+
+
         public boolean frisch(long jetzt, long hoechstensMs) {
             return jetzt - ms <= hoechstensMs;
         }
+
+
+
+
 
         public boolean neu(Figur vorher) {
             return vorher == null || gen != vorher.gen || modMs < vorher.modMs;
         }
     }
+
 
     public static final class Spielstaende {
         public String ordner = "";
@@ -406,9 +493,11 @@ public final class Zustand {
             return s;
         }
 
+
         public int platz(String name) {
             return namen.indexOf(name);
         }
+
 
         public long gespeichert(String name) {
             int i = platz(name);
@@ -416,20 +505,44 @@ public final class Zustand {
         }
     }
 
+
     public static final class Layout {
         public final Map<String, int[]> knoepfe = new HashMap<>();
+
+
+
+
         public final Set<String> unsichtbar = new HashSet<>();
         public int[] joystick = {370, 760, 180};
         public boolean knoepfeSichtbar = true, pauseGewollt, bearbeiten, joystickAktiv;
         public int w = 2480, h = 1116;
+
         public int[] spiel;
+
         public long ms;
+
+
+
+
+
         public boolean angriffRechts;
         public int angriffFertigkeit = -1;
         public String angriffName = "";
+
+
+
+
         public String traenke = "";
+
+
+
+
         public boolean zielhilfe = true;
         public double zielweite, zielkegel;
+
+
+
+
         public double zielweiteNah, zielweiteFern;
         public static final String TRAENKE_TASTEN = "tasten";
 
@@ -470,9 +583,11 @@ public final class Zustand {
             return l;
         }
 
+
         public boolean sichtbar(String id) {
             return !unsichtbar.contains(id);
         }
+
 
         public int[] mitte(String id, int fx, int fy) {
             int[] b = knoepfe.get(id);

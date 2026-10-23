@@ -12,6 +12,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+
+
+
+
 public class D2NewsActivity extends D2Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

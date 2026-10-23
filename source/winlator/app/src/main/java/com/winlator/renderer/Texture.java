@@ -1,4 +1,4 @@
-package com.winlator.renderer;
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -18,19 +18,19 @@ public class Texture {
     protected boolean needsUpdate = true;
     private boolean flipY = false;
     protected Drawable owner;
-    /** D2Android: the renderer context the texture id belongs to ({@link GLRenderer#contextGeneration}) */
+
     private int generation;
-    /**
-     * D2Android: the generation of the context current on this thread, if it is not the renderer's:
-     * the X server's copy context shares with the renderer context it was made for, even when the renderer has a newer
-     * one meanwhile; a texture made there must carry that older generation, so that it is made again.
-     */
+
+
+
+
+
     private static final ThreadLocal<Integer> threadGeneration = new ThreadLocal<>();
 
     public static void setThreadGeneration(int generation) {
         threadGeneration.set(generation);
     }
-    /** D2Android: the drawables using this texture; it is destroyed when the last lets go */
+
     private final com.winlator.d2.D2TextureHolders<Drawable> holders = new com.winlator.d2.D2TextureHolders<>();
 
     public Texture(Drawable owner) {
@@ -67,15 +67,15 @@ public class Texture {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     }
 
-    /** D2Android: a drawable starts using this texture. */
+
     public void hold(Drawable drawable) {
         holders.hold(drawable);
     }
 
-    /**
-     * D2Android: a drawable stops using this texture; an owner that goes hands over to a holder still there.
-     * True when no drawable holds it any more: then it is to be destroyed (on the GL thread).
-     */
+
+
+
+
     public boolean letGo(Drawable drawable) {
         boolean last = holders.letGo(drawable);
         if (owner == drawable) owner = holders.any();
@@ -162,7 +162,7 @@ public class Texture {
     }
 
     public boolean isAllocated() {
-        // D2Android: an id of an older renderer context counts as not allocated (it is made again)
+
         return textureId > 0 && generation == GLRenderer.contextGeneration;
     }
 
@@ -190,7 +190,7 @@ public class Texture {
     }
 
     public void destroy() {
-        // D2Android: an id of an older context is only forgotten; in the current one it may name another texture
+
         if (textureId > 0 && generation == GLRenderer.contextGeneration) {
             int[] textureIds = new int[]{textureId};
             GLES20.glDeleteTextures(textureIds.length, textureIds, 0);

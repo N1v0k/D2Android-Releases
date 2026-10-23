@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import com.winlator.core.Bitmask;
 import com.winlator.xserver.events.Event;
@@ -21,6 +21,6 @@ public class EventListener {
     }
 
     public void sendEvent(Event event) {
-        client.sendEvent(event); // D2Android: the same way, waiting at most a while for a client that reads nothing
+        client.sendEvent(event);
     }
 }

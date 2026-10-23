@@ -5,8 +5,10 @@ import android.media.AudioManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+
 public abstract class D2Activity extends AppCompatActivity {
     private int languageGeneration;
+
     private D2SoundButton soundButton;
 
     @Override
@@ -20,9 +22,13 @@ public abstract class D2Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         if (immersive()) {
+
+
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) getWindow().getAttributes().layoutInDisplayCutoutMode =
                 android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
             com.winlator.core.AppUtils.hideSystemUI(this);
+
+
             android.content.IntentFilter filter = new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_ON);
             filter.addAction(android.content.Intent.ACTION_USER_PRESENT);
             registerReceiver(screenOn, filter);
@@ -41,7 +47,9 @@ public abstract class D2Activity extends AppCompatActivity {
     }
 
 
+
     private final android.os.Handler barsHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+
     private final Runnable hideBars = () -> {
         if (isFinishing() || !hasWindowFocus()) return;
         com.winlator.core.AppUtils.hideSystemUI(this);
@@ -50,6 +58,7 @@ public abstract class D2Activity extends AppCompatActivity {
     private final Runnable toggleBars = () -> {
         if (isFinishing() || !hasWindowFocus() || !barsToggleOnce) return;
         barsToggleOnce = false;
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             android.view.WindowInsetsController c = getWindow().getDecorView().getWindowInsetsController();
             if (c != null) c.show(android.view.WindowInsets.Type.statusBars());
@@ -74,10 +83,12 @@ public abstract class D2Activity extends AppCompatActivity {
         if (!immersive()) return;
         barsHandler.removeCallbacks(hideBars);
         if (!hasFocus) return;
+
         com.winlator.core.AppUtils.hideSystemUI(this);
         barsHandler.postDelayed(hideBars, D2SystemBars.LATE_MS);
         if (barsToggleOnce) barsHandler.postDelayed(toggleBars, D2SystemBars.LATE_MS);
     }
+
 
     protected boolean immersive() {
         return clicks();
@@ -86,6 +97,7 @@ public abstract class D2Activity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
         if (D2Settings.sound(this)) D2Sound.prepare(this);
         if (clicks()) D2Music.pageShown(this);
         if (soundButton != null) soundButton.update();
@@ -102,11 +114,16 @@ public abstract class D2Activity extends AppCompatActivity {
         barsHandler.removeCallbacks(hideBars);
     }
 
+
     @Override
     public boolean dispatchTouchEvent(android.view.MotionEvent event) {
         if (clicks()) D2Sound.touch(this, event);
         return super.dispatchTouchEvent(event);
     }
+
+
+
+
 
     @Override
     public void onContentChanged() {
@@ -121,11 +138,13 @@ public abstract class D2Activity extends AppCompatActivity {
             decor.addView(soundButton, lp);
         }
         else soundButton.bringToFront();
+
         soundButton.post(() -> {
             android.view.WindowInsets insets = decor.getRootWindowInsets();
             if (insets == null || soundButton == null) return;
             android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) soundButton.getLayoutParams();
             int margin = Math.round(4 * getResources().getDisplayMetrics().density);
+
             int top = insets.getSystemWindowInsetTop(), right = insets.getSystemWindowInsetRight();
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 android.view.DisplayCutout cut = insets.getDisplayCutout();
@@ -140,13 +159,19 @@ public abstract class D2Activity extends AppCompatActivity {
         });
     }
 
+
     protected boolean soundButtonOnTop() {
         return clicks();
     }
 
+
     protected boolean clicks() {
         return true;
     }
+
+
+
+
 
     protected boolean recreateOnLanguageChange() {
         return true;

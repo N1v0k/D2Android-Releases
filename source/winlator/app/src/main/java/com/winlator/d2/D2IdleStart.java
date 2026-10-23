@@ -2,10 +2,20 @@ package com.winlator.d2;
 
 import com.winlator.d2.test.Quests;
 
+
+
+
+
+
 final class D2IdleStart {
     enum Sperre { NUR_EINZELSPIELER, FIGUR_LAEDT, HC_UNBEKANNT, HARDCORE, QUEST_NUR_AKT1, QUEST_UNBEKANNT, QUEST_KEINE, TOT, FENSTER }
 
     private D2IdleStart() {}
+
+
+
+
+
 
     static Sperre pruefen(boolean einzelspieler, String name, Boolean hardcore, boolean stadt, int gebiet, int[] worte,
                           boolean lebt, boolean fenster) {
@@ -26,7 +36,14 @@ final class D2IdleStart {
         return null;
     }
 
+
     static final long PAUSE_LIFT_MS = 3000;
+
+
+
+
+
+
 
     static boolean pauseEndet(boolean pauseWanted, boolean statePaused, boolean preparing, long seitStart) {
         if (pauseWanted) return true;

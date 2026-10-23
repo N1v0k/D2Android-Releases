@@ -18,13 +18,38 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2SaveRepair {
     private static final String TAG = "D2Saves";
+
     public static final String ASIDE = ".unterbrochen-";
     private static final String TEMP = ".d2android-repair";
     private static final Pattern BACKUP = Pattern.compile("(.+)_(\\d{8}_\\d{6})");
 
     public enum Kind { STASH_RENAMED, SHARED_STASH_RENAMED, CHARACTER_RESTORED, CHARACTER_BROKEN, CHARACTER_HARDCORE }
+
+
+
+
 
     public static final class Repair {
         public final Kind kind;
@@ -54,11 +79,13 @@ public final class D2SaveRepair {
     private D2SaveRepair() {
     }
 
+
     public static synchronized List<Repair> takeLast() {
         List<Repair> r = last;
         last = new ArrayList<>();
         return r;
     }
+
 
     public static synchronized List<Repair> run(File saveDir) {
         List<Repair> done = new ArrayList<>();
@@ -90,10 +117,15 @@ public final class D2SaveRepair {
             String hero = name.substring(0, name.length() - 4);
             done.add(restore(saveDir, hero, stamp));
         }
-        for (Repair r : done) Log.w(TAG, " " + r);
+        for (Repair r : done) Log.w(TAG, String.valueOf(r));
         last.addAll(done);
         return done;
     }
+
+
+
+
+
 
     private static void finishTemp(File dir, File temp, String target) {
         File existing = find(dir, target);
@@ -102,11 +134,12 @@ public final class D2SaveRepair {
         if (names != null) for (String n : names) if (n.regionMatches(true, 0, target + ASIDE, 0, target.length() + ASIDE.length())) wasThere = true;
         boolean character = target.toLowerCase(Locale.ROOT).endsWith(".d2s");
         if (existing == null && (wasThere || (character && D2Saves.completeCharacter(temp)))) {
-            if (temp.renameTo(new File(dir, target))) Log.w(TAG, " moved in " + target + " left by a repair cut off");
+            if (temp.renameTo(new File(dir, target))) Log.w(TAG, "moved in " + target + " left by a repair cut off");
             else Log.w(TAG, "cannot move in " + temp.getName());
         }
         else if (!temp.delete()) Log.w(TAG, "cannot delete " + temp.getName());
     }
+
 
     private static Repair restore(File saveDir, String hero, String stamp) {
         File backupDir = find(saveDir, "backup");
@@ -127,8 +160,10 @@ public final class D2SaveRepair {
             File d2s = find(folder, hero + ".d2s");
             if (d2s == null || !D2Saves.completeCharacter(d2s)) continue;
             if (!Boolean.FALSE.equals(D2SaveHeader.hardcore(folder, hero))) {
+
                 return new Repair(Kind.CHARACTER_HARDCORE, hero, time, folder.getAbsolutePath());
             }
+
             boolean shared = time.equals(newestAll);
             try {
                 File[] parts = folder.listFiles();
@@ -144,12 +179,13 @@ public final class D2SaveRepair {
                 return new Repair(Kind.CHARACTER_RESTORED, hero, time);
             }
             catch (IOException e) {
-                Log.w(TAG, " restoring " + hero + " from " + folder.getName() + " failed", e);
+                Log.w(TAG, "restoring " + hero + " from " + folder.getName() + " failed", e);
                 return new Repair(Kind.CHARACTER_BROKEN, hero, null);
             }
         }
         return new Repair(Kind.CHARACTER_BROKEN, hero, null);
     }
+
 
     private static void replace(File dir, File source, String stamp) throws IOException {
         File existing = find(dir, source.getName());
@@ -158,6 +194,7 @@ public final class D2SaveRepair {
         copy(source, temp);
         if (existing != null) copy(existing, new File(dir, existing.getName() + ASIDE + stamp));
         if (!temp.renameTo(target)) {
+
             if (!target.delete() || !temp.renameTo(target)) throw new IOException("cannot move in " + target.getName());
         }
     }
@@ -171,6 +208,7 @@ public final class D2SaveRepair {
         }
         to.setLastModified(from.lastModified());
     }
+
 
     private static File find(File dir, String name) {
         File exact = new File(dir, name);

@@ -1,10 +1,22 @@
 
+
+
+
+
+
+
+
+
+
+
 #define VALUE_VERSION 1
 #define VALUE_FIXED   88
 #define VALUE_PAIRS   56
 #define VALUE_MAX     10
 
+
 enum { VK_OTHER = 0, VK_RUNE, VK_GEM, VK_REJUV, VK_JEWELRY, VK_QUEST };
+
 
 #define VQ_NORMAL   2
 #define VQ_SUPERIOR 3
@@ -27,6 +39,7 @@ typedef struct {
     int baseClass;
     unsigned long cost;
 } ValueItem;
+
 
 static int valueParse(const unsigned char* buf, int n, ValueRules* r) {
     if (n < VALUE_FIXED || buf[8] != VALUE_VERSION) return 0;
@@ -57,6 +70,8 @@ static int valueCap(int note) {
     return note < 0 ? 0 : (note > VALUE_MAX ? VALUE_MAX : note);
 }
 
+
+
 static int valueSocketBase(const ValueRules* r, const ValueItem* it, int (*isType)(void*, int), void* ctx) {
     if (it->quality != VQ_NORMAL && it->quality != VQ_SUPERIOR) return 0;
     if (it->ethereal || it->runeword || it->sockets <= 0 || it->baseClass < 1 || it->baseClass > 3) return 0;
@@ -64,6 +79,7 @@ static int valueSocketBase(const ValueRules* r, const ValueItem* it, int (*isTyp
         if (r->pairSockets[i] == it->sockets && isType(ctx, r->pairType[i])) return 1;
     return 0;
 }
+
 
 static int valueNote(const ValueRules* r, const ValueItem* it, int difficulty, int (*isType)(void*, int), void* ctx) {
     if (it->kind == VK_QUEST) return -1;
@@ -95,6 +111,7 @@ static int valueNote(const ValueRules* r, const ValueItem* it, int difficulty, i
         break;
     }
     note = valueCap(note);
+
     unsigned long long gold = q >= 0 ? (unsigned long long) it->cost * r->goldFactor[q] / 16 : 0;
     for (int i = 0; i < 4; i++)
         if (r->goldAt[i] && gold >= r->goldAt[i] && i + 1 > note) note = i + 1;

@@ -1,9 +1,23 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
+
 public final class D2StartupControls {
+
     public static final long NO_MOD_MS = 30_000;
 
     private D2StartupControls() {}
+
+
+
+
 
     public static boolean reveal(boolean modExpected, boolean modReports, boolean graphicsDone, long sinceStartMs) {
         if (modReports) return false;
@@ -11,26 +25,51 @@ public final class D2StartupControls {
         return sinceStartMs >= NO_MOD_MS;
     }
 
+
     public static final int OUT_OF_GAME = 0, UNKNOWN = 1, KEEP = 2;
+
+
+
+
+
+
+
 
     public static int withoutState(boolean modReports, boolean focused) {
         if (modReports) return OUT_OF_GAME;
         return focused ? UNKNOWN : KEEP;
     }
 
+
+
+
+
+
     public static boolean entryWaits(int without, boolean focused) {
         return without == OUT_OF_GAME && focused;
     }
 
+
     public static final long SETTLE_MS = 700;
+
+
+
+
+
+
+
 
     public static final class Entry {
         private boolean waiting;
         private long since = -1;
+
         private boolean drawnBefore, drawnLast;
+
         private long undrawnSince = -1;
         private boolean signalIgnored, gaveUp;
+
         private boolean retried;
+
 
         public void outside() {
             if (!waiting) drawnBefore = drawnLast;
@@ -39,9 +78,17 @@ public final class D2StartupControls {
             undrawnSince = -1;
         }
 
+
         public boolean settled(long now) {
             return settled(now, false, false);
         }
+
+
+
+
+
+
+
 
         public boolean settled(long now, boolean signal, boolean drawn) {
             if (signal && !drawn && drawnLast) newGame();
@@ -74,17 +121,23 @@ public final class D2StartupControls {
             return true;
         }
 
+
         public boolean gaveUp() {
             boolean g = gaveUp;
             gaveUp = false;
             return g;
         }
 
+
+
+
+
         public void retrySignal() {
             signalIgnored = false;
             undrawnSince = -1;
             retried = true;
         }
+
 
         public void newGame() {
             signalIgnored = retried = false;
@@ -93,7 +146,13 @@ public final class D2StartupControls {
         }
     }
 
+
     public static final long SIGNAL_GRACE_MS = 15_000;
+
+
+
+
+
 
     public static final class Clock {
         private final long startedAt;
@@ -102,6 +161,7 @@ public final class D2StartupControls {
         public Clock(long now) {
             startedAt = now;
         }
+
 
         public void focus(boolean focused, long now) {
             if (!focused) {
@@ -116,6 +176,7 @@ public final class D2StartupControls {
         public boolean focused() {
             return awayAt < 0;
         }
+
 
         public long sinceStart(long now) {
             return (awayAt >= 0 ? awayAt : now) - startedAt - awayTotal;

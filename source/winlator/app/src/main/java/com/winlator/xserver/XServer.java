@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import com.winlator.XServerHost;
 import com.winlator.core.CursorLocker;
@@ -24,7 +24,7 @@ public class XServer {
     public static final short VERSION = 11;
     public static final String VENDOR_NAME = "Elbrus Technologies, LLC";
     public static final Charset LATIN1_CHARSET = Charset.forName("latin1");
-    public final XServerHost activity; // D2Android: interface instead of Winlator's activity
+    public final XServerHost activity;
     private final Extension[] extensions;
     public final ScreenInfo screenInfo;
     public final PixmapManager pixmapManager;
@@ -202,7 +202,7 @@ public class XServer {
             new PresentExtension(this, opcode--),
             new SyncExtension(this, opcode--),
             new XComposite(this, opcode--),
-            // D2Android: no GLX – D2DX renders with Vulkan (DXVK); GLX needed the gladio renderer
+
             new GenericEventExtension(this, opcode--),
             new XInputExtension(this, opcode--)
         };
@@ -236,5 +236,5 @@ public class XServer {
         return null;
     }
 
-    public void debugPrint(String line) {} // D2Android: Winlator's debug dialog is gone
+    public void debugPrint(String line) {}
 }

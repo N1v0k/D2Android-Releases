@@ -4,9 +4,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+
+
+
 public final class D2Quests {
     public static final int PKT_QUESTS = 9;
+
     public static final int HOEHLE_DES_BOESEN = 1;
+
 
     public final int schwierigkeit;
     private final int[] woerter;
@@ -15,6 +21,7 @@ public final class D2Quests {
         this.schwierigkeit = schwierigkeit;
         this.woerter = woerter;
     }
+
 
     public static D2Quests parse(byte[] data, int length) {
         if (data == null || length < 10 || length > data.length || (data[5] & 0xFF) != PKT_QUESTS) return null;
@@ -25,6 +32,7 @@ public final class D2Quests {
         return new D2Quests(data[8] & 0xFF, w);
     }
 
+
     public int wort(int i) {
         return i >= 0 && i < woerter.length ? woerter[i] : -1;
     }
@@ -33,9 +41,11 @@ public final class D2Quests {
         return woerter.length;
     }
 
+
     public int[] woerter() {
         return woerter.clone();
     }
+
 
     public static String json(D2Quests q, int seq, long now) {
         try {

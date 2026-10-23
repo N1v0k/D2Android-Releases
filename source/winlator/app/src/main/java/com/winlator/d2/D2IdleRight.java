@@ -1,8 +1,25 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class D2IdleRight {
+
     interface Actions {
+
         boolean pressHotkey(int index);
+
         void selectRight(int skill);
         void trace(String text);
     }
@@ -15,6 +32,7 @@ final class D2IdleRight {
     private String name;
     private boolean pending, sent, viaKey, fallbackDone;
     private long until, sentAt, maxMs;
+
 
     void remember(int rightSkill, int characterClass, String characterName, int[] hotkeySkill, boolean[] hotkeyLeft) {
         pending = false;
@@ -30,6 +48,10 @@ final class D2IdleRight {
         }
     }
 
+
+
+
+
     void owe(long now, long maxMs) {
         if (skill < 0) return;
         pending = true;
@@ -42,16 +64,23 @@ final class D2IdleRight {
         return pending;
     }
 
+
     void takeover(Actions a) {
         if (!pending) return;
         pending = false;
         a.trace("right skill: not restored, the player took over");
     }
 
+
     static boolean ownTree(int characterClass, int skill) {
         int[] first = {6, 36, 66, 96, 126, 221, 251};
         return skill == 0 || (characterClass >= 0 && characterClass < 7 && skill >= first[characterClass] && skill < first[characterClass] + 30);
     }
+
+
+
+
+
 
     Result step(long now, boolean focused, boolean haveState, int rightSkill, int characterClass, String characterName,
                 int[] hotkeySkill, boolean[] hotkeyLeft, Actions a) {

@@ -7,8 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+
+
+
+
+
+
 public final class Wegsuche {
     public static final int WAND_NAH = 50, UNBEKANNT = 60, KNOTEN_ABSTAND = 6;
+
     public static final int MAX_KNOTEN = 50_000;
 
     public static final class Punkt {
@@ -17,10 +24,13 @@ public final class Wegsuche {
         @Override public String toString() { return x + "," + y; }
     }
 
+
     public static final class Weg {
         public final List<Punkt> knoten;
         public final int kosten, untersucht;
+
         public Punkt ziel;
+
         public final boolean abgebrochen;
         Weg(List<Punkt> knoten, int kosten, int untersucht, boolean abgebrochen) {
             this.knoten = knoten; this.kosten = kosten; this.untersucht = untersucht; this.abgebrochen = abgebrochen;
@@ -30,6 +40,7 @@ public final class Wegsuche {
     private static final int[] DX = {1, -1, 0, 0, 1, 1, -1, -1}, DY = {0, 0, 1, -1, 1, -1, 1, -1};
 
     private static long key(int x, int y) { return ((long) x << 32) | (y & 0xFFFFFFFFL); }
+
 
     static int feldKosten(Karte k, int x, int y) {
         int f = k.feld(x, y);
@@ -47,6 +58,7 @@ public final class Wegsuche {
 
     public static Weg suche(Karte k, int sx, int sy, int zx, int zy, int maxKnoten) {
         if (k.feld(zx, zy) == Karte.WAND) {
+
             Punkt p = freiNahe(k, zx, zy, 6);
             if (p == null) return null;
             zx = p.x; zy = p.y;
@@ -74,6 +86,7 @@ public final class Wegsuche {
                 int nx = cx + DX[i], ny = cy + DY[i];
                 int extra = feldKosten(k, nx, ny);
                 if (extra < 0) continue;
+
                 if (i >= 4 && (k.feld(cx + DX[i], cy) == Karte.WAND || k.feld(cx, cy + DY[i]) == Karte.WAND)) continue;
                 int ng = gc + (i < 4 ? 10 : 14) + extra;
                 long nk = key(nx, ny);
@@ -88,6 +101,11 @@ public final class Wegsuche {
     }
 
     private static Weg mitZiel(Weg w, int zx, int zy) { w.ziel = new Punkt(zx, zy); return w; }
+
+
+
+
+
 
     public static final double GEWICHT = 1.5;
 
@@ -107,6 +125,7 @@ public final class Wegsuche {
         }
         return null;
     }
+
 
     private static List<Punkt> pfad(Map<Long, Long> von, long start, long ziel) {
         List<Punkt> voll = new ArrayList<>();

@@ -1,5 +1,11 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
 final class D2IdleUntold {
     private final long maxAgeMs;
     private String text;
@@ -9,10 +15,12 @@ final class D2IdleUntold {
         this.maxAgeMs = maxAgeMs;
     }
 
+
     void queue(String text, long now) {
         this.text = text;
         this.at = now;
     }
+
 
     String take(long now) {
         String t = text;

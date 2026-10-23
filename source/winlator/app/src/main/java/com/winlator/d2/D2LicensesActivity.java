@@ -17,6 +17,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 public class D2LicensesActivity extends D2Activity {
     static final String INDEX = "licenses/index.tsv";
 
@@ -39,6 +44,7 @@ public class D2LicensesActivity extends D2Activity {
 
     @Override
     public void onBackPressed() {
+
         if (content.getTag() != null) showList();
         else super.onBackPressed();
     }
@@ -98,6 +104,7 @@ public class D2LicensesActivity extends D2Activity {
         scrollView.scrollTo(0, 0);
     }
 
+
     static final class Part {
         final String id, name, version, license, source, note;
         final List<String> files = new ArrayList<>();
@@ -128,6 +135,7 @@ public class D2LicensesActivity extends D2Activity {
         }
         return parts;
     }
+
 
     static String read(AssetManager assets, String path) {
         StringBuilder out = new StringBuilder();

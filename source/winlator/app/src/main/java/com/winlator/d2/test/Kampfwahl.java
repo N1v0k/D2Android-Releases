@@ -1,20 +1,52 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Kampfwahl {
     public static final String ANGRIFF = "attack";
     public static final int ZAUBERIN = 1, TOTENBESCHWOERER = 2, BARBAR = 4;
     public static final int FEUERBLITZ = 36, EISBLITZ = 39, FROSTRUESTUNG = 40, FROSTNOVA = 44, FEUERBALL = 47, SHIVER = 50, CHILLING = 60;
+
     public static final int ZAEHNE = 67, KNOCHENSPEER = 84;
     public static final int HIEB = 126, DOPPELSCHWUNG = 133, SCHREI = 138, KAMPFBEFEHLE = 149;
     static final long HALTEN_MS = 1500, ELEMENT_WECHSEL_MS = 6000;
+
     static final int HAUPT_RESERVE = 4;
     static final int NOVA_MINDESTENS = 3;
     static final double NOVA_ABSTAND = 200;
     private static final int FEUER = 1, KAELTE = 2;
 
+
+
+
+
     public static final class Rollen {
         public final int klasse;
         public final int[] haupt, stark, nova;
+
         public final int[] puffer;
 
         public Rollen(int klasse, int[] haupt, int[] stark, int[] nova, int[] puffer) {
@@ -26,9 +58,14 @@ public final class Kampfwahl {
         }
     }
 
+
     private Rollen rollen;
     private int[] rollenHaupt = new int[0], rollenStark = new int[0];
     private int rollenKlasse = -2;
+
+
+
+
 
     public void rollen(Rollen r) {
         if (r == rollen) return;
@@ -40,13 +77,16 @@ public final class Kampfwahl {
         else puffer.zusatz(-2, null);
     }
 
+
     int[] hauptFuer(int klasse) {
         return klasse == rollenKlasse ? rollenHaupt : haupt(klasse);
     }
 
+
     int[] starkFuer(int klasse) {
         return klasse == rollenKlasse ? rollenStark : stark(klasse);
     }
+
 
     boolean umDieFigurFuer(int skill) {
         if (umDieFigur(skill)) return true;
@@ -64,13 +104,19 @@ public final class Kampfwahl {
         return r;
     }
 
+
+
+
+
     static int[] haupt(int klasse) {
         switch (klasse) {
             case ZAUBERIN: return new int[]{FEUERBLITZ, EISBLITZ};
+
             case TOTENBESCHWOERER: return new int[]{KNOCHENSPEER, ZAEHNE};
             default: return new int[0];
         }
     }
+
 
     static int[] stark(int klasse) {
         switch (klasse) {
@@ -80,13 +126,16 @@ public final class Kampfwahl {
         }
     }
 
+
     public static boolean eigeneListe(int klasse) {
         return haupt(klasse).length > 0;
     }
 
+
     static boolean hauptIstAngriff(int klasse) {
         return klasse == BARBAR;
     }
+
 
     static boolean umDieFigur(int skill) {
         return skill == FROSTNOVA;
@@ -97,18 +146,27 @@ public final class Kampfwahl {
     }
 
     private Fertigkeiten tabelle;
+
     public final Puffer puffer = new Puffer();
     private String gewaehlt = ANGRIFF;
     private int gewaehltFertigkeit = -1;
     private long gewaehltSeit;
+
     private boolean gewaehltStark;
+
     public double reserveStark;
+
     private boolean ersteWahl = true;
+
     private long wechselZiel = -1;
     private int wechselElement;
+
     public boolean manaFehlt;
+
     public double gewuenschteKosten;
+
     public boolean elementGewechselt;
+
     public String grund = "";
 
     public void tabelle(Fertigkeiten f) {
@@ -119,17 +177,32 @@ public final class Kampfwahl {
         return tabelle;
     }
 
+
     public String gewaehlt() {
         return gewaehlt;
     }
+
 
     public int fertigkeit() {
         return gewaehltFertigkeit;
     }
 
+
     public String knopf(Zustand z, Zustand.Layout l, long ziel, long ohneWirkungMs, long now) {
         return knopf(z, l, ziel, ohneWirkungMs, null, now);
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
     public String knopf(Zustand z, Zustand.Layout l, long ziel, long ohneWirkungMs, Gruppen.Gruppe gruppe, long now) {
         manaFehlt = false;
@@ -149,6 +222,7 @@ public final class Kampfwahl {
                 if (slot >= 0) hauptKosten = Math.min(hauptKosten, kosten(z, slot, t.get(skill)));
             }
             reserveStark = reserve + (hauptKosten == Double.MAX_VALUE ? 0 : HAUPT_RESERVE * hauptKosten);
+
             if (gruppe != null && gruppe.stark()) {
                 for (int skill : starkFuer(z.klasse)) {
                     int slot = slot(z, l, t, skill);
@@ -164,6 +238,7 @@ public final class Kampfwahl {
                     }
                 }
             }
+
             if (ziel >= 0 && ohneWirkungMs > ELEMENT_WECHSEL_MS && ziel != wechselZiel) {
                 int aktuell = element(gewaehltFertigkeit);
                 if (aktuell != 0 && hatElement(z, l, t, liste, aktuell == FEUER ? KAELTE : FEUER)) {
@@ -171,6 +246,7 @@ public final class Kampfwahl {
                     wechselElement = aktuell == FEUER ? KAELTE : FEUER;
                     elementGewechselt = true;
                     if (wahlStark) {
+
                         wahl = ANGRIFF;
                         wahlFertigkeit = -1;
                         wahlStark = false;
@@ -181,6 +257,7 @@ public final class Kampfwahl {
             boolean firstWanted = true;
             for (int pass = 0; pass < 2 && wahlFertigkeit < 0; pass++) {
                 for (int skill : liste) {
+
                     if (pass == 0 && (wechselElement == 0 || element(skill) != wechselElement)) continue;
                     int slot = slot(z, l, t, skill);
                     if (slot < 0) continue;
@@ -198,6 +275,8 @@ public final class Kampfwahl {
                     manaFehlt = true;
                 }
             }
+
+
             double angriff = wahlFertigkeit < 0 ? angriffKosten(l, t) : 0;
             if (angriff > 0 && z.mana < angriff) {
                 wahl = null;
@@ -205,6 +284,7 @@ public final class Kampfwahl {
                 if (gewuenschteKosten == 0) gewuenschteKosten = angriff;
             }
         }
+
         if (!ersteWahl && !java.util.Objects.equals(wahl, gewaehlt) && now - gewaehltSeit < HALTEN_MS && !elementGewechselt
             && gewaehlt != null && bezahlbar(z, l, gewaehltFertigkeit, gewaehltStark, gruppe, now)) {
             grund = gewaehlt.equals(ANGRIFF) ? "Angriff" : gewaehlt;
@@ -223,9 +303,15 @@ public final class Kampfwahl {
         return wahl;
     }
 
+
     public boolean stark() {
         return gewaehltStark;
     }
+
+
+
+
+
 
     private int[] hauptListe(Zustand z, Zustand.Layout l, Fertigkeiten t, int[] haupt, int[] stark) {
         for (int skill : haupt) if (slot(z, l, t, skill) >= 0) return haupt;
@@ -242,9 +328,16 @@ public final class Kampfwahl {
         return false;
     }
 
+
+
+
+
+
     static int slot(Zustand z, Zustand.Layout l, Fertigkeiten t, int skill) {
         Fertigkeiten.Fertigkeit f = t.get(skill);
         if (f == null || f.klasse != z.klasse) return -1;
+
+
         if (f.zweiWaffen() && z.waffen < 2) return -1;
         for (int i = 0; i < 4; i++) {
             if (z.fkFertigkeit[i] != skill || z.fkLinks[i]) continue;
@@ -260,6 +353,10 @@ public final class Kampfwahl {
         for (int skill : liste) if (element(skill) == element && slot(z, l, t, skill) >= 0) return true;
         return false;
     }
+
+
+
+
 
     static double kosten(Zustand z, int slot, Fertigkeiten.Fertigkeit f) {
         int stufe = slot >= 0 && slot < 16 ? z.fkStufe[slot] : 0;
@@ -277,6 +374,10 @@ public final class Kampfwahl {
         if (f.angriffOhneMana) return !stark || z.mana - kosten(z, slot, f) >= reserve;
         return z.mana - kosten(z, slot, f) >= (stark ? reserveStark : reserve);
     }
+
+
+
+
 
     static double angriffKosten(Zustand.Layout l, Fertigkeiten t) {
         if (l == null || l.angriffFertigkeit <= 0) return 0;

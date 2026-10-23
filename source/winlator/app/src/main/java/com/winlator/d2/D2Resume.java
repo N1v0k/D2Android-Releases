@@ -3,7 +3,25 @@ package com.winlator.d2;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Resume {
+
     public interface Store {
         String get(String key);
 
@@ -12,9 +30,14 @@ public final class D2Resume {
         void remove(String key);
     }
 
+
     static final int[] WAYPOINT_LEVELS = {1, 40, 75, 103, 109, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
         79, 80, 81, 83, 101, 106, 107, 111, 112, 113, 115, 117, 118, 129, 123};
     static final long CONFIRM_MS = 5000;
+
+
+
+
     static final long FOLLOW_MS = 2000;
 
     public static final class Entry {
@@ -59,12 +82,14 @@ public final class D2Resume {
         }
     }
 
+
     public enum Why { OK, OFF, NOT_SINGLE_PLAYER, IDLE, NO_MOD, DIFFICULTY_UNKNOWN, NO_ENTRY, SAVE_CHANGED, OTHER_MAP, LEVEL }
 
     private final Store store;
     private String pendingKey, pendingName;
     private D2ResumeState pending;
     private long pendingBefore, pendingUntil, pendingSize, pendingTime;
+
     private String lastName;
     private D2ResumeState last;
 
@@ -85,16 +110,23 @@ public final class D2Resume {
         return false;
     }
 
+
     public void seen(String name, D2ResumeState s) {
         if (name == null || s == null) return;
         lastName = name;
         last = s;
     }
 
+
     public void forget() {
         lastName = null;
         last = null;
     }
+
+
+
+
+
 
     public void died(String name) {
         if (pending != null && name != null && name.equals(pendingName)) {
@@ -104,10 +136,24 @@ public final class D2Resume {
         forget();
     }
 
+
+
+
+
+
+
+
+
+
+
     public D2ResumeState placeFor(String hero, D2ResumeState fresh, int levelNow, boolean alive) {
         if (fresh != null) return levelNow <= 0 || fresh.level == levelNow ? fresh : null;
         return alive && last != null && hero != null && hero.equals(lastName) && last.level == levelNow ? last : null;
     }
+
+
+
+
 
     public void saving(String folder, String name, D2ResumeState s, long fileTimeBefore, long now) {
         pending = null;
@@ -121,10 +167,19 @@ public final class D2Resume {
         pendingSize = pendingTime = -1;
     }
 
+
+
+
+
     public boolean waiting(long now) {
         if (pending != null && now > pendingUntil) pending = null;
         return pending != null;
     }
+
+
+
+
+
 
     public boolean written(long fileSize, long fileTime, long now) {
         if (!waiting(now) || fileTime <= pendingBefore || fileSize <= 0) return false;
@@ -138,6 +193,13 @@ public final class D2Resume {
             fileSize, fileTime).toJson());
         return true;
     }
+
+
+
+
+
+
+
 
     public boolean leftWritten(String folder, String name, long fileSize, long fileTime) {
         D2ResumeState s = last;
@@ -154,6 +216,7 @@ public final class D2Resume {
             fileSize, fileTime).toJson());
         return true;
     }
+
 
     public Why decide(boolean on, boolean singlePlayer, boolean idle, String folder, String name, D2ResumeState s,
                       long fileSize, long fileTime) {
@@ -172,6 +235,11 @@ public final class D2Resume {
         return Why.OK;
     }
 
+
+
+
+
+
     public Entry stored(boolean on, String folder, String name, int difficulty, long fileSize, long fileTime) {
         if (!on || folder == null || name == null) return null;
         Entry e = Entry.fromJson(store.get(key(folder, name, difficulty)));
@@ -179,16 +247,29 @@ public final class D2Resume {
         return e;
     }
 
+
     public Entry entry;
+
+
+
+
+
+
+
 
     public static final class GameWatch {
         public static final long NEW_GAME_MS = 3000;
         private String hero = "";
         private long lastOut, outFocused;
 
+
         public String hero() {
             return hero.isEmpty() ? null : hero;
         }
+
+
+
+
 
         public boolean step(boolean inGame, String name, boolean focused, long now) {
             if (!inGame) {

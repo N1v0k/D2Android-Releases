@@ -1,4 +1,18 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define PKT_QUESTS            9
 #define RVA_QuestFlagsLoad    0x7D2A4
 #define RVA_QuestFlags        0x1018B3
@@ -24,6 +38,7 @@ static void checkQuestSite(void) {
         && **(DWORD* const*) (thunk + 2) == (DWORD) price;
     logLine("quest site: %s", questSite ? "verified, packet type 9" : "NOT as expected, no packet type 9");
 }
+
 
 static void sendQuests(void* player) {
     static DWORD lastHash, lastAt;

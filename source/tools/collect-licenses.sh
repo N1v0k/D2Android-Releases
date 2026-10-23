@@ -1,4 +1,10 @@
 #!/bin/bash
+
+
+
+
+
+
 set -euo pipefail
 NOTICES=""
 if [ "${1:-}" = "--notices" ]; then NOTICES="${2:?--notices needs a file}"; fi
@@ -7,6 +13,7 @@ source "$REPO_DIR/tools/blocks.sh"
 ASSETS="$REPO_DIR/winlator/app/src/main/assets"
 OUT="$ASSETS/licenses"
 SPDX=https://raw.githubusercontent.com/spdx/license-list-data/v3.24.0/text
+
 
 while IFS='|' read -r dest sha url; do
   [ -z "$dest" ] && continue
@@ -49,8 +56,13 @@ xbr/xbr-lv2.glsl|9cf5b08c7378305b558204354e898f6837c481fd5b4371dfbe6b5092cffe506
 stormlib/LICENSE|50b128e6750ed9d887e7a5748a6021238bb2f3bf34a5dd2768c410d932069e35|https://raw.githubusercontent.com/ladislav-zezula/StormLib/116135c27e8c0dcf8ea0a0c549a6d737ce10fc73/LICENSE
 LIST
 
+
 mkdir -p "$OUT/winlator"
 cp "$REPO_DIR/winlator/LICENSE" "$OUT/winlator/LICENSE"
+
+
+
+
 
 missing=0
 while IFS=$'\t' read -r id name version license source files note; do
@@ -64,6 +76,7 @@ while IFS=$'\t' read -r id name version license source files note; do
   done
 done < "$OUT/index.tsv"
 if [ -n "$NOTICES" ]; then
+
   {
     echo "D2Android – third-party notices"
     echo "Generated from assets/licenses/index.tsv by tools/collect-licenses.sh. D2Android is an unofficial fan project,"

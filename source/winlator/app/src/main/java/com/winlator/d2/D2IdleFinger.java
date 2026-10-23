@@ -8,6 +8,11 @@ import com.winlator.d2.test.Finger;
 
 import java.util.function.Consumer;
 
+
+
+
+
+
 final class D2IdleFinger implements Finger {
     static final int FINGERS = 3, POINTER_BASE = 8;
 
@@ -60,6 +65,7 @@ final class D2IdleFinger implements Finger {
         down[finger] = false;
     }
 
+
     @Override
     public void releaseAll() {
         if (count() == 0) return;
@@ -72,6 +78,7 @@ final class D2IdleFinger implements Finger {
         for (boolean d : down) if (d) n++;
         return n;
     }
+
 
     private int index(int finger) {
         int n = 0;

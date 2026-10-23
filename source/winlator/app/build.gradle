@@ -1,3 +1,4 @@
+// Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 apply plugin: 'com.android.application'
 
 android {
@@ -5,18 +6,20 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // D2Android: own package, installs next to Winlator and the old app
+
         applicationId 'at.d2android'
         minSdkVersion 26
         targetSdkVersion 28
-        // D2Android: CI passes -Pd2VersionCode/-Pd2VersionName so every build installs as an update.
+
         versionCode((project.findProperty('d2VersionCode') ?: '33') as Integer)
         versionName(project.findProperty('d2VersionName') ?: "12.0")
     }
 
-    // D2Android: sign every build with a fixed key (not part of this source) so updates install over each other.
-    // Override the path with -Pd2Keystore=<file> if needed.
+
+
     def d2Keystore = rootProject.file(project.findProperty('d2Keystore') ?: '../signing/debug.keystore')
+
+
     def d2ReleaseKeystore = project.findProperty('d2ReleaseKeystore')
     signingConfigs {
         if (d2ReleaseKeystore) {
@@ -30,11 +33,14 @@ android {
         }
         d2 {
             storeFile d2Keystore
+
             storePassword project.findProperty('d2StorePassword') ?: 'android'
             keyAlias project.findProperty('d2KeyAlias') ?: 'androiddebugkey'
             keyPassword project.findProperty('d2KeyPassword') ?: 'android'
         }
     }
+
+
 
     buildFeatures {
         buildConfig true
@@ -42,13 +48,14 @@ android {
 
     buildTypes {
         debug {
-            // D2Android: use the fixed key when present, otherwise the standard debug key.
+
             if (d2Keystore.exists()) {
                 signingConfig signingConfigs.d2
             }
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro', 'proguard-internal.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             buildConfigField 'boolean', 'D2_INTERNAL', 'true'
+
             resValue 'string', 'app_name', 'D2Android Dev'
             resValue 'string', 'd2launch_label', 'D2Android Dev'
 
@@ -56,6 +63,9 @@ android {
                 abiFilters 'arm64-v8a'
             }
         }
+
+
+
         release {
             if (d2ReleaseKeystore) {
                 signingConfig signingConfigs.pub
@@ -76,14 +86,23 @@ android {
         }
     }
 
+
     sourceSets {
         main.assets.srcDirs += "$buildDir/generated/d2news"
+
         release.res.srcDirs += "$buildDir/generated/d2shortcuts/res"
     }
 
     lintOptions {
         checkReleaseBuilds false
+
+
+
+
         error 'MissingTranslation', 'ExtraTranslation', 'NewApi'
+
+
+
         checkOnly 'MissingTranslation', 'ExtraTranslation', 'NewApi'
     }
 
@@ -96,6 +115,7 @@ android {
         }
     }
 }
+
 
 androidComponents {
     onVariants(selector().withBuildType('release')) { variant ->
@@ -113,17 +133,21 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
 }
 
+
 def d2NewsCopy = tasks.register('d2NewsAsset', Copy) {
     from rootProject.file('../public/CHANGELOG.md')
     into "$buildDir/generated/d2news/news"
 }
 preBuild.dependsOn d2NewsCopy
+
 tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
     doFirst {
+
         if (!rootProject.file('../public/CHANGELOG.md').exists() && !file('src/main/assets/news/CHANGELOG.md').exists())
             throw new GradleException('public/CHANGELOG.md is missing')
     }
 }
+
 
 def d2PublicPackage = project.property('d2PublicPackage')
 def d2ShortcutsRelease = tasks.register('d2ShortcutsRelease', Copy) {
@@ -132,9 +156,11 @@ def d2ShortcutsRelease = tasks.register('d2ShortcutsRelease', Copy) {
     inputs.property('package', d2PublicPackage)
     filter { String line -> line.replace('android:targetPackage="at.d2android"', "android:targetPackage=\"$d2PublicPackage\"") }
 }
+
 tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
     dependsOn d2ShortcutsRelease
     doFirst {
+
         def info = [file('src/release/assets/d2/runtime-info.txt'), file('src/main/assets/d2/runtime-info.txt')].find { it.exists() }
         if (info == null || !info.text.contains("package=$d2PublicPackage"))
             throw new GradleException("the public runtime for $d2PublicPackage is missing: run tools/build-runtime.sh --public")

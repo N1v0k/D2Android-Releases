@@ -1,0 +1,26 @@
+D2DX 0.99.529: show the HRESULT that was passed in the message of ComException.
+
+The constructor built the message from the member hr before it was set,
+so every fatal error reported HRESULT 0x00000000. The app ships the
+prebuilt glide3x.dll of the D2DX 0.99.529 release with a three-byte change,
+applied by tools/binpatch.py (patch "d2dx-glide3x") when the assets are
+fetched:
+
+  file      glide3x.dll
+  before    sha256 06cc9e9b49902f1ef3aa28180a9859327df717d9022fb1774eeda6f0ba0546d8
+  after     sha256 5c4997371d9ca183bd7f0b17bc2f33eb9193f85e34cd94cc7153127b68bc5725
+  change    file offset 0x10fd4: 8b 4b 0c -> 8b 4d 08 (mov ecx, [ebx+0xc] -> mov ecx, [ebp+8])
+
+The source change it corresponds to:
+
+--- a/src/d2dx/ErrorHandling.h
++++ b/src/d2dx/ErrorHandling.h
+@@ -31,7 +31,7 @@
+ 	struct ComException final : public std::runtime_error
+ 	{
+ 		ComException(HRESULT hr_, const char* func_, int32_t line_) :
+-			std::runtime_error(detail::GetMessageForHRESULT(hr, func_, line_)),
++			std::runtime_error(detail::GetMessageForHRESULT(hr_, func_, line_)),
+ 			hr{ hr_ },
+ 			func{ func_ },
+ 			line{ line_ }

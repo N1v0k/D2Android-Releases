@@ -1,3 +1,18 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tlhelp32.h>
@@ -21,6 +36,9 @@ static void logLine(const char* fmt, ...) {
     fclose(f);
 }
 
+
+
+
 static void keepAsPrevious(const char* path, const char* base) {
     char prev[MAX_PATH];
     const char* slash = strrchr(path, '\\');
@@ -31,6 +49,7 @@ static void keepAsPrevious(const char* path, const char* base) {
         DeleteFileA(path);
     }
 }
+
 
 static const char* passedArguments(void) {
     const char* cmd = GetCommandLineA();
@@ -61,6 +80,7 @@ static BOOL CALLBACK findWindow(HWND hwnd, LPARAM lparam) {
     }
     return TRUE;
 }
+
 
 static FARPROC remoteLoadLibrary(DWORD pid) {
     HMODULE local = GetModuleHandleA("kernel32.dll");
@@ -106,6 +126,10 @@ static int inject(HANDLE process, DWORD pid, const char* dllPath) {
     logLine("LoadLibraryA in game: wait=%lu module=0x%08lx", wait, module);
     return wait == WAIT_OBJECT_0 && module != 0 && module != STILL_ACTIVE;
 }
+
+
+
+
 
 static int injectByThread(HANDLE process, HANDLE mainThread, DWORD pid, const char* dllPath) {
     SIZE_T pathSize = strlen(dllPath) + 1;
@@ -156,6 +180,7 @@ static int injectByThread(HANDLE process, HANDLE mainThread, DWORD pid, const ch
     return 1;
 }
 
+
 static DWORD findLoadLibraryIat(const BYTE* file, DWORD size, DWORD* imageBase, DWORD* entry) {
     if (size < 0x400 || file[0] != 'M' || file[1] != 'Z') return 0;
     DWORD pe = *(const DWORD*) (file + 0x3C);
@@ -165,6 +190,7 @@ static DWORD findLoadLibraryIat(const BYTE* file, DWORD size, DWORD* imageBase, 
     *entry = nt->OptionalHeader.AddressOfEntryPoint;
     const IMAGE_SECTION_HEADER* sections = IMAGE_FIRST_SECTION(nt);
     int count = nt->FileHeader.NumberOfSections;
+
     #define OFFSET(rva, out) do { out = 0; for (int s_ = 0; s_ < count; s_++) { \
         DWORD va_ = sections[s_].VirtualAddress, vs_ = sections[s_].Misc.VirtualSize > sections[s_].SizeOfRawData ? sections[s_].Misc.VirtualSize : sections[s_].SizeOfRawData; \
         if ((rva) >= va_ && (rva) < va_ + vs_) { out = (rva) - va_ + sections[s_].PointerToRawData; break; } } } while (0)
@@ -190,6 +216,11 @@ static DWORD findLoadLibraryIat(const BYTE* file, DWORD size, DWORD* imageBase, 
     #undef OFFSET
     return 0;
 }
+
+
+
+
+
 
 static int injectAtEntry(HANDLE process, const char* gamePath, const char* dllPath) {
     HANDLE f = CreateFileA(gamePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -242,6 +273,7 @@ static int injectAtEntry(HANDLE process, const char* gamePath, const char* dllPa
         logLine("early: WriteProcessMemory failed: %lu", GetLastError());
         return 0;
     }
+
     if (!VirtualProtectEx(process, (void*) entry, 5, PAGE_EXECUTE_READWRITE, &old) || !WriteProcessMemory(process, (void*) entry, jump, 5, NULL)) {
         logLine("early: entry point not patchable: %lu", GetLastError());
         return 0;
@@ -261,6 +293,8 @@ int main(void) {
     snprintf(gamePath, sizeof(gamePath), "%s\\Game.exe", dir);
     snprintf(dllPath, sizeof(dllPath), "%s\\d2android-mod.dll", dir);
     snprintf(cmdLine, sizeof(cmdLine), "\"%s\" %s", gamePath, passedArguments());
+
+
     keepAsPrevious(logPath, "d2android-loader");
     char modLog[MAX_PATH];
     snprintf(modLog, sizeof(modLog), "%s\\d2android-mod.log", dir);
@@ -278,6 +312,8 @@ int main(void) {
     }
     logLine("Game.exe started, pid %lu", pi.dwProcessId);
 
+
+
     char plugyPath[MAX_PATH], introPath[MAX_PATH];
     snprintf(plugyPath, sizeof(plugyPath), "%s\\PlugY.dll", dir);
     snprintf(introPath, sizeof(introPath), "%s\\d2android-skipintro", dir);
@@ -294,6 +330,7 @@ int main(void) {
         logLine("mod loaded at the entry point");
     }
     else {
+
         WindowSearch search = {pi.dwProcessId, 0};
         for (int i = 0; i < 300 && !search.found; i++) {
             if (WaitForSingleObject(pi.hProcess, 100) == WAIT_OBJECT_0) break;
@@ -301,6 +338,7 @@ int main(void) {
         }
         logLine("game window %s", search.found ? "found" : "not found");
         if (WaitForSingleObject(pi.hProcess, 0) == WAIT_TIMEOUT) {
+
             char mode[16] = "";
             GetEnvironmentVariableA("D2ANDROID_INJECT", mode, sizeof(mode));
             int loaded = strcmp(mode, "thread") != 0 && inject(pi.hProcess, pi.dwProcessId, dllPath);

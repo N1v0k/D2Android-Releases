@@ -1,8 +1,17 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
 final class D2Facing {
     private D2Facing() {
     }
+
 
     static float[] screen(int direction) {
         if (direction < 0 || direction >= 64) return null;
@@ -11,6 +20,7 @@ final class D2Facing {
         double sx = wx - wy, sy = (wx + wy) / 2, length = Math.hypot(sx, sy);
         return new float[]{(float) (sx / length), (float) (sy / length)};
     }
+
 
     static int direction(double screenX, double screenY) {
         double a = Math.atan2(screenY - screenX / 2, screenY + screenX / 2) - Math.PI / 4;

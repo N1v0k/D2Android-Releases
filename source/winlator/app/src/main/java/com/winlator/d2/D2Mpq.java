@@ -8,6 +8,12 @@ import java.util.Locale;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+
+
+
+
+
+
 public final class D2Mpq implements Closeable {
     private static final int FLAG_IMPLODE = 0x00000100, FLAG_COMPRESS = 0x00000200, FLAG_ENCRYPTED = 0x00010000,
         FLAG_FIX_KEY = 0x00020000, FLAG_SINGLE_UNIT = 0x01000000, FLAG_EXISTS = 0x80000000;
@@ -26,6 +32,7 @@ public final class D2Mpq implements Closeable {
     }
 
     private final RandomAccessFile file;
+
     private static final int MAX_FILE = 128 << 20;
     private final long base;
     private final int sectorSize;
@@ -53,6 +60,7 @@ public final class D2Mpq implements Closeable {
         blockTable = readTable(blockPos, blockCount, hash("(block table)", 3));
     }
 
+
     public synchronized byte[] read(String name) throws IOException {
         int block = find(name);
         if (block < 0) return null;
@@ -64,6 +72,7 @@ public final class D2Mpq implements Closeable {
             key = hash(plain, 3);
             if ((flags & FLAG_FIX_KEY) != 0) key = (key + offset) ^ size;
         }
+
         if (size < 0 || size > MAX_FILE) throw new IOException("bad file size " + size);
         byte[] out = new byte[size];
         boolean compressed = (flags & (FLAG_IMPLODE | FLAG_COMPRESS)) != 0;
@@ -88,6 +97,7 @@ public final class D2Mpq implements Closeable {
         for (int i = 0; i < sectors; i++) {
             int want = Math.min(sectorSize, size - i * sectorSize);
             int length = starts[i + 1] - starts[i];
+
             if (length <= 0 || length > want) throw new IOException("bad sector table");
             byte[] data = read(base + (offset & 0xFFFFFFFFL) + starts[i], length);
             if ((flags & FLAG_ENCRYPTED) != 0) decrypt(data, length, key + i);
@@ -135,6 +145,7 @@ public final class D2Mpq implements Closeable {
             }
         }
         else if (mask != 0 && (mask & ~(0x01 | 0x40 | 0x80)) == 0 && (mask & 0xC0) != 0xC0) {
+
             byte[] in = data;
             int from = 1, to = length;
             if ((mask & 0x01) != 0) {
@@ -208,8 +219,9 @@ public final class D2Mpq implements Closeable {
         return (b[at] & 0xFF) | (b[at + 1] & 0xFF) << 8;
     }
 
-    // A port of blast.c by Mark Adler (zlib license, zlib/contrib/blast), which decodes the PKWARE Data Compression
-    // Library format.
+
+    // A port of blast.c by Mark Adler (zlib license, zlib/contrib/blast).
+
 
     private static final class Huffman {
         final short[] count = new short[14], symbol;

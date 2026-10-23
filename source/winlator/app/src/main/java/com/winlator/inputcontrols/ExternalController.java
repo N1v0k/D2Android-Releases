@@ -1,4 +1,4 @@
-package com.winlator.inputcontrols;
+package com.winlator.inputcontrols;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -16,7 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 public class ExternalController implements GamepadSlot {
-    /** D2Android: was ControlElement.STICK_DEAD_ZONE (on-screen controls are gone) */
+
     private static final float STICK_DEAD_ZONE = 0.15f;
 
     public static final byte IDX_BUTTON_A = 0;

@@ -8,11 +8,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+
+
+
+
+
+
 public final class D2InstallCheck {
+
     static final List<String> VARYING = Arrays.asList("d2data.mpq", "d2char.mpq", "d2sfx.mpq");
+
+
     static final long VARYING_MIN_BYTES = 16L * 1024 * 1024;
 
     private D2InstallCheck() {}
+
 
     public static String verify(File gameDir, Map<String, String> reference) throws IOException {
         int hashed = 0;

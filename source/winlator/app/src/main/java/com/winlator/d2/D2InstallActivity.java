@@ -29,44 +29,55 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
+
+
+
+
+
+
+
 public class D2InstallActivity extends D2Activity {
-    public static final String EXTRA_DEBUG_FROM_PATCH = "d2_install_from_patch";
-    static final String ADB_TOKEN = "/data/local/tmp/d2android-installend.ok";
-
-    public static boolean debugFromPatch(android.content.Context context, android.content.Intent intent) {
-        if (!com.winlator.BuildConfig.D2_INTERNAL) return false;
-        if (intent == null || !intent.getBooleanExtra(EXTRA_DEBUG_FROM_PATCH, false)) return false;
-        if ((context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) return false;
-        return D2SpieltestPort.tokenFresh("install end", ADB_TOKEN);
-    }
-
     private D2InstallPlan.Language language;
     private TextView spaceView, statusView;
+
     private Button accessButton;
     private Button nextButton;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private volatile boolean busy;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
     private D2GuestScreen screen;
     private TextView progressView;
+
     private final D2InstallSteps steps = new D2InstallSteps();
+
     private android.view.View cover;
+
     private android.view.View programCancel;
     private TextView coverStatus, coverTotal;
     private android.widget.ProgressBar coverBar;
     private LinearLayout coverSteps;
     private D2InstallPlan.Product running;
     private boolean stopped;
+
     private boolean askedMenu, askedNoProgress, noStartChosen;
     private android.app.AlertDialog noStartDialog;
+
     private boolean installed;
+
     private File installTarget;
+
     private char[] keyClassic, keyLod;
+
     private boolean languageLocked;
+
     private boolean onFirstPage;
     private D2InstallFailure.Kind shownFailure;
     private Object[] shownFailureArgs;
+
     private boolean retryKeys;
+
     private int generation;
 
     @Override
@@ -74,32 +85,26 @@ public class D2InstallActivity extends D2Activity {
         super.onCreate(savedInstanceState);
         language = D2InstallPlan.defaultLanguage(Locale.getDefault());
         portrait();
+
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         buildUI();
         if (D2TouchOverlay.isGameRunning()) {
+
             statusView.setTextColor(D2Style.RED);
             statusView.setText(R.string.install_game_running);
             nextButton.setEnabled(false);
-            return;
-        }
-        if (debugFromPatch(this, getIntent())) {
-            work(() -> {
-                try {
-                    ensureRuntime();
-                    copyTools();
-                    runOnUiThread(this::patch);
-                }
-                catch (IOException e) {
-                    failInstall(D2InstallFailure.Kind.RUNTIME, e.getMessage());
-                }
-            });
         }
     }
+
 
     @Override
     protected boolean recreateOnLanguageChange() {
         return false;
     }
+
+
+
+
 
     private void work(Runnable job) {
         try {
@@ -114,12 +119,15 @@ public class D2InstallActivity extends D2Activity {
             });
         }
         catch (java.util.concurrent.RejectedExecutionException ignored) {
+
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+
         if (screen != null) screen.resume();
         else if (onFirstPage && !busy) buildUI();
         else if (shownFailure == D2InstallFailure.Kind.NO_ACCESS && hasStorage()) buildUI();
@@ -149,11 +157,14 @@ public class D2InstallActivity extends D2Activity {
         onFirstPage = true;
         shownFailure = null;
         retryKeys = false;
+
         File download = download();
         boolean access = hasStorage();
         File chosen = GameLocator.gameDir(this);
         File awaiting = access ? D2InstallPlan.findAwaitingPatch(download, chosen) : null;
+
         File finished = access && awaiting == null ? D2InstallPlan.findFinished(download, chosen) : null;
+
         languageLocked = false;
         if (finished != null) {
             File game = finished;
@@ -165,6 +176,7 @@ public class D2InstallActivity extends D2Activity {
             page.addView(use, matchWidth());
         }
         if (awaiting != null) {
+
             language = D2InstallFlow.resumeLanguage(D2InstallPlan.folderLanguage(awaiting), language);
             languageLocked = D2InstallPlan.folderLanguage(awaiting) != null;
             page.addView(heading(getString(R.string.install_resume_patch_title)));
@@ -176,6 +188,7 @@ public class D2InstallActivity extends D2Activity {
                 resumePatch(awaiting);
             });
             page.addView(resume, matchWidth());
+
             Button anew = new Button(this);
             anew.setText(R.string.install_start_anew);
             anew.setOnClickListener((v) -> confirmAnew(R.string.install_anew_question_keep, () -> D2InstallPlan.discardUnfinished(awaiting)));
@@ -183,6 +196,9 @@ public class D2InstallActivity extends D2Activity {
         }
         else if (access && (D2InstallPlan.interrupted(download) || D2InstallPlan.installerLanguage(download) != null
             || D2InstallPlan.stoppedWithSaves(chosen))) {
+
+
+
             D2InstallFlow.ResumeNote resumeNote = D2InstallFlow.resumeNote(D2InstallPlan.interrupted(download),
                 D2InstallPlan.stoppedWithSaves(chosen), finished != null);
             if (resumeNote != D2InstallFlow.ResumeNote.NONE) {
@@ -192,13 +208,17 @@ public class D2InstallActivity extends D2Activity {
                 note.setPadding(0, 0, 0, dp(12));
                 page.addView(note, matchWidth());
             }
+
+
             D2InstallPlan.Language stored = D2InstallPlan.installerLanguage(download);
             if (stored != null) {
                 language = stored;
                 languageLocked = true;
             }
+
             Button anew = new Button(this);
             anew.setText(R.string.install_start_anew);
+
             int question = D2InstallPlan.stoppedWithSaves(chosen) ? R.string.install_anew_question_saves
                 : R.string.install_anew_question_all;
             anew.setOnClickListener((v) -> confirmAnew(question, () -> D2InstallPlan.discardAll(download)));
@@ -227,6 +247,7 @@ public class D2InstallActivity extends D2Activity {
         page.addView(heading(getString(R.string.install_space)));
         spaceView = text("", D2Style.TEXT);
         page.addView(spaceView, matchWidth());
+
         accessButton = new Button(this);
         accessButton.setText(R.string.install_action_access);
         accessButton.setOnClickListener((v) -> askStorage());
@@ -240,6 +261,7 @@ public class D2InstallActivity extends D2Activity {
         nextButton.setText(R.string.install_next);
         nextButton.setOnClickListener((v) -> fetchDownloaders());
         page.addView(nextButton, matchWidth());
+
         if (awaiting != null) nextButton.setVisibility(android.view.View.GONE);
 
         ScrollView scroll = new ScrollView(this);
@@ -248,6 +270,7 @@ public class D2InstallActivity extends D2Activity {
         setContentView(scroll);
         checkSpace();
     }
+
 
     private void checkSpace() {
         boolean access = hasStorage();
@@ -262,6 +285,7 @@ public class D2InstallActivity extends D2Activity {
         long usable = download.getUsableSpace();
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         String free = D2InstallPlan.formatGb(usable, locale);
+
         long needed = neededAtStart();
         String need = D2InstallPlan.formatGb(needed, locale);
         boolean ok = D2InstallFlow.enough(usable, needed);
@@ -270,15 +294,19 @@ public class D2InstallActivity extends D2Activity {
         nextButton.setEnabled(ok && !busy && !D2TouchOverlay.isGameRunning());
     }
 
+
     private long neededAtStart() {
         File download = download();
         return D2InstallFlow.neededAtStart(D2InstallPlan.installerBytes(download),
             D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download, GameLocator.gameDir(this))));
     }
 
+
     private long neededBeforeKeys() {
         return D2InstallFlow.neededBeforeKeys(D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download(), GameLocator.gameDir(this))));
     }
+
+
 
     private void confirmAnew(int question, Runnable discard) {
         android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
@@ -291,6 +319,7 @@ public class D2InstallActivity extends D2Activity {
             .create();
         styleDialog(dialog);
     }
+
 
     private void styleDialog(android.app.AlertDialog dialog) {
         dialog.show();
@@ -306,6 +335,11 @@ public class D2InstallActivity extends D2Activity {
         android.widget.TextView message = dialog.findViewById(android.R.id.message);
         if (message != null) message.setTextColor(D2Style.TEXT);
     }
+
+
+
+
+
 
     private void fetchDownloaders() {
         if (busy) return;
@@ -345,6 +379,7 @@ public class D2InstallActivity extends D2Activity {
             }
             catch (IOException e) {
                 result = e.getMessage();
+
                 failure = D2InstallFlow.fetchFailure(false, hasStorage(), download.getUsableSpace());
             }
             String text = result;
@@ -360,9 +395,14 @@ public class D2InstallActivity extends D2Activity {
         });
     }
 
+
+
+
+
     private void buildKeysPage() {
         buildKeysPage(null);
     }
+
 
     private void buildKeysPage(String notice) {
         releaseRun();
@@ -397,10 +437,12 @@ public class D2InstallActivity extends D2Activity {
         keysButton = install;
         install.setText(R.string.install_start);
         install.setOnClickListener((v) -> {
+
             if (!hasStorage()) {
                 failInstall(D2InstallFailure.Kind.NO_ACCESS);
                 return;
             }
+
             if (!D2InstallFlow.enough(download().getUsableSpace(), neededBeforeKeys())) {
                 retryKeys = true;
                 failInstall(D2InstallFailure.Kind.NO_SPACE);
@@ -430,23 +472,36 @@ public class D2InstallActivity extends D2Activity {
         setContentView(scroll);
     }
 
+
     private TextView keysStatusView;
+
     private Button keysButton;
+
 
     private void ensureRuntime() throws IOException {
         setUpRuntime(this::showSetupProgress);
     }
 
+
+
+
+
     private void setUpRuntime(D2Runtime.Progress progress) throws IOException {
+
         D2LaunchGate.installSetup(!D2Runtime.isInstalled(this) || !D2Runtime.isPrefixReady(this), () -> {
             if (!D2Runtime.isInstalled(this)) D2Runtime.install(this, progress);
             if (!D2Runtime.isPrefixReady(this)) D2Runtime.setupPrefix(this, progress);
         });
     }
 
+
+
+
+
     private void installBlocked() {
         if (isFinishing() || isDestroyed() || keysStatusView == null || keysButton == null) return;
         keysStatusView.setTextColor(D2Style.RED);
+
         keysStatusView.setText(getString(D2TouchOverlay.isGameRunning() ? R.string.install_game_running : R.string.install_game_starting));
         keysButton.setText(R.string.install_next);
         keysButton.setEnabled(true);
@@ -468,15 +523,24 @@ public class D2InstallActivity extends D2Activity {
     }
 
 
+
+
     private static final String TOOLS_FOLDER = "D2Install";
     private static final String OLD_GAME_EXE = "Game.exe.114b";
+
+
+
+
     private static final String PIPE_PREFIX = "d2k-";
     private static final String INSTALLER_ARGS = "1800 --no-start " + D2InstallPlan.NO_START_SECONDS + " --key-from %s --run %s\\Installer.exe --user=Player --destination=%s"
         + " --silent=true --noui=true --skippostlaunch=true --nopatchnotes=true";
 
+
+
     private File toolsDir() {
         return new File(D2Runtime.driveC(this), TOOLS_FOLDER);
     }
+
 
     private static final String KEY_CHECK_PASSED = "installCheckPassed";
 
@@ -497,11 +561,16 @@ public class D2InstallActivity extends D2Activity {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
     }
 
+
     private File installerExeDir(D2InstallPlan.Product product) {
         File base = D2InstallPlan.installerDir(download(), product);
         File exe = D2InstallFetch.find(base, "Installer.exe", 1, language.locale);
         return exe != null ? exe.getParentFile() : base;
     }
+
+
+
+
 
     private java.util.Map<String, String> finalReference() throws IOException {
         return reference(language);
@@ -517,9 +586,11 @@ public class D2InstallActivity extends D2Activity {
         }
     }
 
+
     private File target() {
         return installTarget != null ? installTarget : D2InstallPlan.gameDir(download());
     }
+
 
     private void copyTools() throws IOException {
         File tools = toolsDir();
@@ -533,6 +604,7 @@ public class D2InstallActivity extends D2Activity {
         }
     }
 
+
     private void installAll() {
         if (keyClassic == null || keyLod == null) return;
         if (D2TouchOverlay.isGameRunning()) {
@@ -541,12 +613,20 @@ public class D2InstallActivity extends D2Activity {
         }
         stopped = false;
         retryKeys = false;
+
+
+
         installTarget = D2InstallPlan.freeGameDir(download(), GameLocator.gameDir(this));
         File target = installTarget;
         work(() -> {
             try {
+
+
                 D2InstallPlan.beginInstall(target, language);
                 forgetCheckPassed(this, target);
+
+
+
                 ensureRuntime();
                 copyTools();
                 runOnUiThread(() -> runInstaller(D2InstallPlan.Product.CLASSIC));
@@ -564,6 +644,7 @@ public class D2InstallActivity extends D2Activity {
         char[] key = product == D2InstallPlan.Product.CLASSIC ? keyClassic : keyLod;
         if (key == null) return;
         steps.at(D2InstallSteps.install(product));
+
         if (!holdRun()) {
             installBlocked();
             return;
@@ -587,15 +668,20 @@ public class D2InstallActivity extends D2Activity {
         runGuest(getString(R.string.install_installing, product.folder), dir, "C:\\D2Install\\d2install.exe", args, null, () -> {
             pipe.close();
             dismissNoStart();
+
+
+
             String helper = helperResult();
             File game = target();
             String expected = product == D2InstallPlan.Product.CLASSIC ? "d2data.mpq" : "d2exp.mpq";
+
             D2InstallFlow.AfterInstaller next = D2InstallFlow.afterInstaller(helper, noStartChosen, new File(game, expected).isFile(),
                 download().getUsableSpace());
             D2Trace.log("install: " + product.code + " ended: " + next + (helper != null ? " (" + helper + ")" : ""));
             if (next == D2InstallFlow.AfterInstaller.WRONG_KEY || next == D2InstallFlow.AfterInstaller.NO_START) {
                 wipeKeys();
                 discardTarget();
+
                 buildKeysPage(next == D2InstallFlow.AfterInstaller.NO_START ? getString(R.string.install_key_no_start, product.folder)
                     : getString(R.string.install_key_rejected));
                 return;
@@ -611,9 +697,13 @@ public class D2InstallActivity extends D2Activity {
                 failInstall(D2InstallFailure.Kind.INSTALLER, product.folder, helper != null ? helper : "-");
                 return;
             }
+
             if (product == D2InstallPlan.Product.CLASSIC) { D2InstallKeys.wipe(keyClassic); keyClassic = null; }
             else { D2InstallKeys.wipe(keyLod); keyLod = null; }
             if (product == D2InstallPlan.Product.CLASSIC) {
+
+
+
                 work(() -> {
                     killGuests();
                     writeInstallPath(game);
@@ -634,6 +724,12 @@ public class D2InstallActivity extends D2Activity {
         handler.postDelayed(() -> watchStart(current), 5000);
     }
 
+
+
+
+
+
+
     private void watchStart(D2GuestScreen current) {
         if (current == null || current != screen || stopped) return;
         String state = D2InstallPlan.helperState(helperLog());
@@ -641,6 +737,7 @@ public class D2InstallActivity extends D2Activity {
             dismissNoStart();
             return;
         }
+
         boolean menu = "start-menu".equals(state), none = "no-progress".equals(state);
         if ((menu && !askedMenu || none && !askedNoProgress) && (noStartDialog == null || !noStartDialog.isShowing())) {
             if (menu) askedMenu = true;
@@ -657,6 +754,8 @@ public class D2InstallActivity extends D2Activity {
         noStartDialog = new android.app.AlertDialog.Builder(this)
             .setView(message)
             .setPositiveButton(R.string.install_check_keys, (d, w) -> {
+
+
                 List<String> log = helperLog();
                 if ("progress".equals(D2InstallPlan.helperState(log)) || D2InstallPlan.helperResult(log) == null) {
                     D2Trace.log("install: the installer started after all, nothing ended");
@@ -672,6 +771,7 @@ public class D2InstallActivity extends D2Activity {
         styleDialog(noStartDialog);
     }
 
+
     private List<String> helperLog() {
         try {
             return java.nio.file.Files.readAllLines(new File(toolsDir(), "d2install.log").toPath(), java.nio.charset.StandardCharsets.ISO_8859_1);
@@ -686,6 +786,10 @@ public class D2InstallActivity extends D2Activity {
         noStartDialog = null;
     }
 
+
+
+
+
     private String helperResult() {
         try {
             return D2InstallPlan.helperResult(java.nio.file.Files.readAllLines(new File(toolsDir(), "d2install.log").toPath(),
@@ -696,12 +800,15 @@ public class D2InstallActivity extends D2Activity {
         }
     }
 
+
     private void patch() {
         File game = target();
         steps.at(D2InstallSteps.Step.PATCH);
         work(() -> {
             try {
                 killGuests();
+
+
                 if (!patchAgainClean && gameExeIs113d(game)) {
                     runOnUiThread(this::finishInstall);
                     return;
@@ -724,8 +831,16 @@ public class D2InstallActivity extends D2Activity {
         });
     }
 
+
     private static final String PATCH_ARCHIVE = "Patch_D2.mpq", PATCH_ARCHIVE_OLD = "Patch_D2.mpq.114b", PATCH_ARCHIVE_NONE = "Patch_D2.mpq.none";
+
     private static final String REPATCHED_MARKER = ".d2android-repatched";
+
+
+
+
+
+
 
     private static void keepPatchArchive(File game) throws IOException {
         File archive = new File(game, PATCH_ARCHIVE), kept = new File(game, PATCH_ARCHIVE_OLD), none = new File(game, PATCH_ARCHIVE_NONE);
@@ -741,19 +856,23 @@ public class D2InstallActivity extends D2Activity {
         else if (!none.createNewFile()) throw new IOException("cannot create " + none);
     }
 
+
     private static void dropPatchBackups(File game) {
         new File(game, PATCH_ARCHIVE_OLD).delete();
         new File(game, PATCH_ARCHIVE_NONE).delete();
         new File(game, REPATCHED_MARKER).delete();
     }
 
+
     private volatile boolean patchAgainClean;
+
 
     private boolean gameExeIs113d(File game) throws IOException {
         String want = GameLocator.reference(this).get("Game.exe");
         File current = new File(game, "Game.exe");
         return want != null && current.isFile() && want.equalsIgnoreCase(GameVersion.sha256(current));
     }
+
 
     private void finishInstall() {
         File game = target();
@@ -767,6 +886,7 @@ public class D2InstallActivity extends D2Activity {
                 new File(game, "LODPatch_113d.exe").delete();
                 File log = new File(game, "bnupdate.log");
                 String text = log.isFile() ? new String(java.nio.file.Files.readAllBytes(log.toPath()), java.nio.charset.StandardCharsets.ISO_8859_1) : "";
+
                 D2InstallFlow.AfterPatch after = D2InstallFlow.afterPatch(text.toLowerCase(Locale.ROOT).contains("succeeded"), gameExeIs113d(game));
                 if (after == D2InstallFlow.AfterPatch.PATCH_FAILED) {
                     problem = "LODPatch_113d.exe: no \"succeeded\" in bnupdate.log";
@@ -775,6 +895,7 @@ public class D2InstallActivity extends D2Activity {
                 else {
                     for (String name : D2InstallCheck.VARYING) D2MpqAttributes.hide(new File(game, name));
                     problem = D2InstallCheck.verify(game, finalReference());
+
                     if (problem != null && D2InstallPlan.folderLanguage(game) == null) {
                         D2InstallPlan.Language other = language == D2InstallPlan.Language.EN_US ? D2InstallPlan.Language.DE_DE : D2InstallPlan.Language.EN_US;
                         if (D2InstallCheck.verify(game, reference(other)) == null) {
@@ -782,6 +903,8 @@ public class D2InstallActivity extends D2Activity {
                             problem = null;
                         }
                     }
+
+
                     File repatched = new File(game, REPATCHED_MARKER);
                     D2InstallFlow.AfterCheck checked = D2InstallFlow.afterCheck(problem == null,
                         new File(game, PATCH_ARCHIVE_OLD).isFile() || new File(game, PATCH_ARCHIVE_NONE).isFile(), repatched.isFile());
@@ -792,6 +915,9 @@ public class D2InstallActivity extends D2Activity {
                         patchAgainClean = true;
                         D2Trace.log("install: the check failed after the patch (" + problem + "), one clean patch again");
                     }
+
+
+
                     if (problem == null && !D2InstallPlan.installFinished(game)) {
                         android.util.Log.w("D2Install", "cannot remove or neutralise the marker in " + game);
                         rememberCheckPassed(this, game);
@@ -815,6 +941,7 @@ public class D2InstallActivity extends D2Activity {
         });
     }
 
+
     private void askUseNewInstall(File game) {
         buildUI();
         String folder = D2InstallPlan.ROOT_FOLDER + "/" + game.getName();
@@ -834,6 +961,7 @@ public class D2InstallActivity extends D2Activity {
         message.setPadding(0, dp(8), 0, 0);
         D2Style.text(message);
         content.addView(message);
+
         android.widget.CheckBox cleanup = new android.widget.CheckBox(this);
         cleanup.setText(R.string.install_delete_installers);
         cleanup.setChecked(true);
@@ -854,6 +982,11 @@ public class D2InstallActivity extends D2Activity {
         styleDialog(dialog);
     }
 
+
+
+
+
+
     private void useNewInstall(File game) {
         GameVersion.Result r = GameLocator.choose(this, game);
         if (!r.ok()) {
@@ -864,6 +997,7 @@ public class D2InstallActivity extends D2Activity {
         startActivity(new android.content.Intent(this, D2LaunchActivity.class));
         finish();
     }
+
 
     private void deleteInstallers() {
         File dir = new File(D2InstallPlan.root(download()), D2InstallPlan.INSTALLER_FOLDER);
@@ -876,19 +1010,28 @@ public class D2InstallActivity extends D2Activity {
         f.delete();
     }
 
+
     private void failInstall(D2InstallFailure.Kind kind, Object... args) {
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
-            D2Trace.log("install: stopped, " + kind + "");
+            D2Trace.log("install: stopped, " + kind);
             generation++;
             busy = false;
             wipeKeys();
             closeScreen();
+
+
             if (D2InstallFlow.discard(kind, D2InstallPlan.awaitsPatch(installTarget))) discardTarget();
             releaseRun();
             buildFailPage(kind, args);
         });
     }
+
+
+
+
+
+
 
     private void discardTarget() {
         File unfinished = installTarget;
@@ -901,6 +1044,7 @@ public class D2InstallActivity extends D2Activity {
             if (D2InstallPlan.discardUnfinished(unfinished)) android.util.Log.i("D2Install", "removed the unfinished " + unfinished);
         });
     }
+
 
     private void writeInstallPath(File game) {
         String dos = D2Runtime.dosPath(this, game) + "\\";
@@ -919,6 +1063,12 @@ public class D2InstallActivity extends D2Activity {
 
     private KeyPipe keyPipe;
 
+
+
+
+
+
+
     private final class KeyPipe {
         final File path;
         private volatile boolean done;
@@ -928,6 +1078,8 @@ public class D2InstallActivity extends D2Activity {
             new java.security.SecureRandom().nextBytes(random);
             StringBuilder name = new StringBuilder(PIPE_PREFIX);
             for (byte b : random) name.append(String.format(Locale.ROOT, "%02x", b));
+
+
             File tmp = toolsDir();
             if (!tmp.isDirectory() && !tmp.mkdirs()) throw new IOException("cannot create " + tmp);
             path = new File(tmp, name.toString());
@@ -945,6 +1097,7 @@ public class D2InstallActivity extends D2Activity {
                     android.system.Os.write(fd, line, 0, line.length);
                 }
                 catch (android.system.ErrnoException | java.io.InterruptedIOException ignored) {
+
                 }
                 finally {
                     D2InstallKeys.wipe(line);
@@ -963,6 +1116,7 @@ public class D2InstallActivity extends D2Activity {
             return "C:\\" + TOOLS_FOLDER + "\\" + path.getName();
         }
 
+
         void close() {
             if (!done && path.exists()) {
                 try {
@@ -971,6 +1125,7 @@ public class D2InstallActivity extends D2Activity {
                     android.system.Os.close(r);
                 }
                 catch (android.system.ErrnoException ignored) {
+
                 }
             }
             path.delete();
@@ -980,6 +1135,7 @@ public class D2InstallActivity extends D2Activity {
     private static void copyFile(File from, File to) throws IOException {
         java.nio.file.Files.copy(from.toPath(), to.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     }
+
 
     private void runGuest(String label, String dosDir, String program, String args, String stdin, Runnable then) {
         if (stopped) return;
@@ -1013,6 +1169,7 @@ public class D2InstallActivity extends D2Activity {
                     }));
             }
             catch (IOException e) {
+
                 failInstall(D2InstallFailure.Kind.RUNTIME, e instanceof D2LaunchGate.Busy ? getString(R.string.launch_already_starting) : e.getMessage());
             }
         });
@@ -1030,6 +1187,7 @@ public class D2InstallActivity extends D2Activity {
         field.setSaveEnabled(false);
         return field;
     }
+
 
     private static char[] takeKey(android.widget.EditText field) {
         android.text.Editable e = field.getText();
@@ -1061,7 +1219,12 @@ public class D2InstallActivity extends D2Activity {
         keyClassic = keyLod = null;
     }
 
+
     private static final D2InstallPlan.Product[] DOWNLOAD_ORDER = {D2InstallPlan.Product.LOD, D2InstallPlan.Product.CLASSIC};
+
+
+
+
 
     private void runDownloader(int index) {
         if (stopped) return;
@@ -1070,6 +1233,8 @@ public class D2InstallActivity extends D2Activity {
             buildKeysPage();
             return;
         }
+
+
         D2InstallPlan.Product next = DOWNLOAD_ORDER[index];
         steps.at(D2InstallSteps.download(next));
         int gen = generation;
@@ -1093,6 +1258,7 @@ public class D2InstallActivity extends D2Activity {
             });
         });
     }
+
 
     private java.util.Map<String, String> installerSums() throws IOException {
         try (java.io.InputStream in = getAssets().open("install/installer-sha256-" + language.locale + ".txt")) {
@@ -1125,6 +1291,7 @@ public class D2InstallActivity extends D2Activity {
         cancel.setOnClickListener((v) -> cancelDownloads());
         frame.addView(cancel, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             android.view.Gravity.BOTTOM | android.view.Gravity.END));
+
         cancel.setVisibility(android.view.View.GONE);
         programCancel = cancel;
         addCover(frame, true);
@@ -1145,14 +1312,17 @@ public class D2InstallActivity extends D2Activity {
                 runOnUiThread(() -> pollProgress(current, product, index));
             }
             catch (IOException e) {
+
                 String why = e instanceof D2LaunchGate.Busy ? getString(R.string.launch_already_starting) : e.getMessage();
                 runOnUiThread(() -> failInstall(D2InstallFailure.Kind.RUNTIME, why));
             }
         });
     }
 
+
     private int lastPercent = -2;
     private long lastChange;
+
 
     private void pollProgress(D2GuestScreen current, D2InstallPlan.Product product, int index) {
         if (current != screen || stopped) return;
@@ -1173,6 +1343,7 @@ public class D2InstallActivity extends D2Activity {
             steps.percent(percent);
             progressView.setText(getString(R.string.install_download_progress, product.folder, percent));
         }
+
         if (D2InstallSteps.stalled(lastChange, now)) {
             progressView.setText(getString(R.string.install_stalled, (now - lastChange) / 60_000L));
         }
@@ -1182,6 +1353,10 @@ public class D2InstallActivity extends D2Activity {
         }
         handler.postDelayed(() -> pollProgress(current, product, index), 1000);
     }
+
+
+
+
 
     private void downloaderEnded(int index, int percent) {
         running = null;
@@ -1211,12 +1386,14 @@ public class D2InstallActivity extends D2Activity {
                     runDownloader(index + 1);
                     return;
                 }
+
                 D2InstallFailure.Kind kind = D2InstallFailure.afterDownload(percent);
                 if (kind == D2InstallFailure.Kind.DOWNLOAD_DAMAGED) work(() -> deleteTree(D2InstallPlan.installerDir(download, product)));
                 failInstall(kind, product.folder, failed);
             });
         });
     }
+
 
     private void cancelDownloads() {
         generation++;
@@ -1228,9 +1405,18 @@ public class D2InstallActivity extends D2Activity {
         statusView.setText(R.string.install_cancelled);
     }
 
+
+
+
+
+
+
+
+
     private void killGuests() {
         killGuests(true);
     }
+
 
     private void killGuests(boolean saveRegistry) {
         File proc = new File("/proc"), rootfs = D2Runtime.rootDir(this);
@@ -1245,6 +1431,7 @@ public class D2InstallActivity extends D2Activity {
                     android.system.Os.kill(pid, android.system.OsConstants.SIGTERM);
                 }
                 catch (android.system.ErrnoException ignored) {
+
                 }
             }
         }
@@ -1263,6 +1450,7 @@ public class D2InstallActivity extends D2Activity {
         }
         for (int pid : servers) android.os.Process.killProcess(pid);
         for (int pid : others) android.os.Process.killProcess(pid);
+
         java.util.Set<Integer> ended = new java.util.HashSet<>(servers);
         ended.addAll(others);
         long gone = System.currentTimeMillis() + GUESTS_GONE_MS;
@@ -1285,7 +1473,9 @@ public class D2InstallActivity extends D2Activity {
             + (alive == 0 ? "" : ", " + alive + " still alive after " + GUESTS_GONE_MS + " ms"));
     }
 
+
     private static final long GUESTS_GONE_MS = 2000;
+
 
     private static boolean isAlive(int pid) {
         try {
@@ -1298,6 +1488,7 @@ public class D2InstallActivity extends D2Activity {
             return false;
         }
     }
+
 
     private static final long WINESERVER_SAVE_MS = 8000;
 
@@ -1325,6 +1516,7 @@ public class D2InstallActivity extends D2Activity {
         boolean runActive = screen != null, held = runHeld;
         runHeld = false;
         closeScreen();
+
         if (runActive || !installed) {
             new Thread(() -> {
                 killGuests(false);
@@ -1336,7 +1528,9 @@ public class D2InstallActivity extends D2Activity {
         super.onDestroy();
     }
 
+
     private boolean runHeld;
+
 
     private boolean holdRun() {
         if (runHeld) return true;
@@ -1345,6 +1539,7 @@ public class D2InstallActivity extends D2Activity {
         runHeld = true;
         return true;
     }
+
 
     private void releaseRun() {
         if (!runHeld) return;
@@ -1364,6 +1559,7 @@ public class D2InstallActivity extends D2Activity {
         }
     }
 
+
     static File downloaderFile(File download, D2InstallPlan.Product product) {
         return new File(D2InstallPlan.installerDir(download, product), String.format(Locale.ROOT, "Downloader_%s.exe", product.code));
     }
@@ -1373,9 +1569,16 @@ public class D2InstallActivity extends D2Activity {
     }
 
 
+
+
     private void portrait() {
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
     }
+
+
+
+
+
 
     private void addCover(FrameLayout frame, boolean cancellable) {
         int pad = dp(24);
@@ -1426,6 +1629,7 @@ public class D2InstallActivity extends D2Activity {
         cover = scroll;
         frame.addView(scroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         portrait();
+
         progressView.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence t, int a, int b, int c) {}
             @Override public void onTextChanged(CharSequence t, int a, int b, int c) {}
@@ -1439,6 +1643,7 @@ public class D2InstallActivity extends D2Activity {
     private static final int[] STEP_TEXT = {R.string.install_step_fetch, R.string.install_step_dl_lod, R.string.install_step_dl_classic,
         R.string.install_step_keys, R.string.install_step_inst_classic, R.string.install_step_inst_lod, R.string.install_step_patch,
         R.string.install_step_check};
+
 
     private void refreshCover() {
         if (cover == null || coverSteps == null) return;
@@ -1460,6 +1665,7 @@ public class D2InstallActivity extends D2Activity {
         coverTotal.setText(getString(R.string.install_cover_total, total));
     }
 
+
     private void showProgram(FrameLayout frame) {
         if (cover == null) return;
         D2Trace.log("install: the player shows the program");
@@ -1477,6 +1683,10 @@ public class D2InstallActivity extends D2Activity {
         frame.addView(back, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             android.view.Gravity.BOTTOM | android.view.Gravity.START));
     }
+
+
+
+
 
     private void buildFailPage(D2InstallFailure.Kind kind, Object... args) {
         portrait();
@@ -1515,6 +1725,7 @@ public class D2InstallActivity extends D2Activity {
             Button b = new Button(this);
             b.setText(getResources().getIdentifier(action.label, "string", getPackageName()));
             b.setOnClickListener((v) -> {
+
                 if (action == D2InstallFailure.Action.PATCH) {
                     for (Button other : buttons) other.setEnabled(false);
                     statusView.setTextColor(D2Style.TEXT);
@@ -1535,11 +1746,13 @@ public class D2InstallActivity extends D2Activity {
         setContentView(scroll);
     }
 
+
     private Object[] spaceArgs(boolean atStart) {
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         long needed = atStart ? neededAtStart() : neededBeforeKeys();
         return new Object[]{D2InstallPlan.formatGb(download().getUsableSpace(), locale), D2InstallPlan.formatGb(needed, locale)};
     }
+
 
     private static Object[] readable(Object[] args) {
         if (args == null) return new Object[0];
@@ -1547,6 +1760,7 @@ public class D2InstallActivity extends D2Activity {
         for (int i = 0; i < out.length; i++) if (out[i] == null || String.valueOf(out[i]).trim().isEmpty()) out[i] = "-";
         return out;
     }
+
 
     private void act(D2InstallFailure.Action action) {
         switch (action) {
@@ -1586,12 +1800,14 @@ public class D2InstallActivity extends D2Activity {
     }
 
 
+
     private static final int STORAGE_REQUEST = 0x613;
 
     private boolean hasStorage() {
         return androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             == android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
+
 
     private void askStorage() {
         if (hasStorage()) {
@@ -1609,6 +1825,7 @@ public class D2InstallActivity extends D2Activity {
             android.Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_REQUEST);
     }
 
+
     private boolean asked;
 
     @Override
@@ -1616,6 +1833,8 @@ public class D2InstallActivity extends D2Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_REQUEST && screen == null) buildUI();
     }
+
+
 
 
     private void resumePatch(File dir) {
@@ -1629,6 +1848,7 @@ public class D2InstallActivity extends D2Activity {
             return;
         }
         onFirstPage = false;
+
         language = D2InstallFlow.resumeLanguage(D2InstallPlan.folderLanguage(dir), language);
         installTarget = dir;
         if (!holdRun()) {
@@ -1657,6 +1877,7 @@ public class D2InstallActivity extends D2Activity {
             }
         });
     }
+
 
     private FrameLayout.LayoutParams statusParams() {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,

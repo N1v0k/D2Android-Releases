@@ -1,17 +1,26 @@
 package com.winlator.d2;
 
+
+
+
+
+
 public final class D2ResumeState {
+
     static final int LENGTH = 97;
     static final int OFFSET = 74;
 
     public static final int STATE_NONE = 0, STATE_RUNNING = 1, STATE_SPOT = 2, STATE_WAYPOINT = 3, STATE_REFUSED = 4;
+
     public static final int CAPS_ALL = 7;
 
     public final int level, x, y;
     public final long seed;
     public final int roomX, roomY, roomW, roomH;
+
     public final int difficulty;
     public final int caps, state, reason;
+
     public final int guardTenths;
 
     D2ResumeState(int level, int x, int y, long seed, int roomX, int roomY, int roomW, int roomH, int difficulty, int caps,
@@ -31,9 +40,11 @@ public final class D2ResumeState {
         this.guardTenths = guardTenths;
     }
 
+
     public boolean placeKnown() {
         return level > 0 && x > 0 && y > 0 && seed != 0 && roomW > 0 && roomH > 0;
     }
+
 
     public static D2ResumeState parse(byte[] d, int length, int at) {
         if (at < 0 || length <= at) return null;

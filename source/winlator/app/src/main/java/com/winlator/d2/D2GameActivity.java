@@ -32,30 +32,46 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 
+
+
+
+
+
+
+
+
+
 public class D2GameActivity extends D2Activity {
+
     private static final int MENU_HELPERS = 0, MENU_KEYBOARD = 1, MENU_IDLE = 2, MENU_QUIT = 3, MENU_BUILD = 4, MENU_INTRO = 5,
         MENU_SWITCH = 6;
 
     public static final String EXTRA_DIR = "d2_dir";
     public static final String EXTRA_PROGRAM = "d2_program";
     public static final String EXTRA_ARGS = "d2_args";
-    public static final String EXTRA_ENV = "d2_env";
     public static final String EXTRA_LOG = "d2_log";
-    public static final String EXTRA_LOG_NAME = "d2_log_name";
     public static final String EXTRA_WINEDEBUG = "d2_winedebug";
+
 
     private D2GuestScreen screen;
     private XServer xServer;
     private WinHandler winHandler;
     private D2TouchOverlay overlay;
-    private D2TestSession testSession;
     private TextView loadingView;
     private BufferedWriter guestLog;
     private final com.winlator.core.Callback<String> guestLogCallback = this::writeGuestLog;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
     private final D2StallWatch stallWatch = new D2StallWatch();
     private long stallResumedAt, dxvkLimitAt;
+
     private long presentsAtStart;
+
+
+
+
+
+
     private final Runnable stallTick = new Runnable() {
         @Override
         public void run() {
@@ -76,6 +92,7 @@ public class D2GameActivity extends D2Activity {
             if (pausedAt == 0) handler.postDelayed(this, 1000);
         }
     };
+
 
     private void traceStall(long standingMs, long stateAgoMs) {
         long now = SystemClock.uptimeMillis();
@@ -100,6 +117,7 @@ public class D2GameActivity extends D2Activity {
         for (int i = 0; i < pids.length; i++) pids[i] = guests.get(i).pid;
         int game = D2StallSnapshot.gamePid(proc, pids);
         if (game < 0) D2Trace.log("stall: no Game.exe among " + guests.size() + " guest processes");
+
         String dxvk = D2DxvkLog.tail(D2Runtime.logFile(this, D2DxvkLog.DIR), 5);
         if (dxvk.isEmpty()) D2Trace.log("stall: DXVK log empty");
         else for (String line : dxvk.split("\n")) D2Trace.log("stall: " + line);
@@ -107,18 +125,30 @@ public class D2GameActivity extends D2Activity {
         for (String line : D2StallSnapshot.packed(D2StallSnapshot.threads(proc, game))) D2Trace.log("stall: Game.exe threads " + line);
     }
     private final Runnable suspendGuest = () -> screen.pauseGuest();
+
     private static D2GameActivity savingAfterRelaunch;
+
     private boolean afterRelaunch;
+
     private D2GameActivity nextWindow;
+
     private long newestAtPause;
+
     private volatile long pausedAt;
     private boolean exiting = false;
+
     private boolean exitRequested = false;
+
     private boolean exitOnlySaved = false;
+
     private File saveDir;
+
     private D2DirectStart.Request directRequest;
+
     private D2DirectLoading directLoading;
+
     private boolean switchCharacter;
+
     private boolean thenInstall;
 
     @Override
@@ -128,6 +158,7 @@ public class D2GameActivity extends D2Activity {
         presentsAtStart = com.winlator.xserver.extensions.PresentExtension.presents;
         AppUtils.hideSystemUI(this);
         AppUtils.keepScreenOn(this);
+
         android.content.IntentFilter on = new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_ON);
         on.addAction(android.content.Intent.ACTION_USER_PRESENT);
         registerReceiver(screenOn, on);
@@ -135,6 +166,7 @@ public class D2GameActivity extends D2Activity {
         D2KeepAliveService.start(this, false);
         D2GameActivity saving = savingAfterRelaunch;
         if (saving != null) {
+
             afterRelaunch = true;
             saving.nextWindow = this;
             FrameLayout root = new FrameLayout(this);
@@ -157,24 +189,31 @@ public class D2GameActivity extends D2Activity {
 
         ProcessHelper.removeAllDebugCallbacks();
         if (getIntent().getBooleanExtra(EXTRA_LOG, false)) openGuestLog();
+
+
         if (getIntent().getBooleanExtra(D2SpieltestPort.EXTRA, false)) {
             D2SpieltestPort.start(new java.io.File(new java.io.File(D2Runtime.driveC(this), D2Runtime.DRIVE_C_SHADOW), "d2android-mod.log"));
         }
-        testSession = D2TestSession.attachIfRequested(this, getIntent(), this::exit);
-        D2TouchOverlay.mercPotionsTest = getIntent().getBooleanExtra(D2TouchOverlay.EXTRA_MERC_POTIONS, false);
+
 
         screen = new D2GuestScreen(this, root, true, true);
         xServer = screen.getXServer();
         winHandler = screen.getWinHandler();
         loadingView = screen.getLoadingView();
 
+
+
         overlay = new D2TouchOverlay(this, xServer, winHandler, this::openMenu);
         D2Text.setListener(() -> runOnUiThread(() -> { if (overlay != null) overlay.onLanguageChanged(); }));
         overlay.setKeyboard(this::setKeyboardShown);
+
         overlay.setModExpected(GameShadow.LOADER_EXE.equals(getIntent().getStringExtra(EXTRA_PROGRAM)));
         screen.addOverlay(overlay);
+
+
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             if (overlay != null) overlay.setRightShift(navShift(insets));
+
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
                 && insets.isVisible(android.view.WindowInsets.Type.statusBars()) && hasWindowFocus()) {
                 handler.removeCallbacks(hideBarsInsets);
@@ -185,10 +224,12 @@ public class D2GameActivity extends D2Activity {
         String gameDir = getIntent().getStringExtra(D2LaunchActivity.EXTRA_GAME_DIR);
         if (gameDir != null) overlay.setGameDir(new File(gameDir));
         if (gameDir != null) saveDir = D2Saves.saveDir(new File(gameDir));
+
         if (gameDir != null && D2SpieltestPort.active()) D2SpieltestPort.saves(D2Saves.saveDir(new File(gameDir)));
 
-        if (testSession != null) testSession.onXServerReady(xServer, winHandler, screen.getXServerView());
         showDirectLoading(root);
+
+
 
 
         frameLimit = D2FrameRate.effective(D2Settings.frameRate(this), D2Screen.refreshRates(this));
@@ -197,21 +238,27 @@ public class D2GameActivity extends D2Activity {
         Executors.newSingleThreadExecutor().execute(this::startEnvironment);
     }
 
+
     private int frameLimit;
     private float displayRefresh = -1;
 
     private void startEnvironment() {
         D2Runtime.prepareSession(this);
         EnvVars env = D2Runtime.guestEnv(this);
+
+
+
         env.put("WINEDLLOVERRIDES", "dsound=b");
         env.put("ALSA_CONFIG_PATH", D2Runtime.rootDir(this).getPath() + "/opt/d2/alsa-d2.conf");
         env.put("D2_ALSA_RATE", "22050");
+
         D2Runtime.enableDxvkLog(this, env, getIntent().getBooleanExtra(EXTRA_LOG, false));
+
+
         String frameRate = D2FrameRate.envValue(frameLimit);
         if (frameRate != null) env.put(D2FrameRate.ENV, frameRate);
-        String extraEnv = getIntent().getStringExtra(EXTRA_ENV);
-        if (extraEnv != null && !extraEnv.isEmpty()) env.putAll(extraEnv);
         if (env.has(D2FrameRate.ENV)) D2Trace.log("frame rate limit " + env.get(D2FrameRate.ENV) + " fps");
+
         if (displayRefresh > 0) D2Trace.log("display mode " + Math.round(displayRefresh) + " Hz for the setting of "
             + frameLimit + " fps");
         String wineDebug = getIntent().getStringExtra(EXTRA_WINEDEBUG);
@@ -223,6 +270,8 @@ public class D2GameActivity extends D2Activity {
         String command = D2Runtime.guestCommand(xServer.screenInfo.toString(), dir != null ? dir : "C:\\windows",
             program != null ? program : "explorer.exe", args);
         writeGuestLog("[d2] " + command);
+
+
         java.io.File output = null;
         if (getIntent().getBooleanExtra(D2LaunchActivity.EXTRA_D2_LAUNCH, false)) {
             boolean log = getIntent().getBooleanExtra(EXTRA_LOG, false);
@@ -232,13 +281,18 @@ public class D2GameActivity extends D2Activity {
         }
 
         screen.start(command, env, null, (status) -> {
+
             D2ExitLog.gameEnded(status, backgroundMs(), D2GuestComponent.endReason(), D2GuestComponent.endSinceResumeMs());
             writeGuestLog("[d2] guest ended with status " + status);
+
+
             D2Trace.log("game ended with status " + status + " (Wine desktop)");
             D2Diagnose.keepTraceOfEndedRun(this);
             runOnUiThread(this::exit);
         }, output);
     }
+
+
 
 
     private void showDirectLoading(FrameLayout root) {
@@ -253,6 +307,7 @@ public class D2GameActivity extends D2Activity {
             @Override public File gameDir() { return gameDir != null ? new File(gameDir) : null; }
             @Override public String message(D2DirectStart.Outcome outcome, D2DirectStart.Report report) { return directMessage(outcome, report); }
             @Override public void arrived() {
+
                 if (overlay != null) overlay.setPaused(true);
             }
             @Override public boolean worldReady() { return overlay != null && overlay.uiReady(); }
@@ -260,6 +315,7 @@ public class D2GameActivity extends D2Activity {
         });
         root.addView(directLoading, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         directLoading.start();
+
         D2Music.keepForGame();
         com.winlator.alsaserver.ALSAMute.muteForLoading(true);
     }
@@ -269,19 +325,23 @@ public class D2GameActivity extends D2Activity {
         return D2Text.get(this, names[Math.max(0, Math.min(2, difficulty))]);
     }
 
+
     private void directEnded(D2DirectStart.Outcome outcome, D2DirectStart.Report report) {
         boolean shown = directLoading != null && directLoading.messageShown();
+
         D2Music.fadeOut();
         com.winlator.alsaserver.ALSAMute.muteForLoading(false);
         directLoading = null;
         String text = directMessage(outcome, report);
         if (text != null) {
+
             if (!shown) Toast.makeText(this, text, Toast.LENGTH_LONG).show();
             return;
         }
         if (outcome == D2DirectStart.Outcome.CANCELLED) return;
         watchGameLeft();
         if (directRequest.isNew()) return;
+
         final int wanted = directRequest.difficulty;
         handler.postDelayed(() -> {
             D2ResumeState place = overlay != null ? overlay.modLink().resumeState() : null;
@@ -291,6 +351,11 @@ public class D2GameActivity extends D2Activity {
                 Toast.LENGTH_LONG).show();
         }, 8000);
     }
+
+
+
+
+
 
     private void watchGameLeft() {
         handler.postDelayed(new Runnable() {
@@ -310,6 +375,7 @@ public class D2GameActivity extends D2Activity {
             }
         }, 300);
     }
+
 
     private String directMessage(D2DirectStart.Outcome outcome, D2DirectStart.Report report) {
         if (outcome == D2DirectStart.Outcome.STOPPED) return D2Text.get(this, R.string.direct_stopped, directReason(report != null ? report.reason : 0));
@@ -333,6 +399,11 @@ public class D2GameActivity extends D2Activity {
         }
     }
 
+
+
+
+
+
     private boolean directSwallows(KeyEvent event) {
         if (directLoading == null || !directLoading.showing()) return false;
         int code = event.getKeyCode();
@@ -347,6 +418,7 @@ public class D2GameActivity extends D2Activity {
     }
 
 
+
     private void openMenu() {
         float density = getResources().getDisplayMetrics().density;
         int pad = Math.round(16 * density);
@@ -358,6 +430,9 @@ public class D2GameActivity extends D2Activity {
         title.setTextSize(20);
         D2Style.heading(title);
         list.addView(title);
+
+
+
         android.widget.ScrollView scroll = new android.widget.ScrollView(this);
         scroll.setScrollbarFadingEnabled(false);
         scroll.setVerticalScrollBarEnabled(true);
@@ -371,9 +446,13 @@ public class D2GameActivity extends D2Activity {
         scroll.addView(list);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(scroll).create();
         D2PadFocus.all(list);
+
+
+
         final boolean withIdle = com.winlator.BuildConfig.D2_INTERNAL;
         String idleBlocked = withIdle ? overlay.idleBlocked() : null;
         boolean pausedAtMenu = overlay.playerPausedNow();
+
         java.util.List<Integer> ids = new java.util.ArrayList<>();
         java.util.List<String> items = new java.util.ArrayList<>();
         ids.add(MENU_HELPERS);
@@ -388,6 +467,8 @@ public class D2GameActivity extends D2Activity {
             ids.add(MENU_IDLE);
             items.add(idleBlocked == null ? D2Text.get(this, R.string.menu_idle) : D2Text.get(this, R.string.menu_idle_blocked, idleBlocked));
         }
+
+
         if (getIntent().getBooleanExtra(D2LaunchActivity.EXTRA_D2_LAUNCH, false) && GameShadow.LOADER_EXE.equals(getIntent().getStringExtra(EXTRA_PROGRAM))) {
             ids.add(MENU_SWITCH);
             items.add(D2Text.get(this, R.string.menu_switch_character));
@@ -413,6 +494,7 @@ public class D2GameActivity extends D2Activity {
                 else if (which == MENU_BUILD) overlay.showBuildPage(this);
                 else if (which == MENU_INTRO) overlay.showIntroAgain(pausedAtMenu);
                 else if (which == MENU_KEYBOARD) AppUtils.showKeyboard(this);
+
                 else if (com.winlator.BuildConfig.D2_INTERNAL && which == MENU_IDLE) D2IdleDialog.show(this, overlay.idleQuest(), (minutes, retreat) -> overlay.requestIdle(pausedAtMenu, minutes, retreat));
                 else {
                     thenInstall = false;
@@ -427,10 +509,17 @@ public class D2GameActivity extends D2Activity {
         styleDialog(dialog, 0.36f);
     }
 
+
+
+
+
+
     private static void immersiveDialog(AlertDialog dialog) {
         android.view.Window window = dialog.getWindow();
         if (window == null) return;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+
+
             android.view.WindowInsetsController controller = window.getDecorView().getWindowInsetsController();
             if (controller != null) {
                 controller.hide(android.view.WindowInsets.Type.statusBars() | android.view.WindowInsets.Type.navigationBars());
@@ -444,6 +533,10 @@ public class D2GameActivity extends D2Activity {
         }
     }
 
+
+
+
+
     private int navShift(android.view.WindowInsets insets) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             return D2NavInset.rightShift(insets.isVisible(android.view.WindowInsets.Type.ime()),
@@ -452,17 +545,24 @@ public class D2GameActivity extends D2Activity {
         return D2NavInset.rightShift(overlay != null && overlay.keyboardShown(), insets.getStableInsetRight());
     }
 
+
+
+
+
     private void setKeyboardShown(boolean show) {
         View decor = getWindow().getDecorView();
+
         decor.post(decor::requestApplyInsets);
         decor.postDelayed(decor::requestApplyInsets, 500);
         android.view.inputmethod.InputMethodManager imm =
             (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm == null) return;
         if (!show) {
+
             imm.hideSoftInputFromWindow(decor.getWindowToken(), 0);
             return;
         }
+
         D2Keyboard.show(new D2Keyboard.Ime() {
             @Override
             public Boolean visible() {
@@ -493,6 +593,7 @@ public class D2GameActivity extends D2Activity {
         });
     }
 
+
     private void styleDialog(AlertDialog dialog, float widthFraction) {
         D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
@@ -511,10 +612,12 @@ public class D2GameActivity extends D2Activity {
         confirmExit(false);
     }
 
+
     private void confirmExit(boolean toLauncher) {
         TextView message = new TextView(this);
         int pad = Math.round(16 * getResources().getDisplayMetrics().density);
         message.setPadding(pad, pad, pad, 0);
+
         message.setText(overlay.materialsNotSaving() ? D2Text.get(this, R.string.quit_ask_not_saving)
             : overlay.canSaveBeforeExit()
             ? D2Text.get(this, R.string.quit_ask_saves)
@@ -535,6 +638,10 @@ public class D2GameActivity extends D2Activity {
         styleDialog(dialog, 0.42f);
     }
 
+
+
+
+
     private void saveAndExitOnlySaved() {
         if (!overlay.canSaveBeforeExit()) {
             D2Trace.log("save and exit (d2_nur_gespeichert): cannot save first, the game keeps running");
@@ -547,6 +654,7 @@ public class D2GameActivity extends D2Activity {
                 exit();
                 return;
             }
+
             loadingView.setVisibility(View.GONE);
             overlay.setPaused(true);
             D2Trace.log("save and exit (d2_nur_gespeichert): save not confirmed, the game keeps running");
@@ -554,16 +662,26 @@ public class D2GameActivity extends D2Activity {
         });
     }
 
+
     private long unconfirmedAt;
     private static final long SECOND_TAP_MS = 30_000;
 
+
+
+
+
+
+
     private void saveAndExit() {
         switchCharacter = false;
+
         if (overlay.materialsNotSaving()) {
             D2Trace.log("save and exit: the game cannot save (materials file), asking first");
             confirmExit();
             return;
         }
+
+
         if (thenInstall) {
             int request = ++installQuitRequest;
             installQuit(SystemClock.uptimeMillis(), request);
@@ -572,11 +690,19 @@ public class D2GameActivity extends D2Activity {
         saveAndExitConfirmed();
     }
 
+
     private int installQuitRequest;
+
 
     private static final long INSTALL_WORD_MS = 2000;
 
+
+
+
+
+
     private void installQuit(long since, int request) {
+
         if (exiting || isFinishing() || isDestroyed() || !thenInstall || request != installQuitRequest) return;
         Boolean loses = overlay.quitLossNow();
         if (loses == null && SystemClock.uptimeMillis() - since < INSTALL_WORD_MS) {
@@ -591,6 +717,7 @@ public class D2GameActivity extends D2Activity {
         }
         saveAndExitConfirmed();
     }
+
 
     private void saveAndExitConfirmed() {
         if (!overlay.canSaveBeforeExit()) {
@@ -621,6 +748,10 @@ public class D2GameActivity extends D2Activity {
         });
     }
 
+
+
+
+
     private void askQuitUnconfirmed() {
         TextView message = new TextView(this);
         int pad = Math.round(16 * getResources().getDisplayMetrics().density);
@@ -644,11 +775,19 @@ public class D2GameActivity extends D2Activity {
         styleDialog(dialog, 0.42f);
     }
 
+
     private static final long SAVE_CONFIRM_MS = 4000;
+
+
+
+
+
 
     private void saveConfirmed(java.util.function.Consumer<Boolean> done) {
         loadingView.setText(D2Text.get(this, R.string.game_saving));
         loadingView.setVisibility(View.VISIBLE);
+
+
         if (!overlay.sortSettled()) {
             final long since = SystemClock.uptimeMillis();
             D2Trace.log("save and exit: waiting for the inventory sort");
@@ -669,9 +808,12 @@ public class D2GameActivity extends D2Activity {
         saveConfirmedSorted(done);
     }
 
+
     private static final long SORT_SETTLE_MS = 25000;
 
     private void saveConfirmedSorted(java.util.function.Consumer<Boolean> done) {
+
+
         if (overlay.heroDead()) {
             overlay.setPaused(false);
             final long since = SystemClock.uptimeMillis();
@@ -685,7 +827,7 @@ public class D2GameActivity extends D2Activity {
                         handler.postDelayed(this, 200);
                         return;
                     }
-                    D2Trace.log("save and exit: hero " + (overlay.heroDead() ? "still dead" : "respawned") + "");
+                    D2Trace.log("save and exit: hero " + (overlay.heroDead() ? "still dead" : "respawned"));
                     saveConfirmedAlive(done);
                 }
             }, 300);
@@ -704,6 +846,8 @@ public class D2GameActivity extends D2Activity {
 
             @Override
             public void run() {
+
+
                 File newest = D2Saves.newestCharacter(saveDir);
                 boolean newer = newest != null && newest.lastModified() > before;
                 if (newer && D2Saves.completeCharacter(newest)) {
@@ -727,6 +871,15 @@ public class D2GameActivity extends D2Activity {
             }
         }, 200);
     }
+
+
+
+
+
+
+
+
+
 
     private void saveAndQuitAfterRelaunch() {
         D2Trace.log("window rebuilt by Android while the game runs: save, then quit");
@@ -756,9 +909,11 @@ public class D2GameActivity extends D2Activity {
                 }
                 if (saved) D2ExitLog.quit("Fenster von Android neu aufgebaut: gespeichert (bestätigt), beendet");
                 else D2ExitLog.quit("Fenster von Android neu aufgebaut: Speichern NICHT bestätigt, beendet");
+
                 handler.postDelayed(quit, saved ? D2Relaunch.SAVE_SETTLE_MS : 0);
             }
         };
+
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -778,17 +933,22 @@ public class D2GameActivity extends D2Activity {
         if (exiting) return;
         exiting = true;
         if (overlay != null) overlay.endRelaunchSave();
-        screen.destroy(D2ExitText.BY_QUIT);
+
+
+        D2ExitGuard guard = D2ExitGuard.arm(D2ExitGuard.TEARDOWN_MS, this::endHungExit);
+        screen.destroy(D2ExitText.BY_QUIT, guard);
+        D2Trace.log("exit: teardown took " + guard.done() + " ms");
         D2FolderLock.releaseAll();
         closeGuestLog();
-        if (testSession != null) {
-            testSession.onSessionEnded();
-            return;
-        }
+
+
         D2Trace.log(switchCharacter ? "exit: back to the character list, the app ends the process" : "exit: the app ends the process");
         D2Diagnose.keepTraceOfEndedRun(this);
         D2KeepAliveService.stop(this);
         if (switchCharacter || thenInstall) {
+
+
+
             Intent launcher = Intent.makeRestartActivityTask(new android.content.ComponentName(this, D2LaunchActivity.class));
             launcher.putExtra(thenInstall && !switchCharacter ? D2KeepAliveService.EXTRA_THEN_INSTALL : D2LaunchActivity.EXTRA_CHARACTERS, true);
             startActivity(launcher);
@@ -798,10 +958,43 @@ public class D2GameActivity extends D2Activity {
     }
 
 
+
+
+
+
+
+    private void endHungExit(String step, long ms) {
+        D2Trace.log("exit: teardown hangs for " + ms + " ms in " + step + ": guests and app process are ended");
+        D2ExitLog.note("Beenden: Abbau hing " + ms + " ms bei " + step + ", Spiel und App hart beendet");
+        int self = android.os.Process.myPid();
+        java.util.List<D2GuestProcs.Proc> guests = D2GuestProcs.find(new File("/proc"), D2Runtime.rootDir(this),
+            android.os.Process.myUid(), self, null);
+        for (D2GuestProcs.Proc p : guests) android.os.Process.killProcess(p.pid);
+        D2Trace.log("exit: " + guests.size() + " guest processes killed " + guests);
+        D2Diagnose.keepTraceOfEndedRun(this);
+        D2KeepAliveService.stop(this);
+        try {
+            if (switchCharacter || thenInstall) {
+                Intent launcher = Intent.makeRestartActivityTask(new android.content.ComponentName(this, D2LaunchActivity.class));
+                launcher.putExtra(thenInstall && !switchCharacter ? D2KeepAliveService.EXTRA_THEN_INSTALL : D2LaunchActivity.EXTRA_CHARACTERS, true);
+                startActivity(launcher);
+            }
+            else finishAndRemoveTask();
+        }
+        catch (RuntimeException e) {
+            D2Trace.log("exit: " + e + " while ending the hung game");
+        }
+        android.os.Process.killProcess(self);
+    }
+
+
+
+
     @Override
     protected boolean clicks() {
         return false;
     }
+
 
     @Override
     protected boolean recreateOnLanguageChange() {
@@ -813,6 +1006,7 @@ public class D2GameActivity extends D2Activity {
         super.onResume();
         if (directLoading != null) D2Music.gameInFront(this, true);
         if (afterRelaunch) return;
+
         final long presents = com.winlator.xserver.extensions.PresentExtension.presents;
         D2Trace.log("activity resume (guest started " + screen.isStarted() + ", presents so far " + presents + ")");
         D2FrameCounts.restart();
@@ -821,12 +1015,15 @@ public class D2GameActivity extends D2Activity {
                 + (com.winlator.xserver.extensions.PresentExtension.presents - presents) + " presents, renderer context "
                 + com.winlator.renderer.GLRenderer.contextGeneration);
         }, 5000);
+
+
         long background = pausedAt != 0 ? SystemClock.uptimeMillis() - pausedAt : 0;
         long written = com.winlator.alsaserver.ALSAMute.unmute();
         if (background > 0) D2Trace.log("audio: unmuted after " + background + " ms in the background, " + written
             + " ms of sound written meanwhile");
         pausedAt = 0;
         handler.removeCallbacks(suspendGuest);
+
         stallResumedAt = SystemClock.uptimeMillis();
         handler.removeCallbacks(stallTick);
         handler.postDelayed(stallTick, 1000);
@@ -835,9 +1032,11 @@ public class D2GameActivity extends D2Activity {
         D2KeepAliveService.start(this, false);
         if (exitRequested) {
             exitRequested = false;
+
             handler.postDelayed(exitOnlySaved ? this::saveAndExitOnlySaved : this::saveAndExit, 300);
         }
     }
+
 
     @Override
     protected void onNewIntent(android.content.Intent intent) {
@@ -850,14 +1049,21 @@ public class D2GameActivity extends D2Activity {
         }
     }
 
+
     private final Runnable hideBars = () -> rehideBars("focus");
+
     private final Runnable hideBarsScreenOn = () -> rehideBars("screen on");
     private final Runnable hideBarsInsets = () -> rehideBars("insets");
+
+
+
+
     private static final long BARS_CHECK_MS = 1000;
     private final Runnable barsAfterToggle = () -> {
         if (isFinishing()) return;
         D2Trace.log("system bars: status bar " + (statusBarVisible() ? "VISIBLE" : "hidden") + " after the toggle");
     };
+
     private final Runnable hideBarsAfterToggle = () -> {
         if (isFinishing()) return;
         AppUtils.hideSystemUI(this);
@@ -866,15 +1072,22 @@ public class D2GameActivity extends D2Activity {
         handler.postDelayed(barsAfterToggle, BARS_CHECK_MS);
     };
 
+
     private boolean statusBarVisible() {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return false;
         android.view.WindowInsets insets = getWindow().getDecorView().getRootWindowInsets();
         return insets != null && insets.isVisible(android.view.WindowInsets.Type.statusBars());
     }
 
+
+
+
+
+
     private void rehideBars(String why) {
         if (isFinishing() || afterRelaunch) return;
         if (!hasWindowFocus()) {
+
             if (barsScreenOn) D2Trace.log("system bars: " + why + " without the focus, waiting for it");
             return;
         }
@@ -884,6 +1097,7 @@ public class D2GameActivity extends D2Activity {
             boolean anyway = barsScreenOn && !visible;
             barsScreenOn = false;
             android.view.WindowInsetsController controller = getWindow().getDecorView().getWindowInsetsController();
+
             if (controller != null) controller.show(android.view.WindowInsets.Type.statusBars());
             handler.removeCallbacks(hideBarsAfterToggle);
             handler.postDelayed(hideBarsAfterToggle, D2SystemBars.TOGGLE_MS);
@@ -892,21 +1106,25 @@ public class D2GameActivity extends D2Activity {
             return;
         }
         AppUtils.hideSystemUI(this);
+
         if (visible && barsToggles <= D2SystemBars.MAX_TOGGLES) {
             boolean gaveUp = barsToggles == D2SystemBars.MAX_TOGGLES;
             if (gaveUp) barsToggles++;
             D2Trace.log("system bars: hidden again after " + why + ", status bar VISIBLE"
-                + (gaveUp ? ", toggle did not help, plain hide" : "") + "");
+                + (gaveUp ? ", toggle did not help, plain hide" : ""));
         }
     }
 
+
     private int barsToggles;
+
     private boolean barsScreenOn;
+
 
     private final android.content.BroadcastReceiver screenOn = new android.content.BroadcastReceiver() {
         @Override
         public void onReceive(android.content.Context context, android.content.Intent intent) {
-            D2Trace.log("system bars: " + intent.getAction() + "");
+            D2Trace.log("system bars: " + intent.getAction());
             barsToggles = 0;
             barsScreenOn = true;
             handler.removeCallbacks(hideBarsScreenOn);
@@ -914,6 +1132,10 @@ public class D2GameActivity extends D2Activity {
         }
     };
     private boolean screenOnRegistered;
+
+
+
+
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -938,9 +1160,12 @@ public class D2GameActivity extends D2Activity {
         super.onPause();
         pausedAt = SystemClock.uptimeMillis();
         handler.removeCallbacks(stallTick);
+
+
         com.winlator.alsaserver.ALSAMute.mute();
         D2Trace.log("activity pause (guest started " + screen.isStarted() + ")");
         if (screen.isStarted()) {
+
             long wait = !isFinishing() ? overlay.onAppPaused() : 0;
             if (wait > 0) handler.postDelayed(suspendGuest, wait);
             else screen.pauseGuest();
@@ -954,18 +1179,25 @@ public class D2GameActivity extends D2Activity {
         noteWindow("stop", D2ExitText.WINDOW_STOPPED);
     }
 
+
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         boolean running = D2GuestComponent.running();
         D2Trace.log("trim memory: level " + level + " (guest running " + running + ", " + backgroundMs() + " ms in the background)");
+
         if (running && D2ExitText.trimWorthNoting(level)) D2ExitLog.note(D2ExitText.trimMemory(level, backgroundMs()));
     }
+
 
     private long backgroundMs() {
         long at = pausedAt;
         return at != 0 ? SystemClock.uptimeMillis() - at : -1;
     }
+
+
+
+
 
     private void noteWindow(String event, String protocolEvent) {
         if (afterRelaunch) {
@@ -997,7 +1229,8 @@ public class D2GameActivity extends D2Activity {
         }
         D2Text.setListener(null);
         handler.removeCallbacks(suspendGuest);
-        if (D2Relaunch.onDestroy(isChangingConfigurations(), screen.isStarted(), exiting, testSession != null) == D2Relaunch.SAVE_AND_QUIT) {
+        if (D2Relaunch.onDestroy(isChangingConfigurations(), screen.isStarted(), exiting) == D2Relaunch.SAVE_AND_QUIT) {
+
             savingAfterRelaunch = this;
             saveAndQuitAfterRelaunch();
             super.onDestroy();
@@ -1039,10 +1272,10 @@ public class D2GameActivity extends D2Activity {
     }
 
 
+
     private void openGuestLog() {
         try {
-            String name = getIntent().getStringExtra(EXTRA_LOG_NAME);
-            guestLog = new BufferedWriter(new FileWriter(D2Runtime.logFile(this, name != null ? name : "guest.log")));
+            guestLog = new BufferedWriter(new FileWriter(D2Runtime.logFile(this, "guest.log")));
             ProcessHelper.addDebugCallback(guestLogCallback);
         }
         catch (IOException ignored) {}

@@ -1,9 +1,7 @@
 package com.winlator.d2;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -11,12 +9,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
+
 public final class D2Updates {
     private static final String PREFS = "d2_updates";
     private static final String KEY_LAST_CHECK = "lastCheck", KEY_TAG = "tag", KEY_URL = "url", KEY_BODY = "body",
         KEY_LATER = "later", KEY_SEEN_CODE = "seenVersionCode";
-    public static final String EXTRA_TEST_FAKE = "d2_update_fake", EXTRA_TEST_CHECK = "d2_update_check";
-    static final String ADB_TOKEN = "/data/local/tmp/d2android-update.ok";
 
     private D2Updates() {}
 
@@ -42,27 +45,12 @@ public final class D2Updates {
         }
     }
 
-    private static boolean testAllowed(Context context, Intent intent, String extra) {
-        if (!com.winlator.BuildConfig.D2_INTERNAL || intent == null || !intent.getBooleanExtra(extra, false)) return false;
-        if ((context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) return false;
-        return D2SpieltestPort.tokenFresh("update test", ADB_TOKEN);
-    }
 
-    public static void start(Context context, Intent intent) {
+    public static void start(Context context) {
         Context app = context.getApplicationContext();
-        if (testAllowed(app, intent, EXTRA_TEST_FAKE)) {
-            String installed = installedVersion(app);
-            java.util.List<Long> n = D2UpdateCheck.numbers(installed != null ? installed : "0");
-            String version = (n.isEmpty() ? 0 : n.get(0)) + "." + (n.size() > 1 ? n.get(1) + 1 : 1) + ".0";
-            store(app, new D2UpdateCheck.Release("v" + version, D2UpdateCheck.RELEASES_PAGE,
-                "- Test of the update hint\n- Nothing is downloaded from here"));
-            prefs(app).edit().remove(KEY_LATER).apply();
-            return;
-        }
-        boolean test = testAllowed(app, intent, EXTRA_TEST_CHECK);
-        if (!test && (com.winlator.BuildConfig.D2_INTERNAL || !D2Settings.updateCheck(app))) return;
+        if (com.winlator.BuildConfig.D2_INTERNAL || !D2Settings.updateCheck(app)) return;
         long now = System.currentTimeMillis();
-        if (!test && !D2UpdateCheck.due(prefs(app).getLong(KEY_LAST_CHECK, 0), now)) return;
+        if (!D2UpdateCheck.due(prefs(app).getLong(KEY_LAST_CHECK, 0), now)) return;
         prefs(app).edit().putLong(KEY_LAST_CHECK, now).apply();
         new Thread(() -> {
             D2UpdateCheck.Release release = fetch();
@@ -99,6 +87,7 @@ public final class D2Updates {
         prefs(context).edit().putString(KEY_TAG, release.tag).putString(KEY_URL, release.url).putString(KEY_BODY, release.body).apply();
     }
 
+
     public static D2UpdateCheck.Release pending(Context context) {
         SharedPreferences p = prefs(context);
         String tag = p.getString(KEY_TAG, null);
@@ -108,14 +97,18 @@ public final class D2Updates {
         return D2UpdateCheck.isNewer(release, installedVersion(context)) ? release : null;
     }
 
+
     public static void later(Context context, D2UpdateCheck.Release release) {
         prefs(context).edit().putString(KEY_LATER, release.tag).apply();
     }
 
-    public static boolean newsAfterUpdate(Context context, Intent intent) {
+
+
+
+
+    public static boolean newsAfterUpdate(Context context) {
         long code = installedCode(context), seen = prefs(context).getLong(KEY_SEEN_CODE, 0);
         if (seen != code) prefs(context).edit().putLong(KEY_SEEN_CODE, code).apply();
-        if (testAllowed(context, intent, EXTRA_TEST_FAKE)) return false;
         return !com.winlator.BuildConfig.D2_INTERNAL && seen > 0 && seen < code;
     }
 }

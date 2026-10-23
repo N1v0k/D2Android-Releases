@@ -1,14 +1,27 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
+
+
 final class D2RingChoice {
     static final int MAX_ALL = 8, PER_PAGE = 6, PAGED_PLACES = 8;
+
     static final int NONE = -1, BACK = -2, NEXT = -3;
     static final int PLACE_NEXT = 2, PLACE_BACK = 6;
+
     private static final int[] TARGET_PLACES = {0, 1, 3, 4, 5, 7};
 
     final int count;
     private int page;
     private int selected = NONE;
+
     private boolean armed = true;
 
     D2RingChoice(int count) {
@@ -27,15 +40,18 @@ final class D2RingChoice {
         return page;
     }
 
+
     int places() {
         return paged() ? PAGED_PLACES : count;
     }
+
 
     int[] onPage() {
         if (!paged()) return new int[]{0, count};
         int from = page * PER_PAGE;
         return new int[]{from, Math.min(count, from + PER_PAGE)};
     }
+
 
     int at(int place) {
         if (place < 0 || place >= places()) return NONE;
@@ -50,6 +66,7 @@ final class D2RingChoice {
         return NONE;
     }
 
+
     int placeOf(float dx, float dy, float min) {
         int n = places();
         if (n <= 0 || Math.hypot(dx, dy) < min) return NONE;
@@ -58,13 +75,19 @@ final class D2RingChoice {
         return (int) Math.round(angle / (360.0 / n)) % n;
     }
 
+
     int selected() {
         return selected;
     }
 
+
     int target() {
         return selected >= 0 ? selected : NONE;
     }
+
+
+
+
 
     int move(float dx, float dy, float min) {
         int place = placeOf(dx, dy, min);
@@ -82,6 +105,7 @@ final class D2RingChoice {
         }
         return result;
     }
+
 
     void turn(int direction) {
         if (!paged()) return;

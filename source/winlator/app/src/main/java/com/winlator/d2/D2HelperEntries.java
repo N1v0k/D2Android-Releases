@@ -7,25 +7,41 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
 public final class D2HelperEntries {
+
     public static final String TAB_FREQUENT = "Häufig", TAB_AUTO = "Automatik", TAB_DISPLAY = "Anzeige",
         TAB_CONTROL = "Steuerung", TAB_GAME = "Spiel & Hilfe";
     public static final List<String> TABS = Collections.unmodifiableList(java.util.Arrays.asList(
         TAB_FREQUENT, TAB_AUTO, TAB_DISPLAY, TAB_CONTROL, TAB_GAME));
 
+
     public enum Kind { CHECK, SLIDER, CHOICE, PINS, BUTTON, TRIGGERS, PAD, HOST }
+
 
     public static final String ACTION_DIAGNOSE = "diagnose", ACTION_REPORT = "report", ACTION_INTRO = "intro";
 
+
     public interface Text { String get(String name); }
+
 
     public static String textName(String tabOrGroup, boolean tab) {
         String s = tabOrGroup.toLowerCase().replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss").replace("&", "and");
         return (tab ? "helper_tab_" : "helper_group_") + s.replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", "");
     }
 
+
     public static final Map<String, List<String>> GROUPS = new LinkedHashMap<>();
     private static final Map<String, String> GROUP_OF = new HashMap<>();
+
     private static final Map<String, String> DEPENDS = new HashMap<>();
 
     static {
@@ -68,11 +84,14 @@ public final class D2HelperEntries {
         for (String key : keys) GROUP_OF.put(key, name);
     }
 
+
     public static String dependsOn(String key) {
         return key == null ? null : DEPENDS.get(key);
     }
 
+
     public static final int TWO_COLUMNS_DP = 900;
+
 
     public static int rows(Entry e) {
         switch (e.kind) {
@@ -83,6 +102,11 @@ public final class D2HelperEntries {
             default: return 1;
         }
     }
+
+
+
+
+
 
     public static int splitAt(int[] heights) {
         int n = heights.length, total = 0;
@@ -100,19 +124,33 @@ public final class D2HelperEntries {
         return best;
     }
 
+
+
+
+
     public static boolean shown(Entry e, boolean internal) {
         return !(internal && ACTION_REPORT.equals(e.action));
     }
 
     public static final class Entry {
         public final Kind kind;
+
         public final String key;
+
         public final String action;
         public final String label;
+
         public final String section, tab;
+
         public final boolean frequent;
+
         public final String lead, info;
+
+
+
+
         public final String[] options;
+
         public final String group;
 
         Entry(Kind kind, String key, String label, String section, String tab, boolean frequent, String lead, String info,
@@ -129,6 +167,7 @@ public final class D2HelperEntries {
             this.action = kind == Kind.BUTTON ? label.replaceAll("^helper_(.*)_label$", "$1") : null;
             this.group = GROUP_OF.get(key != null ? key : action);
         }
+
 
         private Entry(Entry e, Text t) {
             kind = e.kind;
@@ -150,12 +189,14 @@ public final class D2HelperEntries {
 
     private D2HelperEntries() {}
 
+
     public static List<Entry> all() {
         List<Entry> l = new ArrayList<>();
         String s = "Untere Leiste";
         l.add(new Entry(Kind.CHOICE, "hud", "helper_hud_label", s, TAB_DISPLAY, false, null, "helper_hud_info", "helper_hud_opt0", "helper_hud_opt1"));
         l.add(new Entry(Kind.CHECK, "orbNumbers", "helper_orbNumbers_label", s, TAB_DISPLAY, false, null, null));
         l.add(new Entry(Kind.CHECK, "skillNames", "helper_skillNames_label", s, TAB_DISPLAY, false, null, null));
+
         s = "Infoleiste";
         l.add(new Entry(Kind.CHECK, "infoGrid", "helper_infoGrid_label", s, TAB_DISPLAY, false, null, "helper_infoGrid_info"));
         for (int i = 1; i <= D2InfoGrid.SLOTS; i++) {
@@ -163,6 +204,7 @@ public final class D2HelperEntries {
                 "helper_gridSlot_opt0", "helper_gridSlot_opt1", "helper_gridSlot_opt2", "helper_gridSlot_opt3",
                 "helper_gridSlot_opt4", "helper_gridSlot_opt5", "helper_gridSlot_opt6", "helper_gridSlot_opt7"));
         }
+
         l.add(new Entry(Kind.CHECK, "clockTop", "helper_clockTop_label", s, TAB_DISPLAY, false, null, "helper_clockTop_info"));
         for (int i = 1; i <= D2InfoGrid.BOX_SLOTS; i++) {
             l.add(new Entry(Kind.CHOICE, "boxSlot" + i, "helper_boxSlot" + i + "_label", s, TAB_DISPLAY, false, null, null,
@@ -171,6 +213,8 @@ public final class D2HelperEntries {
         }
         l.add(new Entry(Kind.CHECK, "xpBar", "helper_xpBar_label", s, TAB_DISPLAY, false, null, "helper_xpBar_info"));
         l.add(new Entry(Kind.CHECK, "xpLevel", "helper_xpLevel_label", s, TAB_DISPLAY, false, null, null));
+
+
         s = "Hervorgehoben (weiß)";
         for (String key : new String[]{"hiClock", "hiFps", "hiBattery", "hiPlayers", "hiLevel", "hiDps", "hiGold"})
             l.add(new Entry(Kind.CHECK, key, "helper_" + key + "_label", s, TAB_DISPLAY, false, null, null));
@@ -178,10 +222,12 @@ public final class D2HelperEntries {
         s = "Menü oben rechts";
         l.add(new Entry(Kind.PINS, "menuPinned", "helper_menuPinned_label", s, TAB_CONTROL, false, "helper_menuPinned_lead", null, "pause", "helper_pin_pause", "portal", "helper_pin_portal", "inv", "helper_pin_inv", "char", "helper_pin_char", "skills", "helper_pin_skills", "map", "helper_pin_map", D2MenuRow.QUESTS, "helper_pin_quests", "esc", "helper_pin_esc", "names", "helper_pin_names", "run", "helper_pin_run", "keys", "helper_pin_keys", "drawer", "helper_pin_drawer"));
 
+
         s = "Schultertasten";
         l.add(new Entry(Kind.TRIGGERS, "triggers", "helper_triggers_label", s, TAB_CONTROL, false, "helper_triggers_lead", null,
             triggerOptions()));
         l.add(new Entry(Kind.CHECK, "hidePointer", "helper_hidePointer_label", s, TAB_DISPLAY, false, null, "helper_hidePointer_info"));
+
 
         s = "Gamepad";
         l.add(new Entry(Kind.CHECK, "padEnabled", "helper_padEnabled_label", s, TAB_CONTROL, false, null, "helper_padEnabled_info"));
@@ -218,6 +264,7 @@ public final class D2HelperEntries {
         l.add(new Entry(Kind.CHECK, "itemLabels", "helper_itemLabels_label", s, TAB_DISPLAY, true, null, "helper_itemLabels_info"));
         l.add(new Entry(Kind.CHECK, "dropLabels", "helper_dropLabels_label", s, TAB_DISPLAY, false, null, null));
         l.add(new Entry(Kind.CHECK, "labelsNearOnly", "helper_labelsNearOnly_label", s, TAB_DISPLAY, false, null, null));
+
         l.add(new Entry(Kind.CHOICE, "lootFilter", "helper_lootFilter_label", s, TAB_DISPLAY, false, null, "helper_lootFilter_info", "helper_lootFilter_opt0", "helper_lootFilter_opt1", "helper_lootFilter_opt2", "helper_lootFilter_opt3"));
         l.add(new Entry(Kind.PINS, "lootHide", "helper_lootHide_label", s, TAB_DISPLAY, false, "helper_lootHide_lead", null, "ammo", "helper_loot_ammo", "scrolls", "helper_loot_scrolls", "keys", "helper_loot_keys", "potionsSmall", "helper_loot_potionsSmall", "potions", "helper_loot_potions", "potionsOther", "helper_loot_potionsOther", "rejuv", "helper_loot_rejuv", "gemsChipped", "helper_loot_gemsChipped", "gemsFlawed", "helper_loot_gemsFlawed", "white", "helper_loot_white", "inferior", "helper_loot_inferior", "superior", "helper_loot_superior", "magic", "helper_loot_magic", "gold", "helper_loot_gold"));
         l.add(new Entry(Kind.CHECK, "compareEquipped", "helper_compareEquipped_label", s, TAB_DISPLAY, false, null, "helper_compareEquipped_info"));
@@ -241,6 +288,7 @@ public final class D2HelperEntries {
 
         s = "Händler";
         l.add(new Entry(Kind.CHECK, "autoTrade", "helper_autoTrade_label", s, TAB_AUTO, false, null, "helper_autoTrade_info"));
+
         l.add(new Entry(Kind.CHECK, "potionShop", "helper_potionShop_label", s, TAB_AUTO, false, null, "helper_potionShop_info"));
         l.add(new Entry(Kind.SLIDER, "shopReserveHeal", "helper_shopReserveHeal_label", s, TAB_AUTO, false, null, null));
         l.add(new Entry(Kind.SLIDER, "shopReserveMana", "helper_shopReserveMana_label", s, TAB_AUTO, false, null, "helper_shopReserve_info"));
@@ -265,6 +313,7 @@ public final class D2HelperEntries {
         return l;
     }
 
+
     private static String[] triggerOptions() {
         String[] names = {"trigger_action_skill", "trigger_action_heal", "trigger_action_mana", "trigger_action_rejuv",
             "trigger_action_take", "trigger_action_portal", "trigger_action_map", "trigger_action_inventory",
@@ -273,10 +322,12 @@ public final class D2HelperEntries {
         for (int i = 0; i < D2TriggerAction.ALL.length; i++) {
             int action = D2TriggerAction.ALL[i];
             options[2 * i] = Integer.toString(action);
+
             options[2 * i + 1] = action == D2TriggerAction.ATTACK_OR_TAKE ? "trigger_action_attack_take" : names[action];
         }
         return options;
     }
+
 
     private static String[] padSlots() {
         String[] slots = new String[2 * D2Gamepad.ASSIGNABLE.length];
@@ -287,6 +338,7 @@ public final class D2HelperEntries {
         return slots;
     }
 
+
     public static List<Entry> all(Text t) {
         List<Entry> out = new ArrayList<>();
         for (Entry e : all()) out.add(new Entry(e, t));
@@ -294,14 +346,25 @@ public final class D2HelperEntries {
     }
 
 
+
+
+
+
+
+
+
+
     public static final String SET_CONTROL = "steuerung", SET_DISPLAY = "anzeige", SET_LOOT = "beute", SET_POTIONS = "traenke",
         SET_GAME = "spiel", SET_SAVES = "spielstaende", SET_HELP = "hilfe";
     public static final List<String> SETTINGS_GROUPS = Collections.unmodifiableList(java.util.Arrays.asList(
         SET_CONTROL, SET_DISPLAY, SET_LOOT, SET_POTIONS, SET_GAME, SET_SAVES, SET_HELP));
+
     public static final Map<String, List<String>> SECTIONS = new LinkedHashMap<>();
     private static final Map<String, String[]> PLACE = new HashMap<>();
+
     public static final int IN_GAME = 0, BEFORE_START = 1, NEXT_START = 2;
     private static final Map<String, Integer> SCOPE = new HashMap<>();
+
     private static final Map<String, String> KEYWORDS = new HashMap<>();
 
     static {
@@ -329,6 +392,7 @@ public final class D2HelperEntries {
         section(SET_GAME, "im_spiel", "players", "autoPause", "largeStacks", "resume");
         section(SET_GAME, "start", "gameLines", "frameRate", "skipIntro", "mod", "appLanguage");
         section(SET_GAME, "plugy", "plugy", "bigStash", "autosave", "respec", "statsPages", "plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue");
+
         section(SET_GAME, "plugy_extras", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint");
         section(SET_SAVES, "ordner", "gameFolder", "install");
         section(SET_SAVES, "spielstaende", "savesShare", "savesLoad");
@@ -345,6 +409,7 @@ public final class D2HelperEntries {
         keywords("mapHack", "map karte aufdecken minimap reveal automap");
         keywords("lootFilter", "loot filter lootfilter beute ausblenden hide");
         keywords("lootHide", "loot filter lootfilter eigene own");
+
         keywords("infoGrid", "info raster grid infoleiste akku batterie battery fps bilder frames spieler players stufe level dps gold");
         for (int i = 1; i <= 4; i++) keywords("gridSlot" + i, "raster grid platz slot akku batterie battery fps bilder frames dps gold");
         keywords("clockTop", "uhr zeit clock time box mini leiste panel");
@@ -405,12 +470,14 @@ public final class D2HelperEntries {
         keywords("autoPause", "pause hintergrund");
     }
 
+
     private static void section(String group, String section, String... ids) {
         SECTIONS.computeIfAbsent(group, g -> new ArrayList<>()).add(section);
         for (String id : ids) {
             if (PLACE.put(id, new String[]{group, section}) != null) throw new IllegalStateException("settings place twice: " + id);
         }
     }
+
 
     public static java.util.Set<String> placedIds() {
         return Collections.unmodifiableSet(PLACE.keySet());
@@ -420,20 +487,24 @@ public final class D2HelperEntries {
         KEYWORDS.put(id, words);
     }
 
+
     public static String settingsGroup(String id) {
         String[] p = PLACE.get(id);
         return p != null ? p[0] : null;
     }
+
 
     public static String settingsSection(String id) {
         String[] p = PLACE.get(id);
         return p != null ? p[1] : null;
     }
 
+
     public static int scope(String id) {
         Integer s = SCOPE.get(id);
         return s != null ? s : IN_GAME;
     }
+
 
     public static String groupTitle(String group) {
         return "settings_group_" + group;
@@ -447,9 +518,14 @@ public final class D2HelperEntries {
         return "settings_section_" + section;
     }
 
+
     public static String id(Entry e) {
         return e.key != null ? e.key : e.action;
     }
+
+
+
+
 
     public static List<Entry> hostEntries() {
         List<Entry> l = new ArrayList<>();
@@ -465,16 +541,19 @@ public final class D2HelperEntries {
         return l;
     }
 
+
     public static List<Entry> settings(Text t) {
         List<Entry> out = all(t);
         for (Entry e : hostEntries()) out.add(new Entry(e, t));
         return out;
     }
 
+
     public static boolean shownIn(Entry e, boolean internal) {
         if (!shown(e, internal)) return false;
         return !(internal && "updateCheck".equals(e.key));
     }
+
 
     public static final class Hit {
         public final Entry entry;
@@ -486,6 +565,13 @@ public final class D2HelperEntries {
             this.section = section;
         }
     }
+
+
+
+
+
+
+
 
     public static List<Hit> search(String query, List<Entry> entries, Text t) {
         List<Hit> out = new ArrayList<>();
@@ -513,10 +599,12 @@ public final class D2HelperEntries {
         return out;
     }
 
+
     static String normal(String s) {
         String l = s.toLowerCase(java.util.Locale.ROOT).replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss");
         return l.replaceAll("[^a-z0-9]+", " ");
     }
+
 
     public static String migrateTab(String oldTab) {
         if (TAB_AUTO.equals(oldTab)) return SET_POTIONS;

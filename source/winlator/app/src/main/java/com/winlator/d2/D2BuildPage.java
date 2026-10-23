@@ -4,15 +4,26 @@ import com.winlator.d2.test.Fertigkeiten;
 
 import java.util.function.IntUnaryOperator;
 
+
+
+
+
+
 public final class D2BuildPage {
+
     public static final int DONE = 0, NEXT = 1, LATER = 2;
 
     private D2BuildPage() {}
+
 
     public static int next(D2PointPlan.Build build, Fertigkeiten table, D2Points points) {
         if (build == null || table == null || points == null || points.firstSkill < 0) return -1;
         return D2PointPlan.nextSkill(build, table, points.level, points::baseLevel);
     }
+
+
+
+
 
     public static int[] states(D2PointPlan.Build build, Fertigkeiten table, D2Points points) {
         if (build == null || table == null || points == null || points.firstSkill < 0) return null;
@@ -33,6 +44,11 @@ public final class D2BuildPage {
         return out;
     }
 
+
+
+
+
+
     public static int outside(D2PointPlan.Build build, Fertigkeiten table, D2Points points) {
         if (build == null || table == null || points == null || points.firstSkill < 0) return 0;
         java.util.Set<Integer> inside = new java.util.HashSet<>();
@@ -49,6 +65,7 @@ public final class D2BuildPage {
         Fertigkeiten.Fertigkeit f = table.get(skill);
         if (f != null) for (int pre : f.voraussetzungen) addWithPrerequisites(table, pre, into, depth + 1);
     }
+
 
     public static int[][] targets(D2PointPlan.Build build, int stat) {
         if (build == null) return new int[0][];

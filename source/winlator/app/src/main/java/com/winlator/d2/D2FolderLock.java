@@ -14,11 +14,31 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class D2FolderLock {
+
     static final String FILE = ".d2android-lock";
     static final long BEAT_MS = 20_000, STALE_MS = 90_000;
 
     private D2FolderLock() {}
+
 
     static final class Holder {
         final String pkg, label;
@@ -32,8 +52,15 @@ final class D2FolderLock {
         }
     }
 
+
+
+
+
+
+
     static final class Decision {
         final boolean foreign, byOs, byBeat, unusable;
+
         final String label;
         final long since;
 
@@ -63,6 +90,7 @@ final class D2FolderLock {
             + "\nbeat=" + h.beat + "\n";
     }
 
+
     static Holder parse(String text) {
         if (text == null) return null;
         String pkg = null, label = "";
@@ -87,11 +115,17 @@ final class D2FolderLock {
         return pkg == null || pkg.isEmpty() || beat < 0 ? null : new Holder(pkg, label, since, beat);
     }
 
+
+
+
+
+
     static Decision decide(Holder content, long now, String ownPackage, boolean osHeldElsewhere) {
         boolean other = content != null && !content.pkg.equals(ownPackage);
         boolean byBeat = other && Math.abs(now - content.beat) <= STALE_MS;
         return new Decision(osHeldElsewhere, byBeat, other ? content.label : null, other ? content.since : 0);
     }
+
 
 
     private static final class Held {
@@ -112,6 +146,13 @@ final class D2FolderLock {
 
     private static final Map<String, Held> held = new HashMap<>();
     private static ScheduledExecutorService beats;
+
+
+
+
+
+
+
 
     static synchronized Decision acquire(String pkg, String label, File gameDir, String why) {
         File file = lockFile(gameDir);
@@ -169,6 +210,11 @@ final class D2FolderLock {
         }
     }
 
+
+
+
+
+
     static Decision readOnly(File file, String pkg, long now) {
         try {
             Decision decision = decide(parse(new String(java.nio.file.Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)),
@@ -180,6 +226,7 @@ final class D2FolderLock {
         }
     }
 
+
     static synchronized void release(File gameDir) {
         File file = lockFile(gameDir);
         if (file == null) return;
@@ -187,6 +234,7 @@ final class D2FolderLock {
         if (h == null || --h.users > 0) return;
         close(h);
     }
+
 
     static synchronized void releaseAll() {
         for (Held h : new java.util.ArrayList<>(held.values())) close(h);
@@ -219,9 +267,10 @@ final class D2FolderLock {
         FileChannel channel = raf.getChannel();
         long size = Math.min(channel.size(), 4096);
         ByteBuffer buffer = ByteBuffer.allocate((int) size);
-        while (buffer.hasRemaining() && channel.read(buffer, buffer.position()) > 0) {   }
+        while (buffer.hasRemaining() && channel.read(buffer, buffer.position()) > 0) {  }
         return new String(buffer.array(), 0, buffer.position(), StandardCharsets.UTF_8);
     }
+
 
     private static void write(RandomAccessFile raf, Holder h) throws IOException {
         byte[] data = format(h).getBytes(StandardCharsets.UTF_8);

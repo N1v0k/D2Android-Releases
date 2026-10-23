@@ -1,5 +1,20 @@
 # What's new
 
+<!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
+     The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
+
+## 1.3.2 (2026-10-23)
+
+- Tal Rasha's Chamber can be entered with the controller (A) or "Take" once the Horadric Staff is in place; before, only a mouse click worked. Stand a few steps in front of the opening, not in the rubble.
+- Act 5: Baal's portal and the other portals in Act 5 are targets for "Take" and A.
+- The joystick, on the touch screen and on a gamepad stick, follows quick changes of direction right away instead of running the old way first; tight circles run round.
+- Rogue Encampment: with "Show the whole map" the camp's name appears once, at the gate, and no longer on the palisade.
+- No short stutter any more when entering the game or changing acts with "Show the whole map" on.
+- No freeze of about a second any more shortly after a character starts straight into the game.
+- The game's own bar no longer flashes briefly when entering the game; names, damage numbers and item comparison are there from the first frame.
+- "Quit" closes the app within a few seconds even when the game hangs; no force stop needed.
+- A level exit no longer stays out of reach for A and "Take" after a chest was opened earlier; before, only reloading helped.
+- The first start after the update takes a little longer while the game files are prepared once.
 
 ## 1.3.1 (2026-10-22)
 

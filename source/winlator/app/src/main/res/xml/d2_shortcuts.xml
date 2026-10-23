@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- D2Android: long-press shortcut of the "Diablo II" icon (package at.d2android) -->
+
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:shortcutId="d2_game_settings"

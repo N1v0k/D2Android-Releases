@@ -3,26 +3,49 @@ package com.winlator.d2;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 public final class D2Intro {
 
+
+
     public static final boolean PAUSE = true;
+
     public static final boolean SHOW_TO_EXISTING = true;
+
     public static final boolean TAP_ANYWHERE = true;
+
     public static final Step[] STEPS = {Step.WELCOME, Step.JOYSTICK, Step.ATTACK, Step.TAKE, Step.POTIONS, Step.SKILLS, Step.BAR};
+
 
     public static final String EXTRA_ADB = "d2_intro";
 
+
     public static final long START_DELAY_MS = 1000;
+
     public static final long PAUSE_REPEAT_MS = 1000;
+
+
+
+
     public static final long SKIP_CONFIRM_MS = 3000;
+
     public static final long SKIP_CONFIRM_MIN_MS = 400;
+
     public static final int MAX_INTERRUPTIONS = 3;
 
     public enum Step { WELCOME, JOYSTICK, ATTACK, TAKE, POTIONS, SKILLS, BAR }
 
+
     public enum Presence {
+
         SHOWN,
+
         HIDDEN,
+
         ABSENT
     }
 
@@ -36,21 +59,43 @@ public final class D2Intro {
 
     private D2Intro() {}
 
+
     public static final class Conditions {
+
         public boolean seen;
+
         public boolean graphics, layout;
+
         public boolean heroAlive;
+
         public boolean idle, editMode, gameWindow, ringOpen, paused;
-        public boolean playtester, testPlan;
+
+        public boolean playtester;
+
         public boolean singlePlayer;
+
         public boolean windowFocus;
+
         public boolean fingers;
+
         public long stateFor;
+
+
+
+
+
         public boolean buttonsBehind;
     }
 
+
+
+
+
+
+
     public static final class Skip {
         private long armedAt = -1;
+
 
         public boolean press(long now, boolean back) {
             if (armed(now)) {
@@ -65,14 +110,22 @@ public final class D2Intro {
             return false;
         }
 
+
         public boolean armed(long now) {
             return armedAt >= 0 && now - armedAt <= SKIP_CONFIRM_MS;
         }
+
 
         public void reset() {
             armedAt = -1;
         }
     }
+
+
+
+
+
+
 
     public static int interruptionsAfter(boolean interrupted, int before) {
         return interrupted ? before + 1 : 0;
@@ -82,15 +135,28 @@ public final class D2Intro {
         return !interrupted || interruptionsNow >= MAX_INTERRUPTIONS;
     }
 
+
+
+
+
+
     public static boolean liftMenuPause(boolean playerPausedAtMenu, boolean paused) {
         return paused && !playerPausedAtMenu;
     }
 
+
     public static boolean shouldStart(Conditions c) {
         return !c.seen && c.graphics && c.layout && c.heroAlive && !c.idle && !c.editMode && !c.gameWindow && !c.ringOpen
-            && !c.paused && !c.playtester && !c.testPlan && c.singlePlayer && c.windowFocus && !c.fingers && c.stateFor >= START_DELAY_MS
+            && !c.paused && !c.playtester && c.singlePlayer && c.windowFocus && !c.fingers && c.stateFor >= START_DELAY_MS
             && !c.buttonsBehind;
     }
+
+
+
+
+
+
+
 
     public static void windowsInto(Conditions c, long panelFlags, int escMenu, boolean ownPause, boolean npc, long appliedWindows) {
         long open = windows(panelFlags, escMenu, ownPause);
@@ -98,23 +164,34 @@ public final class D2Intro {
         c.buttonsBehind = open != appliedWindows;
     }
 
+
+
+
+
     public static boolean seenByDefault(boolean playedBefore) {
         return !SHOW_TO_EXISTING && playedBefore;
     }
+
+
+
+
 
     public static long windows(long panelFlags, int escMenu, boolean ownPause) {
         return ownPause ? panelFlags & ~(1L << escMenu) : panelFlags;
     }
 
+
     public static boolean pauses(boolean canPause, boolean singlePlayer) {
         return PAUSE && canPause && singlePlayer;
     }
+
 
     public static List<Step> steps(Step[] all, PresenceOf presence) {
         List<Step> steps = new ArrayList<>();
         for (Step step : all) if (step == Step.WELCOME || presence.of(step) != Presence.ABSENT) steps.add(step);
         return steps;
     }
+
 
     public static final class Tour {
         private final List<Step> steps;
@@ -140,16 +217,24 @@ public final class D2Intro {
             return at == steps.size() - 1;
         }
 
+
         public boolean next() {
             if (last()) return false;
             at++;
             return true;
         }
 
+
         public String count() {
             return (at + 1) + "/" + steps.size();
         }
     }
+
+
+
+
+
+
 
     public static float[] boxAt(float w, float h, float bw, float bh, float margin, float[] spot, List<float[]> keep) {
         float midX = (w - bw) / 2, midY = (h - bh) / 2;
@@ -170,6 +255,7 @@ public final class D2Intro {
         return new float[]{midX, midY};
     }
 
+
     private static float[] nearestFree(float w, float h, float bw, float bh, float margin, List<float[]> keep, float x, float y) {
         for (float[] k : keep) {
             float[] below = {x, k[3] + margin};
@@ -182,6 +268,7 @@ public final class D2Intro {
         for (float[] r : rects) if (at[0] < r[2] && at[0] + bw > r[0] && at[1] < r[3] && at[1] + bh > r[1]) return false;
         return true;
     }
+
 
     public static List<String> wrap(String text, Width width, int budget) {
         List<String> lines = new ArrayList<>();

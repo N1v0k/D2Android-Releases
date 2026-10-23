@@ -15,26 +15,48 @@ import com.winlator.renderer.GLRenderer;
 import java.io.File;
 import java.util.Calendar;
 
+
+
+
+
+
+
+
+
 public final class D2InfoStrip {
     private static final int FILL = 0xD8080705;
+
     private static final int COVER = 0xFF000000;
+
     private static final int XP_FULL = 0xFFFFFFFF, XP_TENTH_FULL = 0xFF505050, XP_TENTH_EMPTY = 0xFF7A7A7A;
+
     private static final float XP_TEXT = 1.25f;
+
     private static final int NORMAL = 0xC8B074, HIGHLIGHTED = 0xFFFFFF;
+
     private static final int BOX_GAP = 8, BOX_PAD = 5;
+
     private static final long NEVER = Long.MIN_VALUE;
     private final Context context;
+
+
     private boolean grid, xpBar, box, boxOpen, xpLevel;
     private final int[] slots = D2InfoGrid.DEFAULT_SLOTS.clone(), boxSlots = D2InfoGrid.DEFAULT_BOX.clone();
+
     private final boolean[] highlighted = new boolean[D2InfoGrid.KINDS];
+
     private long[] xp;
+
     private long xpHeldSince;
     static final long XP_HOLD_MS = 1500;
     private int batteryPercent = -1, framesPerSecond = -1, lastFrames, players, level;
+
     private int[] facts;
     private final Paint fill = new Paint();
+
     private long batteryAt = NEVER, fpsAt = NEVER;
     private File saveDir;
+
     private long characterSaved, saveCheckedAt = NEVER;
     private String savedCharacter;
     private final RectF plate = new RectF(), area = new RectF();
@@ -42,6 +64,7 @@ public final class D2InfoStrip {
     public D2InfoStrip(Context context) {
         this.context = context.getApplicationContext();
     }
+
 
     public void applySettings() {
         grid = D2Settings.infoGrid(context);
@@ -55,13 +78,16 @@ public final class D2InfoStrip {
         batteryAt = fpsAt = NEVER;
     }
 
+
     public boolean gridOn() {
         return grid;
     }
 
+
     public boolean xpBarShown() {
         return xpBar && xp != null && D2InfoGrid.xpFilled(xp[0], xp[1], xp[2]) >= 0;
     }
+
 
     public boolean boxOn() {
         return box;
@@ -71,10 +97,12 @@ public final class D2InfoStrip {
         return boxOpen;
     }
 
+
     public void toggleBox() {
         boxOpen = !boxOpen;
         D2Settings.setBoxOpen(context, boxOpen);
     }
+
 
     public float[] boxArea(D2Hud hud, int gameWidth, int gameHeight, boolean boxBlocked) {
         if (!box || !boxOpen || hud == null || boxBlocked) return null;
@@ -83,7 +111,10 @@ public final class D2InfoStrip {
         return w <= 0 ? null : D2InfoGrid.box(gameWidth, gameHeight, w, xpBarShown());
     }
 
+
     public void setExperience(long[] xp) {
+
+
         if (xp != null && D2InfoGrid.xpFilled(xp[0], xp[1], xp[2]) < 0 && this.xp != null
                 && D2InfoGrid.xpFilled(this.xp[0], this.xp[1], this.xp[2]) >= 0) {
             long now = monotonicMs();
@@ -94,26 +125,37 @@ public final class D2InfoStrip {
         this.xp = xp;
     }
 
+
     public void setFacts(int[] facts) {
         this.facts = facts;
     }
+
 
     public boolean showsDps() {
         return (grid && D2InfoGrid.showsDps(slots)) || (box && boxOpen && D2InfoGrid.showsDps(boxSlots));
     }
 
+
     public void setLevel(int level) {
         this.level = level;
     }
+
 
     public void setPlayers(int players) {
         this.players = players;
     }
 
+
     public void setSaveDir(File dir) {
         saveDir = dir;
         saveCheckedAt = NEVER;
     }
+
+
+
+
+
+
 
     public String[] pauseLines(long now, boolean appSaves, String character) {
         return pauseLines(now, monotonicMs(), appSaves, character);
@@ -143,6 +185,7 @@ public final class D2InfoStrip {
         return s / 3600 + " h";
     }
 
+
     static long characterFileTime(File dir, String character) {
         if (character == null || character.isEmpty()) return 0;
         File[] files = dir.listFiles();
@@ -154,9 +197,15 @@ public final class D2InfoStrip {
         return 0;
     }
 
+
     public boolean active() {
         return grid || box || xpBar;
     }
+
+
+
+
+
 
     public void draw(Canvas canvas, D2Hud hud, int gameWidth, int gameHeight, float scale, float x0, float y0, boolean staminaKnown,
                      boolean boxBlocked, boolean compact) {
@@ -166,6 +215,8 @@ public final class D2InfoStrip {
         boolean bar = xpBar && done >= 0;
         boolean pieces = hud.hasBarPieces();
         if (grid && staminaKnown) {
+
+
             float[] block = D2InfoGrid.block(gameWidth, gameHeight);
             set(plate, block, scale, x0, y0);
             if (pieces) {
@@ -186,12 +237,15 @@ public final class D2InfoStrip {
                 if (t.isEmpty()) continue;
                 float cx = plate.left + in + halfW * (i % 2) + halfW / 2;
                 float cy = plate.top + in + rowH * (i / 2) + rowH / 2;
+
                 float room = halfW / scale - 4, wide = hud.smallTextWidth(t);
                 float k = wide > room ? scale * Math.max(0.6f, room / wide) : scale;
                 hud.drawSmallText(canvas, t, cx, cy, k, 255, highlighted[slots[i]] ? HIGHLIGHTED : NORMAL);
             }
         }
         if (bar) {
+
+
             set(area, D2InfoGrid.xpBar(gameWidth, gameHeight, compact), scale, x0, y0);
             if (pieces) hud.drawXpBar(canvas, area, scale);
             else {
@@ -204,15 +258,19 @@ public final class D2InfoStrip {
             for (int i = 1; i < D2InfoGrid.XP_SECTIONS; i++) {
                 float x = left + (right - left) * i / D2InfoGrid.XP_SECTIONS;
                 fill.setColor(x <= filled ? XP_TENTH_FULL : XP_TENTH_EMPTY);
+
                 canvas.drawRect(x, area.top + scale, x + Math.max(2, 2 * scale), area.top + 5 * scale, fill);
             }
             hud.drawTinyTextRight(canvas, Math.round(done * 100) + "%", area.right, area.top - 2 * scale, XP_TEXT * scale, NORMAL);
+
             if (xpLevel && level > 0) hud.drawTinyTextLeft(canvas, D2Text.get(context, R.string.xp_level, level), area.left,
                 area.top - 2 * scale, XP_TEXT * scale, NORMAL);
         }
+
         if (box && boxOpen && staminaKnown && !boxBlocked) {
             int w = boxWidth(hud, wall, mono);
             if (w > 0) {
+
                 set(plate, D2InfoGrid.box(gameWidth, gameHeight, w, bar), scale, x0, y0);
                 if (pieces) hud.drawThinBox(canvas, plate, scale);
                 else {
@@ -231,10 +289,12 @@ public final class D2InfoStrip {
             }
         }
         if (box && staminaKnown) {
+
             set(area, D2InfoGrid.arrow(gameWidth, gameHeight), scale, x0, y0);
             hud.drawArrow(canvas, boxOpen, false, area);
         }
     }
+
 
     int boxWidth(D2Hud hud, long wall, long mono) {
         int w = 0, n = 0;
@@ -246,6 +306,7 @@ public final class D2InfoStrip {
         }
         return n == 0 ? 0 : w + (n - 1) * BOX_GAP + 2 * BOX_PAD;
     }
+
 
     String boxText(long wall, long mono) {
         StringBuilder out = new StringBuilder();
@@ -262,9 +323,14 @@ public final class D2InfoStrip {
         r.set(x0 + g[0] * scale, y0 + g[1] * scale, x0 + g[2] * scale, y0 + g[3] * scale);
     }
 
+
     static long monotonicMs() {
         return System.nanoTime() / 1_000_000L;
     }
+
+
+
+
 
     String entry(int kind, long wallMs, long monoMs) {
         switch (kind) {
@@ -292,6 +358,7 @@ public final class D2InfoStrip {
         }
     }
 
+
     private void readBattery(long now) {
         if (batteryAt != NEVER && now - batteryAt < 30000) return;
         batteryAt = now;
@@ -305,6 +372,7 @@ public final class D2InfoStrip {
             batteryPercent = -1;
         }
     }
+
 
     private void countFrames(long now) {
         int frames = GLRenderer.framesDrawn;

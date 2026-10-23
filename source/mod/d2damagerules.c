@@ -1,11 +1,30 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include "d2companions.h"
 
 #define DMG_RESULT_CRIT 0x2000
 #define DMG_RESULT_KILL 0x0002
 enum { DMG_HIDE = 0, DMG_OWN, DMG_CRIT, DMG_ALLY };
-enum { DMG_EL_PHYS = 0, DMG_EL_FIRE, DMG_EL_COLD, DMG_EL_LIGHT, DMG_EL_MAGIC, DMG_EL_POISON   };
+enum { DMG_EL_PHYS = 0, DMG_EL_FIRE, DMG_EL_COLD, DMG_EL_LIGHT, DMG_EL_MAGIC, DMG_EL_POISON  };
 enum { DMG_STYLE_SIMPLE = 1, DMG_STYLE_ELEMENT = 2 };
+
 
 #define DMG_COLOR_WHITE 0
 #define DMG_COLOR_RED 1
@@ -16,11 +35,21 @@ enum { DMG_STYLE_SIMPLE = 1, DMG_STYLE_ELEMENT = 2 };
 #define DMG_COLOR_ORANGE 8
 #define DMG_COLOR_YELLOW 9
 
+
+
 static int damageKind(unsigned long attType, unsigned long attId, unsigned long attTxt, unsigned long me, unsigned long result) {
     if (attType == 0 && attId == me) return (result & DMG_RESULT_CRIT) ? DMG_CRIT : DMG_OWN;
     if (attType == 1 && (isMercenary(attTxt) || isSummon(attTxt))) return DMG_ALLY;
     return DMG_HIDE;
 }
+
+
+
+
+
+
+
+
 
 static int damageAllyRowLeftOut(unsigned long txt) {
     static const unsigned short rows[] = {516, 517, 518, 519, 522, 523, 543, 545};
@@ -33,6 +62,8 @@ static int damageKindAligned(unsigned long attType, unsigned long attId, unsigne
     return damageKind(attType, attId, attTxt, me, result);
 }
 
+
+
 static int damageElement(long phys, long fire, long cold, long light, long magic) {
     const long part[] = {phys, fire, cold, light, magic};
     int best = DMG_EL_PHYS;
@@ -44,6 +75,7 @@ static int damageElement(long phys, long fire, long cold, long light, long magic
     return best;
 }
 
+
 static int damageColor(int kind, int element, int style) {
     static const int byElement[] = {DMG_COLOR_WHITE, DMG_COLOR_RED, DMG_COLOR_BLUE, DMG_COLOR_YELLOW, DMG_COLOR_ORANGE};
     if (kind == DMG_ALLY) return DMG_COLOR_GREY;
@@ -51,13 +83,18 @@ static int damageColor(int kind, int element, int style) {
     return kind == DMG_CRIT ? DMG_COLOR_GOLD : DMG_COLOR_WHITE;
 }
 
+
 static int damageLarge(int kind, int style) {
     return kind == DMG_CRIT && style == DMG_STYLE_ELEMENT;
 }
 
 
+
 #define DMG_DOT_MS 750
 #define DMG_DOT_QUIET_MS 250
+
+
+
 
 static int damageDotColor(int kind, int element, int style) {
     static const int byElement[] = {DMG_COLOR_WHITE, DMG_COLOR_RED, DMG_COLOR_BLUE, DMG_COLOR_YELLOW, DMG_COLOR_ORANGE, DMG_COLOR_GREEN};
@@ -66,11 +103,18 @@ static int damageDotColor(int kind, int element, int style) {
     return element >= 0 && element <= DMG_EL_POISON ? byElement[element] : DMG_COLOR_WHITE;
 }
 
+
+
+
+
 typedef struct {
     unsigned long id, first, last;
     long sum;
     int kind, element, dead, used;
 } DmgDot;
+
+
+
 
 static int damageDotAdd(DmgDot* acc, int n, unsigned long id, long loss, int kind, int element, int dead, unsigned long now) {
     int slot = -1, freeSlot = -1, oldest = 0;
@@ -98,6 +142,10 @@ static int damageDotAdd(DmgDot* acc, int n, unsigned long id, long loss, int kin
     return slot;
 }
 
+
+
+
+
 static unsigned long damageDotDue(DmgDot* p, unsigned long now) {
     if (!p->used) return 0;
     if (p->dead || now - p->last >= DMG_DOT_QUIET_MS) {
@@ -114,6 +162,9 @@ static unsigned long damageDotDue(DmgDot* p, unsigned long now) {
     return (unsigned long) whole;
 }
 
+
+
+
 typedef struct { unsigned long id; int kind; } DmgDotOwner;
 
 static void damageDotOwnerNote(DmgDotOwner* t, int n, unsigned long* next, unsigned long id, int kind) {
@@ -127,6 +178,7 @@ static void damageDotOwnerNote(DmgDotOwner* t, int n, unsigned long* next, unsig
     ++*next;
 }
 
+
 static int damageDotKind(unsigned long ownerType, unsigned long ownerId, unsigned long ownerTxt, unsigned long me,
                             const DmgDotOwner* t, int n) {
     int kind = damageKind(ownerType, ownerId, ownerTxt, me, 0);
@@ -135,9 +187,16 @@ static int damageDotKind(unsigned long ownerType, unsigned long ownerId, unsigne
     return DMG_HIDE;
 }
 
+
+
+
+
+
 #define DMG_STREAM_MS 120
 
 typedef struct { unsigned long id, at; int kind, element, used; } DmgStream;
+
+
 
 static int damageStream(DmgStream* t, int n, unsigned long id, int kind, int element, unsigned long now) {
     int slot = -1, oldest = 0;
@@ -161,6 +220,8 @@ static int damageStream(DmgStream* t, int n, unsigned long id, int kind, int ele
     t[slot].at = now;
     return series;
 }
+
+
 
 static void damageDotKill(DmgDot* acc, int n, unsigned long id) {
     for (int k = 0; k < n; k++) if (acc[k].used && acc[k].id == id) acc[k].dead = 1;

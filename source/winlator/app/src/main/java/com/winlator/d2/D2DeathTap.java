@@ -1,11 +1,28 @@
 package com.winlator.d2;
 
+
+
+
+
 final class D2DeathTap {
+
     static final long LOCK_MS = 1000;
+
+
+
+
     static final long INFO_AFTER_ESC_MS = 300;
 
     private D2DeathTap() {
     }
+
+
+
+
+
+
+
+
 
     static boolean allowed(boolean waitsForEsc, int life, Boolean hardcore, long now, long screenSince, long lastEscAt,
                            long infoTime) {

@@ -1,4 +1,4 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import androidx.annotation.Keep;
 
@@ -21,7 +21,7 @@ public class XConnectorEpoll {
     private int initialInputBufferCapacity = 64;
     private int initialOutputBufferCapacity = 64;
     private long nativePtr;
-    /** D2Android: the socket's file name (X0, SM0, AS0) for the trace */
+
     private final String name;
 
     static {
@@ -31,7 +31,7 @@ public class XConnectorEpoll {
     public XConnectorEpoll(UnixSocketConfig socketConfig, ConnectionHandler connectionHandler, RequestHandler requestHandler) {
         this.connectionHandler = connectionHandler;
         this.requestHandler = requestHandler;
-        this.name = new File(socketConfig.path).getName(); // D2Android: changed
+        this.name = new File(socketConfig.path).getName();
 
         nativePtr = nativeAllocate(socketConfig.path);
         if (nativePtr == 0) throw new RuntimeException("Failed to allocate XConnectorEpoll.");
@@ -94,10 +94,10 @@ public class XConnectorEpoll {
         }
     }
 
-    /**
-     * The end of the epoll loop. D2Android: with the reason (0 = stopped by {@link #destroy}, else the errno of
-     * epoll_wait): before the fix a suspend ended the loop (EINTR) and so closed every client of the stopped game.
-     */
+
+
+
+
     @Keep
     private void killAllConnections(int errno) {
         int count;
@@ -161,7 +161,7 @@ public class XConnectorEpoll {
     @CriticalNative
     public static native void closeFd(int fd);
 
-    /** D2Android: how often a connector's wait was interrupted (suspend, SIGSTOP/SIGCONT) and went on, since the app started. */
+
     public static native int interruptionCount();
 
     private native long nativeAllocate(String sockPath);

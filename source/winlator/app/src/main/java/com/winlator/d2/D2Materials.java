@@ -2,18 +2,38 @@ package com.winlator.d2;
 
 import java.util.ArrayDeque;
 
+
+
+
+
+
+
+
 public final class D2Materials {
     public static final int PKT_MATERIALS = 10, CMD_MATERIALS = 21;
+
     public static final int ORDER_DEPOSIT = 1, ORDER_WITHDRAW = 2, ORDER_DEPOSIT_ALL = 3;
+
     public static final int CAP_POSSIBLE = 1, CAP_SINGLE = 2, CAP_OPEN = 4, CAP_LOCKED = 8;
+
     public static final int RESULT_NONE = 0, RESULT_OK = 1, RESULT_FULL = 2, RESULT_NOT_ALLOWED = 3, RESULT_LOCKED = 4,
         RESULT_BUSY = 5;
+
     public static final int SAVE_NONE = 0, SAVE_OK = 1, SAVE_NOT_SAVED = 2, SAVE_NOT_CONFIRMED = 3;
+
     public static final int WHY_NONE = 0, WHY_BROKEN = 1, WHY_UNSAVED = 2, WHY_UNREADABLE = 3, WHY_MISSING = 4, WHY_THREAD = 5,
         WHY_VERSION = 6;
+
     public static final int NO_ORIGIN = -32768;
+
+
+
+
+
     public static final long ANSWER_MS = 3000;
+
     public static final long STALE_MS = 3000;
+
 
     static final String[] CODES = {
         "r01", "r02", "r03", "r04", "r05", "r06", "r07", "r08", "r09", "r10", "r11",
@@ -29,6 +49,7 @@ public final class D2Materials {
     };
     public static final int KINDS = CODES.length, RUNES = 33, GEMS_FIRST = 33, SKULLS_FIRST = 63;
 
+
     public static int kindOf(String code) {
         if (code == null) return -1;
         String c = code.trim();
@@ -40,9 +61,11 @@ public final class D2Materials {
         return kind >= 0 && kind < KINDS ? CODES[kind] : null;
     }
 
+
     public static final class Snapshot {
         public final int caps, order, save;
         public final int[] stash = new int[KINDS], inventory = new int[KINDS];
+
         public final boolean end;
         public final int x, y, done, why;
         public final long time;
@@ -63,18 +86,36 @@ public final class D2Materials {
         public boolean open() { return (caps & CAP_OPEN) != 0; }
         public boolean locked() { return (caps & CAP_LOCKED) != 0; }
 
+
         public boolean entry() {
             return end && open() && (possible() || locked());
         }
+
+
+
+
 
         public boolean origin() {
             return end && x != NO_ORIGIN && y != NO_ORIGIN;
         }
     }
 
+
+
+
+
+
+
     static final int[] OTHER_LEFT_PANELS = {D2ModState.UI_CUBE, D2ModState.UI_CHARACTER, D2ModState.UI_QUEST,
         D2ModState.UI_PARTY, D2ModState.UI_MERC, D2ModState.UI_TRADE, D2ModState.UI_NPCSHOP, D2ModState.UI_ANVIL,
         D2ModState.UI_WAYPOINT, D2ModState.UI_QUESTSCROLL, D2ModState.UI_SCROLL};
+
+
+
+
+
+
+
 
     public static boolean placed(Snapshot s, int gameWidth, int gameHeight, long uiFlags) {
         if (s == null || !s.origin() || gameWidth <= 0 || gameHeight <= 0) return false;
@@ -84,6 +125,7 @@ public final class D2Materials {
         int top = Math.min(WIN_Y, ENTRY_Y - ENTRY_MARGIN), bottom = Math.max(WIN_Y + WIN_H, ENTRY_Y + ENTRY_SIZE + ENTRY_MARGIN);
         return s.x + left >= 0 && s.x + right <= gameWidth && s.y + top >= 0 && s.y + bottom <= gameHeight;
     }
+
 
     public static Snapshot parse(byte[] d, int length, long now) {
         if (d == null || length < 12 || length > d.length || (d[5] & 0xFF) != PKT_MATERIALS) return null;
@@ -102,6 +144,7 @@ public final class D2Materials {
         return s;
     }
 
+
     public static byte[] payload(int order, int arg, int count) {
         byte[] p = new byte[12];
         p[0] = (byte) order;
@@ -112,7 +155,12 @@ public final class D2Materials {
         return p;
     }
 
+
     static final int MISC_RECORD = 424, MISC_INVFILE = 0x20, MISC_CODE = 0x80;
+
+
+
+
 
     public static String[] invFiles(byte[] misc) {
         if (misc == null || misc.length < 4) return null;
@@ -132,22 +180,53 @@ public final class D2Materials {
     }
 
 
+
+
+
+
+
+
+
     public static final int ENTRY_X = 312, ENTRY_Y = 446, ENTRY_SIZE = 34;
+
     public static final int ENTRY_MARGIN = 2;
+
+
+
+
     public static final int[] STASH_GAME = {154, 142, 6, 8}, STASH_BIG = {96, 142, 10, 10};
     public static final int STASH_CELL = 29;
+
+
+
+
+
     public static final int[][] STASH_BUTTONS = {{350, 446, 36, 34}, {95, 445, 35, 34}, {178, 445, 128, 34},
         {108, 86, 34, 34}, {341, 86, 34, 34}, {150, 80, 182, 24}, {150, 106, 182, 24}};
+
+
+
+
+
+
     public static final int WIN_X = 92, WIN_Y = 70, WIN_W = 298, WIN_H = 364;
     public static final int TAB_Y = WIN_Y + 30, TAB_H = 24, TAB_W = 108;
+
+
+
+
     public static final int CELL = 29, GRID_X = 154, GRID_Y = 142;
     public static final int INFO_Y = GRID_Y + 6 * CELL + 14;
     public static final int BUTTON_W = 128, BUTTON_H = 35, BUTTON_X = WIN_X + (WIN_W - BUTTON_W) / 2,
         BUTTON_Y = WIN_Y + WIN_H - BUTTON_H - 16;
+
     public static final int TEXT_MARGIN = 8;
+
     public static final int CHOICE_W = 38, CHOICE_H = 28;
     public static final int TAB_RUNES = 0, TAB_GEMS = 1;
+
     public static final int HIT_NONE = -1, HIT_WINDOW = -2, HIT_TAB_RUNES = -3, HIT_TAB_GEMS = -4, HIT_DEPOSIT_ALL = -5;
+
 
     public static int kindAt(int tab, int column, int row) {
         if (column < 0 || column > 5 || row < 0 || row > 5) return -1;
@@ -159,9 +238,11 @@ public final class D2Materials {
         return column < 5 ? SKULLS_FIRST + column : -1;
     }
 
+
     public static int tabOf(int kind) {
         return kind < RUNES ? TAB_RUNES : TAB_GEMS;
     }
+
 
     public static int[] cellOf(int kind) {
         if (kind < 0 || kind >= KINDS) return null;
@@ -170,12 +251,20 @@ public final class D2Materials {
         return new int[]{kind - SKULLS_FIRST, 5};
     }
 
+
+
+
+
     public static String name(int kind, String gameText) {
         String code = code(kind);
         if (code == null) return null;
         String plain = D2ItemLabel.plainBase(gameText);
         return plain != null ? plain : code;
     }
+
+
+
+
 
     public static String fit(String text, java.util.function.ToIntFunction<String> width, int max) {
         if (text == null || width.applyAsInt(text) <= max) return text;
@@ -186,6 +275,7 @@ public final class D2Materials {
         return "";
     }
 
+
     public static boolean onEntry(float lx, float ly) {
         return lx >= ENTRY_X - ENTRY_MARGIN && lx < ENTRY_X + ENTRY_SIZE + ENTRY_MARGIN && ly >= ENTRY_Y - ENTRY_MARGIN
             && ly < ENTRY_Y + ENTRY_SIZE + ENTRY_MARGIN;
@@ -194,6 +284,7 @@ public final class D2Materials {
     public static boolean inWindow(float lx, float ly) {
         return lx >= WIN_X && lx < WIN_X + WIN_W && ly >= WIN_Y && ly < WIN_Y + WIN_H;
     }
+
 
     public static int hit(int tab, float lx, float ly) {
         if (!inWindow(lx, ly)) return HIT_NONE;
@@ -211,12 +302,14 @@ public final class D2Materials {
         return HIT_WINDOW;
     }
 
+
     public static int[] choiceAt(int kind) {
         int[] c = cellOf(kind);
         int x = GRID_X + (c[0] + 1) * CELL + 2, y = GRID_Y + c[1] * CELL + (CELL - CHOICE_H) / 2;
         if (x + 3 * CHOICE_W > WIN_X + WIN_W) x = GRID_X + c[0] * CELL - 2 - 3 * CHOICE_W;
         return new int[]{x, y};
     }
+
 
     public static int choiceHit(int kind, int inStash, float lx, float ly) {
         int[] at = choiceAt(kind);
@@ -225,14 +318,17 @@ public final class D2Materials {
         return choice == 1 && inStash < 3 ? -1 : choice;
     }
 
+
     public static int choiceCount(int choice) {
         return choice == 0 ? 1 : choice == 1 ? 3 : 0;
     }
 
 
+
     public static final int NOTE_NONE = 0, NOTE_INVENTORY_FULL = 1, NOTE_STASH_FULL = 2, NOTE_NOT_NOW = 3,
         NOTE_BUSY = 4, NOTE_LOCKED_BROKEN = 5, NOTE_LOCKED_UNSAVED = 6, NOTE_LOCKED_UNREADABLE = 7, NOTE_LOCKED = 8,
         NOTE_NOT_SAVED = 9, NOTE_NOT_CONFIRMED = 10, NOTE_LOCKED_VERSION = 11;
+
 
     public static int resultNote(int order, int result, int why) {
         switch (result) {
@@ -244,6 +340,7 @@ public final class D2Materials {
         }
     }
 
+
     public static int lockNote(int why) {
         switch (why) {
             case WHY_BROKEN: return NOTE_LOCKED_BROKEN;
@@ -254,10 +351,15 @@ public final class D2Materials {
         }
     }
 
+
     public static int saveWarning(Snapshot s, long now) {
         if (s == null || now - s.time > STALE_MS) return NOTE_NONE;
         return saveBlocked(s);
     }
+
+
+
+
 
     public static int saveBlocked(Snapshot s) {
         if (s == null) return NOTE_NONE;
@@ -265,11 +367,14 @@ public final class D2Materials {
     }
 
 
+
+
     public static final class Orders {
         private final ArrayDeque<int[]> waiting = new ArrayDeque<>();
         private int[] underWay;
         private int doneAtSend, countsAtLook;
         private long sentAt, changedAt;
+
 
         public void add(int order, int arg, int count) {
             int[] last = waiting.peekLast();
@@ -287,14 +392,20 @@ public final class D2Materials {
             return !waiting.isEmpty();
         }
 
+
         public void clear() {
             waiting.clear();
             underWay = null;
         }
 
+
         public void clearWaiting() {
             waiting.clear();
         }
+
+
+
+
 
         public int[] finished(Snapshot s, long now) {
             if (underWay == null) return null;
@@ -314,6 +425,7 @@ public final class D2Materials {
             }
             return null;
         }
+
 
         public int[] next(Snapshot s, long now, boolean mayGo) {
             if (underWay != null || waiting.isEmpty() || !mayGo || s == null || !s.end) return null;

@@ -1,6 +1,13 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
 public final class LeerenLauf {
+
     public interface Umgebung {
         void event(String art, String text);
         Zustand.Ziele ziele();
@@ -17,13 +24,19 @@ public final class LeerenLauf {
     private final Gehirn gehirn;
     private final Fahrer fahrer;
     private final Umgebung u;
+
+
     boolean leeren;
+
     public int rueckzugPct = RUECKZUG_PCT;
     private static final int RUECKZUG_PCT = Spieltester.RUECKZUG_PCT;
+
     int leerenGebiet = -1, leerenKillsStart;
     long leerenSeit;
     private long leerenVorbereitet, zieleOkAm, rueckzugGemeldet;
+
     final Rueckzug rueckzug = new Rueckzug();
+
     final LeerenMessung messung = new LeerenMessung();
     private boolean imRueckzug;
     private String letzteRueckzugMeldung = "";
@@ -39,9 +52,14 @@ public final class LeerenLauf {
         return imRueckzug;
     }
 
+
     public boolean aktiv() {
         return leeren;
     }
+
+
+
+
 
     public boolean gebietLeerEnde(boolean stadtgangAktiv, Zustand.Layout l, long now) throws InterruptedException {
         if (leeren && !stadtgangAktiv && gehirn.gebietLeer(now)) {
@@ -60,7 +78,14 @@ public final class LeerenLauf {
         fahrer.loslassen(warum);
     }
 
+
+
+
+
+
+
     boolean leerenSchritt(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
+
         u.ohneDurchgaenge(!imRueckzug);
         Zustand.Ziele zl = u.ziele();
         boolean gueltig = zl != null && zl.gebiet == z.gebiet && zl.bereit == 2 && now - u.zieleAm() <= LEEREN_OHNE_ZIELE_MS;
@@ -86,6 +111,7 @@ public final class LeerenLauf {
         if (z.gebiet != leerenGebiet) return u.leerenBeenden("Gebiet verlassen (" + u.gebietName(z.gebiet) + ")", false, l);
         if (z.stadt) return u.leerenBeenden("Stadt", false, l);
         if (z.tot()) {
+
             event("tod", "Tod beim Gebiet leeren nach " + (now - leerenSeit) / 1000 + " s · Lage " + z.wx + "," + z.wy);
             return u.leerenBeenden("tot", false, l);
         }
@@ -114,6 +140,10 @@ public final class LeerenLauf {
         }
         return true;
     }
+
+
+
+
 
     private boolean rueckzugSchritt(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
         if (z.tot()) {
@@ -156,6 +186,7 @@ public final class LeerenLauf {
         gehirn.gebietLeeren = false;
         u.ohneDurchgaenge(false);
     }
+
 
     void questLeerenAn() {
         leeren = true;

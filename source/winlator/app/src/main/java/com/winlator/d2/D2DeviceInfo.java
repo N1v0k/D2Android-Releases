@@ -2,19 +2,30 @@ package com.winlator.d2;
 
 import java.util.Locale;
 
+
+
+
+
+
+
 public final class D2DeviceInfo {
+
     public static final class Facts {
         public String manufacturer, model, androidRelease, socManufacturer, socModel, hardware, gpu;
         public int sdk = -1;
+
         public int vulkanVersion = -1;
         public long ramTotal = -1, ramFree = -1;
         public boolean ramLow;
+
         public long guestBytes = -1, appBytes = -1;
         public int guestProcesses;
+
         public boolean pss;
     }
 
     private D2DeviceInfo() {}
+
 
     public static String format(Facts f) {
         StringBuilder b = new StringBuilder();
@@ -39,6 +50,10 @@ public final class D2DeviceInfo {
         return b.toString();
     }
 
+
+
+
+
     public static long pssBytes(String smapsRollup) {
         if (smapsRollup == null) return -1;
         for (String line : smapsRollup.split("\n")) {
@@ -54,11 +69,13 @@ public final class D2DeviceInfo {
         return -1;
     }
 
+
     static String vulkan(int version) {
         if (version < 0) return "?";
         if (version == 0) return "keins";
         return (version >>> 22) + "." + ((version >> 12) & 0x3FF) + "." + (version & 0xFFF);
     }
+
 
     static String bytes(long value) {
         if (value < 0) return "?";
@@ -67,6 +84,7 @@ public final class D2DeviceInfo {
         return String.format(Locale.ROOT, "%.1f GB", mb / 1024.0);
     }
 
+
     private static boolean blank(String s) {
         return s == null || s.trim().isEmpty() || s.equalsIgnoreCase("unknown");
     }
@@ -74,6 +92,7 @@ public final class D2DeviceInfo {
     private static String join(String a, String b) {
         if (blank(a)) return blank(b) ? "" : b.trim();
         if (blank(b)) return a.trim();
+
         return b.trim().regionMatches(true, 0, a.trim(), 0, a.trim().length()) ? b.trim() : a.trim() + " " + b.trim();
     }
 

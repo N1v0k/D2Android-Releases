@@ -8,22 +8,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+
+
+
+
+
+
 final class D2GuestWatch {
+
     static final long WATCH_MS = 2000, POLL_MS = 2, END_WAIT_MS = 300;
+
     static final String WINESERVER = "wineserver";
 
     private D2GuestWatch() {}
 
+
     static final class Status {
         String state;
         long sigPnd, shdPnd, sigBlk, sigIgn;
+
         final List<String> threadsPending = new ArrayList<>();
         int threads;
+
 
         boolean unusual() {
             return state == null || !state.startsWith("T") || sigPnd != 0 || shdPnd != 0 || !threadsPending.isEmpty();
         }
     }
+
 
     static Status read(File proc, int pid, boolean threads) {
         Status s = new Status();
@@ -31,6 +43,7 @@ final class D2GuestWatch {
         if (threads) {
             String[] tids = new File(proc, pid + "/task").list();
             if (tids != null) {
+
                 java.util.Arrays.sort(tids, (a, b) -> Long.compare(number(a), number(b)));
                 for (String tid : tids) {
                     Status t = new Status();
@@ -83,6 +96,7 @@ final class D2GuestWatch {
         return String.format(Locale.ROOT, "%016x", mask);
     }
 
+
     static String signals(long mask) {
         List<String> out = new ArrayList<>();
         for (int bit = 0; bit < 64; bit++) {
@@ -94,6 +108,7 @@ final class D2GuestWatch {
         return String.join(", ", out);
     }
 
+
     private static final String[] NAMES = {null, "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1",
         "SEGV", "USR2", "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG", "XCPU",
         "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS"};
@@ -102,11 +117,13 @@ final class D2GuestWatch {
         return signal > 0 && signal < NAMES.length ? NAMES[signal] : null;
     }
 
+
     static String traceLine(int pid, String name, Status s) {
         if (s == null) return pid + " " + name + ": gone";
         return pid + " " + name + ": " + s.state + " pnd " + hex(s.sigPnd) + " shd " + hex(s.shdPnd) + " blk " + hex(s.sigBlk)
             + " ign " + hex(s.sigIgn) + (s.threads > 0 ? " threads " + s.threads + (s.threadsPending.isEmpty() ? "" : " pending " + s.threadsPending) : "");
     }
+
 
     static String unusualText(int pid, String name, Status s) {
         List<String> what = new ArrayList<>();
@@ -117,13 +134,19 @@ final class D2GuestWatch {
         return name + " (pid " + pid + "): " + String.join(", ", what);
     }
 
+
     static String unusualLine(List<String> unusual) {
         return unusual.isEmpty() ? null : "Vor dem Fortsetzen auffällig: " + String.join("; ", unusual);
     }
 
+
+
+
+
     static char state(File proc, int pid, String comm) {
         return new StatReader().state(new File(proc, pid + "/stat").getPath(), comm != null ? latin1(comm) : null);
     }
+
 
     static String comm(File proc, int pid) {
         return new StatReader().comm(new File(proc, pid + "/stat").getPath());
@@ -133,9 +156,16 @@ final class D2GuestWatch {
         return s.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
     }
 
+
+
+
+
+
+
     static final class StatReader {
         private final byte[] buffer = new byte[256];
         private int length, open, close;
+
 
         private boolean load(String path) {
             length = 0;
@@ -155,6 +185,7 @@ final class D2GuestWatch {
             return open >= 0 && close > open && close + 2 < length;
         }
 
+
         char state(String path, byte[] comm) {
             if (!load(path)) return 0;
             if (comm != null) {
@@ -169,6 +200,10 @@ final class D2GuestWatch {
             return new String(buffer, open + 1, close - open - 1, java.nio.charset.StandardCharsets.ISO_8859_1);
         }
     }
+
+
+
+
 
     static final class Gone {
         final String name;
@@ -185,6 +220,16 @@ final class D2GuestWatch {
             this.zombie = zombie;
         }
     }
+
+
+
+
+
+
+
+
+
+
 
     static String goneLine(List<Gone> gone, int watched, long watchedMs, boolean gameEnded) {
         StringBuilder b = new StringBuilder("Nach dem Fortsetzen (").append(watched).append(" Spielprozesse, ")
@@ -206,9 +251,14 @@ final class D2GuestWatch {
         return b.append(left > 0 ? "; " + left + " noch da" : "; alle beendet").toString();
     }
 
+
     static String contLine(int pid, String name, long sinceFirstNanos) {
         return String.format(Locale.ROOT, "cont %d %s +%.2f ms", pid, name, sinceFirstNanos / 1e6);
     }
+
+
+
+
 
     static long deepSleepMs(long elapsedMs, long uptimeMs) {
         if (elapsedMs < 0 || uptimeMs < 0) return -1;

@@ -11,8 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+
+
+
+
+
+
+
 public final class D2MapFetch {
     public static final int CMD_MAP = 14, PKT_MAP = 8, TEIL_BYTES = 960, MAX_JE_RUNDE = 40;
+
     public static final int MAX_SEITE = 1024, MAX_RAEUME = 2048, MAX_BYTES = 8 << 20;
     private long bytes;
     private boolean wanted;
@@ -29,11 +37,13 @@ public final class D2MapFetch {
 
     public synchronized Karte karte() { return karte; }
 
+
     public synchronized void level(int level) {
         if (level == this.level || level <= 0) return;
         this.level = level;
         reset(level);
     }
+
 
     public synchronized void reset() { reset(level); }
 
@@ -44,7 +54,9 @@ public final class D2MapFetch {
         karte = level > 0 ? new Karte(level) : null;
     }
 
+
     public synchronized boolean tick(long now, boolean wanted) { return tick(now, wanted, Double.NaN, Double.NaN); }
+
 
     public synchronized boolean tick(long now, boolean wanted, double wx, double wy) {
         this.wanted = wanted;
@@ -75,7 +87,9 @@ public final class D2MapFetch {
         return asked > 0;
     }
 
+
     public synchronized String packet(byte[] data, int length, long now) {
+
         if (!wanted || length < 12 || D2ModState.packetType(data, length) != PKT_MAP) return null;
         ByteBuffer b = ByteBuffer.wrap(data, 0, length).order(ByteOrder.LITTLE_ENDIAN);
         b.position(8);
@@ -97,6 +111,7 @@ public final class D2MapFetch {
                     Karte.Raum r = new Karte.Raum(nr, x, y, w, h, loaded);
                     Karte.Raum old = raeume.get(nr);
                     if (old != null && (old.x != x || old.y != y || old.w != w || old.h != h)) {
+
                         reset(lvl);
                         gesamt = total;
                         old = null;
@@ -112,6 +127,7 @@ public final class D2MapFetch {
             int nr = b.getShort() & 0xFFFF, x = b.getShort() & 0xFFFF, y = b.getShort() & 0xFFFF, w = b.getShort() & 0xFFFF, h = b.getShort() & 0xFFFF;
             int part = b.get() & 0xFF, parts = b.get() & 0xFF, firstRow = b.getShort() & 0xFFFF, rows = b.getShort() & 0xFFFF;
             int rowBytes = (w + 7) / 8;
+
             Karte.Raum r = raeume.get(nr);
             if (r == null || r.x != x || r.y != y || r.w != w || r.h != h) return null;
             if (w > MAX_SEITE || h > MAX_SEITE || rows == 0 || firstRow + rows > h || b.remaining() < rowBytes * rows) return null;
@@ -130,6 +146,7 @@ public final class D2MapFetch {
             return null;
         }
     }
+
 
     public synchronized String stand() {
         int complete = 0;

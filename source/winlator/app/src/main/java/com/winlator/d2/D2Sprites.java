@@ -5,7 +5,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 public final class D2Sprites implements AutoCloseable {
+
     public static final class Frame {
         public final int width, height, offsetX, offsetY;
         public final int[] argb;
@@ -19,12 +25,21 @@ public final class D2Sprites implements AutoCloseable {
         }
     }
 
+
+
+
+
+
     static final int[] GAMMA = new int[256];
 
     static {
         for (int i = 0; i < 256; i++) GAMMA[i] = Math.min(255, Math.round(12 + 243 * (float) Math.pow(i / 255.0, 1 / 1.2)));
         GAMMA[0] = 0;
     }
+
+
+
+
 
     private static final String[] ARCHIVES = {"Patch_D2.mpq", "d2exp.mpq", "d2data.mpq", "d2char.mpq"};
     private final List<D2Mpq> archives = new ArrayList<>();
@@ -38,6 +53,7 @@ public final class D2Sprites implements AutoCloseable {
                 archives.add(new D2Mpq(f));
             }
             catch (IOException e) {
+
                 if (!name.equals("d2char.mpq")) throw e;
             }
         }
@@ -58,11 +74,16 @@ public final class D2Sprites implements AutoCloseable {
         return null;
     }
 
+
     public Frame[] dc6(String name) throws IOException {
         byte[] d = read(name);
         if (d == null) return null;
         return decode(d, palette);
     }
+
+
+
+
 
     public Frame[] dc6(String name, String paletteName) throws IOException {
         byte[] d = read(name);
@@ -71,6 +92,7 @@ public final class D2Sprites implements AutoCloseable {
     }
 
     private final java.util.Map<String, int[]> palettes = new java.util.HashMap<>();
+
 
     int[] palette(String name) throws IOException {
         int[] cached = palettes.get(name);
@@ -85,15 +107,18 @@ public final class D2Sprites implements AutoCloseable {
         return out;
     }
 
+
     public D2Dcc.Dcc dcc(String name) throws IOException {
         byte[] d = read(name);
         return d == null ? null : D2Dcc.decode(d);
     }
 
+
     public D2Cof cof(String name) throws IOException {
         byte[] d = read(name);
         return d == null ? null : D2Cof.decode(d);
     }
+
 
     public int[] palette() {
         return palette.clone();

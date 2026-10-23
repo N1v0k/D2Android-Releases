@@ -10,6 +10,12 @@ import android.view.View;
 
 import com.winlator.R;
 
+
+
+
+
+
+
 @SuppressLint("ViewConstructor")
 final class D2SoundButton extends View {
     private final Bitmap on = bitmap(D2StartArt.speaker(true)), off = bitmap(D2StartArt.speaker(false));
@@ -18,7 +24,9 @@ final class D2SoundButton extends View {
     private final String label;
     private Bitmap labelOn, labelOff;
     private D2SettingsLook labelLook;
+
     Runnable onChange;
+
     private final int k, gap;
 
     D2SoundButton(Context context) {
@@ -47,7 +55,9 @@ final class D2SoundButton extends View {
         return Bitmap.createBitmap(img.argb, img.width, img.height, Bitmap.Config.ARGB_8888);
     }
 
+
     void update() {
+
         setVisibility(GameLocator.gameDir(getContext()) != null ? VISIBLE : GONE);
         boolean sound = D2Settings.sound(getContext());
         setContentDescription(label + ", " + getContext().getString(sound ? R.string.settings_on : R.string.settings_off));

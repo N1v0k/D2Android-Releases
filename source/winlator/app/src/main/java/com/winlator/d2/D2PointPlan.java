@@ -11,11 +11,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2PointPlan {
     public static final int STR = 0, ENE = 1, DEX = 2, VIT = 3;
+
     public static final int MAX_BASE = 20;
+
     public static final String IDLE_YES = "ja", IDLE_PARTLY = "teilweise", IDLE_NO = "nein";
+
     private static final int MAX_DEPTH = 8;
+
 
     public static final class Entry {
         public final int fromLevel, skill, target;
@@ -27,6 +47,11 @@ public final class D2PointPlan {
         }
     }
 
+
+
+
+
+
     public static final class Key {
         public final int skill, mainFrom;
         public final String role;
@@ -37,6 +62,7 @@ public final class D2PointPlan {
             this.mainFrom = mainFrom;
         }
 
+
         public String role(int level) {
             return mainFrom > 0 && level >= mainFrom ? "haupt" : role;
         }
@@ -44,11 +70,19 @@ public final class D2PointPlan {
 
     public static final class Build {
         public final String id;
+
         public final int characterClass;
         public final List<Entry> entries;
         public final List<Key> keys;
+
         final int[][] strength, dexterity;
+
         public final List<String> sources;
+
+
+
+
+
         public final String idle, idleReason, weapon;
 
         Build(String id, int characterClass, List<Entry> entries, List<Key> keys, int[][] strength, int[][] dexterity,
@@ -81,6 +115,7 @@ public final class D2PointPlan {
     }
 
     private D2PointPlan() {}
+
 
     public static List<Build> parse(String json) {
         List<Build> out = new ArrayList<>();
@@ -122,11 +157,16 @@ public final class D2PointPlan {
         return t;
     }
 
+
+
+
+
     public static com.winlator.d2.test.Kampfwahl.Rollen rollen(Build b, int level) {
         List<Integer> main = new ArrayList<>(), strong = new ArrayList<>(), nova = new ArrayList<>(), buffs = new ArrayList<>();
         int promoted = 0;
         for (Key k : b.keys) {
             String role = k.role(level);
+
             if (role.equals("haupt") && k.mainFrom > 0 && level >= k.mainFrom) main.add(promoted++, k.skill);
             else if (role.equals("haupt")) main.add(k.skill);
             else if (role.equals("stark")) strong.add(k.skill);
@@ -142,15 +182,23 @@ public final class D2PointPlan {
         return a;
     }
 
+
     public static Build firstOfClass(List<Build> builds, int characterClass) {
         for (Build b : builds) if (b.characterClass == characterClass) return b;
         return null;
     }
 
+
     public static Build byId(List<Build> builds, String id, int characterClass) {
         for (Build b : builds) if (b.id.equals(id) && b.characterClass == characterClass) return b;
         return firstOfClass(builds, characterClass);
     }
+
+
+
+
+
+
 
     public static int nextSkill(Build build, Fertigkeiten table, int level, IntUnaryOperator baseLevel) {
         if (build == null || table == null) return -1;
@@ -162,6 +210,10 @@ public final class D2PointPlan {
         return -1;
     }
 
+
+
+
+
     static int pointFor(Fertigkeiten table, int skill, IntUnaryOperator baseLevel, int depth) {
         Fertigkeiten.Fertigkeit f = table.get(skill);
         if (f == null || depth > MAX_DEPTH) return -1;
@@ -171,6 +223,10 @@ public final class D2PointPlan {
         return skill;
     }
 
+
+
+
+
     static boolean takes(Fertigkeiten table, int skill, int characterClass, int level, IntUnaryOperator baseLevel) {
         Fertigkeiten.Fertigkeit f = table.get(skill);
         if (f == null || f.klasse != characterClass) return false;
@@ -179,6 +235,10 @@ public final class D2PointPlan {
         for (int pre : f.voraussetzungen) if (baseLevel.applyAsInt(pre) <= 0) return false;
         return true;
     }
+
+
+
+
 
     public static int nextStat(Build build, int level, int[] base) {
         if (build == null || base == null || base.length < 4) return -1;

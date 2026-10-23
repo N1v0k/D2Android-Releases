@@ -5,8 +5,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Wertklasse {
     public static final int VERSION = 1, FIXED = 88, PAIRS = 56, MAX = 10;
+
     public static final int KIND_OTHER = 0, KIND_RUNE = 1, KIND_GEM = 2, KIND_REJUV = 3, KIND_JEWELRY = 4, KIND_QUEST = 5;
     public static final int Q_NORMAL = 2, Q_SUPERIOR = 3;
 
@@ -15,16 +30,28 @@ public final class D2Wertklasse {
     static {
         for (int r = 1; r <= 33; r++) RUNES[r - 1] = r >= 30 ? 10 : r >= 26 ? 9 : r >= 24 ? 8 : r >= 20 ? 7 : r >= 9 ? 5 : 3;
     }
+
     static final int[] GEMS = {1, 1, 2, 4, 6};
+
     static final int[] JEWELRY = {0, 0, 0, 6, 8, 6, 8, 6};
     static final int[] OTHER = {0, 0, 0, 2, 8, 4, 8, 4};
+
     static final int[] BASE = {3, 5, 7};
     static final int[] GOLD_AT = {100, 500, 2000, 5000};
+
     static final int[] GOLD_FACTOR = {0, 0, 0, 4, 0, 8, 0, 8};
+
 
     static final int R_RECORD = 288, R_COMPLETE = 0x80, R_SERVER = 0x81, R_ITYPES = 0x86, R_ETYPES = 0x92, R_RUNES = 0x98;
 
     private D2Wertklasse() {}
+
+
+
+
+
+
+
 
     public static int[][] basen(byte[] runes, boolean ladder) {
         if (runes == null || runes.length < 4) return null;
@@ -49,6 +76,10 @@ public final class D2Wertklasse {
         for (long p : seen) pairs.add(new int[]{(int) (p >> 8), (int) (p & 0xFF)});
         return pairs.toArray(new int[0][]);
     }
+
+
+
+
 
     public static byte[] regeln(int[][] basen) {
         int pairs = basen == null ? 0 : Math.min(basen.length, PAIRS);
@@ -79,9 +110,14 @@ public final class D2Wertklasse {
         return b;
     }
 
+
     public interface Typen {
         boolean ist(int type);
     }
+
+
+
+
 
     public static int note(int kind, int tier, int quality, boolean ethereal, boolean runeword, int sockets, int baseClass,
                            long cost, int difficulty, int[][] basen, Typen typen) {
@@ -112,6 +148,7 @@ public final class D2Wertklasse {
         for (int i = 0; i < GOLD_AT.length; i++) if (GOLD_AT[i] > 0 && gold >= GOLD_AT[i]) note = Math.max(note, i + 1);
         return note;
     }
+
 
     static boolean sockelBasis(int quality, boolean ethereal, boolean runeword, int sockets, int baseClass, int[][] basen, Typen typen) {
         if (quality != Q_NORMAL && quality != Q_SUPERIOR) return false;

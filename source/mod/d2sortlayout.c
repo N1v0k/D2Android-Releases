@@ -1,7 +1,24 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define SORT_W 10
 #define SORT_H 4
 #define SORT_MAX 40
+
 
 enum { SG_BIG = 0, SG_TOMES, SG_SCROLLS, SG_KEYS, SG_POTIONS, SG_RUNES, SG_GEMS, SG_JEWELS, SG_RINGS, SG_AMULETS,
        SG_CHARMS, SG_SMALL };
@@ -29,6 +46,7 @@ static void sortMark(BYTE* grid, int x, int y, int w, int h, BYTE value) {
             if (x + dx < SORT_W && y + dy < SORT_H) grid[(y + dy) * SORT_W + x + dx] = value;
 }
 
+
 static int sortBigBefore(const SortItem* a, const SortItem* b) {
     int areaA = a->w * a->h, areaB = b->w * b->h;
     if (areaA != areaB) return areaA > areaB;
@@ -42,6 +60,7 @@ static int sortSmallBefore(const SortItem* a, const SortItem* b) {
     if (a->order != b->order) return a->order < b->order;
     return a->id < b->id;
 }
+
 
 static int sortOrder(const SortItem* it, int n, int* out, int (*want)(const SortItem*),
                      int (*before)(const SortItem*, const SortItem*)) {
@@ -62,6 +81,7 @@ static int sortIsBig(const SortItem* s) { return !s->fixed && s->group == SG_BIG
 static int sortIsSmall(const SortItem* s) { return !s->fixed && s->group != SG_BIG; }
 static int sortIsLoose(const SortItem* s) { return !s->fixed; }
 
+
 static int sortPlace(SortItem* it, const int* idx, int m, BYTE* grid, int fromRight) {
     for (int k = 0; k < m; k++) {
         SortItem* s = &it[idx[k]];
@@ -81,6 +101,14 @@ static int sortPlace(SortItem* it, const int* idx, int m, BYTE* grid, int fromRi
     return 1;
 }
 
+
+
+
+
+
+
+
+
 #define SORT_PERMS 720
 #define SORT_KEEP 6
 
@@ -91,6 +119,8 @@ typedef struct {
     int free24, free23, rect, areas, filled, moved, rank;
     BYTE tx[SORT_MAX], ty[SORT_MAX];
 } SortCand;
+
+
 
 static int sortFreeColumns(const BYTE* grid, int h) {
     int count = 0;
@@ -116,6 +146,7 @@ static int sortLargestRect(const BYTE* grid) {
     return best;
 }
 
+
 static int sortAreas(const BYTE* grid) {
     BYTE seen[SORT_W * SORT_H];
     int stack[SORT_W * SORT_H], areas = 0;
@@ -140,9 +171,11 @@ static int sortAreas(const BYTE* grid) {
     return areas;
 }
 
+
 static int sortCandBefore(const SortCand* a, const SortCand* b) {
     if (a->free24 != b->free24) return a->free24 > b->free24;
     if (a->free23 != b->free23) return a->free23 > b->free23;
+
     if ((a->filled > 0) != (b->filled > 0)) return a->filled == 0;
     if (a->rect != b->rect) return a->rect > b->rect;
     if (a->areas != b->areas) return a->areas < b->areas;
@@ -150,6 +183,7 @@ static int sortCandBefore(const SortCand* a, const SortCand* b) {
     if (a->moved != b->moved) return a->moved < b->moved;
     return a->rank < b->rank;
 }
+
 
 static int sortPlaceSmall(SortItem* it, const int* idx, int m, BYTE* grid, int edge, int fill, int* filled) {
     for (int k = 0; k < m; k++) {
@@ -171,6 +205,7 @@ static int sortPlaceSmall(SortItem* it, const int* idx, int m, BYTE* grid, int e
     return 1;
 }
 
+
 static int sortPlayable(const SortItem* it, int n) {
     SortItem copy[SORT_MAX];
     memcpy(copy, it, (size_t) n * sizeof(SortItem));
@@ -185,6 +220,7 @@ static int sortPlayable(const SortItem* it, int n) {
     }
     return 0;
 }
+
 
 static int sortNextPerm(int* a, int m) {
     int i = m - 2;
@@ -203,10 +239,13 @@ static int sortNextPerm(int* a, int m) {
     return 1;
 }
 
+
+
 static int sortSearch(SortItem* it, int n, int twoSided, SortCand* best, int kept, SortCand* plain) {
     int big[SORT_MAX], small[SORT_MAX], cls[SORT_MAX], seq[SORT_MAX], order[SORT_MAX];
     int nb = sortOrder(it, n, big, twoSided ? sortIsBig : sortIsLoose, sortBigBefore);
     int ns = twoSided ? sortOrder(it, n, small, sortIsSmall, sortSmallBefore) : 0;
+
     for (int k = 0; k < nb; k++) {
         cls[k] = k;
         for (int j = 0; j < k; j++)
@@ -227,6 +266,7 @@ static int sortSearch(SortItem* it, int n, int twoSided, SortCand* best, int kep
                 it[i].ty = it[i].y;
                 if (it[i].fixed) sortMark(grid, it[i].x, it[i].y, it[i].w, it[i].h, 1);
             }
+
             BYTE used[SORT_MAX] = {0};
             for (int k = 0; k < nb; k++)
                 for (int j = 0; j < nb; j++)
@@ -254,6 +294,7 @@ static int sortSearch(SortItem* it, int n, int twoSided, SortCand* best, int kep
             }
             c.rank = rank * 2 + fill;
             if (c.rank == 0) *plain = c;
+
             int at = kept;
             while (at > 0 && sortCandBefore(&c, &best[at - 1])) at--;
             if (at < SORT_KEEP) {
@@ -267,6 +308,7 @@ static int sortSearch(SortItem* it, int n, int twoSided, SortCand* best, int kep
     return kept;
 }
 
+
 static int sortLayout(SortItem* it, int n) {
     static SortCand best[SORT_KEEP + 1];
     if (n > SORT_MAX) return 0;
@@ -274,9 +316,11 @@ static int sortLayout(SortItem* it, int n) {
         SortCand plain;
         int kept = sortSearch(it, n, pass == 1, best, 0, &plain);
         if (!kept) continue;
+
         int tries = kept, inBest = 0;
         for (int j = 0; j < kept; j++) inBest |= best[j].rank == 0;
         if (plain.rank == 0 && !inBest) best[tries++] = plain;
+
         int pick = 0;
         for (int j = 0; j < tries; j++) {
             for (int i = 0; i < n; i++) {
@@ -309,11 +353,16 @@ static int sortOverlap(int ax, int ay, int aw, int ah, int bx, int by, int bw, i
     return ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah;
 }
 
+
+
+
+
 static int sortNextMove(const SortItem* it, int n, int* k, BYTE* x, BYTE* y) {
     BYTE grid[SORT_W * SORT_H];
     int open = 0;
     memset(grid, 0, sizeof(grid));
     for (int i = 0; i < n; i++) sortMark(grid, it[i].x, it[i].y, it[i].w, it[i].h, (BYTE) (i + 1));
+
     int order[SORT_MAX];
     int m = sortOrder(it, n, order, sortIsLoose, sortBigBefore);
     for (int j = 0; j < m; j++) {
@@ -334,6 +383,7 @@ static int sortNextMove(const SortItem* it, int n, int* k, BYTE* x, BYTE* y) {
         }
     }
     if (!open) return 0;
+
     for (int j = 0; j < m; j++) {
         const SortItem* s = &it[order[j]];
         if (sortAtTarget(s)) continue;

@@ -2,8 +2,17 @@ package com.winlator.d2;
 
 import java.io.IOException;
 
+
+
+
+
+
+
+
 public final class D2Cof {
+
     public static final String[] COMPONENTS = {"HD", "TR", "LG", "RA", "LA", "RH", "LH", "SH", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"};
+
 
     public static final class Layer {
         public final int component;
@@ -20,6 +29,7 @@ public final class D2Cof {
             this.weaponClass = weaponClass;
         }
 
+
         public String code() {
             return component >= 0 && component < COMPONENTS.length ? COMPONENTS[component] : "?";
         }
@@ -27,7 +37,9 @@ public final class D2Cof {
 
     public final int directions, framesPerDirection, version, xMin, xMax, yMin, yMax, animationRate;
     public final Layer[] layers;
+
     public final int[] events;
+
     public final int[][][] priority;
 
     private D2Cof(int directions, int framesPerDirection, int version, int xMin, int xMax, int yMin, int yMax,

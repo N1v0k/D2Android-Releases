@@ -3,42 +3,75 @@ package com.winlator.d2;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Vergleich {
     public static final int STATS = 364;
     public static final int STR = 0, ENERGY = 1, DEX = 2, VIT = 3, LIFE = 7, MANA = 9, LIFE_PCT = 76, MANA_PCT = 77,
         FHR = 99, FBR = 102, FCR = 105, LIFE_PER_LEVEL = 216, MANA_PER_LEVEL = 217, MIN = 21, MAX = 22, MIN2 = 23,
         MAX2 = 24, DEMON = 121, UNDEAD = 122;
+
+
     public static final int W_IS = 360, W_TWO = 361, W_STRB = 362, W_DEXB = 363;
+
     public static final int[] ELEM_MIN = {48, 50, 52, 54}, ELEM_MAX = {49, 51, 53, 55};
+
     public static final int[] RES = {39, 43, 41, 45}, RES_MAX = {40, 44, 42, 46};
+
     public static final int[] PENALTY = {0, 40, 100};
+
     public static final String GREEN = "\u00FF" + "c2", RED = "\u00FF" + "c1";
 
     private D2Vergleich() {
     }
 
+
     public static final class Figur {
+
         public int klasse;
         public int stufe;
+
         public int schwierigkeit;
+
         public long basisLeben, basisMana;
+
         public int lebenJeVit, manaJeEnergie;
+
         public final int[] werte = new int[STATS];
+
+
+
         public D2Breakpoints.Anim fcr, fhr, fbr;
     }
 
+
     public static final class Ergebnis {
+
         public boolean schaden;
         public final int[] schadenVorher = new int[2], schadenNachher = new int[2], elementVorher = new int[2], elementNachher = new int[2];
         public int untoteVorher, untoteNachher, daemonenVorher, daemonenNachher;
         public int lebenVorher, lebenNachher, manaVorher, manaNachher;
         public final int[] resVorher = new int[4], resNachher = new int[4];
+
         public final int[] framesVorher = {-1, -1, -1}, framesNachher = {-1, -1, -1};
     }
 
     static int stat(int[] base, int[] item, int id) {
         return base[id] + (item != null ? item[id] : 0);
     }
+
 
     static long max(Figur f, int[] item, boolean life) {
         long base = life ? f.basisLeben : f.basisMana;
@@ -49,10 +82,16 @@ public final class D2Vergleich {
         return (base + flat + attr + perLevel + pct) >> 8;
     }
 
+
     public static int resistance(int value, int max, int difficulty) {
         int cap = Math.min(95, 75 + max);
         return Math.max(-100, Math.min(cap, value - PENALTY[difficulty]));
     }
+
+
+
+
+
 
     static void schaden(Figur f, int[] w, int[] out) {
         boolean two = w[W_TWO] != 0;
@@ -101,6 +140,7 @@ public final class D2Vergleich {
         return e;
     }
 
+
     static final String[] RES_DE = {"Feuer", "Kälte", "Blitz", "Gift"}, RES_EN = {"Fire", "Cold", "Lightning", "Poison"};
     static final String[] BP_DE = {"Zaubertempo", "Trefferholung", "Blocktempo"}, BP_EN = {"Cast rate", "Hit recovery", "Block rate"};
 
@@ -112,9 +152,11 @@ public final class D2Vergleich {
         return (delta > 0 ? GREEN : RED) + text;
     }
 
+
     public static List<String> zeilen(Ergebnis e, boolean deutsch) {
         List<String> out = new ArrayList<>();
         List<String> parts = new ArrayList<>();
+
         if (e.schaden) {
             int[][][] pairs = {{e.schadenVorher, e.schadenNachher}, {e.elementVorher, e.elementNachher}};
             String[] names = deutsch ? new String[]{"Schaden", "Element"} : new String[]{"Damage", "Element"};
@@ -152,6 +194,7 @@ public final class D2Vergleich {
         return out;
     }
 
+
     public static boolean spielschrift(String line) {
         String text = line.replace(GREEN, "").replace(RED, "");
         for (int i = 0; i < text.length(); i++) {
@@ -160,4 +203,5 @@ public final class D2Vergleich {
         }
         return true;
     }
+
 }

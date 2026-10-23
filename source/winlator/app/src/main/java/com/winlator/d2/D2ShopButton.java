@@ -5,11 +5,18 @@ import android.os.SystemClock;
 
 import com.winlator.R;
 
+
+
+
+
+
+
 final class D2ShopButton {
     private final Context context;
     private final D2ModLink link;
     private final D2AutoItems autoItems;
     private final D2PotionShop shop = new D2PotionShop(new java.util.Random().nextInt());
+
     private boolean lostReported = true;
 
     D2ShopButton(Context context, D2ModLink link, D2AutoItems autoItems) {
@@ -18,12 +25,17 @@ final class D2ShopButton {
         this.autoItems = autoItems;
     }
 
+
+
+
+
     boolean visible(D2ModState s) {
         D2ModItems items = link.items();
         return s != null && s.isOpen(D2ModState.UI_NPCSHOP) && items != null && items.shopPossible && items.shopJob != null
             && items.shopSellsPotions() && link.singlePlayer() && D2Settings.potionShop(context)
             && !shop.busy(items.shopJob, SystemClock.uptimeMillis());
     }
+
 
     String tap(D2ModState s) {
         D2ModItems items = link.items();
@@ -37,6 +49,7 @@ final class D2ShopButton {
         link.refillPotions(job, need, D2Settings.minGold(context));
         return null;
     }
+
 
     String poll() {
         D2ModItems items = link.items();

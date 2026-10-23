@@ -15,12 +15,24 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
 public final class GameVersion {
     public enum Status { OK, NOT_A_GAME_DIR, WRONG_VERSION, MODIFIED, MISSING, NOT_WRITABLE }
 
     public static final class Result {
         public final Status status;
+
         public final File dir;
+
         public final String detail;
 
         Result(Status status, File dir, String detail) {
@@ -39,12 +51,17 @@ public final class GameVersion {
         }
     }
 
+
+
     static final String[] HASHED = {"Game.exe", "Bnclient.dll", "D2CMP.dll", "D2Client.dll", "D2Common.dll",
         "D2DDraw.dll", "D2Direct3D.dll", "D2Game.dll", "D2Gdi.dll", "D2Glide.dll", "D2Lang.dll", "D2Launch.dll",
         "D2MCPClient.dll", "D2Multi.dll", "D2Net.dll", "D2Win.dll", "D2gfx.dll", "D2sound.dll", "Fog.dll", "Storm.dll"};
+
+
     static final String[] OPTIONAL = {"D2VidTst.exe", "d2video.mpq"};
     private static final int VS_FIXEDFILEINFO_SIGNATURE = 0xFEEF04BD;
     private static final long MAX_EXE_SIZE = 16 << 20;
+
 
     private final Map<String, String> reference;
     private final List<String> names = new ArrayList<>();
@@ -56,6 +73,7 @@ public final class GameVersion {
             names.add(entry.getKey());
         }
     }
+
 
     public static Map<String, String> parseList(InputStream in) throws IOException {
         Map<String, String> list = new LinkedHashMap<>();
@@ -70,6 +88,7 @@ public final class GameVersion {
         return list;
     }
 
+
     public Result check(File dir) {
         return check(dir, true);
     }
@@ -78,6 +97,7 @@ public final class GameVersion {
         if (dir == null || !dir.isDirectory()) return new Result(Status.NOT_A_GAME_DIR, dir, null);
         Map<String, File> files = list(dir);
         if (!files.containsKey("game.exe")) {
+
             File found = null;
             int count = 0;
             for (File sub : files.values()) {
@@ -96,6 +116,7 @@ public final class GameVersion {
             if (!matches(gameExe, "game.exe")) {
                 String version = versionName(readVersion(gameExe));
                 if (!"1.13d".equals(version)) return new Result(Status.WRONG_VERSION, dir, version);
+
                 modified.add(gameExe.getName());
             }
             List<String> missing = new ArrayList<>();
@@ -110,7 +131,9 @@ public final class GameVersion {
                 if (key.equals("game.exe")) continue;
                 if (reference.containsKey(key) && !matches(files.get(key), key)) modified.add(files.get(key).getName());
             }
+
             if (needWritable && !writable(dir)) return new Result(Status.NOT_WRITABLE, dir, null);
+
             if (!modified.isEmpty()) return new Result(Status.MODIFIED, dir, String.join(", ", modified));
         }
         catch (IOException e) {
@@ -128,6 +151,7 @@ public final class GameVersion {
         String want = reference.get(key);
         return want != null && file != null && want.equals(sha256(file));
     }
+
 
     static boolean writable(File dir) {
         File save = new File(dir, "save");
@@ -166,6 +190,7 @@ public final class GameVersion {
         }
     }
 
+
     static String readVersion(File exe) throws IOException {
         if (exe.length() > MAX_EXE_SIZE) return null;
         byte[] data = new byte[(int) exe.length()];
@@ -184,6 +209,7 @@ public final class GameVersion {
         }
         return null;
     }
+
 
     public static String versionName(String fileVersion) {
         if (fileVersion == null) return null;

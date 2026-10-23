@@ -26,12 +26,34 @@ import androidx.appcompat.app.AlertDialog;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class D2BuildDialog {
+
+
     private static final String[] CLASS_KEYS = {"Amazon", "Sorceress", "Necromancer", "Paladin", "Barbarian", "Druid", "Assassin"};
+
     private static final int[] CLASS_NAMES = {R.string.class_amazon, R.string.class_sorceress, R.string.class_necromancer,
         R.string.class_paladin, R.string.class_barbarian, R.string.class_druid, R.string.class_assassin};
 
     private D2BuildDialog() {}
+
+
+
+
 
     static void show(Activity activity, D2Hud hud, D2ModState s, D2Points points, String name, D2PointHighlight builds,
                      Runnable spendAfterRespec) {
@@ -65,6 +87,7 @@ final class D2BuildDialog {
                     button.setId(View.generateViewId());
                     D2PointPlan.Build b = list.get(i);
                     String buildName = D2Text.get(activity, texts(activity, b.id)[0]);
+
                     button.setText(com.winlator.BuildConfig.D2_INTERNAL ? D2Text.get(activity, R.string.build_choice_idle, buildName,
                         D2Text.get(activity, idleLabel(b.idle))) : buildName);
                     D2Style.control(button);
@@ -112,10 +135,12 @@ final class D2BuildDialog {
         }
     }
 
+
     private static void fill(Activity a, LinearLayout box, D2Hud hud, D2ModState s, D2Points points, D2PointPlan.Build b) {
         box.removeAllViews();
         int[] t = texts(a, b.id);
         com.winlator.d2.test.Fertigkeiten table = hud != null ? hud.fertigkeiten : null;
+
         String reason = !b.idleReason.isEmpty() ? D2Text.get(a, textId(a, "build_idle_reason_" + b.idleReason, R.string.build_no_text)) : "";
         int noLine = com.winlator.d2.test.Kampfwahl.eigeneListe(b.characterClass) ? R.string.build_idle_line_nein
             : R.string.build_idle_line_nein_attack;
@@ -189,6 +214,7 @@ final class D2BuildDialog {
         }
     }
 
+
     private static String rule(Activity a, int[][] steps) {
         if (steps.length == 0) return D2Text.get(a, R.string.build_stat_nothing);
         List<String> parts = new ArrayList<>();
@@ -214,9 +240,17 @@ final class D2BuildDialog {
             : D2PointPlan.IDLE_PARTLY.equals(idle) ? R.string.build_idle_teilweise : R.string.build_idle_ja;
     }
 
+
+
+
+
     static boolean respecAvailable(Context c, D2ModState s, D2ModLink link) {
         return s != null && s.plugyLoaded && link != null && link.singlePlayer() && D2Settings.respecStarted(c);
     }
+
+
+
+
 
     private static View respecButton(Activity a, D2ModLink link, Runnable spendAfterRespec) {
         Button button = new Button(a);
@@ -250,6 +284,10 @@ final class D2BuildDialog {
         return button;
     }
 
+
+
+
+
     private static void offerSpend(Activity a, Button button, Runnable spend) {
         button.setText(D2Text.get(a, R.string.build_spend));
         D2Style.buttonText(button, D2Style.GOLD);
@@ -276,11 +314,19 @@ final class D2BuildDialog {
         });
     }
 
+
+
+
+
     static int[] texts(Context c, String id) {
         String key = "build_" + id.replace('-', '_');
         return new int[]{textId(c, key, R.string.build_unnamed), textId(c, key + "_strengths", R.string.build_no_text),
             textId(c, key + "_weaknesses", R.string.build_no_text), textId(c, key + "_tips", R.string.build_no_text)};
     }
+
+
+
+
 
     static String withoutIdle(String text) {
         return com.winlator.BuildConfig.D2_INTERNAL ? text : dropIdleLines(text);
@@ -295,6 +341,7 @@ final class D2BuildDialog {
         }
         return out.toString();
     }
+
 
     private static int textId(Context c, String name, int fallback) {
         int id = c.getResources().getIdentifier(name, "string", c.getPackageName());
@@ -311,6 +358,7 @@ final class D2BuildDialog {
         String n = hud != null ? hud.skillName(skill) : null;
         return n != null && !n.isEmpty() ? n : "#" + skill;
     }
+
 
     private static View iconRow(Activity a, D2Hud hud, int skill, TextView text) {
         LinearLayout row = new LinearLayout(a);

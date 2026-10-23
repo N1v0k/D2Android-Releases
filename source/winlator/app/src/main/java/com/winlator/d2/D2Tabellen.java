@@ -4,13 +4,29 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Tabellen {
+
     public static final int ITEM_RECORD = 424, TYPE_RECORD = 228;
+
     static final int I_CODE = 0x80, I_SPEED = 0xD8, I_MINDAM = 0xFE, I_MAXDAM = 0xFF, I_2H_MINDAM = 0x102,
         I_2H_MAXDAM = 0x103, I_STRBONUS = 0x106, I_DEXBONUS = 0x108, I_REQSTR = 0x10A, I_REQDEX = 0x10C, I_2HANDED = 0x11C,
         I_TYPE = 0x11E, I_QUEST = 0x12A, I_1OR2HANDED = 0x13D, I_LEVELREQ = 0x13F;
+
     static final int T_CODE = 0x00, T_EQUIV1 = 0x04, T_EQUIV2 = 0x06, T_THROWABLE = 0x10, T_CLASS = 0x21;
+
     public static final int CLASS_ANY = 255;
+
 
     public static final class Waffe {
         public final String code;
@@ -36,6 +52,7 @@ public final class D2Tabellen {
         }
     }
 
+
     public static final class Typ {
         public final String code;
         public final int equiv1, equiv2, klasse;
@@ -57,6 +74,10 @@ public final class D2Tabellen {
         this.typen = typen;
     }
 
+
+
+
+
     public static D2Tabellen lesen(byte[] weapons, byte[] itemtypes) {
         int wn = count(weapons, ITEM_RECORD), tn = count(itemtypes, TYPE_RECORD);
         if (wn <= 0 || tn <= 0) return null;
@@ -72,9 +93,11 @@ public final class D2Tabellen {
         return t;
     }
 
+
     public Waffe waffe(String code) {
         return code == null ? null : waffen.get(code.trim());
     }
+
 
     public boolean ist(int type, String code) {
         return ist(type, code.trim(), 0);
@@ -85,6 +108,7 @@ public final class D2Tabellen {
         Typ t = typen[type];
         return t.code.trim().equals(code) || ist(t.equiv1, code, depth + 1) || ist(t.equiv2, code, depth + 1);
     }
+
 
     public int klasse(int type) {
         return klasse(type, 0);
@@ -97,6 +121,7 @@ public final class D2Tabellen {
         int k = klasse(t.equiv1, depth + 1);
         return k != CLASS_ANY ? k : klasse(t.equiv2, depth + 1);
     }
+
 
     public boolean fernkampf(int type) {
         return ist(type, "miss") || ist(type, "thro") || (type > 0 && type < typen.length && typen[type].throwable);

@@ -4,12 +4,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+
+
+
+
+
+
+
 public final class D2PlugYTexts {
+
     public static final String STRINGS_FILE = "LocalizedStrings" + ".ini";
+
     static final String[] SECTIONS = {"[STR_STATS_UNASSIGN_WITH_LIMIT]", "[STR_STATS_UNASSIGN_WITHOUT_LIMIT]"};
     private static final Pattern LINE = Pattern.compile("([A-Z]{3})=([^\r\n]*)(\r?\n?)");
 
     private D2PlugYTexts() {}
+
 
     public static String statsHint(String ini, String german, String english) {
         StringBuilder out = new StringBuilder(ini.length() + 256);
@@ -34,6 +45,7 @@ public final class D2PlugYTexts {
         }
         return out.toString();
     }
+
 
     public static byte[] statsHint(byte[] file, String german, String english) {
         if (file == null || file.length < 2 || (file[0] & 0xFF) != 0xFF || (file[1] & 0xFF) != 0xFE) return null;

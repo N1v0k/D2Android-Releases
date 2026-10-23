@@ -1,4 +1,4 @@
-package com.winlator.core;
+package com.winlator.core;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.os.Process;
 import android.system.Os;
@@ -70,23 +70,23 @@ public abstract class ProcessHelper {
         return exec(command, envVars, workingDir, terminationCallback, null);
     }
 
-    /**
-     * D2Android: {@code stdinText} is written to the process's stdin and the pipe is closed (the installer
-     * helper reads the player's keys this way, so they never appear in a command line or log). Null = no stdin.
-     */
+
+
+
+
     public static int exec(String command, EnvVars envVars, File workingDir, Callback<Integer> terminationCallback, String stdinText) {
         return exec(command, envVars, workingDir, terminationCallback, stdinText, null);
     }
 
-    /**
-     * D2Android: {@code outputFile} gets the process's stdout and stderr appended (O_APPEND, so the app may
-     * empty it meanwhile), instead of /dev/null. Null = /dev/null as before. Debug callbacks (diagnosis runs) win.
-     */
+
+
+
+
     public static int exec(String command, EnvVars envVars, File workingDir, Callback<Integer> terminationCallback, String stdinText, File outputFile) {
         int pid = -1;
         try {
             ProcessBuilder processBuilder = (new ProcessBuilder(splitCommand(command))).directory(workingDir);
-            // D2Android: the game's own output to a file (D2GuestOutput), else /dev/null as before
+
             if (debugCallbacks.isEmpty()) {
                 processBuilder.redirectOutput(outputFile != null ? ProcessBuilder.Redirect.appendTo(outputFile)
                     : ProcessBuilder.Redirect.to(new File("/dev/null"))).redirectErrorStream(true);
@@ -106,11 +106,11 @@ public abstract class ProcessHelper {
                 createDebugThread(process.getErrorStream());
             }
 
-            // D2Android: the watcher comes first, so a guest that ends before reading stdin is still reported
+
             if (terminationCallback != null) createWaitForThread(process, terminationCallback);
 
-            // D2Android: hand the text to stdin, then close it; a closed pipe only means the guest is gone,
-            // which the watcher reports
+
+
             if (stdinText != null) {
                 try (java.io.OutputStream stdin = process.getOutputStream()) {
                     stdin.write(stdinText.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -275,7 +275,7 @@ public abstract class ProcessHelper {
         return getProcessName(new File("/proc"), pid);
     }
 
-    /** D2Android: with the /proc folder as a parameter, for the desktop test. */
+
     public static String getProcessName(File procFile, int pid) {
         try (BufferedReader reader = new BufferedReader(new FileReader(new File(procFile, pid+"/cmdline")))) {
             StringBuilder result = new StringBuilder();
@@ -318,21 +318,21 @@ public abstract class ProcessHelper {
         return getChildProcesses(new File("/proc"), Os.getpid());
     }
 
-    /**
-     * D2Android: a process that ends while the list is read (its stat is gone) is left out; before, it emptied
-     * the whole list. At the game's start many short Wine processes come and go, and an empty list in onResume left
-     * every stopped guest process stopped (black picture, Game.exe stopped). The /proc folder is a parameter for the
-     * desktop test (mod/test/jvm/ProcListTest.java).
-     */
+
+
+
+
+
+
     public static List<PStat> getChildProcesses(File procFile, int parentPID) {
         return getProcesses(procFile, pstat -> pstat.parentPID == parentPID || pstat.pid > parentPID);
     }
 
-    /**
-     * D2Android: every process in procFile that keep accepts (its pid, parent and state read); name and
-     * guestProcess as for getChildProcesses. D2GuestList picks the guests by uid and runtime path with it, not by
-     * "pid > the app's pid", which misses a guest whose pid came after a wrap of the pid counter.
-     */
+
+
+
+
+
     public static List<PStat> getProcesses(File procFile, java.util.function.Predicate<PStat> keep) {
         String[] pids = procFile.list((file, name) -> (new File(file, name)).isDirectory() && name.matches("[0-9]+"));
         if (pids == null) return Collections.emptyList();
@@ -384,7 +384,7 @@ public abstract class ProcessHelper {
                     }
                 }
 
-                if (keep.test(pstat)) { // D2Android: the choice is the caller's
+                if (keep.test(pstat)) {
                     pstat.name = getProcessName(procFile, pstat.pid);
                     if (pstat.name.isEmpty()) pstat.name = pstat.shortName;
                     pstat.guestProcess = pstat.name.contains("wine") || pstat.name.contains(".exe");
@@ -392,7 +392,7 @@ public abstract class ProcessHelper {
                 }
             }
             catch (Exception e) {
-                continue; // D2Android: gone meanwhile, the others still count
+                continue;
             }
         }
 

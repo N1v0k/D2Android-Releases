@@ -1,16 +1,32 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
 final class D2StartLayout {
     final int width, height;
     final float u;
+
     final float scale, cutX;
+
     final int backdropHeight;
     final float hintY, listTop, listBottom, rowHeight, cardHeight, cardLeft, cardRight, figureX, textX, whenRight;
+
     final float textScale, smallScale;
+
     final float statusScale;
+
+
+
+
     final float statusBandTop, statusBandBottom;
+
     static final float STATUS_MIN_UNITS = 1f;
     final float scrollX, countY, lineY, buttonsTop, buttonWidth, buttonHeight, firstGap, gap, footerY;
+
     final float classicY;
     static final int BUTTONS = 5;
 
@@ -29,6 +45,7 @@ final class D2StartLayout {
         gap = 10 * u;
         footerY = height - 34 * u;
         classicY = footerY - 40 * u;
+
         float fixed = Math.max(620 * u, 58 * u + BUTTONS * buttonHeight + firstGap + (BUTTONS - 2) * gap + 70 * u);
         listBottom = Math.max(listTop + 214 * u, height - fixed);
         countY = listBottom + 8 * u;
@@ -49,6 +66,7 @@ final class D2StartLayout {
         scrollX = width - 40 * u;
     }
 
+
     static final class Status {
         final java.util.List<String> lines;
         final float scale, top, step;
@@ -60,6 +78,12 @@ final class D2StartLayout {
             this.step = step;
         }
     }
+
+
+
+
+
+
 
     Status status(D2GameFont font, String text) {
         float step = font.height * 0.9f, band = statusBandBottom - statusBandTop, room = width - 60 * u;
@@ -77,6 +101,7 @@ final class D2StartLayout {
             k -= 0.1f * u;
         }
     }
+
 
     float buttonTop(int i) {
         return buttonsTop + i * buttonHeight + (i > 0 ? firstGap + (i - 1) * gap : 0);

@@ -9,15 +9,27 @@ import android.os.Looper;
 import java.io.File;
 import java.io.FileOutputStream;
 
+
+
+
+
+
+
+
+
+
 final class D2Music {
     static final String TITLE = "data\\global\\music\\introedit.wav";
     private static final String CACHE = "d2-title.wav";
+
     private static final long GRACE_MS = 2500;
     private static final long FADE_MS = 1500;
     private static final Handler handler = new Handler(Looper.getMainLooper());
     private static MediaPlayer player;
+
     private static String playerSource;
     private static boolean preparing, forGame;
+
     private static boolean gameFront;
     private static int pages;
     private static final Runnable pauseLater = () -> {
@@ -26,21 +38,25 @@ final class D2Music {
 
     private D2Music() {}
 
+
     static void pageShown(Context context) {
         pages++;
         handler.removeCallbacks(pauseLater);
         if (D2Settings.sound(context)) start(context);
     }
 
+
     static void pageHidden() {
         pages = Math.max(0, pages - 1);
         if (pages == 0) handler.postDelayed(pauseLater, GRACE_MS);
     }
 
+
     static void soundChanged(Context context) {
         if (D2Settings.sound(context) && (pages > 0 || forGame)) start(context);
         else pause();
     }
+
 
     static void keepForGame() {
         forGame = true;
@@ -48,12 +64,14 @@ final class D2Music {
         handler.removeCallbacks(pauseLater);
     }
 
+
     static void gameInFront(Context context, boolean front) {
         if (!forGame) return;
         gameFront = front;
         if (front && D2Settings.sound(context)) start(context);
         else if (!front) pause();
     }
+
 
     static void fadeOut() {
         forGame = false;
@@ -124,6 +142,10 @@ final class D2Music {
             });
         }, "TitleMusic").start();
     }
+
+
+
+
 
     private static File cached(Context app, String source) {
         File file = new File(app.getCacheDir(), CACHE);

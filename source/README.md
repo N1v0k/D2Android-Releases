@@ -1,12 +1,13 @@
-# D2Android 1.3.1 – source code
+# D2Android 1.3.2 – source code
 
 D2Android runs the original Diablo II: Lord of Destruction 1.13d on Android phones (ARM64) with touch controls.
 It is an unofficial fan project, **not affiliated with, endorsed or supported by Blizzard Entertainment**. You need
 your own copy of the game; no game files are part of this archive.
 
-This archive is the source of the public app (package `at.d2andrpub`) of release 1.3.1: the Android app
+This archive is the source of the public app (package `at.d2andrpub`) of release 1.3.2: the Android app
 (`winlator/`, Java and a small native part), the scripts that put together the runtime (Box64, Wine, Turnip, DXVK),
-and the mod (`mod/`, C for MinGW) that runs inside `Game.exe`. Comments are not included.
+and the mod (`mod/`, C for MinGW) that runs inside `Game.exe`. It holds only what the build needs. Comments are
+removed; every line keeps its number, so the code is line for line the code of the APK.
 
 ## Not included
 
@@ -28,7 +29,7 @@ bash tools/build-runtime.sh --public           # runtime archive for at.d2andrpu
 bash tools/build-mod.sh                        # mod DLL, loader and installer helpers
 cd winlator
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew assembleRelease -Pd2VersionName=1.3.1 -Pd2VersionCode=<number> \
+./gradlew assembleRelease -Pd2VersionName=1.3.2 -Pd2VersionCode=<number> \
     -Pd2ReleaseKeystore=/path/to/your-key.p12 -Pd2ReleaseKeystorePassword=...
 ```
 
@@ -47,14 +48,14 @@ runtime gets another version (the build says so, it works the same). To use the 
 
 **The build is not byte-identical to the official APK.** The runtime archive (with the repacked Wine package),
 timestamps inside the build and the signature differ. The code is the same: this archive is made from the commit
-the release was built from.
+the release was built from, with nothing changed but the comments.
 
 ## Licences
 
 | Path | Licence |
 |---|---|
 | `winlator/app/src/main/java/com/winlator/d2/` (D2Android's own app code), `mod/`, `tools/` except `tools/alsa-plugin/`, `README.md` | MIT (`LICENSE`), Copyright (c) 2026 The D2Android authors |
-| everything else under `winlator/`: the other packages under `com/winlator/`, `app/src/main/cpp/`, resources, assets, manifests and Gradle files of the project taken over from Winlator 11.2 (https://github.com/brunodev85/winlator-app) | GNU LGPL 2.1 (`winlator/LICENSE`); D2Android's changes are marked `D2Android:` |
+| everything else under `winlator/`: the other packages under `com/winlator/`, `app/src/main/cpp/`, resources, assets, manifests and Gradle files of the project taken over from Winlator 11.2 (https://github.com/brunodev85/winlator-app) | GNU LGPL 2.1 (`winlator/LICENSE`); a file D2Android changed says so in its first line ("Modified by D2Android") |
 | `tools/alsa-plugin/` (Winlator's `android_alsa/module_pcm_android_aserver.c` with D2Android's changes) | GNU LGPL 2.1 |
 | code ported from elsewhere inside D2Android's own files: `D2Xbr.java` (Hyllian's xBR-lv2), `D2StormAudio.java` (StormLib), `D2Mpq.java` (blast.c by Mark Adler) | their own licences (MIT, MIT, zlib), as stated in each file |
 | except `winlator/gradlew`, `winlator/gradlew.bat`, `winlator/gradle/wrapper/` | Apache 2.0 (Gradle) |

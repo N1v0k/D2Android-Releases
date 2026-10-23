@@ -1,9 +1,26 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_TAKE 15
 #define TAKE_RANGE     20.0
 #define TAKE_NPC_NEAR  4.0
 
 static int takeAvailable;
+
+
 
 static void checkTakeSites(void) {
     static const BYTE item[] = {0xB9, 0x04, 0x00, 0x00, 0x00, 0xB0, 0x16, 0xE8};
@@ -19,6 +36,7 @@ static void sendUnitPacket(BYTE op, DWORD type, DWORD id, int withFlag) {
     BYTE packet[13] = {op};
     *(DWORD*) (packet + 1) = type;
     *(DWORD*) (packet + 5) = id;
+
     fSendPacket(withFlag ? 13 : 9, 1, packet);
 }
 
@@ -41,6 +59,7 @@ static void takeUnit(void* player, DWORD type, DWORD id, DWORD now) {
     }
     double d = unitDistance(player, unit);
     const char* how = "click";
+
     stopWalk(player);
     pendingPress.active = 0;
     releaseHeld("app: take");

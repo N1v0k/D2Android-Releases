@@ -16,6 +16,11 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+
+
+
+
+
 public final class D2DeviceProbe {
     public static final long GPU_TIMEOUT_MS = 1000;
 
@@ -30,6 +35,7 @@ public final class D2DeviceProbe {
         this.kgsl = kgsl;
     }
 
+
     public static D2DeviceProbe basics() {
         boolean arm64 = Arrays.asList(Build.SUPPORTED_64_BIT_ABIS).contains("arm64-v8a");
         long pageSize;
@@ -42,9 +48,11 @@ public final class D2DeviceProbe {
         return new D2DeviceProbe(arm64, pageSize, new File("/dev/kgsl-3d0").exists());
     }
 
+
     public boolean ruledOutEarly() {
         return !arm64 || (pageSize > 0 && pageSize != D2DeviceCheck.PAGE_SIZE);
     }
+
 
     public void readGpu() {
         String[] out = {"", ""};
@@ -71,6 +79,7 @@ public final class D2DeviceProbe {
                 out[1] = renderer != null ? renderer : "";
             }
             catch (Throwable ignored) {
+
             }
             finally {
                 try {
@@ -98,28 +107,6 @@ public final class D2DeviceProbe {
         }
     }
 
-    public static final String EXTRA_FAKE = "d2_devicecheck_fake";
-    public static final String ADB_TOKEN = "/data/local/tmp/d2android-devicecheck.ok";
-    public boolean fakeLowSpace;
-
-    public static String fakeFromIntent(android.content.Context context, android.content.Intent intent) {
-        if (!com.winlator.BuildConfig.D2_INTERNAL) return null;
-        String fake = intent != null ? intent.getStringExtra(EXTRA_FAKE) : null;
-        if (fake == null) return null;
-        if ((context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) return null;
-        return D2SpieltestPort.tokenFresh("device check", ADB_TOKEN) ? fake : null;
-    }
-
-    public static D2DeviceProbe fake(String which) {
-        boolean arm64 = !which.equals("abi32"), kgsl = which.startsWith("adreno") || which.equals("unknown") || which.equals("space");
-        D2DeviceProbe p = new D2DeviceProbe(arm64, which.equals("pages16k") ? 16384 : D2DeviceCheck.PAGE_SIZE, kgsl);
-        if (which.equals("mali")) { p.glVendor = "ARM"; p.glRenderer = "Mali-G715"; }
-        else if (which.startsWith("adreno")) { p.glVendor = "Qualcomm"; p.glRenderer = "Adreno (TM) " + which.substring(6); }
-        else if (which.equals("space") || which.equals("pages16k") || which.equals("abi32")) { p.glVendor = "Qualcomm"; p.glRenderer = "Adreno (TM) 740"; }
-        p.fakeLowSpace = which.equals("space");
-        return p;
-    }
-
 
     public String gpuName() {
         return glRenderer.isEmpty() ? null : glRenderer;
@@ -129,6 +116,7 @@ public final class D2DeviceProbe {
         return D2DeviceCheck.classify(arm64, pageSize, glVendor, glRenderer, kgsl);
     }
 
+
     public static long freeBytes(File dir) {
         try {
             return new StatFs(dir.getPath()).getAvailableBytes();
@@ -137,6 +125,7 @@ public final class D2DeviceProbe {
             return -1;
         }
     }
+
 
     public String describe() {
         return "device " + Build.MANUFACTURER + " " + Build.MODEL + ", arm64 " + arm64 + ", page " + pageSize + ", kgsl " + kgsl

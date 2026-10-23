@@ -1,3 +1,10 @@
+
+
+
+
+
+
+
 #ifdef D2MOD_TESTCMDS
 
 static const DWORD probeStats[] = {0, 1, 2, 3, 7, 9, 31, 39, 40, 41, 42, 43, 44, 45, 46, 72, 73, 76, 77, 96, 99, 102,
@@ -23,10 +30,11 @@ static void probeUnit(const char* who, void* unit) {
     else trace("probe: %s:%s", who, line);
 }
 
+
 static void statProbe(void* player) {
     typedef DWORD (__stdcall *MaxLife_t)(void*);
     MaxLife_t maxLife = (MaxLife_t) GetProcAddress((HMODULE) common, (LPCSTR) 10574);
-    trace("probe: hero level %lu, max life (#10574) %lu", (unsigned long) fGetUnitStat(player, 12, 0),
+    trace("probe: hero level %lu, max life (ordinal 10574) %lu", (unsigned long) fGetUnitStat(player, 12, 0),
         maxLife ? (unsigned long) maxLife(player) : 0ul);
     probeUnit("hero", player);
     void* inventory = RDP(player, U_INVENTORY);

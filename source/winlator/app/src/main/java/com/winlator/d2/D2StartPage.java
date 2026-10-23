@@ -28,14 +28,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
 @SuppressLint("ViewConstructor")
 final class D2StartPage extends FrameLayout {
     interface Host {
         void start(D2SaveHeader.Info character, int difficulty);
         void longPress(D2SaveHeader.Info character);
+
         void refused(D2SaveHeader.Info character);
+
         void button(int which);
     }
+
 
     static final class Figure {
         final Bitmap[] frames;
@@ -57,7 +69,9 @@ final class D2StartPage extends FrameLayout {
     private final Rect visible = new Rect();
     private D2StartLayout layout;
     private Bitmap backdrop, hint, count, footer, classic, button, buttonPressed;
+
     private final View classicTap, licencesTap;
+
     private final Bitmap[] cardFrames = new Bitmap[3];
     private Bitmap[] blackLeft, blackRight, fireLeft, fireRight;
     private final Backdrop backdropView;
@@ -68,6 +82,7 @@ final class D2StartPage extends FrameLayout {
     private final List<Stone> stones = new ArrayList<>();
     private String status = "";
     private List<Bitmap> statusLines = new ArrayList<>();
+
     private D2StartLayout.Status statusPlace;
     private boolean running;
 
@@ -86,9 +101,12 @@ final class D2StartPage extends FrameLayout {
         fireRight = bitmaps(art.fireRight);
         button = bitmap(art.button);
         buttonPressed = bitmap(art.buttonPressed);
+
+
         int hintText = characters.isEmpty() ? R.string.start_hint_empty
             : D2CharacterList.anyStartable(characters) ? R.string.start_hint : R.string.start_hint_none;
         hint = bitmap(art.formal10.render(context.getString(hintText), 0xA0A0A0));
+
         classic = bitmap(art.formal10.render(context.getString(R.string.start_classic), 0xA0A0A0));
         footer = bitmap(art.formal10.render(context.getString(R.string.start_trademark) + "   " + context.getString(R.string.start_licenses), 0x808080));
         backdropView = new Backdrop(context);
@@ -146,6 +164,7 @@ final class D2StartPage extends FrameLayout {
         post(this::place);
     }
 
+
     private void place() {
         D2StartLayout l = layout;
         if (l == null) return;
@@ -180,10 +199,12 @@ final class D2StartPage extends FrameLayout {
         licences.setLayoutParams(lp);
     }
 
+
     private Bitmap cardFrame(int kind, D2StartLayout l, float w, float h) {
         if (art.cardFrame == null) return null;
         Bitmap b = cardFrames[kind];
         if (b == null) {
+
             int fw = Math.max(2 * D2StartArt.CARD_FRAME_EDGE + 1, Math.round(w / l.scale));
             int fh = Math.max(2 * D2StartArt.CARD_FRAME_EDGE + 1, Math.round(h / l.scale));
             int[] px = D2StartArt.frame(art.cardFrame, D2StartArt.CARD_FRAME_EDGE, fw, fh);
@@ -205,17 +226,21 @@ final class D2StartPage extends FrameLayout {
         count = bitmap(art.formal10.render(text, 0xA0A0A0));
     }
 
+
     void setStatus(String text) {
         status = text == null ? "" : text;
         List<Bitmap> lines = new ArrayList<>();
         D2StartLayout l = layout;
         if (!status.isEmpty() && l != null) {
+
+
             statusPlace = l.status(art.formal10, status);
             for (String line : statusPlace.lines) lines.add(bitmap(art.formal10.render(line, 0xC8B074)));
         }
         statusLines = lines;
         backdropView.invalidate();
     }
+
 
     void setFigure(String file, Figure figure) {
         figures.put(file, figure);
@@ -224,6 +249,7 @@ final class D2StartPage extends FrameLayout {
             if (card.character.file.equals(file)) card.invalidate();
         }
     }
+
 
     void setRunning(boolean on) {
         running = on;
@@ -238,6 +264,7 @@ final class D2StartPage extends FrameLayout {
             logoView.invalidate();
             for (int i = 0; i < rows.getChildCount(); i++) {
                 View card = rows.getChildAt(i);
+
                 if (card.getLocalVisibleRect(visible)) card.invalidate();
             }
             handler.postDelayed(this, LOGO_MS);
@@ -253,6 +280,7 @@ final class D2StartPage extends FrameLayout {
     private static int frame(long ms, int count) {
         return count <= 1 ? 0 : (int) ((SystemClock.uptimeMillis() / Math.max(1, ms)) % count);
     }
+
 
     private final class Backdrop extends View {
         Backdrop(Context context) {
@@ -292,6 +320,7 @@ final class D2StartPage extends FrameLayout {
         }
     }
 
+
     private final class Logo extends View {
         Logo(Context context) {
             super(context);
@@ -317,6 +346,7 @@ final class D2StartPage extends FrameLayout {
             canvas.drawBitmap(b[n], D2StartArt.LOGO_X + f[n].offsetX, D2StartArt.LOGO_Y + f[n].offsetY - f[n].height, paint);
         }
     }
+
 
     private final class Overlay extends View {
         private final Paint fade = new Paint(), track = new Paint(), thumb = new Paint();
@@ -347,6 +377,7 @@ final class D2StartPage extends FrameLayout {
         }
     }
 
+
     private final class Card extends View {
         final D2SaveHeader.Info character;
         private final boolean last;
@@ -362,6 +393,7 @@ final class D2StartPage extends FrameLayout {
             when = bitmap(art.formal10.render(ago(context, System.currentTimeMillis(), c.modified), 0x909090));
             classLine = bitmap(art.font16.render(context.getString(R.string.start_class_level, className(context, c.characterClass), c.level), 0xF0F0F0));
             String where = context.getString(R.string.start_where, difficultyName(context, c.defaultDifficulty()), c.lastAct + 1);
+
             String level = art.levels.get(c.file);
             if (level != null) where = context.getString(R.string.start_where_level, difficultyName(context, c.defaultDifficulty()), level);
             if (hc) where += "   " + context.getString(R.string.launch_character_hardcore);
@@ -389,6 +421,7 @@ final class D2StartPage extends FrameLayout {
             boolean strong = character.hardcore() || last;
             RectF card = new RectF(l.cardLeft, 0, l.cardRight, l.cardHeight);
             canvas.drawRect(card, fill);
+
             Bitmap gold = cardFrame(character.hardcore() ? D2StartArt.FRAME_HARDCORE : last ? D2StartArt.FRAME_LAST
                 : D2StartArt.FRAME_OTHER, l, card.width(), card.height());
             if (gold != null) canvas.drawBitmap(gold, null, card, pixels);
@@ -415,9 +448,11 @@ final class D2StartPage extends FrameLayout {
         }
     }
 
+
     private final class Stone extends View {
         final int index;
         private final Bitmap label;
+
         private Bitmap sharp;
         private int sharpFactor;
 
@@ -452,6 +487,7 @@ final class D2StartPage extends FrameLayout {
     }
 
 
+
     static String className(Context context, int cls) {
         int[] names = {R.string.class_amazon, R.string.class_sorceress, R.string.class_necromancer, R.string.class_paladin,
             R.string.class_barbarian, R.string.class_druid, R.string.class_assassin};
@@ -462,6 +498,7 @@ final class D2StartPage extends FrameLayout {
         int[] names = {R.string.difficulty_normal, R.string.difficulty_nightmare, R.string.difficulty_hell};
         return context.getString(names[Math.max(0, Math.min(2, d))]);
     }
+
 
     static String ago(Context context, long now, long then) {
         int[] a = D2StartTexts.ago(now, then);

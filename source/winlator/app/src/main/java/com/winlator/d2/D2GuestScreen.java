@@ -35,6 +35,14 @@ import com.winlator.xserver.XServer;
 
 import java.io.File;
 
+
+
+
+
+
+
+
+
 public class D2GuestScreen implements XServerHost {
     private final Activity activity;
     private final SharedPreferences preferences;
@@ -45,7 +53,12 @@ public class D2GuestScreen implements XServerHost {
     private final TextView loadingView;
     private final boolean audio;
     private XEnvironment environment;
+
     private D2GuestComponent guest;
+
+
+
+
 
     public D2GuestScreen(Activity activity, FrameLayout root, boolean audio, boolean relativeMouse) {
         this.activity = activity;
@@ -65,6 +78,7 @@ public class D2GuestScreen implements XServerHost {
                     xServerView.getRenderer().setCursorVisible(true);
                     activity.runOnUiThread(() -> loadingView.setVisibility(View.GONE));
                 }
+
                 if (window.attributes.isViewable() && window.isDesktopWindow()) {
                     window.attributes.setViewable(false);
                     if (window.attributes.isEnabled()) window.disableAllDescendants();
@@ -86,6 +100,7 @@ public class D2GuestScreen implements XServerHost {
         loadingView.setGravity(Gravity.CENTER);
         loadingView.setBackgroundColor(Color.BLACK);
         root.addView(loadingView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+
         FrameLayout.LayoutParams bannerParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
         int bannerMargin = Math.round(6 * activity.getResources().getDisplayMetrics().density);
@@ -93,9 +108,11 @@ public class D2GuestScreen implements XServerHost {
         if (com.winlator.BuildConfig.D2_INTERNAL) root.addView(new D2TestBanner(activity), bannerParams);
     }
 
+
     public void addOverlay(View overlay) {
         root.addView(overlay, root.indexOfChild(xServerView) + 1);
     }
+
 
     public TextView getLoadingView() {
         return loadingView;
@@ -105,9 +122,14 @@ public class D2GuestScreen implements XServerHost {
         return winHandler;
     }
 
+
+
+
+
     public void start(String command, EnvVars env, String stdinText, Callback<Integer> onEnded) {
         start(command, env, stdinText, onEnded, null);
     }
+
 
     public void start(String command, EnvVars env, String stdinText, Callback<Integer> onEnded, File outputFile) {
         File rootDir = D2Runtime.rootDir(activity);
@@ -127,32 +149,56 @@ public class D2GuestScreen implements XServerHost {
         return environment != null;
     }
 
+
     public void resume() {
         if (environment == null) return;
         xServerView.onResume();
         environment.onResume();
     }
 
+
     public void pauseGuest() {
         if (environment != null) environment.onPause();
     }
+
+
+
+
 
     public void resumeGuest() {
         if (environment != null) environment.onResume();
     }
 
+
     public void pauseView() {
         if (environment != null) xServerView.onPause();
     }
+
 
     public void destroy() {
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
     }
 
+
     public void destroy(String reason) {
         if (guest != null) guest.setStopReason(reason);
         destroy();
+    }
+
+
+
+
+
+    public void destroy(String reason, D2ExitGuard guard) {
+        if (guest != null) guest.setStopReason(reason);
+        guard.step("WinHandler");
+        winHandler.stop();
+        if (environment == null) return;
+        for (com.winlator.xenvironment.EnvironmentComponent component : environment) {
+            guard.step(component.getClass().getSimpleName());
+            component.stop();
+        }
     }
 
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -162,6 +208,7 @@ public class D2GuestScreen implements XServerHost {
     public boolean onKeyEvent(KeyEvent event) {
         return !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event);
     }
+
 
 
     @Override

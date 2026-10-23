@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.graphics.Bitmap;
 
@@ -55,11 +55,11 @@ public class Drawable extends XResource {
         return texture;
     }
 
-    /**
-     * D2Android: this drawable holds the new texture and lets go of the old one, which it returns if no other
-     * drawable holds it any more (the caller destroys it on the GL thread), else null. A shared GPUImage's CPU mapping
-     * is used only while held: letting go of it gives the drawable a buffer of its own again.
-     */
+
+
+
+
+
     public Texture setTexture(Texture texture) {
         Texture old = this.texture;
         if (texture == old) return null;
@@ -67,17 +67,18 @@ public class Drawable extends XResource {
         this.texture = texture;
         if (texture instanceof GPUImage) data = ((GPUImage)texture).getVirtualData();
         else if (old instanceof GPUImage && data != null && data == ((GPUImage)old).getVirtualData()) {
+
             data = texture == null ? null : ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
         }
         return old != null && old.letGo(this) ? old : null;
     }
 
-    /**
-     * D2Android: the drawable goes (DrawableManager.removeDrawable). It lets go of its texture but keeps the
-     * field: the GL thread may still draw the old scene with it (a null texture crashed it there). Returns
-     * the texture if no other drawable holds it any more (the caller destroys it on the GL thread), else null. A
-     * shared GPUImage's CPU mapping is not used any more.
-     */
+
+
+
+
+
+
     public Texture releaseTexture() {
         Texture old = this.texture;
         if (old == null) return null;

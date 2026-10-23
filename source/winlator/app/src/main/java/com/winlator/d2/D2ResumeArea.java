@@ -5,14 +5,22 @@ import android.content.Context;
 import java.io.File;
 import java.io.IOException;
 
+
+
+
+
+
+
 final class D2ResumeArea {
     private D2ResumeArea() {}
+
 
     static String levelName(Context context, File gameDir, D2SaveHeader.Info character, int difficulty, D2LevelNames names) {
         if (names == null) return null;
         D2Resume.Entry e = entry(context, gameDir, character, difficulty);
         return e != null ? names.name(e.level) : null;
     }
+
 
     static boolean expected(Context context, File gameDir, String file, int difficulty) {
         if (gameDir == null || file == null) return false;

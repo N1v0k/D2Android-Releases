@@ -1,14 +1,32 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
+
+
+
 public final class Stadtgang {
     public enum Schritt { AUS, PORTAL_OEFFNEN, INS_PORTAL, ZUM_HEILER, REDEN, DIALOG_ZU, ZUR_TRUHE, TRUHE, ZUM_PORTAL, ZURUECK }
 
+
     public int minHeil = 2;
+
     public long alleMs;
+
+
+
+
     public long pauseNachGangMs = 180_000;
+
     public boolean mitTruhe = true;
     public int gaenge, abbrueche;
+
     public String meldung = "", abbruch;
+
     public int lebenVorher = -1, lebenNachher = -1;
 
     static final int PORTAL = 5;
@@ -19,7 +37,9 @@ public final class Stadtgang {
     private long seit, letzterTipp, letzterGang;
     private int versuche;
     private boolean truheOffen, portalGetippt;
+
     private double letzteX = Double.NaN, letzteY = Double.NaN;
+
     private double ankunftX = Double.NaN, ankunftY = Double.NaN;
     private long bewegtAm, ausweichenBis;
     private int ausweichSeite = 1;
@@ -31,6 +51,7 @@ public final class Stadtgang {
     public Schritt schritt() {
         return schritt;
     }
+
 
     public boolean faellig(Zustand z, long now) {
         if (aktiv() || z.stadt || !z.weltlage()) return false;
@@ -45,13 +66,16 @@ public final class Stadtgang {
         abbruch = null;
         truheOffen = portalGetippt = false;
         ankunftX = ankunftY = Double.NaN;
+
         letzterGang = now;
     }
+
 
     public void beenden() {
         schritt = Schritt.AUS;
         portalGetippt = false;
     }
+
 
     public void beobachten(Zustand z) {
         if (schritt == Schritt.TRUHE && z.panel && !z.npc) truheOffen = true;
@@ -91,6 +115,7 @@ public final class Stadtgang {
                 return a;
             }
             case REDEN: {
+
                 if (z.npc || z.panel) {
                     lebenNachher = z.leben;
                     return weiterIn(a, Schritt.DIALOG_ZU, now, "Dialog offen, Leben " + z.leben + "/" + z.lebenMax);
@@ -124,6 +149,7 @@ public final class Stadtgang {
                 return a;
             }
             case TRUHE: {
+
                 if (truheOffen && !z.panel) return weiterIn(a, Schritt.ZUM_PORTAL, now, "Truhe geöffnet und geschlossen");
                 if (!truheOffen && now - letzterTipp > TIPP_ABSTAND_MS) {
                     if (versuche >= 3) return abbrechen(a, "Truhe geht nicht auf", now);
@@ -149,10 +175,13 @@ public final class Stadtgang {
         }
     }
 
+
     private Gehirn.Absicht zumPortal(Zustand z, Zustand.Figur f, Gehirn.Absicht a, long now, String was) {
         Zustand.Ding p = portal(z);
         if (p == null) {
             if (!z.stadt) return abbrechen(a, "Portal nicht mehr da", now);
+
+
             if (!Double.isNaN(ankunftX)) {
                 gehe(z, ankunftX, ankunftY, now, a, "Portal suchen (zum Ankunftsort)");
                 return a;
@@ -178,6 +207,10 @@ public final class Stadtgang {
         return a;
     }
 
+
+
+
+
     public boolean portalGetippt() {
         return portalGetippt;
     }
@@ -186,15 +219,22 @@ public final class Stadtgang {
         portalGetippt = false;
     }
 
+
+
+
+
+
     public boolean fensterErlaubt() {
         return schritt == Schritt.REDEN || schritt == Schritt.DIALOG_ZU;
     }
+
 
     static Zustand.Ding portal(Zustand z) {
         Zustand.Ding best = null;
         for (Zustand.Ding d : z.objekte) if (d.art == PORTAL && (best == null || z.abstand(d) < z.abstand(best))) best = d;
         return best;
     }
+
 
     static int heiler(int gebiet) {
         switch (gebiet) {
@@ -206,6 +246,7 @@ public final class Stadtgang {
         }
     }
 
+
     static Zustand.Figur.Ort ort(Zustand.Figur f, int art, int txt) {
         if (f == null) return null;
         Zustand.Figur.Ort best = null;
@@ -215,6 +256,7 @@ public final class Stadtgang {
         }
         return best;
     }
+
 
     private void gehe(Zustand z, double x, double y, long now, Gehirn.Absicht a, String was) {
         double dx = x - z.wx, dy = y - z.wy;

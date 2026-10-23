@@ -9,9 +9,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
 final class D2SettingsLook {
     final D2GameFont font16, formal10, font24, font30, exocet10;
     final Bitmap wideStone, mediumStone, backdrop;
+
     final int scale;
 
     private static volatile D2SettingsLook loaded;
@@ -27,6 +35,8 @@ final class D2SettingsLook {
         exocet10 = need(D2GameFont.load(sprites, "fontexocet10"));
         D2Sprites.Frame[] wide = sprites.dc6(D2StartArt.FRONT_END + "widebuttonblank.dc6", "Sky");
         D2Sprites.Frame[] medium = sprites.dc6(D2StartArt.FRONT_END + "mediumbuttonblank.dc6", "Sky");
+
+
         D2Sprites.Frame[] tiles = sprites.dc6(D2StartArt.FRONT_END + "TCPIPscreen.dc6", "Sky");
         if (tiles == null) tiles = sprites.dc6(D2StartArt.FRONT_END + "gameselectscreenEXP.dc6", "Sky");
         if (wide == null || wide.length < 2 || medium == null || medium.length < 1 || tiles == null) throw new java.io.IOException("stones");
@@ -50,9 +60,15 @@ final class D2SettingsLook {
         return Bitmap.createBitmap(f.argb, f.width, f.height, Bitmap.Config.ARGB_8888);
     }
 
+
     static D2SettingsLook get() {
         return loaded;
     }
+
+
+
+
+
 
     static void load(Context context, Runnable done) {
         Handler main = new Handler(Looper.getMainLooper());
@@ -89,11 +105,18 @@ final class D2SettingsLook {
         }, "SettingsLook").start();
     }
 
+
+
+
+
+
     static final int HINT_RGB = 0xB0B0B0, HINT_GAIN = 120, TITLE_GAIN = 145;
+
 
     static Bitmap text(D2GameFont font, String text, int rgb) {
         return text(font, text, rgb, 100);
     }
+
 
     static Bitmap text(D2GameFont font, String text, int rgb, int gainPercent) {
         D2GameFont.Img img = font.render(text, rgb, gainPercent);

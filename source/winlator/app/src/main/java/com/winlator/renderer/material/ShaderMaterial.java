@@ -1,4 +1,4 @@
-package com.winlator.renderer.material;
+package com.winlator.renderer.material;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.graphics.Color;
 import android.opengl.GLES20;
@@ -6,13 +6,13 @@ import android.opengl.GLES20;
 public abstract class ShaderMaterial {
     private static final float INV_255 = 1.0f / 255.0f;
     public int programId;
-    /** D2Android: the renderer context the program belongs to */
+
     private int generation;
 
     public static class Uniform {
         public final String name;
         public int location = -1;
-        /** D2Android: the program generation the location belongs to */
+
         int generation;
 
         public Uniform(String name) {
@@ -69,7 +69,7 @@ public abstract class ShaderMaterial {
     }
 
     public void use() {
-        // D2Android: compiled again in a new renderer context
+
         if (programId == 0 || generation != com.winlator.renderer.GLRenderer.contextGeneration) {
             programId = compileShaders(getVertexShader(), getFragmentShader());
             generation = com.winlator.renderer.GLRenderer.contextGeneration;

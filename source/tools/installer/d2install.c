@@ -1,7 +1,25 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
 static int found, wrongKey;
+
 static void note(const char *what, long value) {
     char path[MAX_PATH]; DWORD n = GetModuleFileNameA(NULL, path, MAX_PATH);
     if (!n || n >= MAX_PATH) return;
@@ -10,6 +28,8 @@ static void note(const char *what, long value) {
     FILE *f = fopen(path, "a"); if (!f) return;
     fprintf(f, "%lu %s %ld\n", (unsigned long)GetTickCount(), what, value); fclose(f);
 }
+
+
 static const char *GO[] = {"Agree", "I Agree", "OK", "Install", "Ja", "Zustimmen", "Installieren", NULL};
 static int isGoButton(const char *txt) {
     char plain[256]; int n = 0;
@@ -18,6 +38,7 @@ static int isGoButton(const char *txt) {
     for (int i = 0; GO[i]; i++) if (!_stricmp(plain, GO[i])) return 1;
     return 0;
 }
+
 static int wrongKeyText(const char *txt) {
     return strstr(txt, "not correct") || strstr(txt, "invalid") || strstr(txt, "nicht korrekt") || strstr(txt, "ung\xfcltig");
 }
@@ -33,6 +54,9 @@ static BOOL CALLBACK child(HWND w, LPARAM l) {
     }
     return TRUE;
 }
+
+
+
 static unsigned long long folderBytes(const char *dir, int depth) {
     char pattern[MAX_PATH + 4], sub[MAX_PATH]; WIN32_FIND_DATAA d; unsigned long long sum = 0;
     if (strlen(dir) + 3 >= sizeof pattern) return 0;
@@ -49,7 +73,9 @@ static unsigned long long folderBytes(const char *dir, int depth) {
     FindClose(f);
     return sum;
 }
+
 static int menuVisible;
+
 static int others;
 static BOOL CALLBACK count(HWND w, LPARAM l) {
     char cls[64], txt[256]; DWORD wp = 0;
@@ -90,6 +116,10 @@ int main(int argc, char **argv) {
         key[strcspn(key, "\r\n")] = 0;
         if (!key[0]) { printf("empty key on stdin\n"); return 5; }
     }
+
+
+
+
     else if (argc > next + 1 && !strcmp(argv[next], "--key-from")) {
         FILE *pipe = fopen(argv[next + 1], "r");
         if (!pipe) { note("pipe-open-failed", (long)GetLastError()); printf("cannot open the key pipe\n"); return 5; }
@@ -102,6 +132,8 @@ int main(int argc, char **argv) {
         fromStdin = 1; next += 2;
     }
     if (argc > next && !strcmp(argv[next], "--linger")) { linger = 1; next++; }
+
+
     if (argc > next + 1 && !strcmp(argv[next], "--run")) {
         char cmd[4096] = "";
         for (int i = next + 1; i < argc; i++) {
@@ -113,6 +145,8 @@ int main(int argc, char **argv) {
         if (fromStdin) { strcat(cmd, " --key1="); strcat(cmd, key); }
         STARTUPINFOA si; memset(&si, 0, sizeof si); si.cb = sizeof si;
         PROCESS_INFORMATION pi;
+
+
         char dir[MAX_PATH] = "";
         const char *slash = strrchr(argv[next + 1], '\\');
         if (slash && (size_t)(slash - argv[next + 1]) < sizeof dir) {
@@ -132,10 +166,13 @@ int main(int argc, char **argv) {
         found = 0; menuVisible = 0;
         EnumWindows(top, (LPARAM)pid);
         if (wrongKey) {
+
             if (child) TerminateProcess(child, 3);
             note("wrong-key", 0); printf("wrong key\n"); return 3;
         }
         if (found) lastClick = i;
+
+
         if (child && noStart && dest[0] && !progressed) {
             menuSince = menuVisible ? (menuSince < 0 ? i : menuSince) : -1;
             if (folderBytes(dest, 6) >= destStart + 1048576) { progressed = 1; note("progress", i); }
@@ -152,10 +189,14 @@ int main(int argc, char **argv) {
             if (WaitForSingleObject(child, 0) == WAIT_OBJECT_0) {
                 DWORD rc = 0; GetExitCodeProcess(child, &rc); printf("ended %lu\n", rc); fflush(stdout); note("child-ended", (long)rc);
                 if (!linger) return 0;
+
+
                 child = NULL; pid = 0; lingering = 1;
             }
         }
         else if (lingering) {
+
+
             if (found) lingerClicks++;
             others = 0;
             EnumWindows(count, 0);

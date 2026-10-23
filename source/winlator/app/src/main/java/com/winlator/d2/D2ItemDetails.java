@@ -3,9 +3,22 @@ package com.winlator.d2;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2ItemDetails {
+
     public static final int MARKER = 1;
+
     public static final int NORMAL = 0, EXCEPTIONAL = 1, ELITE = 2, UNKNOWN = 255;
+
 
     public static final class Item {
         public final int sockets, filled, tier, level;
@@ -20,10 +33,12 @@ public final class D2ItemDetails {
 
     private D2ItemDetails() {}
 
+
     public static Item[] parse(byte[] data, int length) {
         if (data == null || length > data.length) return null;
         try {
             ByteBuffer b = ByteBuffer.wrap(data, 0, length).order(ByteOrder.LITTLE_ENDIAN);
+
             b.position(8 + 2 + 4 + 16 + 12 + 1 + 8 + 4);
             int places = b.get() & 0xFF;
             b.position(b.position() + places * 11);

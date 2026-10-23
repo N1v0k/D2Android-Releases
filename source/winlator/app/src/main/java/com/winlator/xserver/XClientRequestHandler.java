@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import com.winlator.xconnector.ConnectedClient;
 import com.winlator.xconnector.RequestHandler;
@@ -211,8 +211,8 @@ public class XClientRequestHandler implements RequestHandler {
                         }
                         break;
                     case ClientOpcodes.CONFIGURE_WINDOW:
-                        // D2Android: a resize replaces the window's drawable (WindowManager.changeWindowGeometry)
-                        // while the GL thread draws under DRAWABLE_MANAGER; same lock order as DESTROY_WINDOW.
+
+
                         try (XLock lock = client.xServer.lock(XServer.Lockable.WINDOW_MANAGER, XServer.Lockable.DRAWABLE_MANAGER, XServer.Lockable.INPUT_DEVICE)) {
                             WindowRequests.configureWindow(client, inputStream, outputStream);
                         }

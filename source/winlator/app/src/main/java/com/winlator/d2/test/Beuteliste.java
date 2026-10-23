@@ -1,30 +1,59 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
+
+
+
+
 public final class Beuteliste {
+
+
+
+
+
     public enum Antwort { LIEGEN, VERKAUFEN, BEHALTEN, TRUHE }
+
 
     static final int K_RUNE = 10, K_EDELSTEIN = 11, K_JUWEL = 12, K_RING = 13, K_AMULETT = 14, K_ZAUBER = 15, K_WAFFE = 16,
         K_RUESTUNG = 17, K_QUEST = 20;
+
     static final int Q_MAGISCH = 4, Q_SET = 5, Q_SELTEN = 6, Q_EINZIGARTIG = 7, Q_HANDGEFERTIGT = 8;
+
 
     public static final int RUNEN = 0, EDELSTEINE = 1, JUWELEN = 2, ZAUBER = 3, SCHMUCK = 4, EINZIGARTIG = 5, SELTEN = 6,
         MAGISCH = 7, BASEN = 8, WEISS = 9, QUEST = 10, GRUPPEN = 11;
     public static final String[] NAMEN = {"Runen", "Edelsteine", "Juwelen", "Zauber", "Ringe/Amulette", "Einzigartig/Set",
         "Selten", "Magisch", "Basen mit Sockeln", "Weiß", "Quest"};
 
+
+
+
+
+
     private static final Antwort[] VORGABEN = {Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN,
         Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.VERKAUFEN, Antwort.LIEGEN, Antwort.LIEGEN,
         Antwort.BEHALTEN};
+
     private static final Antwort[] VORGABEN_SPIELER = {Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN,
         Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN, Antwort.BEHALTEN,
         Antwort.BEHALTEN, Antwort.BEHALTEN};
 
+
     public static final Beuteliste VORGABE = new Beuteliste(VORGABEN, true);
+
     public static final Beuteliste SPIELER = new Beuteliste(VORGABEN_SPIELER, true);
 
     private final Antwort[] stufen;
+
     private final int[] abWertklasse = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+
     private final boolean fest;
+
 
     public Beuteliste() {
         this(VORGABEN, false);
@@ -35,9 +64,11 @@ public final class Beuteliste {
         this.fest = fest;
     }
 
+
     public static Beuteliste spieler() {
         return new Beuteliste(VORGABEN_SPIELER, false);
     }
+
 
     public static Antwort vorgabe(int gruppe) {
         return VORGABEN[gruppe];
@@ -51,15 +82,18 @@ public final class Beuteliste {
         return abWertklasse[gruppe];
     }
 
+
     public void setzen(int gruppe, Antwort a) {
         if (fest) throw new UnsupportedOperationException("feste Vorgabe");
         stufen[gruppe] = a;
     }
 
+
     public void abWertklasse(int gruppe, int klasse) {
         if (fest) throw new UnsupportedOperationException("feste Vorgabe");
         abWertklasse[gruppe] = klasse;
     }
+
 
     public static int gruppe(int kategorie, int qualitaet, int sockel) {
         switch (kategorie) {
@@ -78,9 +112,15 @@ public final class Beuteliste {
         }
     }
 
+
     static boolean verkaeuflich(int gruppe) {
         return gruppe == SCHMUCK || gruppe == EINZIGARTIG || gruppe == SELTEN || gruppe == MAGISCH || gruppe == BASEN || gruppe == WEISS;
     }
+
+
+
+
+
 
     public Antwort antwort(int kategorie, int qualitaet, int sockel, int wertklasse) {
         int g = gruppe(kategorie, qualitaet, sockel);
@@ -94,6 +134,10 @@ public final class Beuteliste {
     }
 
     public static final int BREITE = 10, HOEHE = 4;
+
+
+
+
 
     public static boolean passt(long belegt, int breite, int hoehe) {
         if (breite <= 0 || hoehe <= 0) return true;

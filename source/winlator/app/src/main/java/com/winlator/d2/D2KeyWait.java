@@ -3,13 +3,30 @@ package com.winlator.d2;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
+
+
+
+
+
+
+
+
+
+
+
 final class D2KeyWait {
+
     static final long FALLBACK_MS = 80;
+
     static final long MAX_MS = 300;
+
     static final long POLL_MS = 20;
 
+
     static final int WAIT = 0;
+
     static final int SHOWN = 1;
+
     static final int TIMED = 2;
 
     private static final class Key {
@@ -26,14 +43,20 @@ final class D2KeyWait {
         }
     }
 
+
     private final ArrayDeque<Key> unseen = new ArrayDeque<>();
     private long nextTicket = 1;
+
 
     long sent(int skill, boolean left, long now) {
         long ticket = nextTicket++;
         unseen.add(new Key(ticket, skill, left, now));
         return ticket;
     }
+
+
+
+
 
     void state(int leftSkill, int rightSkill, long now) {
         expire(now);
@@ -44,6 +67,12 @@ final class D2KeyWait {
         }
     }
 
+
+
+
+
+
+
     int castNow(long ticket, int skill, int current, long sentAt, long now) {
         expire(now);
         boolean open = false;
@@ -52,6 +81,7 @@ final class D2KeyWait {
         if (skill >= 0 && current == skill && now - sentAt >= FALLBACK_MS) return TIMED;
         return WAIT;
     }
+
 
     private void expire(long now) {
         for (Iterator<Key> it = unseen.iterator(); it.hasNext(); ) {

@@ -18,10 +18,16 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.winlator.core.AppUtils;
 
+
+
+
+
+
 final class D2IdleDialog {
     static final String KEY_DURATION = "idleDurationMin", KEY_RETREAT = "idleRetreat";
     static final int[] DURATIONS = {15, 30, 60};
     static final int RETREAT_MIN = 10, RETREAT_MAX = 60, RETREAT_DEFAULT = D2Idle.RETREAT_PERCENT;
+
 
     interface Start {
         void start(int minutes, int retreatPercent);
@@ -34,6 +40,7 @@ final class D2IdleDialog {
         scroll.addView(content);
         return scroll;
     }
+
 
     static void show(Activity activity, String quest, Start onStart) {
         SharedPreferences prefs = activity.getSharedPreferences(D2Settings.PREFS, Activity.MODE_PRIVATE);
@@ -101,6 +108,8 @@ final class D2IdleDialog {
         title.setPadding(pad, pad, pad, Math.round(4 * density));
         AlertDialog dialog = new AlertDialog.Builder(activity)
             .setCustomTitle(title)
+
+
             .setView(scrolling(activity, root))
             .setPositiveButton(D2Text.get(activity, R.string.idle_start), (d, which) -> {
                 int minutes = duration.getCheckedRadioButtonId() - 1000;

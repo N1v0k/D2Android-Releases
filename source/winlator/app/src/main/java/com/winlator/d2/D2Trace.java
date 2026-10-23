@@ -10,6 +10,11 @@ import java.util.ArrayDeque;
 import java.util.Date;
 import java.util.Locale;
 
+
+
+
+
+
 public final class D2Trace {
     private static final int MAX_LINES = 4000;
     private static final ArrayDeque<String> lines = new ArrayDeque<>();
@@ -18,6 +23,7 @@ public final class D2Trace {
     private static int inSecond, skipped;
 
     private D2Trace() {}
+
 
     public static synchronized void log(String text) {
         long second = SystemClock.uptimeMillis() / 1000;

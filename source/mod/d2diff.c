@@ -1,4 +1,22 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_FRAMES       28
 #define FRAMES_HOLD_MS   3000
 #define FRAMES_LEN       132
@@ -11,6 +29,7 @@
 #define IFLAG_NOEQUIP    0x4000
 #define STATE_WOLF       139
 #define STATE_BEAR       140
+
 #define DIFF_FORMS_VERIFIED 1
 #define CAP2_DIFF        0x01
 
@@ -23,6 +42,7 @@ static const int diffStatIds[] = {1, 3, 7, 9, 39, 40, 41, 42, 43, 44, 45, 46, 76
 #define ITXT_STRBONUS 0x106
 #define ITXT_DEXBONUS 0x108
 #define ITXT_2HMINDAM_DIFF 0x102
+
 
 static int diffDamageStat(int id) {
     return (id >= 21 && id <= 24) || (id >= 48 && id <= 55) || id == 121 || id == 122;
@@ -39,6 +59,7 @@ static int diffAvailable, diffOn;
 static DWORD diffUntil;
 static wchar_t diffBlock[DIFF_LINES * (DIFF_LINE_CHARS + 1) + 64];
 
+
 static void checkDiffSites(void) {
     BYTE* txt = compareAvailable && fGetItemText ? (BYTE*) fGetItemText(0) : NULL;
     int items = readable(txt, ITXT_LEVELREQ + 1) && !memcmp(txt + ITXT_CODE, "hax ", 4) && !memcmp(txt + ITXT_WCLASS, "1hs", 3)
@@ -51,6 +72,7 @@ static void checkDiffSites(void) {
 static BYTE diffCapabilities2(void) {
     return diffAvailable ? CAP2_DIFF : 0;
 }
+
 
 static void framesCommand(const BYTE* buf, int n) {
     if (n < 8 + FRAMES_LEN || buf[8] != 1 || buf[9] > 6 || buf[10] > 2) {
@@ -79,10 +101,13 @@ static void framesCommand(const BYTE* buf, int n) {
     *slot = t;
 }
 
+
 static int diffWanted(DWORD now) {
     diffOn = diffAvailable && (int) (now - diffUntil) < 0;
     return diffOn;
 }
+
+
 
 static void diffItemStats(void* item, int* out, int damage) {
     void* data = RDP(item, U_DATA);
@@ -92,6 +117,7 @@ static void diffItemStats(void* item, int* out, int damage) {
             out[diffStatIds[i]] += (int) fGetUnitStat(item, (DWORD) diffStatIds[i], 0);
 }
 
+
 static void diffWeaponInfo(void* weapon, int* out) {
     BYTE* txt = weapon ? (BYTE*) fGetItemText(RD32(weapon, U_TXTNO)) : NULL;
     if (!readable(txt, ITXT_DEXBONUS + 2)) return;
@@ -100,6 +126,7 @@ static void diffWeaponInfo(void* weapon, int* out) {
     out[DS_W_STRB] = *(WORD*) (txt + ITXT_STRBONUS);
     out[DS_W_DEXB] = *(WORD*) (txt + ITXT_DEXBONUS);
 }
+
 
 static int diffWeaponClass(void* item, int twoHands) {
     BYTE* txt = item ? (BYTE*) fGetItemText(RD32(item, U_TXTNO)) : NULL;
@@ -114,6 +141,7 @@ static int diffTwoHanded(void* item) {
     return readable(txt, ITXT_2HANDED + 1) && txt[ITXT_2HANDED] != 0;
 }
 
+
 static int diffScore(const DiffResult* r) {
     int s = (r->lifeAfter - r->lifeBefore) * 2 + (r->manaAfter - r->manaBefore);
     for (int i = 0; i < 4; i++) s += 2 * (r->resAfter[i] - r->resBefore[i]);
@@ -122,6 +150,7 @@ static int diffScore(const DiffResult* r) {
     return s;
 }
 
+
 static int diffRequirement(void* player, void* item, int* need) {
     BYTE* txt = (BYTE*) fGetItemText(RD32(item, U_TXTNO));
     void* data = RDP(item, U_DATA);
@@ -129,6 +158,7 @@ static int diffRequirement(void* player, void* item, int* need) {
     int ethereal = (RD32(data, IDATA_FLAGS) & IFLAG_ETHEREAL) != 0;
     int str = *(WORD*) (txt + ITXT_REQSTR) - (ethereal ? 10 : 0), dex = *(WORD*) (txt + ITXT_REQDEX) - (ethereal ? 10 : 0);
     int level = txt[ITXT_LEVELREQ];
+
     void* sockets = RDP(item, U_INVENTORY);
     int guard = 0;
     for (void* s = readable(sockets, 0x10) ? RDP(sockets, INV_FIRST) : NULL; readable(s, 0x18) && guard < 8; guard++) {
@@ -143,6 +173,7 @@ static int diffRequirement(void* player, void* item, int* need) {
     return (RD32(data, IDATA_FLAGS) & IFLAG_NOEQUIP) ? 4 : 0;
 }
 
+
 static int diffBuild(void* player, void* item) {
     void* inventory = RDP(player, U_INVENTORY);
     if (!inventory) return 0;
@@ -153,11 +184,14 @@ static int diffBuild(void* player, void* item) {
     void* partners[2] = {NULL, NULL};
     int count = compareSlots(item, inventory, partners);
     int itemIsWeapon = fItemIsType(item, ITYPE_WEAPON), itemTwoHands = itemIsWeapon && diffTwoHanded(item);
+
+
     static const DWORD wornTypes[] = {ITYPE_HELM, ITYPE_AMULET, ITYPE_ARMOR, ITYPE_BELT, ITYPE_BOOTS, ITYPE_GLOVES,
         ITYPE_RING, ITYPE_WEAPON, ITYPE_SHIELD, ITYPE_BOWQUIVER, ITYPE_XBOWQUIVER};
     int wearable = 0;
     for (unsigned i = 0; i < sizeof(wornTypes) / sizeof(wornTypes[0]); i++) wearable |= fItemIsType(item, wornTypes[i]) != 0;
     if (!wearable) return 0;
+
     int ringFree = fItemIsType(item, ITYPE_RING) && count < 2;
     void* right = fBodyLocItem(inventory, 4), *left = fBodyLocItem(inventory, 5);
     void* wornTwoHands = right && fItemIsType(right, ITYPE_WEAPON) && diffTwoHanded(right) ? right
@@ -188,6 +222,8 @@ static int diffBuild(void* player, void* item) {
         f.baseMana = (long long) fGetBaseStat(player, 9, 0);
         f.lifePerVit = t->lifePerVit;
         f.manaPerEnergy = t->manaPerEnergy;
+
+
         for (unsigned i = 0; i < sizeof(diffStatIds) / sizeof(diffStatIds[0]); i++) {
             int id = diffStatIds[i];
             if (id != 1 && id != 3 && id != 7 && id != 9) f.stats[id] = (int) fGetBaseStat(player, (DWORD) id, 0);
@@ -197,6 +233,8 @@ static int diffBuild(void* player, void* item) {
             if (!worn || worn == gone[0] || worn == gone[1]) continue;
             diffItemStats(worn, f.stats, !fItemIsType(worn, ITYPE_WEAPON));
         }
+
+
         int guard = 0;
         for (void* it = readable(inventory, 0x10) ? RDP(inventory, INV_FIRST) : NULL; readable(it, 0x18) && guard < 512; guard++) {
             void* d = RDP(it, U_DATA);
@@ -210,6 +248,7 @@ static int diffBuild(void* player, void* item) {
         static int wornStats[DIFF_STATS], itemStats[DIFF_STATS];
         memset(wornStats, 0, sizeof(wornStats));
         memset(itemStats, 0, sizeof(itemStats));
+
         void* wornWeapon = NULL;
         for (int g = 0; g < 2; g++) {
             if (!gone[g]) continue;
@@ -221,9 +260,12 @@ static int diffBuild(void* player, void* item) {
             diffWeaponInfo(wornWeapon, wornStats);
             diffWeaponInfo(item, itemStats);
         }
+
         for (unsigned i = 0; i < sizeof(diffStatIds) / sizeof(diffStatIds[0]); i++)
             itemStats[diffStatIds[i]] += (int) fGetUnitStat(item, (DWORD) diffStatIds[i], 0);
+
         void* weapon = itemIsWeapon ? item : (right && fItemIsType(right, ITYPE_WEAPON) ? right : NULL);
+
         int wclass = weapon && form == 0 ? diffWeaponClass(weapon, diffTwoHanded(weapon)) : 0;
         void* offhand = itemIsOffhand ? item : (itemTwoHands ? NULL : left);
         int shield = offhand && fItemIsType(offhand, ITYPE_SHIELD);
@@ -260,6 +302,7 @@ static int diffBuild(void* player, void* item) {
         n++;
     }
     if (!n) return 0;
+
     diffBlock[0] = 0;
     int length = 0;
     for (int i = n - 1; i >= 0; i--) {
@@ -280,12 +323,14 @@ static int diffBuild(void* player, void* item) {
     return length;
 }
 
+
 static int diffLinesAdd(void) {
     if (!diffOn || !hoverText || !hoverText[0]) return 0;
     if (RD32(client, RVA_HoverGrid) != 1 || RD32(client, RVA_HoverBody) != 0) return 0;
     void* item = RDP(client, RVA_HoverItem);
     void* player = fGetPlayerUnit();
     if (!player || !readable(item, 0x18) || RD32(item, U_TYPE) != UNIT_ITEM || RD32(item, U_MODE) != 0) return 0;
+
     static void* cachedItem;
     static DWORD cachedId, cachedAt;
     static int cachedLength;
@@ -303,6 +348,7 @@ static int diffLinesAdd(void) {
     memcpy(hoverText, diffBlock, n * sizeof(wchar_t));
     return n;
 }
+
 
 static void diffLinesRemove(int added) {
     if (added <= 0 || memcmp(hoverText, diffBlock, added * sizeof(wchar_t))) return;

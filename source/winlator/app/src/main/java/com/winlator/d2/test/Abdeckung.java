@@ -4,17 +4,35 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Abdeckung {
     static final int ZELLE = 20, BLOCK = 4, JE_ZELLE = ZELLE / BLOCK, BLOECKE = JE_ZELLE * JE_ZELLE;
     public static final byte UNGUELTIG = 0, OFFEN = 1, GESEHEN = 2, AUFGEGEBEN = 3;
+
     static final long NEU_RECHNEN_MS = 2000;
     static final int FEHLSCHLAEGE = 2;
     private static final int KEINER = Integer.MIN_VALUE;
+
 
     private static final class Zelle {
         final int cx, cy;
         final int[] vx = new int[BLOECKE], vy = new int[BLOECKE];
         final byte[] stand = new byte[BLOECKE], fehl = new byte[BLOECKE];
+
         boolean sicher;
         boolean gerechnet;
 
@@ -33,8 +51,10 @@ public final class Abdeckung {
     private final int cx0, cy0, cx1, cy1;
     private long gerechnetAm = Long.MIN_VALUE;
     private boolean alleGerechnet;
+
     private Zelle zielZelle;
     private int zielBlock = -1;
+
     public long rechnenMs;
 
     public Abdeckung(Karte karte, Zustand.Ziele ziele) {
@@ -48,9 +68,14 @@ public final class Abdeckung {
         cy1 = Math.floorDiv(b[1] + Math.max(1, b[3]) - 1, ZELLE);
     }
 
+
+
+
+
     public boolean passt(Zustand.Ziele z) {
         return z.gebiet == gebiet && java.util.Arrays.equals(z.box, ziele.box) && z.ausgaenge.size() == ziele.ausgaenge.size();
     }
+
 
     public void vergessen() {
         zellen.clear();
@@ -59,6 +84,11 @@ public final class Abdeckung {
         zielZelle = null;
         zielBlock = -1;
     }
+
+
+
+
+
 
     public int nachsuchen(java.util.List<double[]> orte, double r) {
         int n = 0;
@@ -85,6 +115,7 @@ public final class Abdeckung {
         return n;
     }
 
+
     public boolean vollstaendig() {
         return karte != null && karte.level == gebiet && ziele.box[2] > 0 && ziele.box[3] > 0
             && karte.raeumeGesamt() >= 0 && karte.anzahlRaeume() >= karte.raeumeGesamt();
@@ -105,6 +136,10 @@ public final class Abdeckung {
         if (!c.gerechnet) rechnen(c);
         return c;
     }
+
+
+
+
 
     private void rechnen(Zelle c) {
         int x0 = c.cx * ZELLE, y0 = c.cy * ZELLE;
@@ -141,6 +176,7 @@ public final class Abdeckung {
         c.gerechnet = true;
     }
 
+
     private boolean zaehlt(java.util.List<Karte.Raum> raeume, int x, int y) {
         Karte.Raum in = null;
         for (Karte.Raum r : raeume) {
@@ -153,6 +189,7 @@ public final class Abdeckung {
         if (in.vollstaendig() && !Karte.frei(in, x, y)) return false;
         return !Gehirn.nahAusgang(ziele, x + 0.5, y + 0.5);
     }
+
 
     private void aktualisieren(long now) {
         if (!vollstaendig()) return;
@@ -170,6 +207,10 @@ public final class Abdeckung {
         rechnenMs = Math.max(rechnenMs, (System.nanoTime() - t0) / 1_000_000);
     }
 
+
+
+
+
     public void sehen(double wx, double wy, double r) {
         if (!vollstaendig()) return;
         int ax = (int) Math.floor((wx - r) / ZELLE), bx = (int) Math.floor((wx + r) / ZELLE);
@@ -185,6 +226,11 @@ public final class Abdeckung {
             }
         }
     }
+
+
+
+
+
 
     public int[] waehle(double wx, double wy, Random random, long now) {
         aktualisieren(now);
@@ -220,9 +266,11 @@ public final class Abdeckung {
         return false;
     }
 
+
     public boolean zielErledigt() {
         return zielZelle != null && zielZelle.stand[zielBlock] != OFFEN;
     }
+
 
     public void fehlschlag() {
         if (zielZelle == null || zielZelle.stand[zielBlock] != OFFEN) return;
@@ -230,6 +278,7 @@ public final class Abdeckung {
         zielZelle = null;
         zielBlock = -1;
     }
+
 
     public int offen(long now) {
         aktualisieren(now);
@@ -250,6 +299,7 @@ public final class Abdeckung {
         return n;
     }
 
+
     public int stand(int x, int y) {
         Zelle c = zelle(Math.floorDiv(x, ZELLE), Math.floorDiv(y, ZELLE));
         if (c == null) return -1;
@@ -257,12 +307,14 @@ public final class Abdeckung {
         return c.stand[b];
     }
 
+
     public int[] vertreter(int x, int y) {
         Zelle c = zelle(Math.floorDiv(x, ZELLE), Math.floorDiv(y, ZELLE));
         if (c == null) return null;
         int b = (Math.floorMod(y, ZELLE) / BLOCK) * JE_ZELLE + Math.floorMod(x, ZELLE) / BLOCK;
         return c.vx[b] == KEINER ? null : new int[]{c.vx[b], c.vy[b]};
     }
+
 
     public java.util.List<int[]> alleVertreter(long now) {
         aktualisieren(now);

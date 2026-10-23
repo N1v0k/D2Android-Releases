@@ -1,4 +1,4 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -88,7 +88,7 @@ public class GamepadHandler {
             else gamepadModelIds = new short[0];
         }
 
-        // D2Android: only external controllers; Winlator's on-screen virtual gamepad is gone
+
 
         for (byte i = 0; i < GAMEPAD_MAX_COUNT; i++) gamepadSlots[i] = null;
 

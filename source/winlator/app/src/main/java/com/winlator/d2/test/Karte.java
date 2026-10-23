@@ -5,10 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+
+
+
+
+
 public final class Karte {
     public static final class Raum {
         public final int nr, x, y, w, h;
         public final boolean geladen;
+
         byte[] bits;
         int zeilen;
         boolean[] daRows;
@@ -30,6 +37,7 @@ public final class Karte {
 
     public Karte(int level) { this.level = level; }
 
+
     public void raumliste(int gesamt, List<Raum> teil) {
         this.gesamt = gesamt;
         for (Raum r : teil) {
@@ -37,6 +45,7 @@ public final class Karte {
             if (old == null || old.x != r.x || old.y != r.y || old.w != r.w || old.h != r.h) raeume.put(r.nr, r);
         }
     }
+
 
     public void raumTeil(int nr, int x, int y, int w, int h, int ersteZeile, int zeilen, byte[] daten, int offset) {
         if (w <= 0 || h <= 0 || w > 4096 || h > 4096 || ersteZeile < 0 || zeilen < 0) return;
@@ -60,6 +69,7 @@ public final class Karte {
         }
     }
 
+
     public void raumAusText(int nr, int x, int y, String[] zeilen) {
         int h = zeilen.length, w = zeilen[0].length();
         Raum r = new Raum(nr, x, y, w, h, true);
@@ -79,7 +89,12 @@ public final class Karte {
 
     public static final int FREI = 1, WAND = 0, UNBEKANNT = -1;
 
+
+
+
+
     private final java.util.Set<Long> gesperrt = new java.util.HashSet<>();
+
 
     public int feld(int x, int y) {
         Raum r = raum(x, y);
@@ -89,13 +104,23 @@ public final class Karte {
         return gesperrt.isEmpty() || !gesperrt.contains(((long) x << 32) | (y & 0xFFFFFFFFL)) ? FREI : WAND;
     }
 
+
     public void sperren(int x, int y) {
         gesperrt.add(((long) x << 32) | (y & 0xFFFFFFFFL));
     }
 
+
+
+
+
     public boolean engstelle(int x, int y, int weit) {
         return engAchse(x, y, weit) != 0;
     }
+
+
+
+
+
 
     public int engAchse(int x, int y, int weit) {
         if (feld(x, y) != FREI) return 0;
@@ -105,6 +130,7 @@ public final class Karte {
         if (bx == 0) return 2;
         return bx <= by ? 1 : 2;
     }
+
 
     private int breite(int x, int y, int dx, int dy, int weit) {
         int a = wandAbstand(x, y, -dx, -dy, weit), b = wandAbstand(x, y, dx, dy, weit);
@@ -116,14 +142,17 @@ public final class Karte {
         return 0;
     }
 
+
     public int gesperrtAnzahl() { return gesperrt.size(); }
 
     public boolean begehbar(int x, int y) { return feld(x, y) == FREI; }
+
 
     static boolean frei(Raum r, int x, int y) {
         int lx = x - r.x, ly = y - r.y;
         return (r.bits[ly * r.zeilenBytes() + lx / 8] >> (lx % 8) & 1) != 0;
     }
+
 
     public java.util.Collection<Raum> alleRaeume() { return raeume.values(); }
 
@@ -140,6 +169,7 @@ public final class Karte {
 
     public int raeumeGesamt() { return gesamt; }
 
+
     public List<Raum> fehlendeRaeume(int x, int y) {
         List<Raum> out = new ArrayList<>();
         for (Raum r : raeume.values()) if (!r.vollstaendig()) out.add(r);
@@ -147,7 +177,12 @@ public final class Karte {
         return out;
     }
 
+
+
+
+
     public boolean korridorGeladen(int sx, int sy, int zx, int zy, int rand) {
+
         if (gesamt < 0 || raeume.size() < gesamt) return false;
         double len = Math.hypot(zx - sx, zy - sy);
         int steps = Math.max(1, (int) (len / 10));
@@ -168,6 +203,7 @@ public final class Karte {
         long dx = (r.x + r.w / 2) - x, dy = (r.y + r.h / 2) - y;
         return dx * dx + dy * dy;
     }
+
 
     public List<Integer> fehlendeTeile(Raum r, int teilBytes) {
         List<Integer> out = new ArrayList<>();

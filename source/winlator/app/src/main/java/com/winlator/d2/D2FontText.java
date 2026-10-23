@@ -1,12 +1,25 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
+
+
 final class D2FontText {
+
     static final String MAPPED = "“”„‚‘’–—→←…≡";
     private static final String[] STAND_IN = {"\"", "\"", "\"", "'", "'", "'", "-", "-", ">", "<", "...", "="};
+
     private static final String UNKNOWN = "?";
 
     private D2FontText() {
     }
+
 
     static String map(String text) {
         int i = 0, n = text.length();
@@ -25,10 +38,12 @@ final class D2FontText {
                 continue;
             }
             b.append(UNKNOWN);
+
             if (Character.isHighSurrogate(c) && i + 1 < n && Character.isLowSurrogate(text.charAt(i + 1))) i++;
         }
         return b.toString();
     }
+
 
     static int width(int[] glyphWidths, String text) {
         text = map(text);

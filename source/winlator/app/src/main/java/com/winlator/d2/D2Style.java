@@ -10,15 +10,24 @@ import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+
+
+
+
+
 public final class D2Style {
     public static final int BACKGROUND = 0xFF0F0C09;
     public static final int FRAME = 0xFF5A4A30;
     public static final int TEXT = 0xFFD2CEC6;
     public static final int HINT = 0xFF8F8A80;
+
     public static final int BUTTON = 0xFF221C14;
+
     public static final int GOLD = 0xFFC7B377;
+
     public static final int GREEN = 0xFF00FF00;
     public static final int RED = 0xFFFF4D4D;
+
 
     private static volatile D2Hud gameGraphics;
 
@@ -27,6 +36,7 @@ public final class D2Style {
     public static void useGameFrame(D2Hud graphics) {
         gameGraphics = graphics;
     }
+
 
     public static Drawable windowBackground(float density) {
         D2Hud graphics = gameGraphics;
@@ -56,8 +66,13 @@ public final class D2Style {
         button.setButtonTintList(tint());
     }
 
+
+
+
+
     public static void button(Button button, float density) {
         GradientDrawable ground = new GradientDrawable();
+
         ground.setColor(enabledOr(BUTTON, BACKGROUND));
         ground.setStroke(Math.max(1, Math.round(density)), enabledOr(FRAME, HINT & 0x60FFFFFF));
         ground.setCornerRadius(2 * density);
@@ -68,6 +83,7 @@ public final class D2Style {
         button.setPadding(h, v, h, v);
         button.setStateListAnimator(null);
     }
+
 
     public static void buttonText(Button button, int color) {
         button.setTextColor(enabledOr(color, HINT));

@@ -2,13 +2,34 @@ package com.winlator.d2;
 
 import java.io.IOException;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Dcc {
+
     static final int[] WIDTHS = {0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 28, 30, 32};
     static final int SIGNATURE = 0x74;
+
+
     static final int MAX_BOX = 4096;
 
+
     public static final class Frame {
+
         public final int xMin, yMin, width, height;
+
         public final byte[] pixels;
 
         Frame(int xMin, int yMin, int width, int height, byte[] pixels) {
@@ -20,8 +41,10 @@ public final class D2Dcc {
         }
     }
 
+
     public static final class Dcc {
         public final int directions, framesPerDirection;
+
         public final Frame[][] frames;
 
         Dcc(int directions, int framesPerDirection, Frame[][] frames) {
@@ -32,6 +55,7 @@ public final class D2Dcc {
     }
 
     private D2Dcc() {}
+
 
     static final class Bits {
         private final byte[] data;
@@ -66,6 +90,10 @@ public final class D2Dcc {
         }
     }
 
+
+
+
+
     public static Dcc decode(byte[] d) throws IOException {
         try {
             return decodeChecked(d);
@@ -92,12 +120,15 @@ public final class D2Dcc {
         return new Dcc(directions, perDirection, frames);
     }
 
+
     private static final class Head {
         int width, height, xMin, yMin;
+
         int cellsX, cellsY;
         int[] cellW, cellH;
         int x0, y0;
     }
+
 
     private static final class Entry {
         final int[] value = new int[4];
@@ -132,6 +163,7 @@ public final class D2Dcc {
             heads[f] = h;
         }
         if (optional > 0) {
+
             long p = ((b.position() + 7) & ~7L) + optional * 8;
             if (p > b.end()) throw new IOException("DCC: optional bytes past the direction");
             b = new Bits(d, p, b.end());
@@ -155,6 +187,7 @@ public final class D2Dcc {
         p += encodingSize;
         Bits raw = new Bits(d, p, p + rawSize);
         p += rawSize;
+
         if (p > b.end()) throw new IOException("DCC: streams longer than the direction");
         Bits codes = new Bits(d, p, b.end());
 
@@ -163,6 +196,7 @@ public final class D2Dcc {
         int width = (int) boxW, height = (int) boxH;
         int dirCellsX = 1 + (width - 1) / 4, dirCellsY = 1 + (height - 1) / 4;
         for (Head h : heads) layout(h, xMin, yMin);
+
 
         Entry[] cellBuffer = new Entry[dirCellsX * dirCellsY];
         java.util.ArrayList<Entry> buffer = new java.util.ArrayList<>();
@@ -224,6 +258,7 @@ public final class D2Dcc {
         check(encoding, "encoding type");
         check(raw, "raw pixels");
 
+
         byte[] canvas = new byte[width * height];
         int[] lastX = new int[cellBuffer.length], lastY = new int[cellBuffer.length];
         int[] lastW = new int[cellBuffer.length], lastH = new int[cellBuffer.length];
@@ -264,11 +299,14 @@ public final class D2Dcc {
             out[f] = new Frame(h.xMin, h.yMin, h.width, h.height, px);
         }
         if (next != buffer.size()) throw new IOException("DCC: " + (buffer.size() - next) + " cells of the pixel buffer unused");
+
+
         if (codes.end() - codes.position() >= 40) {
             throw new IOException("DCC: " + (codes.end() - codes.position()) + " bits of pixel codes left over");
         }
         return out;
     }
+
 
     private static void layout(Head h, int dirXMin, int dirYMin) {
         h.x0 = h.xMin - dirXMin;
@@ -278,6 +316,7 @@ public final class D2Dcc {
         h.cellsX = h.cellW.length;
         h.cellsY = h.cellH.length;
     }
+
 
     static int[] cells(int offset, int size) {
         int first = 4 - offset % 4;
@@ -313,9 +352,14 @@ public final class D2Dcc {
         if (s.position() != s.end()) throw new IOException("DCC: " + name + " stream: " + (s.end() - s.position()) + " bits left");
     }
 
+
     public static int[] toArgb(Frame frame, int[] palette) {
         return toArgb(frame, palette, null);
     }
+
+
+
+
 
     public static int[] toArgb(Frame frame, int[] palette, byte[] map) {
         int[] out = new int[frame.pixels.length];
@@ -326,6 +370,7 @@ public final class D2Dcc {
         }
         return out;
     }
+
 
     public static Frame remap(Frame frame, byte[] map) {
         byte[] px = new byte[frame.pixels.length];

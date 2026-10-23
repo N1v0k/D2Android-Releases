@@ -1,10 +1,29 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define TELE_SKILL 54
 #define TELE_HOVER_RADIUS 8
 #define TELE_UNIT_WARP 5
 
+
 static DWORD teleHoverIgnored;
 static DWORD teleHoverTracedId = 0xFFFFFFFF;
+
+
+
+
+
 
 static int teleHoverDecide(int hooked, long sinceAsk, int found, int playable, int leftPressed, int leftSkill,
                            int rightPressed, int rightSkill, long mx, long my, long sx, long sy, int unitType) {
@@ -15,9 +34,16 @@ static int teleHoverDecide(int hooked, long sinceAsk, int found, int playable, i
     return dx * dx + dy * dy <= (long) TELE_HOVER_RADIUS * TELE_HOVER_RADIUS;
 }
 
+
 static int teleHoverCapable(void) {
     return unitActions;
 }
+
+
+
+
+
+
 
 static void teleHoverButtons(int clickType, int keyLeft, int keyRight, int* left, int* right) {
     if (clickType < 0) {
@@ -28,6 +54,7 @@ static void teleHoverButtons(int clickType, int keyLeft, int keyRight, int* left
     *left = clickType == 0 || clickType == 1;
     *right = clickType == 3 || clickType == 4;
 }
+
 
 static int teleportIgnoresHover(void* hovered) {
     if (!hovered || !teleActive) return 0;

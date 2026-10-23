@@ -7,10 +7,10 @@ import com.winlator.widget.XServerView;
 import com.winlator.xserver.Window;
 import com.winlator.xserver.XServer;
 
-/**
- * D2Android: what the X server and WinHandler need from the activity that shows the game
- * (D2GameActivity). Replaces Winlator's XServerDisplayActivity in their constructors.
- */
+
+
+
+
 public interface XServerHost {
     Activity getActivity();
 

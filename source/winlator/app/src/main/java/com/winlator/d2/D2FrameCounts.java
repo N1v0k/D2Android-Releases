@@ -2,14 +2,24 @@ package com.winlator.d2;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+
+
+
+
+
+
+
 public final class D2FrameCounts {
     public static final AtomicInteger overlayDraws = new AtomicInteger(), modStates = new AtomicInteger(),
         glFrames = new AtomicInteger(), glContent = new AtomicInteger(), glPointer = new AtomicInteger(),
         glPointerSkipped = new AtomicInteger();
+
     public static final long EVERY_MS = 60_000;
     private static long since = -1;
 
     private D2FrameCounts() {}
+
 
     public static synchronized String due(long nowMs) {
         if (since < 0) {
@@ -23,6 +33,7 @@ public final class D2FrameCounts {
         since = nowMs;
         return line;
     }
+
 
     static String line(long ms, int overlay, int states, int frames, int content, int pointer, int skipped) {
         return "rates: overlay " + rate(overlay, ms) + "/s, mod states " + rate(states, ms) + "/s, gl frames "
@@ -44,6 +55,7 @@ public final class D2FrameCounts {
         glPointer.set(0);
         glPointerSkipped.set(0);
     }
+
 
     public static synchronized void restart() {
         since = -1;

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-23). -->
 <resources>
     <attr name="colorPrimaryText" format="color" />
     <attr name="colorSecondaryText" format="color" />

@@ -7,16 +7,31 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
+
+
+
+
 public final class D2ModState {
     public static final int PROTOCOL_VERSION = 2;
     public static final int UNIT_PLAYER = 0, UNIT_MONSTER = 1, UNIT_OBJECT = 2, UNIT_ITEM = 4, UNIT_TILE = 5;
     public static final int PKT_STATUS = 1, PKT_STATE = 2, PKT_GOALS = 3, PKT_ITEMS = 4, PKT_MENU = 5, PKT_EFFECTS = 6, PKT_PLAYTEST = 7;
 
+
     public static final int UI_INVENTORY = 0x01, UI_CHARACTER = 0x02, UI_MINISKILL = 0x03, UI_SKILLTREE = 0x04,
         UI_CHAT = 0x05, UI_NPCMENU = 0x08, UI_ESCMENU = 0x09, UI_AUTOMAP = 0x0A, UI_HOTKEYS = 0x0B, UI_NPCSHOP = 0x0C,
         UI_ANVIL = 0x0E, UI_QUEST = 0x0F, UI_QUESTLOG = 0x11, UI_WAYPOINT = 0x14, UI_PARTY = 0x16, UI_TRADE = 0x17,
         UI_MESSAGES = 0x18, UI_STASH = 0x19, UI_CUBE = 0x1A, UI_HELP = 0x21, UI_MERC = 0x24, UI_SCROLL = 0x25;
+
+
+
+
+
     public static final int UI_QUESTSCROLL = 0x10;
+
+
+
+
     private static final int[] PANELS = {UI_INVENTORY, UI_CHARACTER, UI_MINISKILL, UI_SKILLTREE, UI_CHAT, UI_NPCMENU,
         UI_ESCMENU, UI_HOTKEYS, UI_NPCSHOP, UI_ANVIL, UI_QUEST, UI_QUESTSCROLL, UI_WAYPOINT, UI_PARTY, UI_TRADE,
         UI_MESSAGES, UI_STASH, UI_CUBE, UI_HELP, UI_MERC, UI_SCROLL};
@@ -24,8 +39,11 @@ public final class D2ModState {
     public static final int BELT_NONE = 0, BELT_HEAL = 1, BELT_MANA = 2, BELT_REJUV = 3, BELT_OTHER = 4;
     public static final int ITEM_OTHER = 0, ITEM_GOLD = 1, ITEM_POTION = 2, ITEM_RUNE = 3, ITEM_GEM = 4;
     public static final int OBJECT_OTHER = 0, OBJECT_CHEST = 1, OBJECT_SHRINE = 2, OBJECT_WAYPOINT = 3, OBJECT_WELL = 4, OBJECT_PORTAL = 5,
+
         OBJECT_ENTRANCE = 6,
+
         OBJECT_CORPSE = 7;
+
     public static final int MONSTER_CHAMPION = 1, MONSTER_UNIQUE = 2, MONSTER_MINION = 4, MONSTER_SUPERUNIQUE = 8, MONSTER_TOWN_NPC = 16;
 
     public static final class Monster {
@@ -51,6 +69,7 @@ public final class D2ModState {
         }
     }
 
+
     public static final class Thing {
         public final long id;
         public final int x, y, kind, extra;
@@ -69,53 +88,105 @@ public final class D2ModState {
     public final long uiFlags;
     public final int levelNo;
     public final boolean inTown;
+
     public final int flags;
     public final int playerX, playerY, lifePercent, manaPercent;
+
     public final int hoverType, rawMonsters;
+
     public final int lastDrink, commandsReceived;
     public final long hoverId;
     public final int[] belt;
     public final List<Monster> monsters;
     public final List<Thing> items;
     public final List<Thing> objects;
+
     public final int characterClass, leftSkill, rightSkill;
+
     public final int[] hotkeySkill = new int[16];
     public final boolean[] hotkeyLeft = new boolean[16];
+
     public final int[] damagedLocation, damagedState;
+
     public final int life, maxLife, mana, maxMana;
+
     public final boolean running;
+
     public final boolean pointerHideable, pointerHidden;
+
     public final boolean npcTalking;
+
     public final boolean goldFull;
+
+
+
+
+
     public final boolean worldSignal, worldDrawn;
+
     public final int[] potionTierBelt = new int[2], potionTierInventory = new int[2], potionCountBelt = new int[2], potionCountInventory = new int[2];
+
     public final boolean potionsKnown;
+
     public final int portals;
+
     public final List<Thing> corpses;
+
     public final int[] npcMenuIds;
     public final String[] npcMenuTexts;
+
     public final boolean staminaKnown;
+
     public final int stamina, maxStamina, staminaPotions;
+
     public final boolean unlimitedStaminaPossible, unlimitedStamina;
+
     public final boolean healingPotionWorking, manaPotionWorking, staminaPotionWorking;
+
+
+
+
     public final boolean potionTiersKnown;
+
+
+
+
     public final int[] potionLargestBelt = new int[2], potionLargestInventory = new int[2], potionTierWorking = new int[2];
+
     public final int rejuvInventory;
+
+
     public final int hoverItemCategory, hoverItemPlace, hoverItemX, hoverItemY;
+
     public final int playerDirection;
+
     public final boolean handsKnown;
+
     public final boolean statPointsLeft, skillPointsLeft;
+
     public final boolean plugyLoaded;
+
     public final boolean itemNamesWithoutAlt;
+
     public final boolean labelTipsKept;
+
     public final boolean mapHackPossible, mapHackOn;
+
     public final boolean edgeButtonsHidden;
+
     public final int quantityRight, quantityLeft;
+
+
+
+
+
     public final boolean worldKnown;
     public final double worldX, worldY;
     public final int playerMode, characterLevel;
     public final long experience, gold, goldStash;
+
     public static final int NPC_TALK = 0xD35, NPC_TRADE = 0xD44, NPC_TRADE_REPAIR = 0xD06, NPC_GAMBLE = 0xD46, NPC_HIRE = 0xD45,
+
         NPC_IDENTIFY = 0xFB4;
 
     private D2ModState(ByteBuffer b, int sequence) {
@@ -152,6 +223,8 @@ public final class D2ModState {
         monsters = Collections.unmodifiableList(monsterList);
         items = Collections.unmodifiableList(things(b));
         objects = Collections.unmodifiableList(things(b));
+
+
         boolean tail = b.hasRemaining();
         int damaged = 0;
         if (tail) {
@@ -175,6 +248,7 @@ public final class D2ModState {
             damagedLocation[i] = u8(b);
             damagedState[i] = u8(b);
         }
+
         if (tail && b.hasRemaining()) {
             life = u16(b);
             maxLife = u16(b);
@@ -215,6 +289,7 @@ public final class D2ModState {
             b.get(text);
             npcMenuTexts[i] = new String(text, StandardCharsets.UTF_8);
         }
+
         potionsKnown = portals >= 0 && b.hasRemaining();
         if (potionsKnown && b.remaining() < 8) throw new java.nio.BufferUnderflowException();
         if (potionsKnown) {
@@ -225,6 +300,7 @@ public final class D2ModState {
                 potionCountInventory[k] = u8(b);
             }
         }
+
         staminaKnown = potionsKnown && b.hasRemaining();
         if (staminaKnown && b.remaining() < 6) throw new java.nio.BufferUnderflowException();
         boolean tierBit = false, hoverBit = false, directionBit = false;
@@ -247,6 +323,7 @@ public final class D2ModState {
             staminaPotions = 0;
             unlimitedStaminaPossible = unlimitedStamina = healingPotionWorking = manaPotionWorking = staminaPotionWorking = false;
         }
+
         handsKnown = staminaKnown && b.hasRemaining();
         if (handsKnown && b.remaining() < 5) throw new java.nio.BufferUnderflowException();
         if (handsKnown) {
@@ -268,9 +345,12 @@ public final class D2ModState {
             edgeButtonsHidden = false;
             quantityRight = quantityLeft = -1;
         }
+
+
         potionTiersKnown = handsKnown && tierBit;
         int tierBytes = (potionTiersKnown ? 7 : 0) + (handsKnown && hoverBit ? 4 : 0) + (handsKnown && directionBit ? 1 : 0);
         if (b.remaining() < tierBytes) throw new java.nio.BufferUnderflowException();
+
         worldKnown = handsKnown && b.remaining() - tierBytes >= 20;
         if (worldKnown) {
             int x = u16(b), y = u16(b), fx = u8(b), fy = u8(b);
@@ -296,6 +376,7 @@ public final class D2ModState {
             rejuvInventory = u8(b);
         }
         else rejuvInventory = -1;
+
         if (handsKnown && hoverBit) {
             int category = u8(b), place = u8(b), x = u8(b), y = u8(b);
             hoverItemCategory = category == 0xFF ? -1 : category;
@@ -304,9 +385,11 @@ public final class D2ModState {
             hoverItemY = y == 0xFF ? -1 : y;
         }
         else hoverItemCategory = hoverItemPlace = hoverItemX = hoverItemY = -1;
+
         int direction = handsKnown && directionBit ? u8(b) : 0xFF;
         playerDirection = direction < 64 ? direction : -1;
     }
+
 
     public int ammunition() {
         if (quantityRight >= 0 && quantityLeft >= 0) return quantityRight + quantityLeft;
@@ -336,11 +419,13 @@ public final class D2ModState {
         return b.getShort() & 0xFFFF;
     }
 
+
     public static int packetType(byte[] data, int length) {
         if (length < 8 || data[0] != 'D' || data[1] != '2' || data[2] != 'A' || data[3] != 'M') return -1;
         if ((data[4] & 0xFF) != PROTOCOL_VERSION) return -1;
         return data[5] & 0xFF;
     }
+
 
     public static D2ModState parse(byte[] data, int length) {
         if (packetType(data, length) != PKT_STATE) return null;
@@ -355,11 +440,16 @@ public final class D2ModState {
         }
     }
 
+
     public static Object[] parseStatus(byte[] data, int length) {
         if (packetType(data, length) != PKT_STATUS || length < 10) return null;
         int code = data[8] & 0xFF, textLength = Math.min(data[9] & 0xFF, length - 10);
         return new Object[]{code, new String(data, 10, textLength, StandardCharsets.UTF_8)};
     }
+
+
+
+
 
     public static int[] parseMenuField(byte[] data, int length) {
         if (packetType(data, length) != PKT_MENU || length < 17 || (data[8] & 1) == 0) return null;
@@ -368,9 +458,11 @@ public final class D2ModState {
         return field;
     }
 
+
     public static boolean parseMenuSecret(byte[] data, int length) {
         return packetType(data, length) == PKT_MENU && length >= 9 && (data[8] & 2) != 0;
     }
+
 
     public static String parseMenuText(byte[] data, int length) {
         if (packetType(data, length) != PKT_MENU || length < 18 || parseMenuSecret(data, length)) return "";
@@ -378,37 +470,46 @@ public final class D2ModState {
         return new String(data, 18, n, StandardCharsets.UTF_8);
     }
 
+
     public boolean isHovered(long id) {
         return hoverType != 0xFF && hoverId == id;
     }
+
 
     public boolean canActOnUnits() {
         return (flags & 1) != 0;
     }
 
+
     public boolean canOwnHud() {
         return (flags & 8) != 0;
     }
+
 
     public boolean hudLeftOut() {
         return (flags & 16) != 0;
     }
 
+
     public boolean durabilityLeftOut() {
         return (flags & 128) != 0;
     }
+
 
     public boolean canPause() {
         return (flags & 32) != 0;
     }
 
+
     public boolean paused() {
         return (flags & 64) != 0;
     }
 
+
     public boolean canWalk() {
         return (flags & 4) != 0;
     }
+
 
     public boolean canHighlight() {
         return (flags & 2) != 0;
@@ -418,9 +519,11 @@ public final class D2ModState {
         return (uiFlags & (1L << uiVar)) != 0;
     }
 
+
     public boolean isPanelOpen() {
         return panelFlags() != 0;
     }
+
 
     public long panelFlags() {
         long flags = 0;
@@ -428,15 +531,18 @@ public final class D2ModState {
         return flags;
     }
 
+
     public int beltColumn(int kind) {
         for (int column = 0; column < 4; column++) if (belt[column] == kind) return column;
         return -1;
     }
 
+
     public boolean beltEmpty() {
         for (int slot : belt) if (slot != BELT_NONE) return false;
         return true;
     }
+
 
     public boolean beltHas(int kind) {
         for (int slot : belt) if (slot == kind) return true;

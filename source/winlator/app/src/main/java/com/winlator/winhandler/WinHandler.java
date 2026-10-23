@@ -1,4 +1,4 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -36,7 +36,7 @@ public class WinHandler {
     private OnGetProcessInfoListener onGetProcessInfoListener;
     private OnPreExecListener onPreExecListener;
     private InetAddress localhost;
-    protected final XServerHost activity; // D2Android: interface instead of Winlator's activity
+    protected final XServerHost activity;
     public final GamepadHandler gamepadHandler = new GamepadHandler(this);
     private Callback<String> requestCallback;
 
@@ -156,7 +156,7 @@ public class WinHandler {
         });
     }
 
-    // D2Android: counts winhandler's cursor position answers, also those that leave the position unchanged
+
     private volatile int cursorFeedbacks;
 
     public int getCursorFeedbacks() {
@@ -353,7 +353,7 @@ public class WinHandler {
                 XServer xServer = activity.getXServer();
                 xServer.pointer.setX(x);
                 xServer.pointer.setY(y);
-                cursorFeedbacks++; // D2Android: lets the touch layer see that a resync was answered
+                cursorFeedbacks++;
                 activity.getXServerView().requestRender();
                 break;
             }
@@ -364,7 +364,7 @@ public class WinHandler {
                 FileUtils.openIntent(activity.getActivity(), new String(data));
                 break;
             }
-            // D2Android: no MIDI synthesizer (Diablo II uses none); MIDI_OPEN/MIDI_CLOSE are ignored
+
             case RequestCodes.GET_EXECUTABLE_PATH: {
                 int requestLength = receiveData.getInt();
                 String path = "";

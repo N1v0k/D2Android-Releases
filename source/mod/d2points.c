@@ -1,4 +1,37 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define ORD_GetBaseStat     10216
 #define RVA_SkillTab        0xF6EE0
 #define RVA_SkillTabCheck   0x30A07
@@ -6,8 +39,21 @@
 #define RVA_SkillRowY       0x2F150
 #define RVA_ScreenW         0xF7034
 #define RVA_ScreenH         0xF7038
+
+
+
+
+
+
 #define RVA_PanelOffX       0x11D354
 #define RVA_PanelOffY       0x11D358
+
+
+
+
+
+
+
 
 #define CAP_POINTS          0x01
 #define CAP_COMPARE         0x02
@@ -15,11 +61,18 @@
 #define CAP_LOOT            0x20
 #define CAP_TELEPORT        0x80
 #define CAP_VALUE           0x40
+
+
+
+
+
 #define CAP2_TELE_HOVER     0x02
 static BYTE diffCapabilities2(void);
 static DWORD damageDps(void);
 static int teleHoverCapable(void);
 static BYTE effectsCapabilities2(void);
+
+
 static const DWORD XP_LEVEL[99] = {
     0u, 500u, 1500u, 3750u, 7875u, 14175u,
     22680u, 32886u, 44396u, 57715u, 72144u, 90180u,
@@ -39,6 +92,9 @@ static const DWORD XP_LEVEL[99] = {
     1764543065u, 1923762030u, 2097310703u, 2286478756u, 2492671933u, 2717422497u,
     2962400612u, 3229426756u, 3520485254u,
 };
+
+
+
 
 static void putExperience(Packet* p, void* hero) {
     DWORD xp = hero ? fGetUnitStat(hero, 13, 0) : 0, level = hero ? fGetUnitStat(hero, 12, 0) : 0;
@@ -61,6 +117,11 @@ static BYTE capabilities2(void) {
         | 16;
 }
 
+
+
+
+
+
 #define ITYPE_BOW           27
 #define ITYPE_CROSSBOW      35
 #define ITYPE_THROWPOTION   38
@@ -76,11 +137,14 @@ static BYTE attackKind(void* player) {
     if (!fItemIsType || !readable(inventory, 0x10)) return ATTACK_UNKNOWN;
     if (fGetUnitState && (fGetUnitState(player, STATE_WEREWOLF) || fGetUnitState(player, STATE_WEREBEAR)))
         return ATTACK_STRIKES;
+
     int steps = 0;
     for (void* item = RDP(inventory, INV_FIRST); item && steps < 512; steps++) {
         void* data = RDP(item, U_DATA);
         if (!readable(data, 0x70)) return ATTACK_UNKNOWN;
         BYTE location = RD8(data, IDATA_BODYLOC);
+
+
         if (RD8(data, IDATA_NODEPAGE) == 3 && (location == 4 || location == 5) && !(RD32(data, IDATA_FLAGS) & 0x4000)
             && (fItemIsType(item, ITYPE_BOW) || fItemIsType(item, ITYPE_CROSSBOW) || fItemIsType(item, ITYPE_THROWPOTION)))
             return ATTACK_SHOOTS;
@@ -91,6 +155,7 @@ static BYTE attackKind(void* player) {
 
 static int damageCapable(void);
 static int valueCapable(void);
+
 #define PTS_SKILLTREE       0x01
 #define PTS_BASESTATS       0x02
 #define PTS_STAT            0x04
@@ -99,6 +164,7 @@ static int valueCapable(void);
 #define PTS_STATSPAGE       0x20
 
 #define CMD_POINTS          19
+
 #define RVA_StatSite        0xC06D1
 #define RVA_SkillSite       0x30B21
 #define RVA_Send3           0xB6B00
@@ -120,6 +186,7 @@ static GetBaseStat_t fGetBaseStat;
 static int skillTreeKnown;
 static BYTE pointOps;
 
+
 typedef struct {
     BYTE level, tab;
     WORD statPoints, skillPoints, stats[4], first;
@@ -134,11 +201,14 @@ static int sameAbs(const BYTE* at, DWORD rva) {
     return *(const DWORD*) at == client + rva;
 }
 
+
 static void checkPointSites(void) {
     fGetBaseStat = (GetBaseStat_t) GetProcAddress((HMODULE) common, (LPCSTR) ORD_GetBaseStat);
+
     static const BYTE col1[] = {0x3C, 0x01, 0x75, 0x11, 0xA1};
     static const BYTE col2[] = {0x2B, 0x05};
     static const BYTE col3[] = {0x2D, 0x31, 0x01, 0x00, 0x00, 0xC3};
+
     static const BYTE row1[] = {0x3C, 0x01, 0x75, 0x13, 0xA1};
     static const BYTE row2[] = {0x8B, 0x0D};
     static const BYTE row3[] = {0x8D, 0x84, 0x01, 0x5E, 0xFE, 0xFF, 0xFF, 0xC3};
@@ -161,6 +231,7 @@ static void checkPointSites(void) {
     if (fSendPacket && readable(a, sizeof(stat)) && memcmp(a, stat, sizeof(stat)) == 0) pointOps |= PTS_STAT;
     if (fSendPacket && readable(b, 9) && memcmp(b, skill, sizeof(skill)) == 0
         && (DWORD) b + 9 + *(const DWORD*) (b + 5) == client + RVA_Send3) pointOps |= PTS_SKILL;
+
     const BYTE* h = (const BYTE*) (client + RVA_SetHotkey);
     int setter = readable(h, 28) && h[0] == 0x89 && h[1] == 0x0C && h[2] == 0x85 && sameAbs(h + 3, RVA_HotkeySkill)
         && h[7] == 0x8B && h[8] == 0x4C && h[9] == 0x24 && h[10] == 0x04 && h[11] == 0x89 && h[12] == 0x14
@@ -172,6 +243,10 @@ static void checkPointSites(void) {
         pointOps & PTS_KEY ? " hotkey" : "");
 }
 
+
+
+
+
 static int statsPageState;
 static DWORD statsPageHook;
 static BYTE* statsPagePlugY;
@@ -182,6 +257,7 @@ static BYTE statsPage(void) {
     DWORD target = (DWORD) c + 5 + *(const DWORD*) (c + 1);
     if (target == client + RVA_CharScreenPage) return 0;
     if (statsPageHook != target) {
+
         BYTE* plugy = plugyLoaded ? (BYTE*) GetModuleHandleA("PlugY.dll") : NULL;
         static const BYTE head[] = {0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF8, 0x80, 0x3D};
         static const BYTE realm[] = {0x00, 0x75, 0x3C, 0xA1};
@@ -205,11 +281,13 @@ static BYTE statsPage(void) {
     BYTE* plugy = statsPagePlugY;
     if (*(volatile BYTE*) (plugy + RVA_PlugYRealm)) return 0;
     int page = *(volatile int*) (plugy + RVA_PlugYPage), last = *(volatile int*) (plugy + RVA_PlugYLastPage);
+
     if ((page > 0 && page <= last) || page == last + 1 || page == last + 2) {
         return (BYTE) (page < 1 ? 1 : page > 254 ? 254 : page);
     }
     return 0;
 }
+
 
 static int ownSkill(void* player, WORD skill) {
     void* info = RDP(player, U_INFO);
@@ -220,6 +298,11 @@ static int ownSkill(void* player, WORD skill) {
     }
     return 0;
 }
+
+
+
+
+
 
 static int passiveSkill(void* player, WORD skill) {
     void* info = RDP(player, U_INFO);
@@ -232,6 +315,11 @@ static int passiveSkill(void* player, WORD skill) {
     }
     return 0;
 }
+
+
+
+
+
 
 static void pointsCommand(void* player, const BYTE* buf, int n) {
     int kind = buf[8];
@@ -251,6 +339,7 @@ static void pointsCommand(void* player, const BYTE* buf, int n) {
     else if (kind == 2 && !ownSkill(player, what)) why = "not learnt";
     else if (kind == 2 && passiveSkill(player, what)) why = "passive";
     else if (kind == 2 && !move) {
+
         DWORD held = RD32(client, RVA_HotkeySkill + key * 4);
         if (held < 0xFFFF && held != what) why = "key holds another skill";
         for (int i = 0; i < 16 && !why; i++) {
@@ -273,19 +362,25 @@ static void pointsCommand(void* player, const BYTE* buf, int n) {
         DWORD* skills = (DWORD*) (client + RVA_HotkeySkill);
         DWORD* lefts = (DWORD*) (client + RVA_HotkeyLeft);
         DWORD* items = (DWORD*) (client + RVA_HotkeyItem);
+
+
         if (move && skills[key] != 0xFFFFFFFF) {
             BYTE clear[9] = {0x51};
             *(DWORD*) (clear + 1) = 0xFFFF | (DWORD) key << 16;
             *(DWORD*) (clear + 5) = 0xFFFFFFFF;
             fSendPacket(9, 1, clear);
         }
+
         BYTE packet[9] = {0x51};
         *(DWORD*) (packet + 1) = what | (DWORD) key << 16;
         *(DWORD*) (packet + 5) = 0xFFFFFFFF;
+
         skills[key] = what;
         lefts[key] = 0;
         items[key] = 0xFFFFFFFF;
         fSendPacket(9, 1, packet);
+
+
         for (int i = 0; move && i < 16; i++) {
             if (i == key || skills[i] != what || items[i] != 0xFFFFFFFF) continue;
             skills[i] = lefts[i] = items[i] = 0xFFFFFFFF;
@@ -297,6 +392,7 @@ static void pointsCommand(void* player, const BYTE* buf, int n) {
     }
     logLine("points: command 19 kind %d %u key %d%s sent", kind, what, key, move ? " (move)" : "");
 }
+
 
 static int skillTreeEdge(DWORD rva, int n) {
     DWORD a = (DWORD) n;
@@ -315,6 +411,7 @@ static void readPoints(void* player, PointsState* s) {
     s->level = (BYTE) (level > 255 ? 255 : level);
     s->statPoints = clampWord(fGetUnitStat(player, 4, 0));
     s->skillPoints = clampWord(fGetUnitStat(player, 5, 0));
+
     for (int i = 0; i < 4 && fGetBaseStat; i++) s->stats[i] = clampWord(fGetBaseStat(player, (DWORD) i, 0));
     DWORD cls = RD32(player, U_TXTNO);
     s->first = cls < 7 ? first[cls] : 0xFFFF;
@@ -333,7 +430,13 @@ static void readPoints(void* player, PointsState* s) {
     s->statsPage = statsPage();
 }
 
+
+
+
+
+
 static int pointsTick(void* player) {
+
     BYTE attack = attackKind(player);
     int attackChanged = attack != attackNow;
     if (attackChanged) trace("attack kind %u (0 strikes, 1 shoots, 255 unknown)", attack);
@@ -355,9 +458,13 @@ static int pointsTick(void* player) {
     return 1;
 }
 
+
 static void putPointsBlock(Packet* p) {
     int lengthAt = p->len;
     putU8(p, 0);
+
+
+
     putU8(p, (pointOps ? CAP_POINTS : 0) | (compareAvailable ? CAP_COMPARE : 0) | (equipAvailable ? CAP_EQUIP : 0)
         | (damageCapable() ? CAP_DAMAGE : 0) | (equipAvailable ? CAP_SORT : 0)
         | (labelFilterAvailable && labelsAvailable ? CAP_LOOT : 0) | (valueCapable() ? CAP_VALUE : 0) | CAP_TELEPORT);
@@ -373,8 +480,11 @@ static void putPointsBlock(Packet* p) {
     putU8(p, pointsNow.tab);
     for (int i = 1; i <= 3; i++) putU16(p, (WORD) (skillTreeKnown ? skillTreeEdge(RVA_SkillColumnX, i) : 0));
     for (int i = 1; i <= 6; i++) putU16(p, (WORD) (skillTreeKnown ? skillTreeEdge(RVA_SkillRowY, i) : 0));
+
     putU8(p, equipCounter);
     putU8(p, equipResult);
+
+
     putU8(p, sortCounter);
     putU8(p, sortStateByte(fGetPlayerUnit()));
     putU8(p, sortMoves);
@@ -382,6 +492,8 @@ static void putPointsBlock(Packet* p) {
     putU8(p, capabilities2());
     putResumeFields(p);
     putU8(p, attackNow);
+
+
     void* hero = fGetPlayerUnit();
     putU16(p, (WORD) damageDps());
     putU32(p, hero ? fGetUnitStat(hero, 14, 0) : 0);

@@ -7,11 +7,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
 public final class D2GuestList {
     private D2GuestList() {}
 
+
     public static final class Result {
         public final List<ProcessHelper.PStat> processes;
+
         public final int onlyByRuntime;
 
         Result(List<ProcessHelper.PStat> processes, int onlyByRuntime) {
@@ -33,6 +44,7 @@ public final class D2GuestList {
         }
         return new Result(list, only);
     }
+
 
     private static boolean oldRule(ProcessHelper.PStat p, int selfPid) {
         return p.parentPID == selfPid || p.pid > selfPid;

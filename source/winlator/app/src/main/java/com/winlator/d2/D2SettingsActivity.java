@@ -22,8 +22,15 @@ import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.InputStream;
 
+
+
+
+
+
 public class D2SettingsActivity extends D2Activity {
+
     public static final String EXTRA_SAVES = "d2_saves";
+
     private android.view.View helpersPanel;
 
     @Override
@@ -33,13 +40,18 @@ public class D2SettingsActivity extends D2Activity {
     }
     private static final int ID_AUTO = 1000, ID_LANGUAGE = 1100, ID_FRAME_RATE = 1200, IMPORT_REQUEST_CODE = 4720,
         FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722;
+
     private TextView savesStatus;
+
     private View loadButton;
+
     private View playButton;
+
     private D2SoundButton soundButton;
     private TextView folderStatus;
     private TextView backgroundStatus;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
 
     private static final String STATE_GROUP = "d2_group";
 
@@ -47,8 +59,10 @@ public class D2SettingsActivity extends D2Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         String group = savedInstanceState != null ? savedInstanceState.getString(STATE_GROUP) : null;
+
         if (group == null && getIntent().getBooleanExtra(EXTRA_SAVES, false)) group = D2HelperEntries.SET_SAVES;
         buildPage(group);
+
         if (D2SettingsLook.get() == null) D2SettingsLook.load(this, () -> {
             if (!isFinishing() && !isDestroyed()) buildPage(D2HelpersPanel.group(helpersPanel));
         });
@@ -62,10 +76,14 @@ public class D2SettingsActivity extends D2Activity {
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+
+
         if (newConfig.orientation != builtFor && D2SettingsLook.get() != null) buildPage(D2HelpersPanel.group(helpersPanel));
     }
 
+
     private int builtFor;
+
 
     private void buildPage(String group) {
         builtFor = getResources().getConfiguration().orientation;
@@ -75,9 +93,11 @@ public class D2SettingsActivity extends D2Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(pad, pad, pad, 0);
         if (look != null) {
+
             root.setBackground(new CoverDrawable(look.backdrop));
         }
         else root.setBackgroundColor(D2Style.BACKGROUND);
+
 
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -93,6 +113,7 @@ public class D2SettingsActivity extends D2Activity {
         }
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         Runnable play = () -> {
+
             if (D2Saves.importRunning()) {
                 D2HelpersPanel.open(helpersPanel, D2HelperEntries.SET_SAVES);
                 savesStatus(getString(R.string.saves_import_running));
@@ -108,6 +129,7 @@ public class D2SettingsActivity extends D2Activity {
             button.setOnClickListener((v) -> play.run());
             playButton = button;
         }
+
         soundButton = new D2SoundButton(this);
         soundButton.onChange = () -> {
             if (D2HelperEntries.SET_GAME.equals(D2HelpersPanel.group(helpersPanel))) buildPage(D2HelperEntries.SET_GAME);
@@ -121,6 +143,7 @@ public class D2SettingsActivity extends D2Activity {
         loadButton = null;
         helpersPanel = D2HelpersPanel.create(this, null, null, true, null, null, this::hostView);
         root.addView(helpersPanel, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
         LinearLayout foot = new LinearLayout(this);
         foot.setGravity(android.view.Gravity.CENTER);
         foot.setPadding(0, dp(8), 0, dp(10));
@@ -133,6 +156,7 @@ public class D2SettingsActivity extends D2Activity {
         lockForImport(D2Saves.importRunning());
         if (group != null) D2HelpersPanel.open(helpersPanel, group);
     }
+
 
     private final class FootDrawable extends android.graphics.drawable.Drawable {
         private final android.graphics.Paint paint = new android.graphics.Paint();
@@ -157,6 +181,7 @@ public class D2SettingsActivity extends D2Activity {
             return android.graphics.PixelFormat.TRANSLUCENT;
         }
     }
+
 
     private static final class CoverDrawable extends android.graphics.drawable.Drawable {
         private final android.graphics.Bitmap picture;
@@ -192,6 +217,10 @@ public class D2SettingsActivity extends D2Activity {
         String group = D2HelpersPanel.group(helpersPanel);
         if (group != null) out.putString(STATE_GROUP, group);
     }
+
+
+
+
 
     private View hostView(D2HelperEntries.Entry e) {
         LinearLayout box = new LinearLayout(this);
@@ -231,9 +260,11 @@ public class D2SettingsActivity extends D2Activity {
                 return box;
             }
             case "frameRate": {
+
                 box.addView(label(e.label));
                 box.addView(hint(getString(R.string.settings_frame_rate_hint)));
                 RadioGroup frameRateGroup = new RadioGroup(this);
+
                 float[] rates = D2Screen.refreshRates(this);
                 int maxHz = Math.round(D2FrameRate.maxRate(rates));
                 for (int fps : D2FrameRate.STEPS) {
@@ -244,6 +275,7 @@ public class D2SettingsActivity extends D2Activity {
                     addOption(frameRateGroup, ID_FRAME_RATE + fps, label);
                     View option = frameRateGroup.findViewById(ID_FRAME_RATE + fps);
                     option.setEnabled(offered);
+
                     if (!offered) option.setAlpha(0.45f);
                 }
                 frameRateGroup.check(ID_FRAME_RATE + D2FrameRate.effective(D2Settings.frameRate(this), rates));
@@ -290,6 +322,7 @@ public class D2SettingsActivity extends D2Activity {
             case "statsPages":
                 return D2PlugY.isBundled(this) ? check(e.label, D2Settings.statsPages(this), D2Settings.KEY_STATS_PAGES) : null;
             default:
+
                 for (int i = 0; i < D2PlugY.EXTRA_KEYS.length; i++) {
                     String key = "plugy" + D2PlugY.EXTRA_KEYS[i];
                     if (!key.equals(e.key)) continue;
@@ -309,6 +342,7 @@ public class D2SettingsActivity extends D2Activity {
                 return box;
             }
             case "gameFolder": {
+
                 box.addView(label(e.label));
                 folderStatus = new TextView(this);
                 D2Style.text(folderStatus);
@@ -351,10 +385,13 @@ public class D2SettingsActivity extends D2Activity {
     }
 
     private void chooseFolder() {
+
         if (D2TouchOverlay.isGameRunning()) {
             folderText(getString(R.string.folder_game_running));
             return;
         }
+
+
         if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -364,13 +401,17 @@ public class D2SettingsActivity extends D2Activity {
         openFolderPicker();
     }
 
+
     private final D2FolderPick.LineKeeper folderKeeper = new D2FolderPick.LineKeeper();
+
     private Runnable pendingPick;
+
 
     private void folderText(String text) {
         folderLine = text;
         if (folderStatus != null) folderStatus.setText(text);
     }
+
 
     private View button(String text, Runnable action) {
         D2SettingsLook look = D2SettingsLook.get();
@@ -414,6 +455,8 @@ public class D2SettingsActivity extends D2Activity {
     @Override
     protected void onRestart() {
         super.onRestart();
+
+
         if (!folderKeeper.dropOnRestart()) D2Trace.log("settings restart after the picker's result: folder line kept");
         else folderLine = null;
     }
@@ -421,6 +464,7 @@ public class D2SettingsActivity extends D2Activity {
     @Override
     protected void onResume() {
         super.onResume();
+
         if (folderLine == null && folderStatus != null && folderStatus.isAttachedToWindow()) showFolder();
         folderKeeper.resumed();
         if (pendingPick != null) {
@@ -431,6 +475,7 @@ public class D2SettingsActivity extends D2Activity {
         if (backgroundStatus != null) backgroundStatus.setText(getString(R.string.settings_background_status, D2BackgroundActivity.summary(this)));
         if (soundButton != null) soundButton.update();
     }
+
 
     private View check(String label, boolean checked, String key) {
         return check(label, checked, key, null);
@@ -464,11 +509,15 @@ public class D2SettingsActivity extends D2Activity {
         return box;
     }
 
+
     private void install() {
+
         if (D2TouchOverlay.isGameRunning()) {
+
             askQuitThenInstall();
             return;
         }
+
         if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -478,8 +527,14 @@ public class D2SettingsActivity extends D2Activity {
         startActivity(new Intent(this, D2InstallActivity.class));
     }
 
+
+
+
+
+
     private void askQuitThenInstall() {
         TextView message = new TextView(this);
+
         boolean saves = !D2TouchOverlay.quitWouldLose();
         message.setText(getString(saves ? R.string.install_game_running_ask : R.string.install_game_running_ask_lose));
         message.setTextSize(16);
@@ -535,8 +590,11 @@ public class D2SettingsActivity extends D2Activity {
         }
     }
 
+
     private void showFolder() {
         if (folderStatus == null) return;
+
+
         if (folderLine == null) {
             File dir = GameLocator.gameDir(this);
             if (dir == null) {
@@ -551,7 +609,9 @@ public class D2SettingsActivity extends D2Activity {
         folderStatus.setText(folderLine);
     }
 
+
     private String folderLine, savesLine = "";
+
 
 
     private void savesStatus(String text) {
@@ -561,6 +621,7 @@ public class D2SettingsActivity extends D2Activity {
         });
     }
 
+
     private void shareSaves() {
         File gameDir = GameLocator.gameDir(this);
         if (gameDir == null) {
@@ -569,6 +630,7 @@ public class D2SettingsActivity extends D2Activity {
         }
         savesStatus(getString(R.string.saves_packing));
         new Thread(() -> {
+
             D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), gameDir, "share");
             if (lock.foreign || lock.unusable) {
                 savesStatus(folderLockText(this, lock, false));
@@ -579,6 +641,8 @@ public class D2SettingsActivity extends D2Activity {
                 File[] old = folder.listFiles();
                 if (old != null) for (File file : old) file.delete();
                 File zip = new File(folder, D2Saves.zipName("Diablo2-Spielstaende"));
+
+
                 if (!D2TouchOverlay.isGameRunning() && D2Saves.recover(D2Saves.saveDir(gameDir))) D2SaveRepair.run(D2Saves.saveDir(gameDir));
                 int count = D2Saves.zip(D2Saves.saveDir(gameDir), zip);
                 if (count == 0) {
@@ -606,9 +670,11 @@ public class D2SettingsActivity extends D2Activity {
         }, "D2SavesShare").start();
     }
 
+
     private void lockForImport(boolean importing) {
         if (loadButton != null) loadButton.setEnabled(!importing);
         if (playButton != null) playButton.setEnabled(!importing);
+
         if (importing) handler.postDelayed(() -> lockForImport(D2Saves.importRunning()), 500);
     }
 
@@ -638,7 +704,7 @@ public class D2SettingsActivity extends D2Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FOLDER_REQUEST_CODE) {
             D2Trace.log("folder picker answered: result " + resultCode + ", " + (data != null && data.getData() != null
-                ? data.getData().getAuthority() : "no folder") + "");
+                ? data.getData().getAuthority() : "no folder"));
             if (resultCode != RESULT_OK && (data == null || data.getData() == null)) return;
             folderKeeper.written();
             File dir = GameLocator.pickedDir(data);
@@ -650,13 +716,17 @@ public class D2SettingsActivity extends D2Activity {
             String before = GameLocator.chosenPath(this);
             GameVersion.Result check = GameLocator.choose(this, dir);
             boolean usable = check.status == GameVersion.Status.OK || check.status == GameVersion.Status.MODIFIED;
+
             if (!usable && D2FolderPick.gamesBelow(dir).size() >= 2) folderLine = null;
             else folderText(check.dir.getAbsolutePath() + "\n" + GameLocator.message(this, check));
+
             pendingPick = () -> D2FolderPickDialog.show(this, dir, check, before, this::chooseFolder);
             return;
         }
         if (requestCode != IMPORT_REQUEST_CODE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
+
+
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(20);
@@ -692,6 +762,8 @@ public class D2SettingsActivity extends D2Activity {
             savesStatus(getString(R.string.saves_no_game_folder));
             return;
         }
+
+
         if (D2TouchOverlay.isGameRunning()) {
             savesStatus(getString(R.string.saves_game_running));
             return;
@@ -703,6 +775,7 @@ public class D2SettingsActivity extends D2Activity {
         lockForImport(true);
         savesStatus(getString(R.string.saves_loading));
         new Thread(() -> {
+
             D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), gameDir, "import");
             if (lock.foreign || lock.unusable) {
                 savesStatus(folderLockText(this, lock, false));
@@ -738,9 +811,15 @@ public class D2SettingsActivity extends D2Activity {
         }, "D2SavesImport").start();
     }
 
+
     static String appLabel(android.content.Context context) {
         return String.valueOf(context.getApplicationInfo().loadLabel(context.getPackageManager()));
     }
+
+
+
+
+
 
     static String folderLockText(android.content.Context context, D2FolderLock.Decision lock, boolean play) {
         if (lock.unusable) return context.getString(R.string.folder_lock_unusable);
@@ -751,12 +830,15 @@ public class D2SettingsActivity extends D2Activity {
         return context.getString(play ? R.string.folder_lock_play : R.string.folder_lock_retry, lock.label, since);
     }
 
+
     private String savesError(Exception e) {
         return savesError(this, e);
     }
 
+
     static String savesError(android.content.Context context, Exception e) {
         if (!(e instanceof D2Saves.Failure)) {
+
             String message = e.getMessage();
             return message != null && !message.isEmpty() ? message : e.getClass().getSimpleName();
         }

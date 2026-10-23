@@ -1,4 +1,12 @@
 
+
+
+
+
+
+
+
+
 #define PKT_MAP 8
 #define CMD_MAP 14
 #define MAP_PART_BYTES 960
@@ -25,6 +33,7 @@ static void mapCommand(const BYTE* buf, int n) {
     r->part = buf[11];
 }
 
+
 static void* playerLevel(void* player, DWORD* levelNo) {
     void* path = RDP(player, U_PATH);
     void* room1 = path ? RDP(path, PATH_ROOM1) : NULL;
@@ -36,8 +45,9 @@ static void* playerLevel(void* player, DWORD* levelNo) {
 }
 
 static int mapStand(void) {
-    return mapAvailable ? (reveal.next >= reveal.end && reveal.act ? 2 : 1) : 0;
+    return mapAvailable ? (revealDone() ? 2 : 1) : 0;
 }
+
 
 static void sendRoomList(void* player, WORD first) {
     DWORD levelNo = 0;
@@ -74,6 +84,7 @@ static void sendRoomList(void* player, WORD first) {
     p.data[countAt] = (BYTE) count;
     sendPacket(&p);
 }
+
 
 static void sendRoomBitmap(void* player, WORD index, BYTE part) {
     DWORD levelNo = 0;
@@ -136,6 +147,7 @@ static void sendRoomBitmap(void* player, WORD index, BYTE part) {
     }
     if (added) fRemoveRoomData(act, levelNo, tx, ty, RDP(room2, ROOM2_ROOM1));
 }
+
 
 static void roomMapTick(void* player) {
     if (!mapQueueLen) return;

@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Locale;
 
+
+
+
+
+
 final class AufzeichnungsFinger implements Finger {
     private final Writer out;
     private final long start;

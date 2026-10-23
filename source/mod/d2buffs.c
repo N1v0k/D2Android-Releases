@@ -1,11 +1,27 @@
 
+
+
+
+
+
+
+
+
+
+
 #define ORD_GetSkillLevel  10007
 #define SKILL_LEVEL        0x28
 
 typedef int (__stdcall *GetSkillLevel_t)(void* unit, void* skill, BOOL total);
 static GetSkillLevel_t fGetSkillLevel;
 
+
+
+
+
+
 static const BYTE BUFF_STATES[] = {10, 88, 20, 30, 16, 38, 26, 32, 51, 14};
+
 
 static void* findSkill(void* player, WORD skill) {
     void* info = RDP(player, U_INFO);
@@ -19,6 +35,10 @@ static void* findSkill(void* player, WORD skill) {
     }
     return found;
 }
+
+
+
+
 
 static void putBuffsAndLevels(Packet* p, void* player) {
     BYTE* count = p->data + p->len;

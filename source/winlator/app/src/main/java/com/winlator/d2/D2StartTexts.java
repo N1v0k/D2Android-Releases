@@ -1,9 +1,11 @@
 package com.winlator.d2;
 
+
 final class D2StartTexts {
     static final int NOW = 0, MINUTES = 1, HOURS = 2, YESTERDAY = 3, DAYS = 4, WEEKS = 5, MONTHS = 6;
 
     private D2StartTexts() {}
+
 
     static int[] ago(long now, long then) {
         long minutes = Math.max(0, now - then) / 60_000;

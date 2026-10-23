@@ -7,20 +7,42 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
+
 public final class Anlegen {
+
     public static final long PRUEF_MS = 3000;
+
     public static final long WARTEN_MS = 5000;
+
     public static final long NACHLAUF_MS = 5000;
+
     public static final long ZEIGER_MS = 3000;
+
     public static final long SPERRE_MS = 60_000;
+
     public static final int OK = 1, ABGELEHNT = 2, AM_ZEIGER = 3, NICHT_BEGONNEN = 4;
 
     public enum Art { NICHTS, SENDEN, HALTEN, ENDE }
+
+
+
+
 
     public static final class Schritt {
         public Art art = Art.NICHTS;
         public long id;
         public String grund = "";
+
         public boolean keineAntwort;
     }
 
@@ -35,13 +57,25 @@ public final class Anlegen {
         return wartet;
     }
 
+
     public boolean beschaeftigt(long now) {
         return wartet || now < nachlaufBis || zeigerSeit >= 0;
     }
 
+
     public boolean brauchtFigur(long now) {
         return !wartet && (now - letztePruefung >= PRUEF_MS || now < nachlaufBis || zeigerSeit >= 0);
     }
+
+
+
+
+
+
+
+
+
+
 
     public Schritt schritt(D2Tabellen t, Zustand.Figur figur, Ausruestung.Figur f, boolean kampf, boolean faehig,
                            int zaehler, int ergebnis, long now) {
@@ -76,6 +110,7 @@ public final class Anlegen {
             return s;
         }
         if (!faehig) return s;
+
         if (figur != null) zeigerSeit = figur.zeiger != 0 ? (zeigerSeit >= 0 ? zeigerSeit : now) : -1;
         if (zeigerSeit >= 0) {
             if (now - zeigerSeit <= ZEIGER_MS) {

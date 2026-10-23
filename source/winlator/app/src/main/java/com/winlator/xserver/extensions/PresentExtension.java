@@ -1,4 +1,4 @@
-package com.winlator.xserver.extensions;
+package com.winlator.xserver.extensions;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
 
@@ -43,16 +43,16 @@ public class PresentExtension extends Extension implements WindowManager.OnWindo
     private final SparseArray<PresentEvent> events = new SparseArray<>();
     private SyncExtension syncExtension;
     private long eglContextPtr;
-    /** D2Android: the renderer context the copy context shares textures with; presents so far (the trace) */
+
     private int copyGeneration;
     private int copyLoggedGeneration;
     private boolean copyWaitLogged;
     public static volatile long presents;
-    /**
-     * D2Android: for the trace of a stalled picture (D2StallSnapshot): when the last PresentPixmap came
-     * (uptime ms) and its pixmap's size, how many Idle-, Complete- and ConfigureNotify went out, and the last
-     * ConfigureNotify (uptime ms, window size)
-     */
+
+
+
+
+
     public static volatile long lastPresentAt, idleNotifies, completeNotifies, configureNotifies, lastConfigureAt;
     public static volatile int lastPresentWidth, lastPresentHeight, lastConfigureWidth, lastConfigureHeight;
     private ScheduledExecutorService idleNotifyScheduler;
@@ -207,8 +207,8 @@ public class PresentExtension extends Extension implements WindowManager.OnWindo
             if (pixmap != null) {
                 Texture srcTexture = pixmap.drawable.getTexture();
                 if (srcTexture instanceof GPUImage) {
-                    // D2Android: the copy context must share the renderer's textures. Before the renderer has a
-                    // context nothing is copied (the next frame comes soon); for a new renderer context it is made anew.
+
+
                     int generation = GLRenderer.contextGeneration;
                     if (generation == 0) {
                         if (!copyWaitLogged) com.winlator.d2.D2Trace.log("present: no renderer context yet, frame not copied");
@@ -223,6 +223,7 @@ public class PresentExtension extends Extension implements WindowManager.OnWindo
                         if (eglContextPtr == 0) {
                             createCopyEGLContext(client);
                             copyGeneration = generation;
+
                             if (copyLoggedGeneration != generation) com.winlator.d2.D2Trace.log("present: copy context "
                                 + (eglContextPtr != 0 ? "made" : "FAILED") + " for renderer context " + generation);
                             copyLoggedGeneration = generation;

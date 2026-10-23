@@ -1,4 +1,12 @@
 
+
+
+
+
+
+
+
+
 #define RVA_LabelItemCheck   0x4E60E
 #define RVA_LabelItemJump    0x4E611
 #define RVA_LabelItemNext    0x4E617
@@ -11,12 +19,14 @@
 #include "d2lootrules.c"
 
 static int labelFilterAvailable, labelFilterApplied;
+
 static unsigned lootMask, lootGoldBelow;
 static int lootHidden(void* unit);
 static int realAltDown;
 static DWORD labelFilterUntil, labelBits, labelSeconds = 5, labelRadius = 12;
 static BYTE labelJumpOriginal[6];
 DWORD labelContinue, labelSkip;
+
 
 static DWORD dropId[64], dropAt[64], dropNext;
 
@@ -31,9 +41,11 @@ static void checkLabelFilterSite(void) {
     logLine(labelFilterAvailable ? "label filter site verified" : "label filter site not as expected: all names as before");
 }
 
+
 static void noteItemMode(void* unit, DWORD mode, DWORD now) {
     if (mode != 5) return;
     DWORD id = RD32(unit, U_ID);
+
     for (int k = 0; k < 64; k++) {
         if (dropId[k] == id + 1) {
             dropAt[k] = now;
@@ -52,6 +64,7 @@ static int isNewLoot(DWORD id, DWORD now) {
     return 0;
 }
 
+
 static int newLootVisible(DWORD now) {
     if (!(labelBits & LABEL_NEW)) return 0;
     for (int k = 0; k < 64; k++) {
@@ -63,13 +76,20 @@ static int newLootVisible(DWORD now) {
     return 0;
 }
 
+
 __attribute__((force_align_arg_pointer)) int __cdecl wantLabel(void* unit) {
     DWORD now = GetTickCount();
     if (!unit) return 1;
+
+
     if (!labelsApplied || realAltDown) return 1;
+
+
+
     DWORD id = RD32(unit, U_ID);
     if (unit == originalSelectedUnit()) return 1;
     if (id == highlightId && highlightType == UNIT_ITEM && (int) (now - highlightUntil) < 0) return 1;
+
     if (lootMask && lootHidden(unit)) return 0;
     if ((labelBits & LABEL_NEW) && isNewLoot(id, now)) return 1;
     if (!(labelBits & LABEL_BUTTON)) return 0;
@@ -116,6 +136,7 @@ static void applyLabelFilter(int on) {
         (unsigned long) labelSeconds, (unsigned long) labelRadius);
 }
 
+
 static void updateLabelFilter(DWORD now) {
     if (!labelFilterAvailable) return;
     int alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
@@ -123,6 +144,7 @@ static void updateLabelFilter(DWORD now) {
     realAltDown = alt;
     int want = (int) (now - labelFilterUntil) < 0;
     if (want != labelFilterApplied) applyLabelFilter(want);
+
     if (!want && lootMask) logLine("loot filter: no command 12 any more, mask cleared");
     lootExpire(want, &lootMask, &lootGoldBelow);
 }
@@ -132,6 +154,7 @@ static void labelFilterCommand(const BYTE* buf, int n) {
     labelBits = buf[8] & 7;
     if (n >= 10 && buf[9]) labelSeconds = buf[9];
     if (n >= 11 && buf[10]) labelRadius = buf[10];
+
     unsigned mask, gold;
     lootParse(buf, n, &mask, &gold);
     if (mask != lootMask || gold != lootGoldBelow)

@@ -1,4 +1,22 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define RVA_GamePacketTable   0xFA698
 #define RVA_GameWaypointPkt   0x6CA70
 #define RVA_GameSendStat      0x68260
@@ -10,6 +28,10 @@
 #define SRV_CODE_HEAL         0xA0D20001u
 #define SRV_CODE_EFFECTS      0xA0D20152u
 #define SRV_CODE_DAMAGE       0xA0D20089u
+
+
+
+
 #define STAT_LIFE             6
 
 typedef int (__fastcall *PacketHandler_t)(void* game, void* unit, BYTE* packet, DWORD size);
@@ -23,6 +45,20 @@ static SetUnitStat_t fSetUnitStat;
 static GetMaxLife_t fGetMaxLife;
 static DWORD srvGame;
 static int srvState;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define SRV_QUEUE    8
 #define SRV_FREE     0
 #define SRV_WAITING  1
@@ -42,11 +78,13 @@ static LONG srvLastSeq;
 static LONG srvRun(SrvSlot* s, void* game, void* unit);
 static LONG damagePatchServer(void);
 
+
 static SrvSlot* srvSlot(LONG seq) {
     if (seq <= 0) return NULL;
     for (int i = 0; i < SRV_QUEUE; i++) if (srvQueue[i].seq == seq) return &srvQueue[i];
     return NULL;
 }
+
 
 static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
     SrvSlot* s = NULL;
@@ -68,14 +106,21 @@ static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
     return seq;
 }
 
+
 static int srvTake(LONG seq, LONG* answer, LONG* count) {
     SrvSlot* s = srvSlot(seq);
+
     if (!s || InterlockedCompareExchange(&s->state, SRV_DONE, SRV_DONE) != SRV_DONE) return 0;
     *answer = s->answer;
     if (count) *count = s->count;
     InterlockedExchange(&s->state, SRV_FREE);
     return 1;
 }
+
+
+
+
+
 
 static int srvCancel(LONG seq) {
     SrvSlot* s = srvSlot(seq);
@@ -85,8 +130,13 @@ static int srvCancel(LONG seq) {
 
 static DWORD srvResets;
 
+
 static void srvReset(void) {
     srvResets++;
+
+
+
+
     for (int i = 0; i < SRV_QUEUE; i++) {
         volatile LONG* st = &srvQueue[i].state;
         for (;;) {
@@ -97,23 +147,38 @@ static void srvReset(void) {
     }
 }
 
+
 static int srvServe(LONG seq, void* game, void* unit) {
     SrvSlot* s = srvSlot(seq);
     if (!s || InterlockedCompareExchange(&s->state, SRV_BUSY, SRV_WAITING) != SRV_WAITING) return 0;
     s->answer = srvRun(s, game, unit);
+
     if (InterlockedCompareExchange(&s->state, SRV_DONE, SRV_BUSY) == SRV_CANCELLED) InterlockedExchange(&s->state, SRV_FREE);
     return 1;
 }
 
+
+
 static LONG srvHeal(void* unit) {
+
     if (!unit || RD32(unit, U_TYPE) != 0 || RD32(unit, U_MODE) == 0 || RD32(unit, U_MODE) == 17
         || fGetUnitStat(unit, STAT_LIFE, 0) >= 256) return 2;
     DWORD max = fGetMaxLife(unit);
     if (max < 256) return 2;
+
     fSetUnitStat(unit, STAT_LIFE, max, 0);
     srvSendStat(unit, STAT_LIFE, max, unit);
     return 1;
 }
+
+
+
+
+
+
+
+
+
 
 #define SU_STATS          0x5C
 #define GAME_FRAME        0xA8
@@ -122,8 +187,19 @@ static LONG srvHeal(void* unit) {
 #define SL_PREVLINK       0x2C
 #define EFFECT_MAX_FRAMES (25u * 60u * 30u)
 static DWORD srvEffectLeft[256];
+
+
 static DWORD srvPointsLeft, srvPointsMost;
 static DWORD srvEffectFrame;
+
+
+
+
+
+
+
+
+
 #define SL_SKILL          0x1C
 #define RVA_DataTables    0xA33F0
 #define DT_SKILLS         0xB98
@@ -168,6 +244,17 @@ static LONG srvEffects(void* game, void* unit) {
     return found;
 }
 
+
+
+
+
+
+
+
+
+
+
+
 #define SRV_CODE_WARP       0xA0D20121u
 #define SRV_CODE_PLACE      0xA0D20122u
 #define SRV_CODE_INVUL_ON   0xA0D20123u
@@ -183,6 +270,7 @@ static LONG srvLivingPlayer(void* unit) {
     return unit && readable(unit, SU_FLAGS + 4) && RD32(unit, U_TYPE) == 0 && RD32(unit, U_MODE) != 0 && RD32(unit, U_MODE) != 17;
 }
 
+
 static DWORD srvCallWarp(DWORD fn, void* game, void* unit, DWORD level, DWORD tile) {
     DWORD eax = (DWORD) unit, ecx = tile, edx = fn;
     __asm__ volatile ("push %%ecx\n\tpush %%esi\n\tcall *%%edx"
@@ -191,6 +279,7 @@ static DWORD srvCallWarp(DWORD fn, void* game, void* unit, DWORD level, DWORD ti
                       : "memory", "cc");
     return eax;
 }
+
 
 static const BYTE WAYPOINT_LEVELS[] = {1, 40, 75, 103, 109, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
     79, 80, 81, 83, 101, 106, 107, 111, 112, 113, 115, 117, 118, 129, 123};
@@ -203,6 +292,7 @@ static int isWaypointLevel(DWORD level) {
 static const BYTE warpStart[] = {0x83, 0xEC, 0x0C, 0x53, 0x55, 0x8B, 0x6C, 0x24, 0x18, 0x56, 0x57, 0x8B, 0xF0};
 static const BYTE placeStart[] = {0x83, 0xEC, 0x2C, 0x53, 0x55, 0x8B, 0x6C, 0x24, 0x3C, 0x85, 0xED, 0x56, 0x57, 0x8B, 0xD8, 0x8B, 0xF1, 0x8B, 0xFA};
 
+
 static int resumeFunctionsKnown(void) {
     DWORD game = (DWORD) GetModuleHandleA("D2Game.dll");
     BYTE* warp = (BYTE*) (game + RVA_LevelWarpUnit);
@@ -211,16 +301,27 @@ static int resumeFunctionsKnown(void) {
         && readable(place, sizeof(placeStart)) && memcmp(place, placeStart, sizeof(placeStart)) == 0;
 }
 
+
+
+
 static LONG srvWarp(void* game, void* unit, LONG level, LONG maxFrame, LONG* frame) {
     BYTE* fn = (BYTE*) (srvGame + RVA_LevelWarpUnit);
     if (!readable(fn, sizeof(warpStart)) || memcmp(fn, warpStart, sizeof(warpStart)) != 0) return 3;
     if (!srvLivingPlayer(unit) || !readable(game, GAME_FRAME + 4) || !isWaypointLevel((DWORD) level)) return 2;
+
     *frame = (LONG) RD32(game, GAME_FRAME);
     if (maxFrame > 0 && (DWORD) *frame > (DWORD) maxFrame) return 4;
     int town = level == 1 || level == 40 || level == 75 || level == 103 || level == 109;
     srvCallWarp((DWORD) fn, game, unit, (DWORD) level, town ? 13 : 0);
     return 1;
 }
+
+
+
+
+
+
+
 
 static DWORD srvCallPlace(DWORD fn, void* game, void* unit, DWORD x, DWORD y) {
     DWORD eax = y, ecx = x, edx = 0;
@@ -231,12 +332,14 @@ static DWORD srvCallPlace(DWORD fn, void* game, void* unit, DWORD x, DWORD y) {
     return eax;
 }
 
+
 static LONG srvPlace(void* game, void* unit, LONG x, LONG y) {
     BYTE* fn = (BYTE*) (srvGame + RVA_PlaceUnit);
     if (!readable(fn, sizeof(placeStart)) || memcmp(fn, placeStart, sizeof(placeStart)) != 0) return 3;
     if (!srvLivingPlayer(unit) || x <= 0 || y <= 0 || x > 0xFFFF || y > 0xFFFF) return 2;
     return srvCallPlace((DWORD) fn, game, unit, (DWORD) x, (DWORD) y) ? 1 : 0;
 }
+
 
 static LONG srvInvulnerable(void* unit, int on, LONG* count) {
     if (!srvLivingPlayer(unit)) return 0;
@@ -246,6 +349,7 @@ static LONG srvInvulnerable(void* unit, int on, LONG* count) {
     else *flags |= SU_ATTACKABLE;
     return 1;
 }
+
 
 #define SRV_CODE_STASH_DEPOSIT  0xA0D20871u
 #define SRV_CODE_STASH_WITHDRAW 0xA0D20872u
@@ -260,6 +364,7 @@ static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     case SRV_CODE_STASH_DEPOSIT:
     case SRV_CODE_STASH_WITHDRAW:
     case SRV_CODE_STASH_ALL: return stashServer(s->code, s->arg, s->arg2, game, unit, &s->count);
+
     case SRV_CODE_DIFFICULTY: return readable(game, GAME_DIFFICULTY + 1) ? *((BYTE*) game + GAME_DIFFICULTY) : -1;
     case SRV_CODE_WARP: return srvWarp(game, unit, s->arg, s->arg2, &s->count);
     case SRV_CODE_PLACE: return srvPlace(game, unit, s->arg, s->arg2);
@@ -269,11 +374,13 @@ static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     }
 }
 
+
 static int __fastcall srvPacket(void* game, void* unit, BYTE* packet, DWORD size) {
     if (size != 9 || *(DWORD*) (packet + 1) != SRV_MARK) return srvOriginal(game, unit, packet, size);
     srvServe(*(LONG*) (packet + 5), game, unit);
     return 0;
 }
+
 
 static void srvCheck(void) {
     static const BYTE handlerStart[] = {0x51, 0x83, 0x7C, 0x24, 0x0C, 0x09};
@@ -304,12 +411,24 @@ static void srvCheck(void) {
     logLine("server: packet 0x49 wrapped");
 }
 
+
+
+
+
+
 static void updateServerRepairs(void* player, DWORD now) {
     static void* lastPlayer;
     static DWORD lastPlayerId, lastSeen;
     static int asked;
     static DWORD askedAt;
     static LONG pending;
+
+
+
+
+
+
+
     DWORD playerId = player ? RD32(player, U_ID) : 0;
     int newGame = player != lastPlayer || playerId != lastPlayerId || (now - lastSeen > 2000 && outOfGameSeen);
     InterlockedExchange(&outOfGameSeen, 0);
@@ -336,6 +455,7 @@ static void updateServerRepairs(void* player, DWORD now) {
     if (asked >= 3 || (asked && now - askedAt < 2000)) return;
     if (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))) srvCheck();
     if (srvState != 1) return;
+
     if (pending && !srvCancel(pending)) return;
     pending = srvSubmit(SRV_CODE_HEAL, 0, 0);
     if (!pending) return;
@@ -343,6 +463,12 @@ static void updateServerRepairs(void* player, DWORD now) {
     askedAt = now;
     logLine("server: hero alive with life 0, asking the server to heal (%d)", asked);
 }
+
+
+
+
+
+
 
 static void updateServerEffects(void* player, DWORD now) {
     static DWORD askedAt;
@@ -360,6 +486,7 @@ static void updateServerEffects(void* player, DWORD now) {
         pending = 0;
         if (!logged++) logLine("server: effect timer answered, frame %lu, %ld found", (unsigned long) srvEffectFrame, (long) answer);
         for (DWORD state = 0; state < 256; state++) if (srvEffectLeft[state]) syncEffect(state, srvEffectLeft[state]);
+
         for (DWORD state = 0; state < 256; state++)
             if (srvEffectAura[state] && !auraLogged[state]) {
                 auraLogged[state] = 1;
@@ -375,6 +502,7 @@ static void updateServerEffects(void* player, DWORD now) {
     for (DWORD state = 0; state < 256; state++) any |= effectOn[state];
     if (!any || now - askedAt < 500) return;
     if (pending && now - askedAt < 2000) return;
+
     if (pending && !srvCancel(pending)) return;
     pending = 0;
     if (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))) srvCheck();
@@ -384,6 +512,10 @@ static void updateServerEffects(void* player, DWORD now) {
 }
 
 #ifdef D2MOD_TESTCMDS
+
+
+
+
 static LONG srvTestSeq[2];
 static DWORD srvTestAt;
 
@@ -399,6 +531,7 @@ static void srvTestTwo(DWORD now) {
     srvTestAt = now;
     logLine("server queue test: heal %ld and effect timer %ld sent in one tick", (long) srvTestSeq[0], (long) srvTestSeq[1]);
 }
+
 
 static LONG srvProbeSeq;
 static DWORD srvProbeCode, srvProbeAt;

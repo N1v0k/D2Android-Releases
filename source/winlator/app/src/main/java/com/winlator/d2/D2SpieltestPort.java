@@ -23,42 +23,63 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2SpieltestPort {
     public static final int PORT = 7960;
     public static final String EXTRA = "d2_spieltest";
     private static final long STATE_INTERVAL_MS = 100, LAYOUT_INTERVAL_MS = 2000;
+
     private static final int QUEUE_LIMIT = 400;
 
     private static volatile boolean active;
     private static volatile ServerSocket server;
     private static final CopyOnWriteArrayList<Client> clients = new CopyOnWriteArrayList<>();
     private static volatile long lastState, lastLayout;
+
     private static volatile String lastGoals;
+
     private static volatile String lastFigur;
+
     private static volatile String lastQuest;
+
     private static volatile File saveDir;
     private static volatile String lastSaves;
     private static volatile File modLog;
 
     private D2SpieltestPort() {}
 
+
+
+
+
+
+
     public static final String ADB_TOKEN = "/data/local/tmp/d2android-spieltest.ok";
     private static final int SHELL_UID = 2000;
     static final long TOKEN_MAX_AGE_S = 60;
 
+
+
+
+
     public static boolean requested(android.content.Intent intent) {
-        if (!com.winlator.BuildConfig.D2_INTERNAL) return false;
         if (intent == null || !intent.getBooleanExtra(EXTRA, false)) return false;
         return tokenFresh("spieltest");
     }
 
-    public static boolean tokenFresh(String who) {
-        return tokenFresh(who, ADB_TOKEN);
-    }
 
-    public static boolean tokenFresh(String who, String token) {
+    public static boolean tokenFresh(String who) {
         try {
-            android.system.StructStat st = android.system.Os.stat(token);
+            android.system.StructStat st = android.system.Os.stat(ADB_TOKEN);
             long age = System.currentTimeMillis() / 1000 - st.st_mtime;
             String why = st.st_uid != SHELL_UID ? "not from the shell user" : (st.st_mode & 0077) != 0 ? "readable or writable by others"
                 : age > TOKEN_MAX_AGE_S || age < -5 ? "too old (" + age + " s)" : null;
@@ -75,8 +96,45 @@ public final class D2SpieltestPort {
         return active;
     }
 
+
+
+
+
+
+
+
+    public static final String TESTER_MARKER = "/data/local/tmp/d2android-spieltester.laeuft";
+    static final long TESTER_MAX_AGE_MS = 3000;
+    private static volatile long testerCheckedAt;
+    private static volatile boolean testerRunning;
+
+
+    public static boolean playing() {
+        if (!active) return false;
+        long now = SystemClock.uptimeMillis();
+        if (now - testerCheckedAt >= 500) {
+            testerCheckedAt = now;
+            boolean running = markerFresh(TESTER_MARKER, System.currentTimeMillis());
+            if (running != testerRunning) D2Trace.log("spieltest: playtester " + (running ? "running: its touch-layer ways on" : "gone: normal controls"));
+            testerRunning = running;
+        }
+        return testerRunning;
+    }
+
+
+    static boolean markerFresh(String path, long nowMs) {
+        try {
+            android.system.StructStat st = android.system.Os.stat(path);
+            long age = nowMs - st.st_mtime * 1000L;
+            return st.st_uid == SHELL_UID && age <= TESTER_MAX_AGE_MS && age > -5000;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+
     public static synchronized void start(File log) {
-        if (!com.winlator.BuildConfig.D2_INTERNAL) return;
         if (active) return;
         active = true;
         modLog = log;
@@ -93,6 +151,8 @@ public final class D2SpieltestPort {
 
     public static synchronized void stop() {
         active = false;
+        testerRunning = false;
+        testerCheckedAt = 0;
         leftOut = Collections.emptySet();
         saveDir = null;
         lastSaves = null;
@@ -110,6 +170,7 @@ public final class D2SpieltestPort {
             server = s;
             while (active) {
                 Socket socket = s.accept();
+
                 socket.shutdownInput();
                 Client c = new Client(socket);
                 clients.add(c);
@@ -125,6 +186,7 @@ public final class D2SpieltestPort {
                 String saves = lastSaves;
                 if (saves != null) c.offer(withTime(saves));
                 lastLayout = 0;
+
                 D2ModLink link = mapLink;
                 if (link != null) link.mapFetch().reset();
                 c.start();
@@ -135,14 +197,21 @@ public final class D2SpieltestPort {
         }
     }
 
+
     private static volatile D2ModLink mapLink;
+
     private static volatile Fertigkeiten skills;
     private static volatile String lastSkills;
     private static volatile int skillsClass = Integer.MIN_VALUE;
 
+
+
+
+
     public static void skills(Fertigkeiten table) {
         skills = table;
         skillsClass = Integer.MIN_VALUE;
+
         lastSkills = null;
     }
 
@@ -168,6 +237,11 @@ public final class D2SpieltestPort {
         send(toJson(s, now, link));
     }
 
+
+
+
+
+
     public static void goals(byte[] data, int length) {
         if (!active) return;
         String line = goalsJson(data, length, SystemClock.uptimeMillis());
@@ -175,6 +249,7 @@ public final class D2SpieltestPort {
         lastGoals = line;
         send(line);
     }
+
 
     public static void quests(D2Quests q, int seq) {
         if (!active) return;
@@ -184,9 +259,11 @@ public final class D2SpieltestPort {
         send(line);
     }
 
+
     public static void karte(String line) {
         if (active) send(line);
     }
+
 
     public static void figur(byte[] data, int length) {
         if (!active) return;
@@ -195,6 +272,14 @@ public final class D2SpieltestPort {
         lastFigur = line;
         send(line);
     }
+
+
+
+
+
+
+
+
 
     static String figurJson(byte[] data, int length, long now) {
         try {
@@ -227,6 +312,7 @@ public final class D2SpieltestPort {
             o.put("leiche", leiche ? new JSONArray().put(lx).put(ly) : JSONObject.NULL);
             o.put("gegenstaende", itemsJson(b));
             o.put("laden", itemsJson(b));
+
             o.put("voll", b.hasRemaining() ? b.get() & 0xFF : 0);
             D2ItemDetails.Item[] details = D2ItemDetails.parse(data, length);
             if (details != null) {
@@ -280,6 +366,7 @@ public final class D2SpieltestPort {
         }
     }
 
+
     private static void tailLoop() {
         long pos = -1;
         StringBuilder partial = new StringBuilder();
@@ -316,6 +403,7 @@ public final class D2SpieltestPort {
         }
     }
 
+
     public static synchronized void saves(File dir) {
         if (!active || dir == null) return;
         boolean first = saveDir == null;
@@ -346,6 +434,7 @@ public final class D2SpieltestPort {
         }
     }
 
+
     private static String withTime(String line) {
         try {
             return new JSONObject(line).put("ms", SystemClock.uptimeMillis()).toString();
@@ -354,6 +443,10 @@ public final class D2SpieltestPort {
             return line;
         }
     }
+
+
+
+
 
     static String savesJson(File dir, File[] files) throws org.json.JSONException {
         java.util.List<File> list = new java.util.ArrayList<>();
@@ -369,10 +462,12 @@ public final class D2SpieltestPort {
         return new JSONObject().put("t", "spielstaende").put("ordner", dir.getAbsolutePath()).put("liste", a).toString();
     }
 
+
     public static void trace(String line) {
         if (!active || clients.isEmpty()) return;
         send(new JSONObjectBuilder("spur").put("l", line).text());
     }
+
 
     public static void layout(Supplier<String> supplier) {
         if (!active || clients.isEmpty()) return;
@@ -387,7 +482,12 @@ public final class D2SpieltestPort {
         for (Client c : clients) c.offer(line);
     }
 
+
+
+
+
     private static volatile Set<Long> leftOut = Collections.emptySet();
+
 
     static void leftOut(Set<Long> ids) {
         leftOut = ids == null || ids.isEmpty() ? Collections.<Long>emptySet() : Collections.unmodifiableSet(new HashSet<>(ids));
@@ -395,6 +495,7 @@ public final class D2SpieltestPort {
 
     private static byte[] waffenPaket;
     private static int waffenZahl = -1;
+
 
     static synchronized int waffen(byte[] figur) {
         if (figur == null) return -1;
@@ -419,6 +520,11 @@ public final class D2SpieltestPort {
         return toJson(s, now, link, leftOut);
     }
 
+
+
+
+
+
     static String toJson(D2ModState s, long now, D2ModLink link, Set<Long> ausgelassen) {
         try {
             JSONObject o = new JSONObject();
@@ -433,6 +539,7 @@ public final class D2SpieltestPort {
             o.put("klasse", s.characterClass).put("links", s.leftSkill).put("rechts", s.rightSkill);
             o.put("heilGuertel", s.potionCountBelt[0]).put("manaGuertel", s.potionCountBelt[1]);
             o.put("heilWirkt", s.healingPotionWorking).put("manaWirkt", s.manaPotionWorking).put("letzterTrank", s.lastDrink);
+
             JSONArray hotkeys = new JSONArray();
             for (int i = 0; i < 16; i++) hotkeys.put(new JSONArray().put(s.hotkeySkill[i]).put(s.hotkeyLeft[i] ? 1 : 0));
             o.put("fk", hotkeys);
@@ -449,6 +556,7 @@ public final class D2SpieltestPort {
             }
             o.put("punkte", (s.statPointsLeft ? 1 : 0) | (s.skillPointsLeft ? 2 : 0));
             o.put("hover", s.hoverType == 0xFF ? -1 : s.hoverType).put("hoverId", s.hoverId);
+
             int waffen = link != null ? waffen(link.figur()) : -1;
             if (waffen >= 0) o.put("waffen", waffen);
             if (s.worldKnown) {
@@ -462,6 +570,7 @@ public final class D2SpieltestPort {
             }
             o.put("monster", monsters);
             o.put("items", things(s.items));
+
             D2ModItems details = link != null ? link.items() : null;
             if (details != null) {
                 JSONArray beute = new JSONArray();
@@ -492,6 +601,7 @@ public final class D2SpieltestPort {
         for (D2ModState.Thing t : list) a.put(new JSONArray().put(t.id).put(t.x).put(t.y).put(t.kind).put(t.extra));
         return a;
     }
+
 
     static final class JSONObjectBuilder {
         private final JSONObject o = new JSONObject();

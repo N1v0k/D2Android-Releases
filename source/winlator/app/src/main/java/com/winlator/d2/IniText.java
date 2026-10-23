@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+
 public final class IniText {
     private IniText() {}
+
 
     public static String set(String text, String section, String key, String value) {
         String newline = text.contains("\r\n") ? "\r\n" : "\n";

@@ -4,8 +4,17 @@ import android.app.Activity;
 import android.view.Display;
 import android.view.WindowManager;
 
+
+
+
+
+
 final class D2Screen {
     private D2Screen() {}
+
+
+
+
 
     static float[] refreshRates(Activity activity) {
         Display.Mode[] modes = sameSizeModes(activity.getWindowManager().getDefaultDisplay());
@@ -14,6 +23,7 @@ final class D2Screen {
         return out;
     }
 
+
     private static Display.Mode[] sameSizeModes(Display display) {
         Display.Mode current = display.getMode();
         java.util.List<Display.Mode> out = new java.util.ArrayList<>();
@@ -21,8 +31,13 @@ final class D2Screen {
         return out.toArray(new Display.Mode[0]);
     }
 
+
+
+
+
     static float applyLimit(Activity activity, int fps) {
         if (fps == D2FrameRate.UNLIMITED) return -1;
+
         Display.Mode[] same = sameSizeModes(activity.getWindowManager().getDefaultDisplay());
         float[] rates = new float[same.length];
         for (int i = 0; i < same.length; i++) rates[i] = same[i].getRefreshRate();

@@ -1,5 +1,18 @@
 
+
+
+
+
+
+
+
+
+
+
+
 #define DIFF_STATS 364
+
+
 #define DS_W_IS 360
 #define DS_W_TWO 361
 #define DS_W_STRB 362
@@ -9,11 +22,14 @@ enum {
     DS_FCR = 105, DS_LIFE_PER_LEVEL = 216, DS_MANA_PER_LEVEL = 217, DS_STR = 0, DS_DEX = 2, DS_MIN = 21, DS_MAX = 22,
     DS_MIN2 = 23, DS_MAX2 = 24, DS_DEMON = 121, DS_UNDEAD = 122
 };
+
 static const int diffElemMin[4] = {48, 50, 52, 54}, diffElemMax[4] = {49, 51, 53, 55};
+
 static const int diffRes[4] = {39, 43, 41, 45}, diffResMax[4] = {40, 44, 42, 46};
 static const int diffPenalty[3] = {0, 40, 100};
 #define DIFF_LINES 10
 #define DIFF_LINE_CHARS 112
+
 
 typedef struct { int fpd, speed; } DiffAnim;
 
@@ -38,6 +54,7 @@ static int diffStat(const DiffFigure* f, const int* item, int id) {
     return f->stats[id] + (item ? item[id] : 0);
 }
 
+
 static int diffMax(const DiffFigure* f, const int* item, int life) {
     long long base = life ? f->baseLife : f->baseMana;
     long long flat = diffStat(f, item, life ? DS_LIFE : DS_MANA);
@@ -47,10 +64,12 @@ static int diffMax(const DiffFigure* f, const int* item, int life) {
     return (int) ((base + flat + attr + perLevel + pct) >> 8);
 }
 
+
 static int diffResistance(int value, int max, int difficulty) {
     int cap = 75 + max < 95 ? 75 + max : 95, v = value - diffPenalty[difficulty];
     return v < -100 ? -100 : v > cap ? cap : v;
 }
+
 
 static int diffFrames(int art, DiffAnim a, int x) {
     int e = x > 0 ? 120 * x / (120 + x) : 0;
@@ -58,6 +77,12 @@ static int diffFrames(int art, DiffAnim a, int x) {
     int step = a.speed * ((art == 0 ? 100 : 50) + e) / 100;
     return step > 0 ? (256 * a.fpd + step - 1) / step - 1 : -1;
 }
+
+
+
+
+
+
 
 static void diffDamage(const DiffFigure* f, const int* w, int* out) {
     int two = w[DS_W_TWO] != 0;
@@ -101,12 +126,14 @@ static void diffCompute(const DiffFigure* f, const int* worn, const int* item, D
     }
 }
 
+
 static void diffPut(wchar_t* line, const wchar_t* text) {
     int at = 0;
     while (at < DIFF_LINE_CHARS - 1 && line[at]) at++;
     for (int i = 0; text[i] && at < DIFF_LINE_CHARS - 1; i++) line[at++] = text[i];
     line[at] = 0;
 }
+
 
 static void diffNumber(wchar_t* line, int v, int plus) {
     wchar_t buf[16];
@@ -132,6 +159,7 @@ static void diffPart(wchar_t* line, int delta, const wchar_t* name, int showAfte
     }
 }
 
+
 static int diffLines(const DiffResult* r, int german, wchar_t lines[DIFF_LINES][DIFF_LINE_CHARS]) {
     static const wchar_t* const resDe[4] = {L"Feuer", L"K\x00E4lte", L"Blitz", L"Gift"};
     static const wchar_t* const resEn[4] = {L"Fire", L"Cold", L"Lightning", L"Poison"};
@@ -139,6 +167,7 @@ static int diffLines(const DiffResult* r, int german, wchar_t lines[DIFF_LINES][
     static const wchar_t* const bpEn[3] = {L"Cast rate", L"Hit recovery", L"Block rate"};
     int n = 0;
     lines[n][0] = 0;
+
     if (r->damage) {
         const int* pairs[2][2] = {{r->dmgBefore, r->dmgAfter}, {r->elemBefore, r->elemAfter}};
         static const wchar_t* const nameDe[2] = {L"Schaden", L"Element"}, *const nameEn[2] = {L"Damage", L"Element"};

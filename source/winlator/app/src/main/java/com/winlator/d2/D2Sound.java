@@ -11,23 +11,36 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+
+
+
+
+
+
+
 final class D2Sound {
     static final String CLICK = "data\\global\\sfx\\cursor\\button.wav";
     private static final String CACHE = "d2-click.wav";
     private static SoundPool pool;
     private static volatile int clickId;
     private static volatile boolean ready, loading;
+
     private static float downX, downY;
     private static long downAt;
     private static final long TAP_MS = 400;
 
     private D2Sound() {}
 
+
     static void click(Context context) {
         if (!D2Settings.sound(context)) return;
         prepare(context);
         if (ready) pool.play(clickId, 1f, 1f, 1, 0, 1f);
     }
+
+
+
+
 
     static synchronized void prepare(Context context) {
         if (ready || loading) return;
@@ -39,6 +52,7 @@ final class D2Sound {
             pool.setOnLoadCompleteListener((p, id, status) -> {
                 if (status == 0) clickId = id;
                 ready = status == 0;
+
                 if (status != 0) new File(app.getCacheDir(), CACHE).delete();
                 loading = false;
             });
@@ -52,6 +66,7 @@ final class D2Sound {
                         loading = false;
                         return;
                     }
+
                     File part = new File(app.getCacheDir(), CACHE + ".part");
                     try (FileOutputStream out = new FileOutputStream(part)) {
                         out.write(wav);
@@ -73,6 +88,10 @@ final class D2Sound {
         }, "ClickSound").start();
     }
 
+
+
+
+
     static void touch(Context context, android.view.MotionEvent event) {
         int action = event.getActionMasked();
         if (action == android.view.MotionEvent.ACTION_DOWN) {
@@ -87,6 +106,7 @@ final class D2Sound {
         }
     }
 
+
     static byte[] read(File gameDir, String archive, String name) throws IOException {
         if (gameDir == null) return null;
         File[] files = gameDir.listFiles();
@@ -100,12 +120,14 @@ final class D2Sound {
         return null;
     }
 
+
     static void attach(Dialog dialog) {
         Window window = dialog.getWindow();
         if (window == null) return;
         final Window.Callback inner = window.getCallback();
         if (inner == null) return;
         final Context context = dialog.getContext();
+
         window.setCallback((Window.Callback) java.lang.reflect.Proxy.newProxyInstance(Window.Callback.class.getClassLoader(),
             new Class<?>[]{Window.Callback.class}, (proxy, method, args) -> {
                 if ("dispatchTouchEvent".equals(method.getName()) && args != null && args[0] instanceof MotionEvent)

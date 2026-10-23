@@ -1,4 +1,19 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include "d2sortlayout.c"
 
 #define CMD_SORT 24
@@ -6,11 +21,13 @@
 #define SORT_STEP_MS 1000
 #define SORT_LIMIT_MS 20000
 #define SORT_MONSTER_NEAR 18
+
 #define SORT_RUNNING     0
 #define SORT_DONE        1
 #define SORT_PARTIAL     2
 #define SORT_CURSOR      3
 #define SORT_NOT_STARTED 4
+
 #define SORT_NO_ROOM     5
 #define SORT_ON_CURSOR   0x80
 
@@ -29,6 +46,7 @@ static DWORD takeSentAt;
 #ifdef D2MOD_TESTCMDS
 static int sortFaultNext;
 #endif
+
 
 static int sortRead(void* player, SortItem* out, int charmsFixed) {
     void* inventory = RDP(player, U_INVENTORY);
@@ -72,6 +90,7 @@ static int sortRead(void* player, SortItem* out, int charmsFixed) {
     return n;
 }
 
+
 static int sortMonsterNear(void* player) {
     if (isTown(unitLevel(player))) return 0;
     void* act = RDP(player, U_ACT);
@@ -85,6 +104,7 @@ static int sortMonsterNear(void* player) {
     return 0;
 }
 
+
 static int sortBusy(void) {
     return sort.active;
 }
@@ -97,6 +117,7 @@ static void sortDone(int result, const char* why) {
     logLine("sort: %s after %d moves, %lu ms (result %d)", why, sort.moves, (unsigned long) sort.activeMs, result);
 }
 
+
 static int sortReportDue(void* player) {
     BYTE state = (BYTE) (sortState | (player && equipCursorId(player) ? SORT_ON_CURSOR : 0));
     if (sortReportedCounter == sortCounter && sortReportedState == state) return 0;
@@ -105,9 +126,11 @@ static int sortReportDue(void* player) {
     return 1;
 }
 
+
 static BYTE sortStateByte(void* player) {
     return (BYTE) (sortState | (player && equipCursorId(player) ? SORT_ON_CURSOR : 0));
 }
+
 
 static void sortStart(void* player, BYTE place, BYTE options, DWORD now) {
     if (sort.active) {
@@ -147,9 +170,11 @@ static void sortStart(void* player, BYTE place, BYTE options, DWORD now) {
         options & 1 ? "fixed" : "moving");
 }
 
+
 static void sortTick(void* player, DWORD now) {
     if (!sort.active) return;
     if (!player || player != sort.player) {
+
         sortDone(sort.step == SO_NONE ? SORT_PARTIAL : SORT_CURSOR, player ? "new player" : "left the game");
         return;
     }
@@ -157,6 +182,7 @@ static void sortTick(void* player, DWORD now) {
         sort.since = sort.lastTick = now;
         return;
     }
+
     long dt = (long) (now - sort.lastTick);
     if (dt > 0) sort.activeMs += (DWORD) dt;
     sort.lastTick = now;
@@ -169,6 +195,7 @@ static void sortTick(void* player, DWORD now) {
             sortDone(SORT_CURSOR, "something on the cursor");
             break;
         }
+
         SortItem now_[SORT_MAX];
         int n = sortRead(player, now_, 0);
         if (n != sort.n) {
@@ -195,6 +222,7 @@ static void sortTick(void* player, DWORD now) {
             sortDone(SORT_DONE, "sorted");
             break;
         }
+
         if (sort.activeMs > SORT_LIMIT_MS || sort.moves >= 3 * sort.n) {
             sortDone(SORT_PARTIAL, "limit");
             break;
@@ -228,6 +256,7 @@ static void sortTick(void* player, DWORD now) {
         }
         else if (waited > SORT_STEP_MS) {
             if (!cursor) {
+
                 equipLate.id = s->id;
                 equipLate.fromX = sort.fromX;
                 equipLate.fromY = sort.fromY;
@@ -246,6 +275,7 @@ static void sortTick(void* player, DWORD now) {
         }
         else if (waited > SORT_STEP_MS) {
             if (cursor == s->id) {
+
                 equipSendToInventory(s->id, sort.fromX, sort.fromY);
                 sort.step = SO_UNDO;
                 sort.since = now;

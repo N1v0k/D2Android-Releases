@@ -9,13 +9,31 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class D2SaveHeader {
     static final int SIGNATURE = 0xAA55AA55, VERSION = 0x60, STATUS_AT = 36, HARDCORE = 0x04, HEAD = 44;
+
     static final int NAME_AT = 20, NAME_LEN = 16, PROGRESS_AT = 37, CLASS_AT = 40, LEVEL_AT = 43, LAST_AT = 168,
         FULL_HEAD = 171, DIED = 0x08, EXPANSION = 0x20;
+
     enum Refusal { NONE, DEAD_HARDCORE, NAME_NOT_FILE }
 
     private D2SaveHeader() {}
+
 
     static Boolean hardcore(byte[] head, int length) {
         if (head == null || length < HEAD || head.length < HEAD) return null;
@@ -27,6 +45,7 @@ final class D2SaveHeader {
         return (b[at] & 0xFF) | (b[at + 1] & 0xFF) << 8 | (b[at + 2] & 0xFF) << 16 | (b[at + 3] & 0xFF) << 24;
     }
 
+
     static File characterFile(File dir, String name) {
         if (dir == null || name == null || name.isEmpty()) return null;
         File[] files = dir.listFiles();
@@ -34,6 +53,7 @@ final class D2SaveHeader {
         for (File f : files) if (f.isFile() && f.getName().equalsIgnoreCase(name + ".d2s")) return f;
         return null;
     }
+
 
     static Boolean hardcore(File dir, String name) {
         File file = characterFile(dir, name);
@@ -49,12 +69,18 @@ final class D2SaveHeader {
         return hardcore(head, n);
     }
 
+
     static final class Info {
+
         final String file;
+
         final String name;
         final int status, progress, characterClass, level;
+
         final int lastDifficulty;
+
         final int lastAct;
+
         final long modified;
 
         Info(String file, String name, int status, int progress, int characterClass, int level, int lastDifficulty, long modified) {
@@ -78,20 +104,25 @@ final class D2SaveHeader {
         boolean expansion() { return (status & EXPANSION) != 0; }
         boolean deadHardcore() { return (status & (HARDCORE | DIED)) == (HARDCORE | DIED); }
 
+
         int openDifficulty() {
             return Math.min(2, (progress & 0x1F) / (expansion() ? 5 : 4));
         }
+
 
         int defaultDifficulty() {
             return lastDifficulty >= 0 && lastDifficulty <= openDifficulty() ? lastDifficulty : 0;
         }
 
+
         Refusal refusal() {
             if (deadHardcore()) return Refusal.DEAD_HARDCORE;
+
             if (!name.equals(file) || !D2DirectStart.validFile(file)) return Refusal.NAME_NOT_FILE;
             return Refusal.NONE;
         }
     }
+
 
     static Info parse(byte[] head, int length, String file, long modified) {
         if (head == null || length < FULL_HEAD || head.length < FULL_HEAD) return null;
@@ -108,6 +139,7 @@ final class D2SaveHeader {
             head[LEVEL_AT] & 0xFF, last, act, modified);
     }
 
+
     static Info read(File file) {
         String n = file.getName();
         if (!n.toLowerCase(java.util.Locale.ROOT).endsWith(".d2s")) return null;
@@ -121,6 +153,7 @@ final class D2SaveHeader {
         }
         return parse(head, got, n.substring(0, n.length() - 4), file.lastModified());
     }
+
 
     static List<Info> list(File dir) {
         List<Info> out = new ArrayList<>();

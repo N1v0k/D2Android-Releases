@@ -3,6 +3,11 @@ package com.winlator.d2;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 public final class D2Changelog {
     public static final String ASSET = "news/CHANGELOG.md";
 
@@ -44,6 +49,7 @@ public final class D2Changelog {
             }
             else if (current != null && (line.startsWith("- ") || line.startsWith("* "))) current.items.add(line.substring(2).trim());
             else if (current != null && !line.isEmpty() && !line.startsWith("#") && !current.items.isEmpty()) {
+
                 int last = current.items.size() - 1;
                 current.items.set(last, current.items.get(last) + " " + line);
             }

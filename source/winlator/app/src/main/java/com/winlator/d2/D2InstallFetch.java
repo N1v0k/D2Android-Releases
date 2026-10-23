@@ -14,9 +14,18 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+
+
+
+
+
+
+
 public final class D2InstallFetch {
     public static final String DOWNLOADER_HOST = "downloader.battle.net";
+
     public static final long DOWNLOADER_MIN = 512L * 1024, DOWNLOADER_MAX = 32L * 1024 * 1024;
+
 
     public static class Refused extends IOException {
         public Refused(String message) {
@@ -25,6 +34,7 @@ public final class D2InstallFetch {
     }
 
     private D2InstallFetch() {}
+
 
     public static void fetchDownloader(String url, File target) throws IOException {
         URL u = new URL(url);
@@ -36,6 +46,7 @@ public final class D2InstallFetch {
         c.setReadTimeout(30000);
         try {
             int code = c.getResponseCode();
+
             if (code != HttpURLConnection.HTTP_OK) throw new Refused("HTTP " + code);
             File dir = target.getParentFile();
             if (dir != null && !dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
@@ -57,8 +68,10 @@ public final class D2InstallFetch {
         if (!part.renameTo(target)) throw new IOException("cannot rename " + part);
     }
 
+
     public static final String PATCH_URL = "http://ftp.blizzard.com/pub/diablo2exp/patches/PC/LODPatch_113d.exe";
     public static final String PATCH_SHA256 = "918fa5141a4a98f826b1f1f5ea69bf6e20208162d67748baceceaff96e49ae30";
+
 
     public static void fetchPatch(File target) throws IOException {
         if (target.isFile() && PATCH_SHA256.equals(sha256(target))) return;
@@ -87,6 +100,7 @@ public final class D2InstallFetch {
         if (!part.renameTo(target)) throw new IOException("cannot rename " + part);
     }
 
+
     public static void checkDownloader(File file) throws IOException {
         long size = file.length();
         if (size < DOWNLOADER_MIN || size > DOWNLOADER_MAX) throw new Refused("implausible size " + size);
@@ -94,6 +108,7 @@ public final class D2InstallFetch {
             if (in.read() != 'M' || in.read() != 'Z') throw new Refused("no MZ header");
         }
     }
+
 
     public static Map<String, String> parseChecksums(String text) {
         Map<String, String> sums = new LinkedHashMap<>();
@@ -107,6 +122,7 @@ public final class D2InstallFetch {
         return sums;
     }
 
+
     public static void verify(File base, Map<String, String> sums) throws IOException {
         for (Map.Entry<String, String> e : sums.entrySet()) {
             File f = new File(base, e.getKey());
@@ -115,9 +131,18 @@ public final class D2InstallFetch {
         }
     }
 
+
+
+
+
+
     public static void verifyProduct(File productDir, Map<String, String> sums, String code) throws IOException {
         verifyProduct(productDir, sums, code, null);
     }
+
+
+
+
 
     public static void verifyProduct(File productDir, Map<String, String> sums, String code, String locale) throws IOException {
         String prefix = code + "/";
@@ -132,6 +157,7 @@ public final class D2InstallFetch {
         }
         if (checked == 0) throw new Refused("no checksums for " + code);
     }
+
 
     public static File find(File dir, String name, int depth, String locale) {
         File direct = new File(dir, name);

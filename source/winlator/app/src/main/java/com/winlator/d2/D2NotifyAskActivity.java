@@ -5,10 +5,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+
+
+
+
+
+
+
+
 public class D2NotifyAskActivity extends Activity {
+
     private static final long WAIT_MS = 1200;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable close = this::finish;
+
     public static final String EXTRA_ASKED = "d2_notify_asked";
     private boolean asked;
 

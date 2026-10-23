@@ -9,13 +9,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2Breakpoints {
+
     public static final int BLOCKS = 256, RECORD = 160;
 
     public enum Art {
+
         FCR(100, 75),
+
         FHR(50, Integer.MAX_VALUE),
+
         FBR(50, Integer.MAX_VALUE);
+
 
         final int base;
         final int cap;
@@ -29,6 +46,7 @@ public final class D2Breakpoints {
             return this == FCR ? "SC" : this == FHR ? "GH" : "BL";
         }
     }
+
 
     public static final class Anim {
         public final int fpd, speed;
@@ -47,6 +65,11 @@ public final class D2Breakpoints {
     private D2Breakpoints() {
     }
 
+
+
+
+
+
     public static Map<String, Anim> parse(byte[] data) {
         if (data == null) return null;
         Map<String, Anim> out = new HashMap<>();
@@ -63,6 +86,7 @@ public final class D2Breakpoints {
                 String name = new String(data, at, len, StandardCharsets.US_ASCII);
                 long fpd = u32(data, at + 8);
                 int speed = u16(data, at + 12), spare = u16(data, at + 14);
+
                 if (fpd <= 0 || fpd > 1000 || spare != 0) return null;
                 out.putIfAbsent(name, new Anim((int) fpd, speed));
             }
@@ -70,16 +94,22 @@ public final class D2Breakpoints {
         return at == data.length ? out : null;
     }
 
+
     public static int effective(Art art, int x) {
         if (x <= 0) return 0;
         return Math.min(art.cap, 120 * x / (120 + x));
     }
+
 
     public static int frames(Art art, Anim anim, int x) {
         int step = anim.speed * (art.base + effective(art, x)) / 100;
         if (step <= 0) return Integer.MAX_VALUE;
         return (256 * anim.fpd + step - 1) / step - 1;
     }
+
+
+
+
 
     public static int[] steps(Art art, Anim anim, int max) {
         List<Integer> out = new ArrayList<>();
@@ -97,11 +127,16 @@ public final class D2Breakpoints {
         return r;
     }
 
+
     public static int framesOf(int[] table, int x) {
         int f = table[0];
         for (int i = 1; i < table.length && x >= table[i]; i++) f--;
         return f;
     }
+
+
+
+
 
     public static final class Table {
         public final String key, cof;
@@ -116,10 +151,12 @@ public final class D2Breakpoints {
         }
     }
 
+
     public static final Map<String, Table> TABLES;
 
     static {
         Map<String, Table> t = new LinkedHashMap<>();
+
         put(t, "FCR AM", Art.FCR, "AMSCHTH", 19, 7, 14, 22, 32, 48, 68, 99, 152);
         put(t, "FCR SO", Art.FCR, "SOSCHTH", 13, 9, 20, 37, 63, 105, 200);
         put(t, "FCR SO lightning", Art.FCR, null, 19, 7, 15, 23, 35, 52, 78, 117, 194);
@@ -130,6 +167,7 @@ public final class D2Breakpoints {
         put(t, "FCR DZ bear", Art.FCR, "TGSCHTH", 16, 7, 15, 26, 40, 63, 99, 163);
         put(t, "FCR DZ wolf", Art.FCR, "40SCHTH", 16, 6, 14, 26, 40, 60, 95, 157);
         put(t, "FCR AI", Art.FCR, "AISCHTH", 16, 8, 16, 27, 42, 65, 102, 174);
+
         put(t, "FHR AM", Art.FHR, "AMGHHTH", 11, 6, 13, 20, 32, 52, 86, 174, 600);
         put(t, "FHR SO", Art.FHR, "SOGHHTH", 15, 5, 9, 14, 20, 30, 42, 60, 86, 142, 280);
         put(t, "FHR NE", Art.FHR, "NEGHHTH", 13, 5, 10, 16, 26, 39, 56, 86, 152, 377);
@@ -142,6 +180,7 @@ public final class D2Breakpoints {
         put(t, "FHR DZ bear", Art.FHR, "TGGHHTH", 13, 5, 10, 16, 24, 37, 54, 86, 152, 360);
         put(t, "FHR DZ wolf", Art.FHR, "40GHHTH", 7, 9, 20, 42, 86, 280);
         put(t, "FHR AI", Art.FHR, "AIGHHTH", 9, 7, 15, 27, 48, 86, 200);
+
         put(t, "FBR AM", Art.FBR, "AMBLHTH", 5, 13, 32, 86, 600);
         put(t, "FBR AM swing", Art.FBR, "AMBL1HS", 17, 4, 6, 11, 15, 23, 29, 40, 56, 80, 120, 200, 480);
         put(t, "FBR SO", Art.FBR, "SOBLHTH", 9, 7, 15, 27, 48, 86, 200);
@@ -157,6 +196,10 @@ public final class D2Breakpoints {
     private static void put(Map<String, Table> t, String key, Art art, String cof, int... values) {
         t.put(key, new Table(key, art, cof, values));
     }
+
+
+
+
 
     public static List<String> compare(Map<String, Anim> anims) {
         List<String> out = new ArrayList<>();
@@ -176,21 +219,35 @@ public final class D2Breakpoints {
     }
 
 
+
     public static final int CMD_FRAMES = 28, FRAMES_VERSION = 1;
+
     public static final String[] WEAPON_CLASSES = {"HTH", "1HS", "2HS", "1HT", "2HT", "STF", "BOW", "XBW", "HT1", "HT2", "1JS",
         "1JT", "1SS", "1ST"};
+
     public static final String[] CLASS_CODES = {"AM", "SO", "NE", "PA", "BA", "DZ", "AI"};
     public static final int FORM_NONE = 0, FORM_WOLF = 1, FORM_BEAR = 2;
     public static final String[] FORM_CODES = {null, "40", "TG"};
+
     public static final int[] LIFE_PER_VIT = {12, 8, 8, 12, 16, 8, 12}, MANA_PER_ENERGY = {6, 8, 8, 6, 4, 8, 7};
+
     public static final int FLAG_NO_CAST = 1;
+
     public static final int SKILL_LIGHTNING = 49, SKILL_CHAIN_LIGHTNING = 53;
+
 
     public static int framesFlags(int angriffSkill) {
         return angriffSkill == SKILL_LIGHTNING || angriffSkill == SKILL_CHAIN_LIGHTNING ? FLAG_NO_CAST : 0;
     }
 
+
     public static final int FRAMES_LENGTH = 6 + 3 * 14 * 3;
+
+
+
+
+
+
 
     public static byte[] frames28(Map<String, Anim> anims, int klasse, int form, int flags) {
         if (klasse < 0 || klasse >= CLASS_CODES.length || form < 0 || form >= FORM_CODES.length) return null;

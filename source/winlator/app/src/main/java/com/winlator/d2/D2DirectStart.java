@@ -6,17 +6,33 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
+
+
+
 public final class D2DirectStart {
+
     public static final String MARKER = "d2android-direct";
+
     public static final int PKT_DIRECT = 15;
+
     public static final String EXTRA = "d2_direct";
 
+
     public static final int RUNNING = 1, IN_GAME = 2, STOPPED = 3;
+
     public static final int LEFT = 4;
+
     public static final int REASON_MARKER = 1, REASON_VERSION = 2, REASON_NOT_LISTED = 3, REASON_DIFFICULTY = 4,
         REASON_NO_PROGRESS = 5, REASON_WINDOW = 6, REASON_NOT_PLAYABLE = 7;
 
     private D2DirectStart() {}
+
 
     public static final class Request {
         public final String file;
@@ -27,11 +43,13 @@ public final class D2DirectStart {
             this.difficulty = difficulty;
         }
 
+
         public static final Request NEW = new Request(":neu", 0);
 
         public boolean isNew() {
             return NEW.file.equals(file);
         }
+
 
         public static Request parse(String extra) {
             if (extra == null) return null;
@@ -53,6 +71,7 @@ public final class D2DirectStart {
         }
     }
 
+
     static boolean validFile(String file) {
         if (file == null || file.length() < 2 || file.length() > 15) return false;
         for (int i = 0; i < file.length(); i++) {
@@ -61,6 +80,7 @@ public final class D2DirectStart {
         }
         return true;
     }
+
 
     public static void apply(File startDir, Request request) throws IOException {
         File marker = new File(startDir, MARKER);
@@ -73,6 +93,7 @@ public final class D2DirectStart {
         }
     }
 
+
     public static final class Report {
         public final int state, step, reason;
 
@@ -81,6 +102,7 @@ public final class D2DirectStart {
             this.step = step;
             this.reason = reason;
         }
+
 
         public static Report parse(byte[] data, int length) {
             if (data == null || length < 11 || data.length < 11) return null;
@@ -94,20 +116,39 @@ public final class D2DirectStart {
         }
     }
 
+
     public enum Outcome {
+
         WAIT,
+
         IN_GAME,
+
         STOPPED,
+
         NO_REPORT,
+
         TOO_LONG,
+
         CANCELLED
     }
 
+
+
+
+
+
+
+
     public static final class Watch {
         public static final long NO_REPORT_MS = 10_000, NO_MOD_MS = 90_000, LIMIT_MS = 180_000;
+
         static final long MAX_STEP_MS = 1000;
         private long shownMs, modMs;
         private boolean reported;
+
+
+
+
 
         public Outcome update(Report report, boolean gameState, boolean modAlive, long frontMs) {
             long step = frontMs > 0 ? Math.min(frontMs, MAX_STEP_MS) : 0;

@@ -9,11 +9,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
+
+
+
+
+
+
+
+
 public final class GameShadow {
+
     public static final String RENDERER_D2GL = "d2gl";
     public static final String RENDERER_D2DX = "d2dx";
     private static final String DIR_NAME = "D2Android-Game";
     private static final String D2DX_ASSET = "d2/d2dx/glide3x.dll";
+
     private static final String MOD_ASSET_DIR = "d2/mod/";
     public static final String LOADER_EXE = "D2Android.exe";
     private static final String[] MOD_FILES = {LOADER_EXE, "d2android-mod.dll"};
@@ -38,6 +48,11 @@ public final class GameShadow {
         }
     }
 
+
+
+
+
+
     static void plugyStatsHint(Context context, File strings) {
         if (!strings.isFile()) return;
         try {
@@ -51,19 +66,29 @@ public final class GameShadow {
         }
     }
 
+
     private static String textIn(Context context, java.util.Locale locale, int id) {
         android.content.res.Configuration config = new android.content.res.Configuration(context.getResources().getConfiguration());
         config.setLocale(locale);
         return context.createConfigurationContext(config).getString(id);
     }
 
+
+
+
+
     public static File prepare(Context context, File driveC, File gameDir, String d2dxCfg) throws IOException {
+
+
         if (!D2Saves.recover(D2Saves.saveDir(gameDir))) {
             throw new IOException(D2Text.get(context, R.string.saves_error_import_unfinished, D2Saves.BACKUP_FOLDER));
         }
+
+
         D2SaveRepair.run(D2Saves.saveDir(gameDir));
         File shadowDir = new File(driveC, DIR_NAME);
         if (!shadowDir.isDirectory() && !shadowDir.mkdirs()) throw new IOException("Cannot create " + shadowDir);
+
 
         File[] existing = shadowDir.listFiles();
         if (existing != null) {
@@ -74,12 +99,15 @@ public final class GameShadow {
         FileUtils.copy(context, D2DX_ASSET, glide);
         if (!glide.isFile()) throw new IOException("D2DX fehlt in dieser App-Version");
 
+
         if (isModBundled(context)) {
             for (String name : MOD_FILES) FileUtils.copy(context, MOD_ASSET_DIR + name, new File(shadowDir, name));
         }
+
         boolean plugy = isModBundled(context) && D2Settings.modEnabled(context) && D2Settings.plugy(context);
         D2PlugY.install(context, shadowDir, plugy);
         if (plugy) plugyStatsHint(context, new File(new File(shadowDir, "PlugY"), D2PlugYTexts.STRINGS_FILE));
+
 
         FileUtils.writeString(new File(shadowDir, "d2dx.cfg"), d2dxCfg != null ? d2dxCfg : defaultD2DXConfig());
 
@@ -95,6 +123,10 @@ public final class GameShadow {
         return shadowDir;
     }
 
+
+
+
+
     private static boolean isProvided(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
         return lower.equals("glide3x.dll") || lower.equals("d2dx.cfg") || lower.equals("ddraw.dll")
@@ -102,9 +134,15 @@ public final class GameShadow {
             || lower.equals("plugy.dll") || lower.equals("plugy.ini") || lower.equals("plugy");
     }
 
+
+
+
+
+
     public static String defaultD2DXConfig() {
         return buildD2DXConfig(null, 0);
     }
+
 
     public static String buildD2DXConfig(String gameSize, int filtering) {
         String size = "[-1,-1]";
@@ -112,7 +150,7 @@ public final class GameShadow {
             String[] parts = gameSize.split("x");
             size = "[" + Integer.parseInt(parts[0]) + "," + Integer.parseInt(parts[1]) + "]";
         }
-        return "# Written by D2Android (D2LaunchActivity / D2TestActivity)\r\n"
+        return "# Written by D2Android (D2LaunchActivity)\r\n"
             + "[window]\r\nscale=1\r\nposition=[-1,-1]\r\nframeless=true\r\n\r\n"
             + "[game]\r\nsize=" + size + "\r\nfiltering=" + filtering + "\r\n\r\n"
             + "[optouts]\r\nnologo=true\r\nnocompatmodefix=true\r\n";

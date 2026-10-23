@@ -1,18 +1,38 @@
 package com.winlator.d2.test;
 
+
+
+
+
+
+
 public final class Fahrer {
+
     public interface Protokoll {
         void event(String art, String text);
     }
 
+
     public static final class Verhalten {
+
         public boolean todWeiter = true;
+
         public boolean pauseBeenden = true;
+
         public boolean fensterSchliessen = true;
+
+
+
+
+
+
         public boolean fensterDurchlassen;
     }
 
     public static final int F_JOYSTICK = 0, F_ANGRIFF = 1, F_TIPP = 2;
+
+    private long joystickAm;
+    private boolean joystickBestaetigt;
     private static final long TIPP_MS = 80;
 
     private final Finger finger;
@@ -22,14 +42,23 @@ public final class Fahrer {
     private double joystickRichtung = Double.NaN;
     private long tippHochAm, letzterEsc, letzteAbsichtLog;
     private String letzterGrund = "";
+
     public int tipps, nehmenTipps;
+
     static final String LEISTE = "menu_toggle";
+
+
+
+
     public boolean leisteAufgeklappt;
     private long leisteGetipptAm = -10_000, leisteLayoutMs = -1;
+
     private String nachholen, nachholenWarum;
     private long nachholenBis;
     private boolean unerreichbar;
+
     static final long NACHHOLEN_MS = 5000;
+
     static final long LEISTE_WARTEN_MS = 3000;
 
     public Fahrer(Finger finger, Protokoll protokoll) {
@@ -37,9 +66,11 @@ public final class Fahrer {
         this.protokoll = protokoll;
     }
 
+
     public Gehirn.Absicht laeuft() {
         return laeuft;
     }
+
 
     public void takt(long now) {
         if (tippHochAm > 0 && now >= tippHochAm) {
@@ -48,9 +79,16 @@ public final class Fahrer {
         }
     }
 
+
+
+
+
+
+
     public boolean vorbereiten(Zustand z, Zustand.Layout l, long now, long totSeit) {
         if (z.tot()) {
             loslassen("tot");
+
             if (verhalten.todWeiter && now - totSeit > 3000 && now - letzterEsc > 6000) {
                 letzterEsc = now;
                 tippen(l.knoepfe.containsKey("menu_esc") ? "menu_esc" : "hidden0", "Esc auf dem Todesbildschirm", l, now);
@@ -77,14 +115,18 @@ public final class Fahrer {
         return true;
     }
 
+
     public void anwenden(Gehirn.Absicht a, Zustand.Layout l, long now) {
         laeuft = a;
+
         String key = a.grund.contains(" (") ? a.grund.substring(0, a.grund.indexOf(" (")) : a.grund;
         if (!key.equals(letzterGrund) && (now - letzteAbsichtLog > 1000 || !a.grund.startsWith("Erkunden"))) {
             letzterGrund = key;
             letzteAbsichtLog = now;
             protokoll.event("absicht", a.grund);
         }
+
+
         if (a.tippen != null && a.sperreMs > 0) {
             if (finger.isDown(F_JOYSTICK)) finger.up(F_JOYSTICK);
             if (finger.isDown(F_ANGRIFF)) finger.up(F_ANGRIFF);
@@ -101,6 +143,7 @@ public final class Fahrer {
             gehalten = null;
             return;
         }
+
         if (Double.isNaN(a.richtung)) {
             if (finger.isDown(F_JOYSTICK)) finger.up(F_JOYSTICK);
             joystickRichtung = Double.NaN;
@@ -108,9 +151,23 @@ public final class Fahrer {
         else {
             int jx = l.joystick[0], jy = l.joystick[1];
             float r = Math.max(60, l.joystick[2]) * 0.9f;
+            if (finger.isDown(F_JOYSTICK) && l.ms > joystickAm) {
+
+
+
+
+                if (l.joystickAktiv) joystickBestaetigt = true;
+                else if (joystickBestaetigt) {
+                    finger.up(F_JOYSTICK);
+                    joystickBestaetigt = false;
+                    protokoll.event("loslassen", "Joystick in der App nicht mehr gehalten (Touch abgebrochen?): neu drücken");
+                }
+            }
             if (!finger.isDown(F_JOYSTICK)) {
                 finger.down(F_JOYSTICK, jx, jy);
                 joystickRichtung = Double.NaN;
+                joystickAm = now;
+                joystickBestaetigt = false;
             }
             if (a.richtung != joystickRichtung) {
                 joystickRichtung = a.richtung;
@@ -118,8 +175,11 @@ public final class Fahrer {
                 finger.move(F_JOYSTICK, jx + (float) Math.cos(a.richtung) * r, jy + (float) Math.sin(a.richtung) * r);
             }
         }
+
+
         String halten = a.angriff ? haltKnopf(a.halten, l) : null;
         if (a.neuDruecken && finger.isDown(F_ANGRIFF)) {
+
             finger.up(F_ANGRIFF);
             gehalten = null;
         }
@@ -133,10 +193,17 @@ public final class Fahrer {
             finger.down(F_ANGRIFF, c[0], c[1]);
             gehalten = halten;
         }
+
         if (a.tippen != null) a.getippt = tippen(a.tippen, a.grund, l, now);
         else if (a.tippSpiel != null) a.getippt = tippenImSpiel(a.tippSpiel, a.grund, l, now);
         else nachholen(l, now);
     }
+
+
+
+
+
+
 
     public boolean nachholen(Zustand.Layout l, long now) {
         if (nachholen == null) return false;
@@ -149,18 +216,26 @@ public final class Fahrer {
         return nachholen != null;
     }
 
+
     public boolean nachholenOffen() {
         return nachholen != null;
     }
 
+
     private String gehalten;
+
     private long sperreBis;
+
+
+
+
 
     public static String haltKnopf(String wanted, Zustand.Layout l) {
         if (wanted == null || wanted.equals(Kampfwahl.ANGRIFF)) return Kampfwahl.ANGRIFF;
         int[] b = l.knoepfe.get(wanted);
         return b != null && b[0] > 0 && b[1] > 0 && l.sichtbar(wanted) ? wanted : Kampfwahl.ANGRIFF;
     }
+
 
     public void loslassen(String warum) {
         if (finger.isDown(F_JOYSTICK) || finger.isDown(F_ANGRIFF)) protokoll.event("loslassen", warum);
@@ -171,6 +246,7 @@ public final class Fahrer {
         laeuft = null;
     }
 
+
     public void allesLoslassen() {
         finger.releaseAll();
         gehalten = null;
@@ -180,8 +256,19 @@ public final class Fahrer {
         laeuft = null;
     }
 
+
+
+
+
+
+
+
+
     public boolean tippen(String button, String warum, Zustand.Layout l, long now) {
         boolean ok = tippenOhneNachholen(button, warum, l, now);
+
+
+
         if (ok) {
             if (button.equals(nachholen)) nachholen = null;
         }
@@ -196,6 +283,8 @@ public final class Fahrer {
 
     private boolean tippenOhneNachholen(String button, String warum, Zustand.Layout l, long now) {
         unerreichbar = false;
+
+
         if ((button.equals("heal") || button.equals("mana")) && Zustand.Layout.TRAENKE_TASTEN.equals(l.traenke)) {
             protokoll.event("tipp", warum + " [" + button + "]: Tränke über feste Tasten, kein Tipp (Automatik der App)");
             unerreichbar = true;
@@ -205,6 +294,8 @@ public final class Fahrer {
             String twin = escZwilling(button);
             if (twin != null && l.sichtbar(twin) && l.knoepfe.containsKey(twin)) button = twin;
             else if (button.startsWith("menu_") && !button.equals(LEISTE) && l.sichtbar(LEISTE) && l.knoepfe.containsKey(LEISTE)) {
+
+
                 boolean neuesLayout = l.ms == 0 || l.ms != leisteLayoutMs;
                 if (now - leisteGetipptAm >= LEISTE_WARTEN_MS && neuesLayout
                         && tippenBei(l.mitte(LEISTE, 0, 0), warum + " [" + button + "]: Leiste aufklappen [" + LEISTE + "]", now)) {
@@ -223,6 +314,7 @@ public final class Fahrer {
         }
         int[] fallback = fallback(button);
         boolean ok = tippenBei(l.mitte(button, fallback[0], fallback[1]), warum + " [" + button + "]", now);
+
         if (ok && button.equals("interact")) nehmenTipps++;
         return ok;
     }
@@ -230,6 +322,11 @@ public final class Fahrer {
     private boolean tippenBei(int[] c, String warum, long now) {
         return tippenBei(c[0], c[1], warum, now);
     }
+
+
+
+
+
 
     public boolean tippenImSpiel(int[] p, String warum, Zustand.Layout l, long now) {
         if (l.spiel == null || p[2] <= 0 || p[3] <= 0) {
@@ -249,11 +346,13 @@ public final class Fahrer {
         return true;
     }
 
+
     static String escZwilling(String button) {
         if (button.equals("menu_esc")) return "hidden0";
         if (button.equals("hidden0")) return "menu_esc";
         return null;
     }
+
 
     static int[] fallback(String button) {
         switch (button) {

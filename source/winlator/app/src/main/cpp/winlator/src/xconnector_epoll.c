@@ -1,4 +1,4 @@
-#include <stdbool.h>
+#include <stdbool.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 #include <jni.h>
 #include <sys/epoll.h>
 #include <sys/poll.h>
@@ -20,7 +20,7 @@
 
 #define MAX_EVENTS 10
 
-// D2Android: how often a wait was interrupted (EINTR: the freezer of a suspend, SIGSTOP/SIGCONT of the app) and went on
+
 static atomic_int interruptionCount;
 
 typedef struct JMethods {
@@ -82,7 +82,7 @@ static void loadJMethods(JMethods* jmethods) {
     jmethods->handleConnectionShutdown = (*env)->GetMethodID(env, cls, "handleConnectionShutdown", "(Ljava/lang/Object;)V");
     jmethods->handleNewConnection = (*env)->GetMethodID(env, cls, "handleNewConnection", "(JI)Ljava/lang/Object;");
     jmethods->handleExistingConnection = (*env)->GetMethodID(env, cls, "handleExistingConnection", "(Ljava/lang/Object;)V");
-    jmethods->killAllConnections = (*env)->GetMethodID(env, cls, "killAllConnections", "(I)V"); // D2Android: with the reason
+    jmethods->killAllConnections = (*env)->GetMethodID(env, cls, "killAllConnections", "(I)V");
 }
 
 static bool addFdToEpoll(int epollFd, int fd, void* ptr) {
@@ -110,7 +110,7 @@ static int waitForSocketRead(jint clientFd, jint shutdownFd) {
 
     int res = poll(pfds, 2, -1);
     if (res < 0) {
-        // D2Android: an interrupted wait is no shutdown: wait again (the caller loops on 0)
+
         if (errno != EINTR) return -1;
         atomic_fetch_add(&interruptionCount, 1);
         return 0;
@@ -241,9 +241,9 @@ static void* epollThread(void* param) {
     while (connector->running) {
         int numFds = epoll_wait(connector->epollFd, events, MAX_EVENTS, -1);
         if (numFds < 0) {
-            // D2Android: the freezer of a suspend (and SIGSTOP/SIGCONT of the app) wakes epoll_wait with EINTR,
-            // which the kernel never restarts. Ending the loop here closed every client while the guests were stopped
-            // ("X connection to :0 broken" after the next SIGCONT). Wait again instead.
+
+
+
             if (errno == EINTR) {
                 atomic_fetch_add(&interruptionCount, 1);
                 continue;
@@ -322,7 +322,7 @@ Java_com_winlator_xconnector_XConnectorEpoll_killConnection(JNIEnv *env, jclass 
                                                             jlong connectorPtr, jlong clientPtr) {
     XConnectorEpoll_killConnection((XConnectorEpoll*)connectorPtr, (ConnectedClient*)clientPtr);
 }
-// D2Android: the interrupted waits that went on (all connectors of the app), for the trace
+
 JNIEXPORT jint JNICALL
 Java_com_winlator_xconnector_XConnectorEpoll_interruptionCount(JNIEnv *env, jclass cls) {
     return atomic_load(&interruptionCount);

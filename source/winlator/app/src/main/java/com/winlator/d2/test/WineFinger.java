@@ -9,10 +9,32 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 final class WineFinger implements Finger {
-    private static final int MOD_PORT = 7959;
+    private static final int MOD_PORT = ModPorts.CMD;
     private static final int UNIT_PLAYER = 0, UNIT_MONSTER = 1, UNIT_OBJECT = 2, UNIT_ITEM = 4, UNIT_TILE = 5;
     private static final int OBJECT_PORTAL = 5, OBJECT_ENTRANCE = 6, OBJECT_CORPSE = 7;
+
     boolean ohneDurchgaenge;
 
     private final DatagramSocket socket;
@@ -22,19 +44,25 @@ final class WineFinger implements Finger {
     private final float[] xs = new float[Touch.FINGERS], ys = new float[Touch.FINGERS];
     private volatile Zustand zustand;
     private volatile Zustand.Layout layout = new Zustand.Layout();
+
     volatile Fertigkeiten fertigkeiten;
+
     private int pressSkill = -1;
     private double walkDx, walkDy;
     private boolean walking;
     private long lastWalk, lastAttack;
+
     private long attackId = -1;
     private int attackMissing;
+
     int leerDruecke;
+
     private volatile java.util.Set<Long> ignoriert = java.util.Collections.emptySet();
 
     void ignorieren(java.util.Set<Long> ids) {
         ignoriert = ids;
     }
+
 
     private int attackButton;
 
@@ -47,13 +75,17 @@ final class WineFinger implements Finger {
         t.start();
     }
 
+
     private final GenutzteObjekte genutzt = new GenutzteObjekte();
+
     private double joyRichtung;
+
 
     void zustand(Zustand z) {
         zustand = z;
         genutzt.zustand(z, System.nanoTime() / 1_000_000);
     }
+
 
     java.util.Set<Long> ausgelassen() {
         return genutzt.ausgelassen(System.nanoTime() / 1_000_000);
@@ -107,6 +139,8 @@ final class WineFinger implements Finger {
     }
 
 
+
+
     private void joystick(float x, float y, int phase) {
         Zustand.Layout l = layout;
         double dx = x - l.joystick[0], dy = y - l.joystick[1];
@@ -127,6 +161,7 @@ final class WineFinger implements Finger {
         send(cmd(4, 0, 0).put((byte) phase).put((byte) 0).putShort((short) Math.round(walkDx)).putShort((short) Math.round(walkDy)));
     }
 
+
     private void keepAlive() {
         while (true) {
             try {
@@ -142,6 +177,10 @@ final class WineFinger implements Finger {
             }
         }
     }
+
+
+
+
 
     private void attack() {
         lastAttack = System.nanoTime() / 1_000_000;
@@ -163,9 +202,18 @@ final class WineFinger implements Finger {
         highlight(attackId);
     }
 
+
+
+
+
     private void highlight(long id) {
         send(cmd(3, 0, 0).putInt(id > 0 ? UNIT_MONSTER : 0).putInt(id > 0 ? (int) id : -1));
     }
+
+
+
+
+
 
     private Zustand.Ding pickTarget(Zustand z) {
         Zustand.Layout l = layout;
@@ -193,6 +241,11 @@ final class WineFinger implements Finger {
         return best;
     }
 
+
+
+
+
+
     private double reichweite(Zustand z, Zustand.Layout l) {
         if (l.zielweiteNah <= 0 || l.zielweiteFern <= 0 || fertigkeiten == null || z == null) return l.zielweite;
         byte[] p6 = z.punkte6;
@@ -202,6 +255,10 @@ final class WineFinger implements Finger {
         return nah ? l.zielweiteNah : l.zielweiteFern;
     }
 
+
+
+
+
     private boolean insLeere(Zustand z, String button) {
         if (layout.zielweite <= 0 || z == null || pickTarget(z) != null) return false;
         attackId = 0;
@@ -210,6 +267,10 @@ final class WineFinger implements Finger {
             + " / Kegel " + Math.round(layout.zielkegel) + "° der Zielhilfe (" + leerDruecke + ". Mal)");
         return true;
     }
+
+
+
+
 
     private void attackDown(float x, float y) {
         genutzt.abgebrochen();
@@ -234,9 +295,11 @@ final class WineFinger implements Finger {
         attack();
     }
 
+
     synchronized long gehaltenesZiel() {
         return down[Fahrer.F_ANGRIFF] && attackId > 0 ? attackId : -1;
     }
+
 
     private void attackUp() {
         if (attackId > 0) unit(2, attackId);
@@ -245,9 +308,11 @@ final class WineFinger implements Finger {
         attackMissing = 0;
     }
 
+
     private void unit(int phase, long id) {
         send(cmd(2, 0, 0).put((byte) attackButton).put((byte) phase).put((byte) 0).put((byte) 0).putInt(UNIT_MONSTER).putInt((int) id));
     }
+
 
     private String nearestButton(float x, float y) {
         String button = null;
@@ -268,6 +333,7 @@ final class WineFinger implements Finger {
         Zustand.Layout l = layout;
         if (button == null && z != null && z.panel && !z.pause && l.spiel != null && x >= l.spiel[0] && y >= l.spiel[1]
                 && x < l.spiel[0] + l.spiel[2] && y < l.spiel[1] + l.spiel[3]) {
+
             int gx = Math.round((x - l.spiel[0]) * (z.gw > 0 ? z.gw : 800) / (float) l.spiel[2]);
             int gy = Math.round((y - l.spiel[1]) * (z.gh > 0 ? z.gh : 600) / (float) l.spiel[3]);
             click(gx, gy, 1);
@@ -275,6 +341,7 @@ final class WineFinger implements Finger {
             return;
         }
         if (button == null) {
+
             send(cmd(6, 0, 0).put((byte) 0));
             protokoll.event("wine", "Tipp ohne Knopf bei " + Math.round(x) + "," + Math.round(y) + " → fortsetzen (Befehl 6)");
             return;
@@ -292,6 +359,11 @@ final class WineFinger implements Finger {
             default: protokoll.event("wine", "Knopf " + button + " hat unter Wine keine Wirkung");
         }
     }
+
+
+
+
+
 
     private void skillTap(int index) {
         Zustand z = zustand;
@@ -326,6 +398,7 @@ final class WineFinger implements Finger {
         t.start();
     }
 
+
     private void click(int x, int y, int mouseButton) {
         try {
             String display = System.getProperty("d2t.display", ":5");
@@ -338,6 +411,7 @@ final class WineFinger implements Finger {
             protokoll.event("wine", "xdotool: " + e);
         }
     }
+
 
     private void interact() {
         Zustand z = zustand;
@@ -353,8 +427,10 @@ final class WineFinger implements Finger {
         for (Zustand.Ding d : z.objekte) {
             double s = z.bodenAbstand(d);
             if (ohneDurchgaenge && (d.art == OBJECT_PORTAL || d.art == OBJECT_ENTRANCE)) continue;
-            if (left.contains(d.id)) continue;
+
+            if (d.art != OBJECT_ENTRANCE && d.art != OBJECT_CORPSE && left.contains(d.id)) continue;
             int type = d.art == OBJECT_ENTRANCE ? UNIT_TILE : d.art == OBJECT_CORPSE ? UNIT_PLAYER : UNIT_OBJECT;
+
             if (s <= range) list.add(new Object[]{d.art == OBJECT_CORPSE ? -1.0 : s, type, d.id, d.art});
         }
         if (z.stadt) for (Zustand.Ding d : z.monster) {
@@ -368,14 +444,18 @@ final class WineFinger implements Finger {
         list.sort((a, b) -> Double.compare((Double) a[0], (Double) b[0]));
         Object[] best = list.get(0);
         protokoll.event("wine", "Nehmen: Einheit Typ " + best[1] + " ID " + best[2]);
+
         genutzt.begonnen((Long) best[2], best.length > 3 ? (Integer) best[3] : -1, joyRichtung, now);
+
         send(cmd(15, 0, 0).put((byte) (int) (Integer) best[1]).put((byte) 0).put((byte) 0).put((byte) 0).putInt((int) (long) (Long) best[2]));
     }
+
 
     public void anlegen(long id) {
         protokoll.event("wine", "Anlegen: ID " + id);
         send(cmd(22, 0, 0).put((byte) 4).put((byte) 0).put((byte) 0).put((byte) 0).putInt((int) id));
     }
+
 
     public void punkte(byte[] befehl, String text) {
         protokoll.event("wine", "Befehl 19: " + text);

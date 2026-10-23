@@ -6,34 +6,73 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Zielpruefung {
     public static final double UMWEG_FAKTOR = 2, UMWEG_PLUS = 10;
+
     public static final double NAH = 2.5;
+
     public static final long NEU_NACH_MS = 1000;
     public static final double BEWEGT = 2.5;
     public static final int SUCHEN_JE_SCHRITT = 2, KNOTEN_MAX = 3000;
+
+
+
+
     public double suchenBisBoden = Double.MAX_VALUE;
 
+
     public static final class Urteil {
+
         public boolean erreichbar = true;
+
         public boolean geprueft;
+
         public boolean sicht = true;
+
         public Wegsuche.Punkt knoten;
+
         public List<Wegsuche.Punkt> weg;
         long am;
         double mx, my, fx, fy;
     }
 
     private final Map<Long, Urteil> urteile = new HashMap<>();
+
     public int suchen, unerreichbarGefunden;
+
 
     public void vergessen() {
         urteile.clear();
     }
 
+
     public Urteil urteil(long id) {
         return urteile.get(id);
     }
+
+
+
+
+
 
     public void pruefen(Zustand z, Karte k, List<Zustand.Ding> feinde, long now) {
         if (!z.weltlage() || k == null || k.level != z.gebiet) return;
@@ -76,6 +115,7 @@ public final class Zielpruefung {
         urteile.keySet().retainAll(da);
     }
 
+
     static void weg(Karte k, double sx, double sy, double zx, double zy, double luft, Urteil u) {
         int budget = (int) Math.min(KNOTEN_MAX, 40 * luft + 200);
         Wegsuche.Weg w = Wegsuche.suche(k, (int) Math.floor(sx), (int) Math.floor(sy), (int) Math.floor(zx), (int) Math.floor(zy), budget);
@@ -96,6 +136,12 @@ public final class Zielpruefung {
         u.erreichbar = laenge <= UMWEG_FAKTOR * luft + UMWEG_PLUS;
     }
 
+
+
+
+
+
+
     public static boolean sichtfrei(Karte k, Set<Long> tuerZellen, double sx, double sy, double zx, double zy) {
         int x = (int) Math.floor(sx), y = (int) Math.floor(sy), bx = (int) Math.floor(zx), by = (int) Math.floor(zy);
         double dx = zx - sx, dy = zy - sy;
@@ -105,6 +151,8 @@ public final class Zielpruefung {
         double tMaxY = dy == 0 ? Double.MAX_VALUE : (dy > 0 ? (y + 1 - sy) : (sy - y)) * tDeltaY;
         int ax = x, ay = y;
         for (int n = Math.abs(bx - x) + Math.abs(by - y) + 2; n > 0 && !(x == bx && y == by); n--) {
+
+
             if (Math.min(tMaxX, tMaxY) >= 1 - 1e-9) break;
             if (tMaxX < tMaxY) {
                 x += stepX;
@@ -119,6 +167,7 @@ public final class Zielpruefung {
         }
         return true;
     }
+
 
     public static Set<Long> tuerZellen(Zustand z, Karte k) {
         Set<Long> out = new HashSet<>();

@@ -1,4 +1,14 @@
 
+
+
+
+
+
+
+
+
+
+
 #define RVA_GetItemName        0x958C0
 #define RVA_GetItemNameEnd     0x96775
 #define RVA_ItemToBeltSite     0x9B317
@@ -22,6 +32,7 @@
 #define INV_W 10
 #define INV_H 4
 
+
 #include "d2cats.h"
 
 #define CMD_BELT 11
@@ -41,6 +52,7 @@ static void checkItemSites(void) {
     BYTE* site = (BYTE*) (client + RVA_ItemToBeltSite);
     itemNameAvailable = readable(name, sizeof(nameStart)) && memcmp(name, nameStart, sizeof(nameStart)) == 0
         && readable(end, sizeof(nameEnd)) && memcmp(end, nameEnd, sizeof(nameEnd)) == 0;
+
     beltMoveAvailable = readable(site, 10) && memcmp(site, belt, sizeof(belt)) == 0
         && (DWORD) (site + 10) + *(DWORD*) (site + 6) == client + RVA_SendPacket5;
     logLine("item sites: names %s, belt refill %s", itemNameAvailable ? "verified" : "NOT as expected",
@@ -50,6 +62,7 @@ static void checkItemSites(void) {
 static int codeIs(const char* code, const char* what) {
     return code[0] == what[0] && code[1] == what[1] && code[2] == what[2];
 }
+
 
 static int itemCategory(void* item, const char* code, int* tier) {
     *tier = 0;
@@ -90,12 +103,14 @@ static int itemCategory(void* item, const char* code, int* tier) {
     return CAT_OTHER;
 }
 
+
 static int beltRows(const char* code) {
     if (!code) return 1;
     if (codeIs(code, "lbl") || codeIs(code, "vbl")) return 2;
     if (codeIs(code, "mbl") || codeIs(code, "tbl")) return 3;
     return 4;
 }
+
 
 typedef struct {
     DWORD id, flags;
@@ -120,6 +135,7 @@ static int itemNameUtf8(void* item, char* out, int size) {
     BOOL (__stdcall *getItemName)(void*, wchar_t*, DWORD) = (BOOL (__stdcall *)(void*, wchar_t*, DWORD)) (client + RVA_GetItemName);
     getItemName(item, name, 255);
     name[255] = 0;
+
     wchar_t clean[128];
     int n = 0;
     for (int i = 0; name[i] && n < 127; i++) {
@@ -139,6 +155,7 @@ static int itemNameUtf8(void* item, char* out, int size) {
     }
     return len;
 }
+
 
 typedef struct {
     BYTE rows;
@@ -185,6 +202,10 @@ static void readCarried(void* player, Carried* c) {
     }
     c->rows = (BYTE) beltRows(beltCode);
 }
+
+
+
+
 
 static void sendItems(void* player, void** units, int count) {
     static DWORD lastHash, lastAt;
@@ -253,9 +274,24 @@ static void sendItems(void* player, void** units, int count) {
         for (int k = 0; k < len; k++) putU8(&p, (BYTE) name[k]);
     }
     putShopJob(&p);
+
+
     if (stackMax(0)) for (int i = 0; i < 3; i++) putU8(&p, stackMax(i));
     sendPacket(&p);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #define CMD_STACKS     20
 #define ITXT_MAXSTACK  0xE8
@@ -309,12 +345,14 @@ static void setLargeStacks(int large) {
         (unsigned long) *(DWORD*) (stackTxt[2] + ITXT_MAXSTACK));
 }
 
+
 static BYTE stackMax(int row) {
     if (stackRowsState == 0) findStackRows();
     if (stackRowsState != 1) return 0;
     DWORD max = *(DWORD*) (stackTxt[row] + ITXT_MAXSTACK);
     return (BYTE) (max > 254 ? 254 : max);
 }
+
 
 static DWORD loggedItems[64];
 
@@ -339,10 +377,16 @@ static void logNewItems(void** units, int count) {
     }
 }
 
+
 static void forgetItems(void) {
     memset(nameCache, 0, sizeof(nameCache));
     memset(loggedItems, 0, sizeof(loggedItems));
 }
+
+
+
+
+
 
 static void moveToBelt(void* player, int kind) {
     if (!beltMoveAvailable) return;

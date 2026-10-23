@@ -1,14 +1,27 @@
 package com.winlator.d2;
 
+
+
+
+
+
+
+
+
+
+
 public final class D2PotionShop {
     public static final int COMMAND = 16;
     public static final int RESERVE_MAX = 10, RESERVE_DEFAULT = 5;
+
     public static final int[] MIN_GOLD_STEPS = {0, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000};
+
     static final long ARRIVAL_MS = 2000;
 
     public static final int STATE_NONE = 0, STATE_RUNNING = 1, STATE_DONE = 2;
     public static final int END_DONE = 0, END_GOLD = 1, END_NO_WARE = 2, END_REFUSED = 3, END_CLOSED = 4, END_BAD_LIST = 5,
         END_STASH_FULL = 6, END_NO_OWN_PAGE = 7, END_TIME = 8, END_UNAVAILABLE = 9, END_INVENTORY_FULL = 10;
+
 
     public static final class Job {
         public final long id;
@@ -28,6 +41,7 @@ public final class D2PotionShop {
         }
     }
 
+
     public static final class Need {
         public final int heal, mana, healBelt, manaBelt;
 
@@ -38,10 +52,15 @@ public final class D2PotionShop {
             this.manaBelt = manaBelt;
         }
 
+
         public boolean nothing() {
             return heal == 0 && mana == 0 && healBelt == 0 && manaBelt == 0;
         }
     }
+
+
+
+
 
     public static Need need(int[] belt, int rows, int[] columnKind, int healInventory, int manaInventory, int reserveHeal,
                             int reserveMana, int freeCells) {
@@ -76,6 +95,8 @@ public final class D2PotionShop {
         int[] buy = new int[2], toBelt = new int[2];
         int cells = Math.max(0, freeCells);
         for (int k = 0; k < 2; k++) {
+
+
             int fromInventory = Math.min(room[k], inventory[k]);
             cells += fromInventory;
             int forBelt = room[k] - fromInventory;
@@ -91,9 +112,11 @@ public final class D2PotionShop {
         return Math.max(0, Math.min(RESERVE_MAX, reserve));
     }
 
+
     public static int minGold(int step) {
         return MIN_GOLD_STEPS[Math.max(0, Math.min(MIN_GOLD_STEPS.length - 1, step))];
     }
+
 
 
     private long nextId;
@@ -101,8 +124,10 @@ public final class D2PotionShop {
     private boolean sentSeen, sentReported;
 
     public D2PotionShop(long seed) {
+
         nextId = (seed & 0xFFFFFFFFL) == 0 ? 1 : seed & 0xFFFFFFFFL;
     }
+
 
     public long start(long now) {
         long id = nextId;
@@ -114,15 +139,21 @@ public final class D2PotionShop {
         return id;
     }
 
+
     public long sentId() {
         return sentId;
     }
+
+
+
+
 
     public boolean busy(Job job, long now) {
         if (job != null && job.id == sentId && sentId != 0) sentSeen = true;
         if (job != null && job.running()) return true;
         return sentId != 0 && !sentSeen && now - sentAt < ARRIVAL_MS;
     }
+
 
     public Job finished(Job job) {
         if (job == null || sentId == 0 || job.id != sentId || job.state != STATE_DONE || sentReported) return null;

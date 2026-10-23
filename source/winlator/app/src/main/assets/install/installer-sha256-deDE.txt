@@ -2,3 +2,6 @@
 f845e8bc0ab622989fd25a81b24161ec7abbd1a6cc07e6d771df3962859f5f68  D2DV/Installer.exe
 209f66c765fba972e358d008e8969e7a1c125c1f285ebab15c263089080bc265  D2XP/Installer Tome.mpq
 a825d97018f2638d1ef067f3fc199cd3d613fe31748ab5494c61fe3250e7bbe5  D2XP/Installer.exe
+# Blizzard's 1.14b installers (deDE) as downloader.battle.net delivered them on 13.10.2026 (checked under Wine).
+# Installer.exe is the same as for enUS; only the two "Installer Tome.mpq" differ. Checked by install.sh before
+# Installer.exe runs; a new installer build needs new values.

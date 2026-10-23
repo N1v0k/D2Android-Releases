@@ -8,6 +8,14 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
+
+
+
+
+
+
+
+
 public final class D2MpqAttributes {
     private static final int HASH_OFFSET = 0, HASH_NAME_A = 1, HASH_NAME_B = 2, HASH_FILE_KEY = 3;
     static final int BLOCK_EMPTY = 0xFFFFFFFF, BLOCK_DELETED = 0xFFFFFFFE;
@@ -17,9 +25,11 @@ public final class D2MpqAttributes {
 
     private D2MpqAttributes() {}
 
+
     public static Result hide(File archive) throws IOException {
         return scan(archive, true);
     }
+
 
     public static boolean present(File archive) throws IOException {
         return scan(archive, false) == Result.HIDDEN;
@@ -68,6 +78,7 @@ public final class D2MpqAttributes {
         }
     }
 
+
     public static int hash(String s, int kind) {
         int seed1 = 0x7FED7FED, seed2 = 0xEEEEEEEE;
         for (byte b : s.toUpperCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII)) {
@@ -77,6 +88,7 @@ public final class D2MpqAttributes {
         }
         return seed1;
     }
+
 
     public static int[] crypt(int[] words, int key, boolean decrypt) {
         int seed = 0xEEEEEEEE;

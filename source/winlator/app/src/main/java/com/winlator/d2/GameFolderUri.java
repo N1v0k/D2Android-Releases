@@ -1,14 +1,24 @@
 package com.winlator.d2;
 
+
+
+
+
+
 public final class GameFolderUri {
     public static final String EXTERNAL_STORAGE = "com.android.externalstorage.documents";
     public static final String DOWNLOADS = "com.android.providers.downloads.documents";
 
     private GameFolderUri() {}
 
+
+
+
+
     public static String toPath(String authority, String treeDocumentId, String primaryRoot) {
         if (authority == null || treeDocumentId == null || primaryRoot == null) return null;
         if (authority.equals(DOWNLOADS)) {
+
             return treeDocumentId.startsWith("raw:/") ? clean(treeDocumentId.substring(4)) : null;
         }
         if (!authority.equals(EXTERNAL_STORAGE)) return null;
@@ -23,6 +33,7 @@ public final class GameFolderUri {
         else return null;
         return clean(rest.isEmpty() ? root : root + "/" + rest);
     }
+
 
     static String clean(String path) {
         if (!path.startsWith("/")) return null;

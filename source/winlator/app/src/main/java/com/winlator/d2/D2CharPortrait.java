@@ -5,16 +5,50 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2CharPortrait {
     private D2CharPortrait() {}
 
+
     public static final String[] CLASSES = {"AM", "SO", "NE", "PA", "BA", "DZ", "AI"};
+
     static final int HD = 0, TR = 1, LG = 2, RA = 3, LA = 4, RH = 5, LH = 6, SH = 7, S1 = 8, S2 = 9;
+
     static final int PLACE_HEAD = 1, PLACE_BODY = 3, PLACE_RIGHT = 4, PLACE_LEFT = 5;
+
     static final String[] ARMOUR = {"LIT", "LIT", "MED", "HVY"};
+
     public static final String MODE_LIST = "TN";
+
     public static final int DIRECTION_LIST = 0;
+
+
+
+
+
     static final int[] DCC_TO_COF_16 = {2, 6, 10, 14, 0, 4, 8, 12, 1, 3, 5, 7, 9, 11, 13, 15}, DCC_TO_COF_8 = {1, 3, 5, 7, 0, 2, 4, 6};
+
+
+
+
 
     public static int cofDirection(int direction, int count) {
         int d = Math.floorMod(direction, 16);
@@ -22,6 +56,7 @@ public final class D2CharPortrait {
         if (count == 8) return d / 2;
         return 0;
     }
+
 
     public static int dccDirection(int direction, int count) {
         int[] table = count >= 16 ? DCC_TO_COF_16 : count == 8 ? DCC_TO_COF_8 : null;
@@ -31,14 +66,21 @@ public final class D2CharPortrait {
         return 0;
     }
 
+
+
+
+
     public static int[] layerOrder(D2Cof cof, int direction, int frame) {
         return cof.priority[cofDirection(direction, cof.directions)][Math.min(frame, cof.framesPerDirection - 1)].clone();
     }
 
+
     public static final class Look {
         public final int heroClass;
         public final String name;
+
         public final int[] graphic = new int[16], colour = new int[16];
+
         public String head = "", body = "", right = "", left = "";
 
         Look(int heroClass, String name) {
@@ -46,6 +88,12 @@ public final class D2CharPortrait {
             this.name = name;
         }
     }
+
+
+
+
+
+
 
 
     public static Look read(byte[] d) {
@@ -89,6 +137,7 @@ public final class D2CharPortrait {
         return look;
     }
 
+
     private static boolean skillsPlausible(byte[] d, int at) {
         for (int k = 0; k < 30; k++) if ((d[at + k] & 0xFF) > 99) return false;
         return true;
@@ -121,6 +170,8 @@ public final class D2CharPortrait {
     }
 
 
+
+
     public static final class Item {
         public final String code, gfx, weaponClass, twoHandedClass;
         public final boolean weapon, shield, helm, oneOrTwoHanded;
@@ -140,9 +191,11 @@ public final class D2CharPortrait {
         }
     }
 
+
     public static Map<String, Item> items(D2Sprites sprites) throws IOException {
         return items(sprites.read("data\\global\\excel\\weapons.txt"), sprites.read("data\\global\\excel\\armor.txt"));
     }
+
 
     public static Map<String, Item> items(byte[] weaponsTxt, byte[] armorTxt) {
         Map<String, Item> out = new HashMap<>();
@@ -187,11 +240,15 @@ public final class D2CharPortrait {
     }
 
 
+
+
     public static final class Parts {
         public final String[] token = new String[16];
         public String weaponClass = "HTH";
+
         public final Item[] item = new Item[16];
     }
+
 
     public static Parts parts(Look look, Map<String, Item> items) {
         Parts p = new Parts();
@@ -229,6 +286,11 @@ public final class D2CharPortrait {
         return p;
     }
 
+
+
+
+
+
     static String weaponClass(Item right, Item left, boolean shield) {
         String r = right.weaponClass.toLowerCase();
         if (left == null) return right.oneOrTwoHanded && !shield && !right.twoHandedClass.isEmpty() ? right.twoHandedClass : r;
@@ -238,8 +300,11 @@ public final class D2CharPortrait {
     }
 
 
+
+
     public static final class Anim {
         public final int width, height, anchorX, anchorY, frameMs;
+
         public final int[][] frames;
 
         Anim(int width, int height, int anchorX, int anchorY, int frameMs, int[][] frames) {
@@ -252,6 +317,7 @@ public final class D2CharPortrait {
         }
     }
 
+
     public interface Files {
         D2Cof cof(String name) throws IOException;
 
@@ -262,6 +328,7 @@ public final class D2CharPortrait {
         int[] palette();
     }
 
+
     public static Files of(D2Sprites sprites) {
         return new Files() {
             @Override public D2Cof cof(String name) throws IOException { return sprites.cof(name); }
@@ -271,12 +338,18 @@ public final class D2CharPortrait {
         };
     }
 
+
     static final String[] COLOUR_FILES = {"grey", "grey2", "gold", "brown", "greybrown", "invgrey", "invgrey2", "invgreybrown"};
+
+
+
+
 
     public static Anim compose(byte[] save, Files files, Map<String, Item> items) throws IOException {
         Look look = read(save);
         return look == null ? null : compose(look, files, items, MODE_LIST, DIRECTION_LIST);
     }
+
 
     public static Anim compose(Look look, Files files, Map<String, Item> items, String mode, int direction) throws IOException {
         String cl = CLASSES[look.heroClass];
@@ -290,6 +363,7 @@ public final class D2CharPortrait {
         if (cof == null) return null;
         int dir = direction;
         int[] palette = files.palette();
+
         D2Dcc.Dcc[] dcc = new D2Dcc.Dcc[16];
         byte[][] maps = new byte[16][];
         D2Cof.Layer[] layerOf = new D2Cof.Layer[16];
@@ -305,8 +379,10 @@ public final class D2CharPortrait {
             if (d == null) continue;
             dcc[c] = d;
             layerOf[c] = layer;
+
             maps[c] = colourMap(files, parts.item[c] != null ? parts.item[c] : c == HD ? null : items.get(look.body), look.colour[c]);
         }
+
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
         for (int c = 0; c < 16; c++) {
             if (dcc[c] == null) continue;
@@ -324,6 +400,7 @@ public final class D2CharPortrait {
         int[][] frames = new int[cof.framesPerDirection][];
         for (int f = 0; f < cof.framesPerDirection; f++) {
             int[] out = new int[w * h];
+
             for (int c : layerOrder(cof, dir, f)) {
                 if (c >= 16 || dcc[c] == null) continue;
                 D2Dcc.Dcc d = dcc[c];
@@ -334,10 +411,12 @@ public final class D2CharPortrait {
             }
             frames[f] = out;
         }
+
         int rate = cof.animationRate > 0 ? cof.animationRate : 256;
         int frameMs = Math.max(20, Math.round(10240f / rate));
         return new Anim(w, h, -minX, -minY, frameMs, frames);
     }
+
 
     static byte[] colourMap(Files files, Item item, int colour) throws IOException {
         if (item == null || colour == 255 || item.transform < 1 || item.transform > COLOUR_FILES.length) return null;
@@ -347,6 +426,7 @@ public final class D2CharPortrait {
         System.arraycopy(d, colour * 256, map, 0, 256);
         return map;
     }
+
 
     static void draw(int[] out, int w, int h, D2Dcc.Frame f, int x0, int y0, int[] palette, byte[] map, D2Cof.Layer layer) {
         boolean blend = layer != null && layer.transparent;
@@ -364,6 +444,7 @@ public final class D2CharPortrait {
             }
         }
     }
+
 
     static int alpha(int argb, int effect) {
         switch (effect) {

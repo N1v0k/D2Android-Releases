@@ -7,7 +7,20 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
+
+
 public final class GenutzteObjekte {
+
     static final int ART_TRUHE = 1, ART_SCHREIN = 2;
     static final long PICKUP_MS = 2500, USED_OBJECT_MS = 3000, WEG_MS = 250, NEUES_SPIEL_MS = 3000;
     static final double WEG_GRAD = 50;
@@ -17,6 +30,7 @@ public final class GenutzteObjekte {
     private int art = -1;
     private double richtung;
 
+
     public synchronized void begonnen(long id, int art, double richtung, long now) {
         this.id = id;
         this.art = art;
@@ -24,14 +38,21 @@ public final class GenutzteObjekte {
         seit = now;
     }
 
+
     public synchronized void abgebrochen() {
         id = -1;
     }
+
 
     public synchronized void joystick(double richtung, long now) {
         if (id < 0 || now - seit <= WEG_MS) return;
         if (Math.cos(richtung - this.richtung) < Math.cos(Math.toRadians(WEG_GRAD))) beenden(now);
     }
+
+
+
+
+
 
     public synchronized void zustand(Zustand z, long now) {
         if (letzterZustand != 0 && now - letzterZustand > NEUES_SPIEL_MS) {
@@ -46,6 +67,7 @@ public final class GenutzteObjekte {
         for (Zustand.Ding d : z.monster) if (d.id == id) da = true;
         if (!da || z.panel || now - seit > PICKUP_MS) beenden(now);
     }
+
 
     public synchronized Set<Long> ausgelassen(long now) {
         if (id >= 0 && now - seit > PICKUP_MS) beenden(now);

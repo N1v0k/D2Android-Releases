@@ -1,4 +1,4 @@
-package com.winlator.xserver.extensions;
+package com.winlator.xserver.extensions;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
 
@@ -83,7 +83,7 @@ public class XComposite extends Extension {
 
         if (updateMode == UpdateMode.REDIRECT_AUTOMATIC.ordinal()) {
             Drawable parentContent = parent.getContent();
-            // D2Android: parent and window share the texture now; the parent's old one goes if nobody holds it
+
             final Texture released = parentContent.setTexture(window.getContent().getTexture());
             if (released != null) xServer.getRenderer().xServerView.queueEvent(released::destroy);
         }
@@ -111,7 +111,7 @@ public class XComposite extends Extension {
 
         if (updateMode == UpdateMode.REDIRECT_AUTOMATIC.ordinal()) {
             Drawable parentContent = oldParent.getContent();
-            // D2Android: the window keeps the shared texture; the parent gets its own again
+
             final Texture released = parentContent.setTexture(new Texture(parentContent));
             if (released != null) xServer.getRenderer().xServerView.queueEvent(released::destroy);
         }

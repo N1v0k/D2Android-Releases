@@ -11,12 +11,19 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+
+
+
+
+
 public final class D2HelpersDialog {
     private D2HelpersDialog() {}
 
     public static void show(Activity activity, D2TouchOverlay overlay) {
         float density = activity.getResources().getDisplayMetrics().density;
         int pad = Math.round(16 * density);
+
+
         AlertDialog[] shown = new AlertDialog[1];
         LinearLayout panel = D2HelpersPanel.create(activity, overlay::reloadSettings, overlay::showAimPreview, true, overlay.lootScope(),
             () -> {
@@ -27,6 +34,7 @@ public final class D2HelpersDialog {
         D2SettingsLook look = D2SettingsLook.get();
         android.view.View title;
         if (look != null) {
+
             title = new D2GameText(activity, look, look.font30, 0xC8B074, D2Text.get(activity, com.winlator.R.string.helpers_title));
         }
         else {
@@ -39,6 +47,7 @@ public final class D2HelpersDialog {
         title.setPadding(pad, pad, pad, Math.round(4 * density));
         AlertDialog.Builder builder = new AlertDialog.Builder(activity).setCustomTitle(title);
         if (look != null) {
+
             LinearLayout body = new LinearLayout(activity);
             body.setOrientation(LinearLayout.VERTICAL);
             body.addView(panel, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
@@ -55,6 +64,7 @@ public final class D2HelpersDialog {
         else builder.setView(panel).setPositiveButton(D2Text.get(activity, com.winlator.R.string.done), null);
         AlertDialog dialog = builder.create();
         shown[0] = dialog;
+
         dialog.setOnKeyListener((d, code, event) -> code == android.view.KeyEvent.KEYCODE_BACK
             && event.getAction() == android.view.KeyEvent.ACTION_UP && D2HelpersPanel.back(panel));
         D2Sound.attach(dialog);
@@ -63,6 +73,7 @@ public final class D2HelpersDialog {
         if (done != null) done.setTextColor(D2Style.GOLD);
         Window window = dialog.getWindow();
         if (window != null) {
+
             window.setBackgroundDrawable(D2Style.windowBackground(density));
             window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             window.setGravity(Gravity.END);

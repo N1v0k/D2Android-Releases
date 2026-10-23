@@ -3,15 +3,22 @@ package com.winlator.d2.test;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
+
+
+
 public final class Waechter {
     public static final class Befund {
-        public final String art, text, issue;
+        public final String art, text;
         public final boolean auffaellig;
 
-        Befund(String art, String text, String issue, boolean auffaellig) {
+        Befund(String art, String text, boolean auffaellig) {
             this.art = art;
             this.text = text;
-            this.issue = issue;
             this.auffaellig = auffaellig;
         }
     }
@@ -23,12 +30,18 @@ public final class Waechter {
     private Zustand vorher;
     private long gehenSeit, bewegtAm, totSeit, festAm, gemeldetJoystick = -MELDE_PAUSE_MS, gemeldetAngriff = -MELDE_PAUSE_MS;
     private long joystickSeit, stehtSeit, angriffSeit;
+
     private double stehtRichtung, stehtSpreizung, stehtX, stehtY;
     private boolean angriffWirkte;
     private double gehenRichtung = Double.NaN;
     private final List<Long> festgefahren = new ArrayList<>();
     private boolean haengtGemeldet;
+
     public int tode, messbar, unmessbar, joystickOhneWirkung, angriffOhneWirkung;
+
+
+
+
 
     public List<Befund> pruefen(Zustand z, Gehirn.Absicht laeuft, long now) {
         List<Befund> out = new ArrayList<>();
@@ -46,12 +59,12 @@ public final class Waechter {
                 totSeit = now;
                 tode++;
                 out.add(new Befund("tod", "Figur tot in Gebiet " + z.gebiet + " (Leben 0 von " + z.lebenMax + ", Heiltränke im Gürtel "
-                    + z.heilGuertel + ")", null, true));
+                    + z.heilGuertel + ")", true));
             }
             else if (!haengtGemeldet && now - totSeit > TOT_HAENGT_MS) {
                 haengtGemeldet = true;
                 out.add(new Befund("todesbildschirm_haengt", "Todesbildschirm nach " + (now - totSeit) / 1000
-                    + " s und Esc noch da", null, true));
+                    + " s und Esc noch da", true));
             }
         }
         else {
@@ -60,6 +73,7 @@ public final class Waechter {
         }
         return out;
     }
+
 
     private void weltlage(Zustand z, Gehirn.Absicht laeuft, boolean joystick, boolean frei, long now, List<Befund> out) {
         if (joystick && frei) {
@@ -79,6 +93,8 @@ public final class Waechter {
             else stehtSeit = 0;
         }
         else joystickSeit = stehtSeit = 0;
+
+
         if (stehtSeit > 0 && now - stehtSeit >= STEHT_MS && now - joystickSeit >= STEHT_MS && stehtSpreizung >= SPREIZUNG
                 && now - gemeldetJoystick > MELDE_PAUSE_MS) {
             gemeldetJoystick = now;
@@ -86,7 +102,7 @@ public final class Waechter {
             out.add(new Befund("joystick_ohne_wirkung", "Joystick " + (now - joystickSeit) + " ms gehalten ("
                 + Math.round(Math.toDegrees(laeuft.richtung)) + "°, Richtungen über " + Math.round(Math.toDegrees(stehtSpreizung))
                 + "° versucht), Spielermodus " + z.modus + " (Stehen) seit " + (now - stehtSeit) + " ms, Lage " + z.wx + "," + z.wy
-                + ", Gebiet " + z.gebiet + "; kein Fenster, keine Pause, kein NPC", null, true));
+                + ", Gebiet " + z.gebiet + "; kein Fenster, keine Pause, kein NPC", true));
         }
 
         boolean angriff = laeuft != null && laeuft.angriff && frei;
@@ -102,11 +118,12 @@ public final class Waechter {
                 gemeldetAngriff = now;
                 angriffOhneWirkung++;
                 out.add(new Befund("angriff_ohne_wirkung", "Angriff " + (now - angriffSeit) + " ms gehalten, Feind in Reichweite, Spielermodus "
-                    + z.modus + " (nie Angriff/Fertigkeit)", null, true));
+                    + z.modus + " (nie Angriff/Fertigkeit)", true));
             }
         }
         else angriffSeit = 0;
     }
+
 
     private void ohneWeltlage(Zustand z, Gehirn.Absicht laeuft, boolean walking, boolean frei, long now, List<Befund> out) {
         double moved = z.weltVerschoben(vorher);
@@ -127,12 +144,12 @@ public final class Waechter {
             festgefahren.add(now);
             while (!festgefahren.isEmpty() && now - festgefahren.get(0) > FEST_FENSTER_MS) festgefahren.remove(0);
             out.add(new Befund("festgefahren", "Joystick " + (now - gehenSeit) + " ms gehalten ("
-                + Math.round(Math.toDegrees(laeuft.richtung)) + "°), Welt bewegt sich nicht", null, false));
+                + Math.round(Math.toDegrees(laeuft.richtung)) + "°), Welt bewegt sich nicht", false));
             if (festgefahren.size() >= 3 && now - gemeldetJoystick > MELDE_PAUSE_MS) {
                 gemeldetJoystick = now;
                 joystickOhneWirkung++;
                 out.add(new Befund("joystick_ohne_wirkung", "Joystick in " + festgefahren.size() + " Richtungen binnen "
-                    + FEST_FENSTER_MS / 1000 + " s ohne Wirkung (kein Fenster, keine Pause)", null, true));
+                    + FEST_FENSTER_MS / 1000 + " s ohne Wirkung (kein Fenster, keine Pause)", true));
             }
         }
     }

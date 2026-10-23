@@ -1,0 +1,25 @@
+DXVK 2.4.1: do not zero the new backing buffer of a discarded buffer.
+
+The app ships the prebuilt 32-bit d3d11.dll of the dxvk-2.4.1 package
+(syswow64) with a one-byte change, applied by tools/binpatch.py
+(patch "dxvk-d3d11") when the runtime is built:
+
+  file      syswow64/d3d11.dll
+  before    sha256 0b560b0d24b14ac2ee3dbc05a12d480eed341a575d713647305d7a040f33abb9
+  after     sha256 c09491f3e80f2ec2f24792b1542df17fdb2523c79e549293c839db368e68b0ee
+  change    file offset 0x892e4: 74 -> eb (je -> jmp over the memset call)
+
+The source change it corresponds to:
+
+--- a/src/dxvk/dxvk_buffer.cpp
++++ b/src/dxvk/dxvk_buffer.cpp
+@@ -156,9 +156,6 @@
+       handle.buffer = handle.memory.buffer();
+     }
+     
+-    if (clear && (m_memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+-      std::memset(handle.memory.mapPtr(0), 0, info.size);
+-
+     return handle;
+   }
+ 

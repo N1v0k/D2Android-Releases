@@ -4,8 +4,15 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 
+
+
+
+
+
+
 final class D2PadFocus {
     private D2PadFocus() {}
+
 
     static <T extends View> T frame(T view) {
         view.setFocusable(true);
@@ -19,6 +26,7 @@ final class D2PadFocus {
         view.setForeground(states);
         return view;
     }
+
 
     static void all(View root) {
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> walk(root));

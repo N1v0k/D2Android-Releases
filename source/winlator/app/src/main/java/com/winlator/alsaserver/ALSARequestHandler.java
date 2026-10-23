@@ -1,4 +1,4 @@
-package com.winlator.alsaserver;
+package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
 
 import com.winlator.sysvshm.SysVSharedMemory;
 import com.winlator.xconnector.ConnectedClient;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ALSARequestHandler implements RequestHandler {
-    // D2Android: payload bytes read per request, as sent by tools/alsa-plugin/
+
     private static final int PREPARE_LENGTH = 10;
     private static final int MIN_BUFFER_SIZE_LENGTH = 6;
     private int maxSHMemoryId = 0;
@@ -41,7 +41,7 @@ public class ALSARequestHandler implements RequestHandler {
                 alsaClient.pause();
                 break;
             case RequestCodes.PREPARE: {
-                // D2Android: wait for all payload bytes this request reads, check the format before using it
+
                 if (inputStream.available() < Math.max(requestLength, PREPARE_LENGTH)) return false;
 
                 byte channels = inputStream.readByte();
@@ -51,8 +51,8 @@ public class ALSARequestHandler implements RequestHandler {
                 if (requestLength > PREPARE_LENGTH) inputStream.skip(requestLength - PREPARE_LENGTH);
 
                 if (dataType == null) {
-                    // D2Android: unknown format: no track, and the reply of a failed shared memory setup, so the
-                    // plugin waiting for it does not block
+
+
                     alsaClient.release();
                     if (ALSAClient.USE_SHARED_MEMORY) {
                         try (XStreamLock lock = outputStream.lock()) {
@@ -92,7 +92,7 @@ public class ALSARequestHandler implements RequestHandler {
                 }
                 break;
             case RequestCodes.MIN_BUFFER_SIZE: {
-                // D2Android: the payload may arrive in a later receive; reading it early desynced the stream
+
                 if (inputStream.available() < Math.max(requestLength, MIN_BUFFER_SIZE_LENGTH)) return false;
 
                 byte channels = inputStream.readByte();
@@ -100,7 +100,7 @@ public class ALSARequestHandler implements RequestHandler {
                 int sampleRate = inputStream.readInt();
                 if (requestLength > MIN_BUFFER_SIZE_LENGTH) inputStream.skip(requestLength - MIN_BUFFER_SIZE_LENGTH);
 
-                // D2Android: 0 for an unknown format, the plugin then keeps its parameters
+
                 int minBufferSize = dataType == null ? 0 :
                     ALSAClient.latencyMillisToBufferSize(alsaClient.options.latencyMillis, channels, dataType, sampleRate);
 
@@ -113,7 +113,7 @@ public class ALSARequestHandler implements RequestHandler {
         return true;
     }
 
-    // D2Android: the plugin sends -EINVAL as data type for formats it does not know; never index the enum with it
+
     private static ALSAClient.DataType toDataType(byte value) {
         ALSAClient.DataType[] dataTypes = ALSAClient.DataType.values();
         return value >= 0 && value < dataTypes.length ? dataTypes[value] : null;

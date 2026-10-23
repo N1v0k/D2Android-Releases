@@ -1,3 +1,27 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import argparse
 import hashlib
 import io
@@ -17,6 +41,7 @@ import zstandard
 PACKAGE_OLD = b"com.winlator"
 PACKAGE_NEW = b"at.d2android"
 
+
 ROOTFS_EXCLUDE = [re.compile(p) for p in (
     r"^opt/wine(/|$)",
     r"(^|/)gstreamer-1\.0(/|$)", r"/libgst[^/]*$",
@@ -26,6 +51,8 @@ ROOTFS_EXCLUDE = [re.compile(p) for p in (
     r"/lib(fdk|mpg123|vorbis|ogg|FLAC|opus|sndfile)[^/]*$",
     r"^usr/bin/(locale|localedef)$",
     r"^usr/share/(man|doc|info)(/|$)",
+
+
     r"/lib(mpeg2|mpeg2convert|out123|syn123)\.so[^/]*$", r"^usr/lib/mpg123(/|$)",
     r"/lib(gnutls|gnutlsxx|gnutls-openssl|nettle|hogweed)\.so[^/]*$",
     r"/lib(glib|gio|gobject|gmodule|gthread|girepository)-2\.0\.so[^/]*$", r"^usr/lib/gio(/|$)",
@@ -35,6 +62,7 @@ ROOTFS_EXCLUDE = [re.compile(p) for p in (
     r"/lib(nss_[a-z]+|nsl|anl|BrokenLocale|memusage|pcprofile|thread_db|c_malloc_debug)\.so[^/]*$",
     r"^usr/lib/(audit|getconf)(/|$)",
 )]
+
 
 PATCHES_KEEP = {
     "usr/lib/alsa-lib/libasound_module_pcm_android_aserver.so": "usr/lib/alsa-lib/libasound_module_pcm_android_aserver.so",
@@ -52,6 +80,7 @@ def sha256(path):
 
 
 def open_tar(path):
+
     fh = open(path, "rb")
     if path.endswith(".tzst"):
         stream = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(fh)
@@ -75,6 +104,8 @@ def safe_join(root, rel):
 
 
 def extract(path, root, select):
+
+
     written = {}
     count = 0
     with open_tar(path) as tar:
@@ -121,6 +152,7 @@ def rewrite_package(root):
                 with open(path, "wb") as f:
                     f.write(data.replace(PACKAGE_OLD, PACKAGE_NEW))
                 changed.append(os.path.relpath(path, root))
+
     for dirpath, dirnames, filenames in os.walk(root):
         for name in dirnames + filenames:
             path = os.path.join(dirpath, name)
@@ -134,6 +166,7 @@ def rewrite_package(root):
 
 
 def pack(root, out_path, level, fmt):
+
     raw = io.BytesIO()
     mtime = 1760140800
     files = dirs = links = 0
@@ -169,6 +202,7 @@ def pack(root, out_path, level, fmt):
                     files += 1
     data = raw.getvalue()
     if fmt == "xz":
+
         comp = lzma.compress(data, format=lzma.FORMAT_XZ, check=lzma.CHECK_CRC64, preset=9 | lzma.PRESET_EXTREME)
     else:
         comp = zstandard.ZstdCompressor(level=level, threads=-1).compress(data)
@@ -177,12 +211,16 @@ def pack(root, out_path, level, fmt):
     return files, dirs, links, len(data), len(comp)
 
 
+
+
+
 ALSA_D2_CONF = """pcm.!default { type android_aserver_d2 }
 ctl.!default { type android_aserver }
 """
 
 
 def build_alsa_plugin(args, root):
+
     lib = os.path.join(root, "usr/lib")
     inc = os.path.join(args.work, "alsa-include")
     shutil.rmtree(inc, ignore_errors=True)
@@ -249,6 +287,9 @@ def main():
     print("turnip: %d" % extract(inputs["turnip"], root, lambda p: p or None))
     dxvk = {"syswow64/d3d11.dll", "syswow64/dxgi.dll"}
     print("dxvk: %d" % extract(inputs["dxvk"], root, lambda p: "opt/d2/" + p if p in dxvk else None))
+
+    subprocess.check_call([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpatch.py"),
+                           "dxvk-d3d11", os.path.join(root, "opt/d2/syswow64/d3d11.dll")])
 
     def wine(p):
         parts = p.split("/", 1)

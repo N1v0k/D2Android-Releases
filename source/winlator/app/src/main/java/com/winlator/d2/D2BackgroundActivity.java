@@ -19,6 +19,11 @@ import android.widget.TextView;
 
 import androidx.core.app.NotificationManagerCompat;
 
+
+
+
+
+
 public class D2BackgroundActivity extends D2Activity {
     private static final String PHANTOM_FLAG = "settings_enable_monitor_phantom_procs";
     private LinearLayout content;
@@ -35,6 +40,7 @@ public class D2BackgroundActivity extends D2Activity {
         scrollView.addView(content);
         setContentView(scrollView);
     }
+
 
     @Override
     protected void onResume() {
@@ -112,6 +118,8 @@ public class D2BackgroundActivity extends D2Activity {
     }
 
 
+
+
     public static String summary(Context context) {
         int done = 0, total = 2;
         if (notificationsAllowed(context)) done++;
@@ -136,6 +144,12 @@ public class D2BackgroundActivity extends D2Activity {
         PowerManager power = context.getSystemService(PowerManager.class);
         return power != null && power.isIgnoringBatteryOptimizations(context.getPackageName());
     }
+
+
+
+
+
+
 
     public static Boolean childProcessLimitActive(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null;
@@ -163,6 +177,7 @@ public class D2BackgroundActivity extends D2Activity {
     }
 
 
+
     private void openNotificationSettings() {
         NotificationManager nm = getSystemService(NotificationManager.class);
         boolean appAllowed = NotificationManagerCompat.from(this).areNotificationsEnabled();
@@ -175,6 +190,7 @@ public class D2BackgroundActivity extends D2Activity {
         intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
         if (!open(intent)) openAppDetails();
     }
+
 
     private void askBattery() {
         if (!open(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())))) {

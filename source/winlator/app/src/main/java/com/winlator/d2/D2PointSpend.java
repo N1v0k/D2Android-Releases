@@ -2,9 +2,32 @@ package com.winlator.d2;
 
 import com.winlator.d2.test.Fertigkeiten;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2PointSpend {
     static final long CONFIRM_MS = 1000, SETTLE_MS = 2500, PAUSE_MS = 30_000;
     static final int PER_SECOND = 10, MISSES = 2, PAUSES = 3;
+
 
     public interface Out {
         void send(int kind, int what);
@@ -13,11 +36,17 @@ public final class D2PointSpend {
     }
 
     private D2Points sentWith;
+
     private D2Points atDeadline;
     private int sentKind = -1, sentWhat, misses, pauses, gaveUpAt = -1;
     private long sentAt = Long.MIN_VALUE / 2, pauseUntil;
     private int skills, stats;
     private String why;
+
+
+
+
+
 
     public void step(D2PointPlan.Build build, Fertigkeiten table, D2Points p, boolean ready, long now, Out out) {
         if (p == null || p.firstSkill < 0) return;
@@ -37,6 +66,7 @@ public final class D2PointSpend {
             }
             else if (p == atDeadline || now - sentAt < SETTLE_MS) return;
             else if (p.counter != sentWith.counter) {
+
                 sentKind = -1;
                 atDeadline = null;
             }
@@ -90,6 +120,7 @@ public final class D2PointSpend {
         out.send(kind, what);
     }
 
+
     private boolean confirmed(D2Points p) {
         if (sentKind == D2Points.KIND_SKILL) {
             return p.skillPoints < sentWith.skillPoints || p.baseLevel(sentWhat) > sentWith.baseLevel(sentWhat);
@@ -98,9 +129,11 @@ public final class D2PointSpend {
             || (p.baseStatsKnown() && sentWhat >= 0 && sentWhat < 4 && p.baseStats[sentWhat] > sentWith.baseStats[sentWhat]);
     }
 
+
     public boolean waiting() {
         return sentKind >= 0;
     }
+
 
     public int skillsSpent() {
         return skills;
@@ -109,6 +142,7 @@ public final class D2PointSpend {
     public int statsSpent() {
         return stats;
     }
+
 
     public String why() {
         return why;

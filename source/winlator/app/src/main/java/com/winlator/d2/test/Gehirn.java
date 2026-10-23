@@ -7,69 +7,155 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class Gehirn {
+
     public static final class Absicht {
+
         public double richtung = Double.NaN;
         public boolean angriff;
+
         public String halten = Kampfwahl.ANGRIFF;
+
+
+
+
         public boolean neuDruecken;
+
         public String tippen;
+
         public int[] tippSpiel;
+
+
+
+
         public long sperreMs;
+
+
+
+
+
         public boolean getippt;
         public String grund = "";
     }
 
+
     static final double KAMPF_AN = 400, KAMPF_AUS = 500;
+
+
+
+
     static final double NEHMEN_SUBTILES = 20;
+
     static final double SUBTILE_BODEN = Math.hypot(16, 16);
+
     static final long NEHMEN_HALTEN_MS = 3000;
+
     static final long NEHMEN_ANPEILEN_MS = 5000;
     private static final long RICHTUNG_DAUER_MS = 9000, NEHMEN_PAUSE_MS = 1500, TRANK_PAUSE_MS = 4000;
     private static final int NEHMEN_VERSUCHE = 4;
+
+
+
+
     public static final int TRINKEN_PCT = 50, TRINKEN_MAX_PCT = 90;
+
     static final long STECKT_MS = 900;
     static final double STEHT_SUBTILES = 0.6;
     private static final long FOLGEN_MS = 1000, PROBE_MS = 600, WAND_MAX_MS = 30_000, ZIEL_MAX_MS = 60_000, KEIN_FORTSCHRITT_MS = 30_000;
     private static final double WAND_GRAD = 75;
+
     private static final long NEU_DRUECKEN_NACH_MS = 6000, LOSLASSEN_MS = 400;
+
     private static final long ANGRIFF_OHNE_WIRKUNG_MS = 12_000, IGNORIEREN_MS = 30_000;
+
+
+
+
     static final double REICHWEITE_DRUECKEN = 0.9;
+
+
+
+
+
+
     static final long HERAN_MAX_MS = ANGRIFF_OHNE_WIRKUNG_MS;
     private static final int ZELLE = 20;
 
     private final Random random;
+
     public int zielGebiet = 3;
+
+
+
+
     public boolean gebietLeeren;
+
     public int trinkenPct = TRINKEN_PCT;
+
+
+
+
+
     public boolean zielwahlUebergehtIgnorierte;
     static final double AUSGANG_ABSTAND = 8;
+
+
+
+
+
     static final double GRENZE_NAH = 5;
     static final long GRENZE_MAX_MS = 4000, GRENZE_PAUSE_MS = 2000;
+
     static final long LEER_NACH_MS = 20_000;
     private double richtung;
     private long richtungSeit, letztesNehmen, letzterTrank;
     private int letztesGebiet = -1;
     private final Map<Long, Integer> nehmenVersuche = new HashMap<>();
+
     private long nehmenId = -1, nehmenSeit, nehmenTippAm;
     private int nehmenGebiet;
+
     private Absicht nehmenTipp;
+
+
+
+
     private final java.util.Set<Long> nehmenGleichauf = new java.util.HashSet<>();
+
     public int aufgehoben, nehmenAufgegeben;
     public int richtungswechsel, hindernisse, ausweichFehlschlaege, neuGedrueckt, zieleGewechselt;
 
+
     private double zielX = Double.NaN, zielY = Double.NaN;
+
     private Karte karte;
+
     private java.util.List<Wegsuche.Punkt> weg;
     private int wegKnoten;
+
     private boolean wegTeil;
     private double wegZielX = Double.NaN, wegZielY = Double.NaN, wegStartX, wegStartY;
     private long wegGeplantAm, wegFortschrittAm, letzterKampfAm, karteWartenSeit;
     public static final long KARTE_WARTEN_MS = 4000;
+
     public static final int KNOTEN_OHNE_KARTE = 4000;
     private double wartenZielX = Double.NaN, wartenZielY = Double.NaN;
     private double wegBesterRest;
     private int neuplanungen;
+
     public int wegePlanungen, wegeNeuplanungen, wegeOhne;
     public long wegeLaengsteMs;
     public static final double WEG_ABWEICHUNG = 4, KNOTEN_ERREICHT = 2;
@@ -77,48 +163,110 @@ public final class Gehirn {
     public static final int NEUPLANUNGEN_MAX = 5;
 
     public void setKarte(Karte k) { karte = k; weg = null; }
+
+
+
+
+
+
+    private double vorgabeX = Double.NaN, vorgabeY = Double.NaN;
+    private String vorgabeName = "";
+    private boolean vorgabeEingang;
+
+    public boolean friedlich, aufheben = true;
+
+
+
+
+
+    public void vorgeben(double x, double y, String name, boolean eingang) {
+        if (Double.isNaN(x)) {
+            if (!Double.isNaN(vorgabeX)) zielX = Double.NaN;
+            vorgabeX = vorgabeY = Double.NaN;
+            return;
+        }
+
+        boolean genommen = !Double.isNaN(zielX) && name.equals(zielName);
+        if (Double.isNaN(vorgabeX) || !name.equals(vorgabeName) || eingang != vorgabeEingang
+            || Math.hypot(x - (genommen ? zielX : vorgabeX), y - (genommen ? zielY : vorgabeY)) > 2) zielX = Double.NaN;
+        vorgabeX = x;
+        vorgabeY = y;
+        vorgabeName = name;
+        vorgabeEingang = eingang;
+    }
+
     public Abdeckung abdeckung() { return abdeckung; }
     public Karte karte() { return karte; }
 
+
     public final Kampfwahl kampfwahl = new Kampfwahl();
+
+
+
+
     public Zustand.Layout layout;
     private long letzterManaTrank = -TRANK_PAUSE_MS;
     private String zielName = "";
+
     private boolean zielEingang;
     private long eingangTippAm;
     private int eingangTipps;
+
+
+
+
     private boolean eingangErsatz;
+
     private double ersatzX, ersatzY;
+
     private long zielMaxMs = ZIEL_MAX_MS;
     private long zielSeit, besterAbstandAm;
     private double besterAbstand;
+
     private final Map<String, Long> schlechteZiele = new HashMap<>();
     private static final long SCHLECHT_MS = 20_000;
     private final Set<Long> besucht = new HashSet<>();
     private final ArrayDeque<double[]> spur = new ArrayDeque<>();
     private long gehenSeit, stehtSeit, loslassenBis, wandSeit, probeAm, probeBis;
+
     private int wandSeite, wandWechsel, letzteSeite;
     private double probeRest, trefferRest;
     private long wandFreiAm;
+
     private boolean kampf;
     private long kampfZiel = -1, kampfZielSeit;
     private int kampfZielLeben;
     private final Map<Long, Long> ignoriert = new HashMap<>();
+
     private boolean angriffGehalten;
     private long heranZiel = -1, heranSeit;
     private int heranLeben;
+
     public int heranSchritte;
+
+
     private Abdeckung abdeckung;
+
     private final Set<Long> jenseits = new HashSet<>();
+
     private Zustand.Ziele zieleJetzt;
+
     private long letzterFeindAm;
+
     private boolean zielBlock;
+
     private double sicherX = Double.NaN, sicherY = Double.NaN;
     private boolean grenzeAktiv;
     private long grenzeSeit, grenzePauseBis;
+
     public int grenzRueckzuege, jenseitsUebergangen;
     private final Set<Long> jenseitsGemeldet = new HashSet<>();
+
     public String navigation = "";
+
+
+
+
 
     public static int trinkSchwelle(int rueckzugPct) {
         return Math.max(TRINKEN_PCT, Math.min(TRINKEN_MAX_PCT, 2 * rueckzugPct));
@@ -128,6 +276,7 @@ public final class Gehirn {
         random = new Random(seed);
         richtung = random.nextDouble() * 2 * Math.PI;
     }
+
 
     public void festgefahren(long now) {
         neueRichtung(now, richtung + Math.PI / 2 + random.nextDouble() * Math.PI);
@@ -143,11 +292,13 @@ public final class Gehirn {
         return richtung;
     }
 
+
     public static double bildschirmWinkel(double dx, double dy) {
         return Math.atan2(8 * (dx + dy), 16 * (dx - dy));
     }
 
     public Absicht denken(Zustand z, Zustand.Ziele ziele, long now) {
+
         if (pufferAbsicht != null) {
             kampfwahl.puffer.ausgeloest(pufferAbsicht.getippt, pufferAbsichtAm);
             pufferAbsicht = null;
@@ -167,9 +318,11 @@ public final class Gehirn {
         }
         letztesGebiet = z.gebiet;
         if (z.weltlage()) besucht.add(zelle(z.wx, z.wy));
+
         zieleJetzt = ziele;
         jenseitsBestimmen(z, ziele);
         if (gebietLeeren) abdeckungPflegen(z, ziele);
+
         if (z.gebiet != pruefungGebiet) {
             zielpruefung.vergessen();
             anlaufSeitJe.clear();
@@ -180,6 +333,8 @@ public final class Gehirn {
         long schrittMs = letzterSchritt < 0 ? 0 : Math.max(0, Math.min(1000, now - letzterSchritt));
         letzterSchritt = now;
         if (z.stadt && z.gebiet == zielGebiet && !gebietLeeren) {
+
+
             a.grund = "Ziel erreicht: Gebiet " + z.gebiet;
             return a;
         }
@@ -190,8 +345,9 @@ public final class Gehirn {
             a.grund = "Leben " + z.lebenPct + " %: Heiltrank";
         }
 
-        Zustand.Ding feind = naechsterFeind(z, now);
+        Zustand.Ding feind = friedlich ? null : naechsterFeind(z, now);
         if (feind != null) letzterFeindAm = now;
+
         if (gebietLeeren && grenze(z, ziele, now, a)) {
             if (kampf) kampfEnde(z, now);
             kampf = false;
@@ -200,14 +356,23 @@ public final class Gehirn {
         }
         if (feind != null) {
             double dist = z.bodenAbstand(feind);
+
+
+
+
+
             boolean anlaufWeiter = feind.id == anlaufZiel && nichtDrueckbar.contains(feind.id) && !ausgeschlossen.contains(feind.id);
             if ((dist < KAMPF_AN || (kampf && dist < KAMPF_AUS) || anlaufWeiter) && anlaufen(z, feind, now, a)) return a;
             if ((dist < KAMPF_AN || (kampf && dist < KAMPF_AUS)) && !zielwechsel(z, feind, now, a)) {
+
+
                 java.util.List<Gruppen.Gruppe> gruppen = Gruppen.bilden(z, ignorierte(now));
                 Gruppen.Gruppe gruppe = z.hover == HOVER_MONSTER ? Gruppen.von(gruppen, z.hoverId) : null;
                 if (gruppe == null) gruppe = Gruppen.von(gruppen, feind.id);
                 kampfGruppe(z, gruppe, now);
                 kampf = true;
+
+
                 Zustand.Ding ziel = angegriffen(z, feind, now);
                 if (ziel.id != kampfZiel || ziel.leben < kampfZielLeben) {
                     if (ziel.id != kampfZiel) kampfZielSeit = now;
@@ -224,7 +389,10 @@ public final class Gehirn {
                     uebersprungenAm = now;
                     neuGedruecktNachSprung = false;
                 }
+
                 String knopf = kampfwahl.knopf(z, layout, kampfZiel, now - kampfZielSeit, gruppe, now);
+
+
                 if (heran(z, feind, dist, now, a, weiteFuer(knopf, layout))) return a;
                 if (knopf != null) kampfKnoepfe.add(knopf.equals(Kampfwahl.ANGRIFF) ? "Angriff" : knopf + (kampfwahl.stark() ? " stark" : ""));
                 a.angriff = knopf != null;
@@ -251,10 +419,14 @@ public final class Gehirn {
         if (kampf) kampfEnde(z, now);
         kampf = false;
         angriffGehalten = false;
+
+
         heranZiel = -1;
         kampfZiel = -1;
 
+
         if (nehmenId >= 0 && nehmenTippAm > 0 && nehmen(z, now, a)) return a;
+
 
         if (a.tippen == null) {
             String puffer = kampfwahl.puffer.tippen(z, layout, kampfwahl.tabelle(), feindAbstand(z), now);
@@ -277,10 +449,12 @@ public final class Gehirn {
 
         if (nehmen(z, now, a)) return a;
 
+
         if (z.weltlage() && ziele != null && ziele.gebiet == z.gebiet && ziele.bereit != 1) {
             gehen(z, ziele, now, a);
             return a;
         }
+
 
         if (gebietLeeren) {
             a.richtung = Double.NaN;
@@ -288,19 +462,29 @@ public final class Gehirn {
             return a;
         }
 
+
         if (now - richtungSeit > RICHTUNG_DAUER_MS) neueRichtung(now, richtung + (random.nextDouble() - 0.5) * Math.PI);
         a.richtung = richtung;
         if (a.grund.isEmpty()) a.grund = "Erkunden " + Math.round(Math.toDegrees(richtung)) + "°";
         return a;
     }
 
+
+
+
+
+
+
+
     private boolean nehmen(Zustand z, long now, Absicht a) {
+        if (!aufheben) return false;
         if (nehmenId >= 0 && (z.gebiet != nehmenGebiet || letzterKampfAm > nehmenSeit)) nehmenId = -1;
         if (nehmenId < 0) {
             if (now - letztesNehmen <= NEHMEN_PAUSE_MS) return false;
             Zustand.Ding best = null;
             for (Zustand.Ding d : z.items) {
                 if (!gewollt(z, d) || z.bodenAbstand(d) > NEHMEN_SUBTILES * SUBTILE_BODEN) continue;
+
                 if (gebietLeeren && jenseits(z, zieleJetzt, d)) continue;
                 Integer tries = nehmenVersuche.get(d.id);
                 if (tries != null && tries >= NEHMEN_VERSUCHE) continue;
@@ -317,12 +501,14 @@ public final class Gehirn {
             nehmenGebiet = z.gebiet;
         }
         if (nehmenTipp != null) {
+
             if (!nehmenTipp.getippt) nehmenTippAm = 0;
             nehmenTipp = null;
         }
         Zustand.Ding d = null;
         for (Zustand.Ding i : z.items) if (i.id == nehmenId) d = i;
         if (d != null && nehmenTippAm > 0 && !nehmenGleichauf.isEmpty()) {
+
             java.util.Set<Long> da = new java.util.HashSet<>();
             for (Zustand.Ding i : z.items) da.add(i.id);
             for (long id : nehmenGleichauf) if (!da.contains(id)) d = null;
@@ -337,6 +523,8 @@ public final class Gehirn {
             return false;
         }
         if (nehmenTippAm > 0 ? now - nehmenTippAm > NEHMEN_HALTEN_MS : now - nehmenSeit > NEHMEN_ANPEILEN_MS) {
+
+
             nehmenVersuche.put(d.id, NEHMEN_VERSUCHE);
             nehmenAufgegeben++;
             navigation = "Nehmen: Art " + d.art + " aufgegeben (" + (nehmenTippAm > 0 ? "nach dem Tipp" : "nicht erreicht") + ")";
@@ -347,6 +535,7 @@ public final class Gehirn {
         gehenSeit = 0;
         spur.clear();
         if (nehmenTippAm == 0 && !ersterKandidat(z, d, gebietLeeren, null, beute)) {
+
             a.richtung = Math.atan2(d.y - z.py, d.x - z.px);
             if (a.grund.isEmpty()) a.grund = "Nehmen: hin zu Art " + d.art + " (" + Math.round(z.bodenAbstand(d) / SUBTILE_BODEN) + " Subtiles)";
             return true;
@@ -369,6 +558,11 @@ public final class Gehirn {
         return gewollt(z, d, beute);
     }
 
+
+
+
+
+
     static boolean gewollt(Zustand z, Zustand.Ding d, Beuteliste liste) {
         if (d.art == Zustand.ITEM_GOLD) return !z.goldVoll();
         if (d.art == Zustand.ITEM_POTION) return true;
@@ -378,16 +572,30 @@ public final class Gehirn {
         return a != Beuteliste.Antwort.LIEGEN && (z.zellen < 0 || Beuteliste.passt(z.zellen, b.breite, b.hoehe));
     }
 
+
     private String beuteText(Zustand z, Zustand.Ding d) {
         Zustand.Beute b = z.beute.get(d.id);
         int g = b != null ? Beuteliste.gruppe(b.kategorie, b.qualitaet, b.sockel) : -1;
         return g < 0 ? "" : ", " + Beuteliste.NAMEN[g] + " → " + beute.antwort(b.kategorie, b.qualitaet, b.sockel, b.wertklasse);
     }
 
+
     public final Beuteliste beute = new Beuteliste();
+
     public final java.util.Set<Long> eigeneBeute = new java.util.HashSet<>();
 
+
     private static final int OBJEKT_PORTAL = 5, OBJEKT_EINGANG = 6, OBJEKT_LEICHE = 7;
+
+
+
+
+
+
+
+
+
+
 
     static boolean ersterKandidat(Zustand z, Zustand.Ding item, boolean ohneDurchgaenge, java.util.Set<Long> gleichauf) {
         return ersterKandidat(z, item, ohneDurchgaenge, gleichauf, Beuteliste.VORGABE);
@@ -406,7 +614,7 @@ public final class Gehirn {
         }
         for (Zustand.Ding d : z.objekte) {
             if (ohneDurchgaenge && (d.art == OBJEKT_PORTAL || d.art == OBJEKT_EINGANG)) continue;
-            if (z.ausgelassen.contains(d.id)) continue;
+            if (z.istAusgelassen(d)) continue;
             double t = z.bodenAbstand(d);
             if (t <= reach && (d.art == OBJEKT_LEICHE || t <= score + GLEICH)) return false;
         }
@@ -418,13 +626,16 @@ public final class Gehirn {
         return true;
     }
 
+
     private void ersatzErreicht(Zustand z) {
         eingangErsatz = true;
         ersatzX = z.wx;
         ersatzY = z.wy;
     }
 
+
     private static final double GLEICH = 0.01;
+
 
     private double abstandZumWeg(Zustand z) {
         Wegsuche.Punkt k = weg.get(wegKnoten);
@@ -433,6 +644,17 @@ public final class Gehirn {
         double t = len2 == 0 ? 0 : Math.max(0, Math.min(1, ((z.wx - ax) * vx + (z.wy - ay) * vy) / len2));
         return Math.hypot(z.wx - (ax + t * vx), z.wy - (ay + t * vy));
     }
+
+
+
+
+
+
+
+
+
+
+
 
     private boolean heran(Zustand z, Zustand.Ding feind, double dist, long now, Absicht a, double reichweite) {
         if (feind.id != heranZiel || feind.leben < heranLeben) {
@@ -456,12 +678,19 @@ public final class Gehirn {
             if (a.grund.isEmpty()) a.grund = "Übersprungen: " + feind.name + " (nicht erreicht)";
             return true;
         }
+
         kampfZiel = -1;
         heranSchritte++;
         a.richtung = Math.atan2(feind.y - z.py, feind.x - z.px);
         if (a.grund.isEmpty()) a.grund = "Heran: " + feind.name + " (" + Math.round(dist) + " > " + Math.round(weite) + ")";
         return true;
     }
+
+
+
+
+
+
 
     double weiteFuer(String knopf, Zustand.Layout l) {
         if (l == null) return 0;
@@ -472,9 +701,17 @@ public final class Gehirn {
         return range == Fertigkeiten.RANGE_H2H ? l.zielweiteNah : l.zielweiteFern;
     }
 
+
     private long uebersprungen = -1, uebersprungenAm;
     private boolean neuGedruecktNachSprung;
     static final long ZIELWECHSEL_MS = 1000;
+
+
+
+
+
+
+
 
     private boolean zielwechsel(Zustand z, Zustand.Ding feind, long now, Absicht a) {
         if (uebersprungen < 0 || feind.id == uebersprungen) return false;
@@ -497,9 +734,15 @@ public final class Gehirn {
         return true;
     }
 
+
+
+
+
+
     static boolean nimmtAltes(Zustand z, Zustand.Ding alt, Zustand.Ding feind, Zustand.Layout l) {
         return nimmtAltes(z, alt, feind, l, l != null ? l.zielweite : 0);
     }
+
 
     static boolean nimmtAltes(Zustand z, Zustand.Ding alt, Zustand.Ding feind, Zustand.Layout l, double weite) {
         if (l == null || (weite <= 0 && l.zielkegel <= 0)) return false;
@@ -512,6 +755,10 @@ public final class Gehirn {
         return true;
     }
 
+
+
+
+
     public java.util.Set<Long> ignorierte(long now) {
         java.util.Set<Long> out = new HashSet<>(jenseits);
         out.addAll(nichtDrueckbar);
@@ -519,10 +766,15 @@ public final class Gehirn {
         return out;
     }
 
+
+
+
+
     public static double[] weltlage(Zustand z, Zustand.Ding d) {
         double sx = d.x - z.px, sy = d.y - z.py;
         return new double[]{z.wx + (sx / 16 + sy / 8) / 2, z.wy + (sy / 8 - sx / 16) / 2};
     }
+
 
     public static boolean jenseits(Zustand z, Zustand.Ziele ziele, Zustand.Ding d) {
         if (ziele == null || ziele.gebiet != z.gebiet || !z.weltlage()) return false;
@@ -544,11 +796,16 @@ public final class Gehirn {
         }
     }
 
+
     private void abdeckungPflegen(Zustand z, Zustand.Ziele ziele) {
         if (karte == null || ziele == null || karte.level != z.gebiet || ziele.gebiet != z.gebiet) return;
         if (abdeckung == null || abdeckung.karte != karte || !abdeckung.passt(ziele)) abdeckung = new Abdeckung(karte, ziele);
         if (z.weltlage()) abdeckung.sehen(z.wx, z.wy, sichtRadius(z));
     }
+
+
+
+
 
     public static double sichtRadius(Zustand z) {
         int gw = z.gw > 0 ? z.gw : 800, gh = z.gh > 0 ? z.gh : 600;
@@ -556,9 +813,11 @@ public final class Gehirn {
         return Math.min(12, sicht - 4.5);
     }
 
+
     public boolean imKampf() {
         return kampf;
     }
+
 
     public final Zielpruefung zielpruefung = new Zielpruefung();
     {
@@ -566,8 +825,13 @@ public final class Gehirn {
     }
     private int pruefungGebiet = -1;
     private long letzterSchritt = -1;
+
+
+
+
     public long angriffMs, fernOhneSichtMs, unerreichbarMs;
     public int zieleOhneWirkung;
+
 
     boolean fernkampf() {
         if (layout == null || layout.zielweiteNah <= 0) return false;
@@ -582,6 +846,7 @@ public final class Gehirn {
         if (u.geprueft && !u.erreichbar) unerreichbarMs += ms;
     }
 
+
     public String zielpruefungText() {
         return String.format(java.util.Locale.ROOT, "Angriff gehalten %d s, davon Fernkampf ohne Schusslinie %d s, auf Unerreichbare %d s"
             + " · Ziele ohne Wirkung aufgegeben %d · Wegprüfungen %d (unerreichbar %d) · zur Schusslinie gelaufen %d (aufgegeben %d)",
@@ -589,16 +854,27 @@ public final class Gehirn {
             zielpruefung.unerreichbarGefunden, anlaeufe, anlaeufeAufgegeben);
     }
 
+
+
+
+
     public boolean gebietLeer(long now) {
         return gebietLeeren && abdeckung != null && abdeckung.gebiet == letztesGebiet && abdeckung.vollstaendig()
             && abdeckung.offen(now) == 0 && now - letzterFeindAm >= LEER_NACH_MS;
     }
+
 
     public String abdeckungText(long now) {
         Abdeckung ab = abdeckung;
         if (ab == null || !ab.vollstaendig()) return "keine vollständige Karte";
         return "offen " + ab.offen(now) + ", gesehen " + ab.gesehen() + ", aufgegeben " + ab.aufgegeben() + " (Rechnen bis " + ab.rechnenMs + " ms)";
     }
+
+
+
+
+
+
 
     private boolean grenze(Zustand z, Zustand.Ziele ziele, long now, Absicht a) {
         if (ziele == null || ziele.gebiet != z.gebiet || !z.weltlage()) {
@@ -655,23 +931,32 @@ public final class Gehirn {
         return true;
     }
 
+
     static double abstandZuAusgang(Zustand.Ziele.Ausgang e, double x, double y) {
         double dx = Math.max(0, Math.max(e.x0 - x, x - e.x1)), dy = Math.max(0, Math.max(e.y0 - y, y - e.y1));
         return Math.hypot(dx, dy);
     }
 
     private String pufferBefund;
+
     private Absicht pufferAbsicht;
     private long pufferAbsichtAm;
 
+
     static final int HOVER_MONSTER = 1;
+
 
     private long kampfBeginn;
     private int kampfManaVorher;
     private double kampfStaerke;
     private boolean kampfStark;
     private final java.util.Set<String> kampfKnoepfe = new java.util.LinkedHashSet<>();
+
     public int kaempfe, starkeKaempfe;
+
+
+
+
     public String kampfMeldung = "";
     public int kampfMeldungen;
 
@@ -679,6 +964,7 @@ public final class Gehirn {
         kampfMeldung = text;
         kampfMeldungen++;
     }
+
 
     private void kampfGruppe(Zustand z, Gruppen.Gruppe g, long now) {
         if (!kampf) {
@@ -697,11 +983,13 @@ public final class Gehirn {
         if (neu) kampfMelden("Kampf: " + g.text() + ", Mana " + z.mana);
     }
 
+
     private void kampfEnde(Zustand z, long now) {
         kampfMelden("Kampf zu Ende: " + (now - kampfBeginn) / 1000 + " s, Mana " + kampfManaVorher + " → " + z.mana
             + ", Stärke bis " + String.format(java.util.Locale.GERMAN, "%.1f", kampfStaerke) + (kampfStark ? " (stark)" : "")
             + ", Knöpfe " + (kampfKnoepfe.isEmpty() ? "keine" : String.join(", ", kampfKnoepfe)));
     }
+
 
     private static double feindAbstand(Zustand z) {
         double nah = Double.MAX_VALUE;
@@ -709,7 +997,13 @@ public final class Gehirn {
         return nah;
     }
 
+
+
+
+
+
     public long gehaltenesZiel = -1;
+
 
     private Zustand.Ding angegriffen(Zustand z, Zustand.Ding naechster, long now) {
         if (gehaltenesZiel <= 0) return naechster;
@@ -730,6 +1024,7 @@ public final class Gehirn {
             if (jenseits.contains(d.id)) continue;
             if (ausgeschlossen.contains(d.id)) continue;
             double dist = z.bodenAbstand(d);
+
             if (nichtDrueckbar.contains(d.id)) {
                 if (dist < nahAnlauf) {
                     nahAnlauf = dist;
@@ -743,6 +1038,12 @@ public final class Gehirn {
         }
         return best != null ? best : bestAnlauf;
     }
+
+
+
+
+
+
 
     private void zieleBeurteilen(Zustand z) {
         nichtDrueckbar.clear();
@@ -758,9 +1059,17 @@ public final class Gehirn {
                 continue;
             }
             nichtDrueckbar.add(d.id);
+
+
+
             if (!u.erreichbar || u.weg == null || u.weg.isEmpty() || (d.extra & GEFAEHRLICH) != 0) ausgeschlossen.add(d.id);
         }
     }
+
+
+
+
+
 
     private boolean anlaufen(Zustand z, Zustand.Ding feind, long now, Absicht a) {
         if (!nichtDrueckbar.contains(feind.id) || ausgeschlossen.contains(feind.id)) {
@@ -768,6 +1077,7 @@ public final class Gehirn {
             return false;
         }
         Zielpruefung.Urteil u = zielpruefung.urteil(feind.id);
+
         if (kampf) kampfEnde(z, now);
         kampf = false;
         angriffGehalten = false;
@@ -777,6 +1087,7 @@ public final class Gehirn {
             anlaufZiel = feind.id;
             anlaeufe++;
         }
+
         Long seit = anlaufSeitJe.get(feind.id);
         if (seit == null) anlaufSeitJe.put(feind.id, seit = now);
         if (now - seit > HERAN_MAX_MS) {
@@ -799,14 +1110,20 @@ public final class Gehirn {
         return true;
     }
 
+
     static final int GEFAEHRLICH = 2 | 4 | 8;
+
     private final Set<Long> nichtDrueckbar = new HashSet<>(), ausgeschlossen = new HashSet<>();
     private long anlaufZiel = -1;
+
     private final Map<Long, Long> anlaufSeitJe = new HashMap<>();
+
     public int anlaeufe, anlaeufeAufgegeben;
 
 
+
     private void gehen(Zustand z, Zustand.Ziele ziele, long now, Absicht a) {
+
         boolean erledigt = zielBlock && abdeckung != null && abdeckung.zielErledigt();
         if (Double.isNaN(zielX) || erledigt || now - zielSeit > zielMaxMs || (now - besterAbstandAm > KEIN_FORTSCHRITT_MS)) {
             if (!Double.isNaN(zielX) && !erledigt) zielAufgegeben(now);
@@ -815,10 +1132,13 @@ public final class Gehirn {
         if (keinZiel(a)) return;
         double dx = zielX - z.wx, dy = zielY - z.wy, rest = Math.hypot(dx, dy);
         if (eingangErsatz && Math.hypot(z.wx - ersatzX, z.wy - ersatzY) > KNOTEN_ERREICHT) {
+
             eingangErsatz = false;
             weg = null;
         }
         if (zielEingang && (rest < 4 || eingangErsatz) && now - eingangTippAm > 2500 && a.tippen == null) {
+
+
             if (++eingangTipps > 4) {
                 navigation = "Eingang " + zielName + ": " + (eingangTipps - 1) + " Tipps ohne Gebietswechsel – anderes Ziel";
                 schlechteZiele.put(zielName, now + SCHLECHT_MS);
@@ -839,11 +1159,13 @@ public final class Gehirn {
             besterAbstandAm = now;
         }
         if (zielEingang && (rest < 4 || eingangErsatz)) {
+
             a.richtung = Double.NaN;
             if (a.grund.isEmpty()) a.grund = "am Eingang " + zielName;
             return;
         }
         if (rest < 3) {
+
             schlechteZiele.put(zielName, now + SCHLECHT_MS);
             waehleZiel(z, ziele, now);
             if (keinZiel(a)) return;
@@ -853,6 +1175,7 @@ public final class Gehirn {
         }
         double winkel = bildschirmWinkel(dx, dy);
 
+
         if (now < loslassenBis) {
             a.richtung = Double.NaN;
             a.grund = "Joystick kurz loslassen (Figur stand trotz Joystick)";
@@ -860,13 +1183,18 @@ public final class Gehirn {
             return;
         }
 
+
         if (tueren(z, now, a)) return;
+
+
 
         if (karte != null && karte.level == z.gebiet && karte.feld((int) z.wx, (int) z.wy) != Karte.UNBEKANNT) {
             boolean neuesZiel = zielX != wegZielX || zielY != wegZielY;
             boolean abweichung = weg != null && now - wegGeplantAm > 500 && abstandZumWeg(z) > WEG_ABWEICHUNG;
             boolean stockt = weg != null && now - wegFortschrittAm > WEG_KEIN_FORTSCHRITT_MS;
             if (weg == null || neuesZiel || abweichung || stockt) {
+
+
                 if (zielX != wartenZielX || zielY != wartenZielY) { karteWartenSeit = now; wartenZielX = zielX; wartenZielY = zielY; }
                 if (!karte.korridorGeladen((int) z.wx, (int) z.wy, (int) Math.round(zielX), (int) Math.round(zielY), 20)
                     && now - karteWartenSeit < KARTE_WARTEN_MS) {
@@ -878,6 +1206,7 @@ public final class Gehirn {
                 if (neuesZiel) neuplanungen = 0;
                 else if (weg != null) {
                     wegeNeuplanungen++;
+
                     if (now - letzterKampfAm > 2000) neuplanungen++;
                 }
                 if (neuplanungen > NEUPLANUNGEN_MAX) {
@@ -904,6 +1233,7 @@ public final class Gehirn {
                     return;
                 }
                 if (w != null && w.knoten.isEmpty()) {
+
                     navigation = "Weg zu " + zielName + ": schon da (" + Math.round(rest) + " Subtiles vom Ziel)";
                     schlechteZiele.put(zielName, now + SCHLECHT_MS);
                     weg = null;
@@ -912,6 +1242,7 @@ public final class Gehirn {
                     return;
                 }
                 if (w == null && zielBlock) {
+
                     weg = null;
                     wegeOhne++;
                     navigation = "Wegsuche: kein Weg zu " + zielName + " – nächstes Ziel";
@@ -929,12 +1260,17 @@ public final class Gehirn {
                     weg = w.knoten;
                     wegTeil = w.abgebrochen;
                     wegKnoten = 0;
+
+
+
                     zielMaxMs = Math.max(zielMaxMs, (now - zielSeit) + ZIEL_MAX_MS + 30L * w.kosten);
                     navigation = "Weg zu " + zielName + ": " + w.knoten.size() + " Knoten, " + w.untersucht + " untersucht in " + sucheMs + " ms" + (korridor ? "" : " (Karte unvollständig)")
                         + (w.abgebrochen ? " (Teilweg)" : "") + (abweichung ? " (Abweichung)" : stockt ? " (stockt)" : "");
                 }
             }
             if (weg != null) {
+
+
                 while (wegKnoten < weg.size() - 1 && Math.hypot(weg.get(wegKnoten).x - z.wx, weg.get(wegKnoten).y - z.wy) < KNOTEN_ERREICHT) {
                     wegKnoten++;
                     wegFortschrittAm = now;
@@ -943,7 +1279,9 @@ public final class Gehirn {
                 Wegsuche.Punkt k = weg.get(wegKnoten);
                 double knotenRest = Math.hypot(k.x - z.wx, k.y - z.wy);
                 if (knotenRest < wegBesterRest - 0.5) { wegBesterRest = knotenRest; wegFortschrittAm = now; }
+
                 if (wegKnoten == weg.size() - 1 && knotenRest < KNOTEN_ERREICHT && wegTeil) {
+
                     weg = null;
                     neuplanungen = 0;
                     navigation = "Teilweg zu " + zielName + " zu Ende: weiter planen (" + Math.round(rest) + " Subtiles)";
@@ -952,6 +1290,9 @@ public final class Gehirn {
                     return;
                 }
                 if (wegKnoten == weg.size() - 1 && knotenRest < KNOTEN_ERREICHT && zielEingang) {
+
+
+
                     weg = null;
                     ersatzErreicht(z);
                     a.richtung = Double.NaN;
@@ -968,6 +1309,7 @@ public final class Gehirn {
                 }
                 a.richtung = bildschirmWinkel(k.x - z.wx, k.y - z.wy);
                 if (a.grund.isEmpty()) a.grund = "Weg zu " + zielName + " (" + Math.round(rest) + " Subtiles), Knoten " + (wegKnoten + 1) + "/" + weg.size();
+
                 if (z.steht()) {
                     if (stehtSeit == 0) stehtSeit = now;
                     if (now - stehtSeit > NEU_DRUECKEN_NACH_MS) {
@@ -983,6 +1325,7 @@ public final class Gehirn {
         }
         else weg = null;
 
+
         if (gehenSeit == 0) {
             gehenSeit = now;
             spur.clear();
@@ -993,6 +1336,8 @@ public final class Gehirn {
         double[] alt = spur.peekFirst();
         boolean genugZeit = now - alt[0] >= STECKT_MS && now - gehenSeit >= STECKT_MS;
         double bewegt = Math.hypot(z.wx - alt[1], z.wy - alt[2]);
+
+
 
         if (z.steht()) {
             if (stehtSeit == 0) stehtSeit = now;
@@ -1005,12 +1350,18 @@ public final class Gehirn {
         }
         else stehtSeit = 0;
 
+
+
+
+
+
         boolean steckt = genugZeit && bewegt < STEHT_SUBTILES;
         double tdx = dx / Math.max(rest, 0.001), tdy = dy / Math.max(rest, 0.001);
         boolean probe = wandSeite != 0 && now < probeBis;
         if (wandSeite == 0) {
             if (steckt) {
                 hindernisse++;
+
                 boolean weiter = now - wandFreiAm < 5000 && letzteSeite != 0;
                 wandSeite = weiter ? letzteSeite : ersteSeite(z, ziele, tdx, tdy);
                 if (!weiter) {
@@ -1026,6 +1377,7 @@ public final class Gehirn {
             }
         }
         else if (probe) {
+
             if (rest < probeRest - 1.2 && rest < trefferRest - 3) {
                 letzteSeite = wandSeite;
                 wandFreiAm = now;
@@ -1067,16 +1419,28 @@ public final class Gehirn {
             double r = Math.toRadians(WAND_GRAD) * wandSeite, c = Math.cos(r), sn = Math.sin(r);
             winkel = bildschirmWinkel(tdx * c - tdy * sn, tdx * sn + tdy * c);
         }
+
         double step = Math.toRadians(3);
         a.richtung = Math.round(winkel / step) * step;
         a.grund = "Ziel " + zielName + " (" + Math.round(rest) + " Subtiles" + (wandSeite != 0 ? (probe ? ", Probe" : ", Wand " + wandSeite) : "") + ")";
     }
 
+
+
+
+
+
+
+
+
     private boolean tueren(Zustand z, long now, Absicht a) {
         return tueren(z, now, a, weg, wegKnoten, weg != null && now - wegFortschrittAm > TUER_FEST_MS);
     }
 
+
     private boolean tueren(Zustand z, long now, Absicht a, java.util.List<Wegsuche.Punkt> w, int knoten, boolean fest) {
+
+
         if (tuer.aktiv() && (letzterKampfAm > tuer.seit() || letztesNehmen > tuer.seit() || now - tuerAufrufAm > TUER_UNTERBROCHEN_MS)) {
             tuer.abbrechen();
             tuerenUnterbrochen++;
@@ -1097,6 +1461,7 @@ public final class Gehirn {
         switch (s) {
             case HIN:
             case GETIPPT:
+
                 wegFortschrittAm = now;
                 gehenSeit = 0;
                 spur.clear();
@@ -1108,6 +1473,7 @@ public final class Gehirn {
                 navigation = "Tür " + id + " offen (" + tuerenGeoeffnet + ")";
                 wegFortschrittAm = now;
                 neuplanungen = 0;
+
                 ignoriert.clear();
                 uebersprungen = -1;
                 return false;
@@ -1128,13 +1494,26 @@ public final class Gehirn {
         }
     }
 
+
     public final ObjektBenutzen tuer = new ObjektBenutzen();
     public int tuerenGeoeffnet, tuerenGesperrt, tuerenUnterbrochen;
     private long tuerPauseBis, tuerAufrufAm;
+
+
+
+
     static final long TUER_UNTERBROCHEN_MS = 700;
     private double tuerX, tuerY;
+
     static final long TUER_FEST_MS = 800;
+
     static final long TUER_PAUSE_MS = 1000;
+
+
+
+
+
+
 
     private void sperren(Zustand z) {
         java.util.List<int[]> o = Tueren.oeffnung(karte, tuerX, tuerY, z.wx, z.wy);
@@ -1147,11 +1526,16 @@ public final class Gehirn {
         for (int[] p : o) if (Math.max(Math.abs(p[0] - fx), Math.abs(p[1] - fy)) > frei) karte.sperren(p[0], p[1]);
     }
 
+
     private void zielAufgegeben(long now) {
         schlechteZiele.put(zielName, now + SCHLECHT_MS);
         zieleGewechselt++;
         if (zielBlock && abdeckung != null) abdeckung.fehlschlag();
     }
+
+
+
+
 
     private boolean keinZiel(Absicht a) {
         if (!Double.isNaN(zielX)) return false;
@@ -1161,6 +1545,10 @@ public final class Gehirn {
         wandSeite = 0;
         return true;
     }
+
+
+
+
 
     private int ersteSeite(Zustand z, Zustand.Ziele ziele, double tdx, double tdy) {
         double ox = Double.NaN, oy = Double.NaN, best = Double.MAX_VALUE;
@@ -1191,17 +1579,28 @@ public final class Gehirn {
         return gebiet == 1 || gebiet == 40 || gebiet == 75 || gebiet == 103 || gebiet == 109;
     }
 
+
+
+
+
     private void waehleZiel(Zustand z, Zustand.Ziele ziele, long now) {
         Zustand.Ziele.Ausgang best = null;
         double bestScore = Double.MAX_VALUE;
+
+
         int seitenweg = Gebiete.eingangVon(zielGebiet) != 0 || Gebiete.eingangVon(z.gebiet) != 0
             || Gebiete.weiter(zielGebiet, z.gebiet) ? Gebiete.naechstesZu(z.gebiet, zielGebiet) : 0;
+        if (!Double.isNaN(vorgabeX)) {
+            vorgabeNehmen(z, now);
+            return;
+        }
         for (Zustand.Ziele.Ausgang e : ziele.ausgaenge) {
             Long bis = schlechteZiele.get(name(e));
             if (bis != null && now < bis) continue;
             double d = Math.hypot(e.x - z.wx, e.y - z.wy);
             double score;
             if (gebietLeeren) {
+
                 if (e.art != Zustand.Ziele.WAYPOINT || besucht.contains(zelle(e.x, e.y))) continue;
                 score = d;
             }
@@ -1210,6 +1609,7 @@ public final class Gehirn {
                 score = d;
             }
             else if ((e.art == Zustand.Ziele.PASSAGE || e.art == Zustand.Ziele.ENTRANCE) && e.nach == zielGebiet && e.nach != z.gebiet) {
+
                 score = d - 20_000;
             }
             else if ((e.art == Zustand.Ziele.PASSAGE || e.art == Zustand.Ziele.ENTRANCE) && seitenweg != 0 && e.nach == seitenweg
@@ -1218,6 +1618,7 @@ public final class Gehirn {
             }
             else if ((e.art == Zustand.Ziele.PASSAGE || e.art == Zustand.Ziele.ENTRANCE) && !istStadt(e.nach)
                 && e.nach == Gebiete.naechstes(z.gebiet) && Gebiete.stufe(e.nach) <= Gebiete.stufe(zielGebiet)) {
+
                 score = d - 10_000;
             }
             else if (e.art == Zustand.Ziele.PASSAGE && !istStadt(e.nach) && Gebiete.stufe(z.gebiet) < 0 && e.nach > z.gebiet && e.nach <= zielGebiet) {
@@ -1235,11 +1636,14 @@ public final class Gehirn {
             ? abdeckung.waehle(z.wx, z.wy, random, now) : null;
         if (best != null) {
             zielName = name(best);
+
+
             zielX = best.x + best.outX * 6;
             zielY = best.y + best.outY * 6;
             zielEingang = best.art == Zustand.Ziele.ENTRANCE;
         }
         else if (block != null) {
+
             zielX = block[0] + 0.5;
             zielY = block[1] + 0.5;
             zielEingang = false;
@@ -1247,6 +1651,7 @@ public final class Gehirn {
             zielName = "Block " + block[0] + "," + block[1];
         }
         else {
+
             int[] box = ziele.box;
             double bx = Double.NaN, by = Double.NaN, bestFrei = -1;
             for (int i = 0; i < 24 && box[2] > 0 && box[3] > 0; i++) {
@@ -1255,6 +1660,7 @@ public final class Gehirn {
                 if (Math.hypot(x - z.wx, y - z.wy) < 25) continue;
                 boolean nahStadt = false;
                 for (Zustand.Ziele.Ausgang e : ziele.ausgaenge) {
+
                     if (!gebietLeeren && istStadt(e.nach) && Math.hypot(e.x - x, e.y - y) < 40) nahStadt = true;
                 }
                 if (nahStadt) continue;
@@ -1271,6 +1677,8 @@ public final class Gehirn {
                 double r = random.nextDouble() * 2 * Math.PI;
                 bx = z.wx + Math.cos(r) * 40;
                 by = z.wy + Math.sin(r) * 40;
+
+
                 if (gebietLeeren && (nahAusgang(ziele, bx, by) || !imGebiet(ziele, bx, by))) bx = by = Double.NaN;
             }
             zielX = bx;
@@ -1288,10 +1696,29 @@ public final class Gehirn {
         navigation = "neues Ziel: " + zielName + " (" + Math.round(besterAbstand) + " Subtiles)";
     }
 
+
+    private void vorgabeNehmen(Zustand z, long now) {
+        zielX = vorgabeX;
+        zielY = vorgabeY;
+        zielEingang = vorgabeEingang;
+        zielBlock = false;
+        zielName = vorgabeName;
+        zielSeit = now;
+        zielMaxMs = ZIEL_MAX_MS;
+        eingangTipps = 0;
+        eingangErsatz = false;
+        besterAbstand = Math.hypot(zielX - z.wx, zielY - z.wy);
+        besterAbstandAm = now;
+        wandSeite = letzteSeite = 0;
+        navigation = "Vorgabe: " + zielName + " (" + Math.round(besterAbstand) + " Subtiles)";
+    }
+
+
     static boolean imGebiet(Zustand.Ziele ziele, double x, double y) {
         int[] b = ziele.box;
         return b[2] > 0 && b[3] > 0 && x >= b[0] && y >= b[1] && x < b[0] + b[2] && y < b[1] + b[3];
     }
+
 
     public static boolean nahAusgang(Zustand.Ziele ziele, double x, double y) {
         for (Zustand.Ziele.Ausgang e : ziele.ausgaenge) {

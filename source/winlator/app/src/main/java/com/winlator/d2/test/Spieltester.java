@@ -26,12 +26,35 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+
+
+
+
+
+
+
+
 public final class Spieltester {
-    static final String PACKAGE = "at.d2android";
+
+
+
+
+    static final String PACKAGE = paket();
     static final String STOP_FILE = "/data/local/tmp/spieltest.stop";
+
     private static final String STOP = System.getProperty("d2t.stop", STOP_FILE);
     private static final String STATUS = System.getProperty("d2t.status", "/data/local/tmp/spieltest.status");
-    static final int PORT = 7960;
+
+
+
+
+    static final String LAEUFT = "/data/local/tmp/d2android-spieltester.laeuft";
+    private long laeuftAm;
+
+
+
+
+    static final int PORT = System.getProperty("d2t.wine") != null ? ModPorts.SPIELTEST : 7960;
     private static final int F_JOYSTICK = Fahrer.F_JOYSTICK, F_ANGRIFF = Fahrer.F_ANGRIFF;
     private static final Map<Integer, String> GEBIETE = new HashMap<>();
     static {
@@ -49,8 +72,11 @@ public final class Spieltester {
     private final Writer events;
     private final ArrayDeque<String> lastStates = new ArrayDeque<>(), lastTrace = new ArrayDeque<>(), lastModLog = new ArrayDeque<>();
     private volatile Zustand zustand;
+
     private volatile Zustand.Ziele ziele;
+
     private final Writer modLog;
+
     private long inStadtSeit = -1;
     private final List<Long> lagerZeiten = new ArrayList<>();
     private int zieleGebiet = -1;
@@ -61,13 +87,18 @@ public final class Spieltester {
     private volatile boolean vordergrund = true, beenden;
     private volatile String modStatus = "";
     private final Finger touch;
+
+
     private final WineFinger wine;
+
     private final Fahrer fahrer;
     private final Gehirn gehirn;
     private final Waechter waechter = new Waechter();
     private final List<String> befunde = new ArrayList<>();
     private String letzterPufferBefund;
+
     private boolean tastenGemeldet;
+
     private com.winlator.d2.D2Tabellen tabellen;
     private final Anlegen anlegen = new Anlegen();
     private final Set<Long> lebendGesehen = new HashSet<>(), getoetet = new HashSet<>();
@@ -78,23 +109,51 @@ public final class Spieltester {
     private int startGebiet = -1, letztesGebiet = -1;
     private long letzterZustandAm;
     private long letzterBericht, letztesBild, ohneZustandGemeldet, letzteSeq = -1;
+
     private boolean nurLager;
+
     private volatile Zustand.Figur figur;
+
     private String testfigur = "st-zauberin";
+
     private final Stadtgang stadtgang = new Stadtgang();
+
+
+
+
     private final Wegpunkte wegpunkte = new Wegpunkte();
     private String letzteWegpunktMeldung = "";
     private String letzteStadtMeldung = "";
+
     private final LeerenLauf ll;
     static final int RUECKZUG_PCT = 25;
+
     private long zieleAm;
     private String leerenEnde = "";
+
     private volatile int portale = -1;
+
     private QuestFahrer questFahrer;
+
+
+
     private QuestLauf quest;
+
+
+
+
+
     private Writer portMitschrift;
+
+
+
+
+    private Auftrag auftrag;
+    private long auftragBis, auftragStatusAm;
+    private String auftragStatus = "", endeGrund = "";
     private final boolean abspielModus;
     private final Writer fingerMitschrift;
+
 
     private Spieltester(File dir, int minuten, long seed) throws Exception {
         this(dir, minuten, seed, false);
@@ -131,6 +190,11 @@ public final class Spieltester {
         if (wine != null) tabellen = wineTabellen(System.getProperty("d2t.spiel"));
         gehirn.zielwahlUebergehtIgnorierte = wine != null;
     }
+
+
+
+
+
 
     private com.winlator.d2.D2Tabellen wineTabellen(String spiel) {
         if (spiel == null) return null;
@@ -175,6 +239,9 @@ public final class Spieltester {
         String aus = null;
         boolean mitschreiben = false;
         File abspielen = null;
+        String ziel = null;
+        int zeit = 180;
+        boolean friedlich = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--minuten") && i + 1 < args.length) minuten = Integer.parseInt(args[++i]);
             else if (args[i].equals("--mitschreiben")) mitschreiben = true;
@@ -190,10 +257,27 @@ public final class Spieltester {
             else if (args[i].equals("--wegpunkt") && i + 1 < args.length) wegpunkt = Integer.parseInt(args[++i]);
             else if (args[i].equals("--rueckzug") && i + 1 < args.length) rueckzug = Integer.parseInt(args[++i]);
             else if (args[i].equals("--quest") && i + 1 < args.length) quest = Integer.parseInt(args[++i]);
+            else if (args[i].equals("--ziel") && i + 1 < args.length) ziel = args[++i];
+            else if (args[i].equals("--zeit") && i + 1 < args.length) zeit = Integer.parseInt(args[++i]);
+            else if (args[i].equals("--friedlich")) friedlich = true;
             else if (args[i].equals("--probe")) {
                 probe();
                 return;
             }
+        }
+        Auftrag auftrag = null;
+        if (ziel != null) {
+
+            try {
+                auftrag = Auftrag.lesen(ziel);
+            }
+            catch (IllegalArgumentException e) {
+                System.out.println("--ziel: " + e.getMessage());
+                writeStatus("beendet · ergebnis falscher Auftrag: " + e.getMessage().split("\n")[0]);
+                System.exit(3);
+                return;
+            }
+            minuten = zeit / 60 + 2;
         }
         if (aus == null) {
             aus = "/sdcard/Download/D2Android/Spieltest/" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(new Date());
@@ -202,6 +286,7 @@ public final class Spieltester {
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("kann " + dir + " nicht anlegen");
         List<String> abspielZeilen = null;
         if (abspielen != null) {
+
             abspielZeilen = java.nio.file.Files.readAllLines(abspielen.toPath(), StandardCharsets.UTF_8);
             if (abspielZeilen.isEmpty()) throw new IOException(abspielen + " ist leer");
             uhrStellen(Long.parseLong(abspielZeilen.get(0).substring(0, abspielZeilen.get(0).indexOf('\t'))));
@@ -214,10 +299,12 @@ public final class Spieltester {
         }
         QuestZeile questZeile = quest > 0 ? Quests.akt1(quest) : null;
         if (quest > 0 && (questZeile == null || !questZeile.kann())) {
+
             System.out.println("--quest " + quest + ": der Quest-Fahrer kann in Akt 1 bisher " + Quests.AKT1);
             return;
         }
         if (wegpunkt != -1 && !Wegpunkte.kursMoeglich(wegpunkt)) {
+
             System.out.println("--wegpunkt " + wegpunkt + ": kein Wegpunkt in Akt 1 außerhalb des Lagers (möglich: 3, 4, 5, 6, 27, 29, 32, 35)");
             return;
         }
@@ -235,24 +322,39 @@ public final class Spieltester {
             t.stadtgang.alleMs = 0;
             t.stadtgang.minHeil = 0;
         }
+        if (auftrag != null) {
+
+            t.auftrag = auftrag;
+            t.auftragBis = t.start + zeit * 1000L;
+            t.stadtgang.alleMs = 0;
+            t.stadtgang.minHeil = 0;
+            t.gehirn.aufheben = false;
+            t.gehirn.friedlich = friedlich;
+        }
         if (build != null) t.build(build);
         if (abspielZeilen != null) t.abspielen(abspielZeilen);
         else t.run();
     }
+
 
     private static long abspielSeed(String[] args, long seed) {
         for (String a : args) if (a.equals("--seed")) return seed;
         return 1;
     }
 
+
     private static void uhrStellen(long ms) {
         try {
             SystemClock.class.getMethod("fest", long.class).invoke(null, ms);
         }
         catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("--abspielen nur unter der JVM mit den Stubs aus tools/wine-test", e);
+            throw new IllegalStateException("--abspielen nur unter der JVM mit den Test-Stubs", e);
         }
     }
+
+
+
+
 
     private void abspielen(List<String> zeilen) throws Exception {
         event("start", "Abspielen: " + zeilen.size() + " Port-Zeilen, " + (ende - start) / 60000 + " min, "
@@ -296,6 +398,10 @@ public final class Spieltester {
         }
     }
 
+
+
+
+
     private void build(String id) throws IOException {
         File f = new File(System.getProperty("d2t.wine", "."), "../../winlator/app/src/main/assets/builds.json");
         String json = new String(java.nio.file.Files.readAllBytes(f.toPath()), java.nio.charset.StandardCharsets.UTF_8);
@@ -307,6 +413,11 @@ public final class Spieltester {
         }
         throw new IOException("Build unbekannt: " + id);
     }
+
+
+
+
+
 
     private void rollenSchritt(Zustand z) {
         if (build == null) return;
@@ -320,6 +431,7 @@ public final class Spieltester {
         com.winlator.d2.D2Points p = punkteFrisch.block(z, now);
         boolean feindNah = false;
         for (Zustand.Ding d : z.feinde()) feindNah |= z.abstand(d) < 500;
+
         boolean halten = quest != null && quest.punkteHalten();
         if (halten != punkteGehalten) {
             punkteGehalten = halten;
@@ -362,6 +474,7 @@ public final class Spieltester {
     private com.winlator.d2.D2PointPlan.Build build;
     private int buildStufe = -1;
 
+
     private void wieIdle(int rueckzug) {
         ll.leeren = true;
         ll.rueckzugPct = rueckzug;
@@ -370,9 +483,16 @@ public final class Spieltester {
         fahrer.verhalten.todWeiter = false;
         fahrer.verhalten.pauseBeenden = false;
         fahrer.verhalten.fensterSchliessen = false;
+
+
         stadtgang.alleMs = 0;
         stadtgang.minHeil = 0;
     }
+
+
+
+
+
 
     private void alsQuest(QuestZeile zeile) {
         quest = new QuestLauf(zeile, gehirn, fahrer, stadtgang, ll, new QuestLauf.Umgebung() {
@@ -386,6 +506,7 @@ public final class Spieltester {
         questFahrer = quest.questFahrer;
         ll.leeren = false;
     }
+
 
     private static void probe() throws Exception {
         if (!PACKAGE.equals(resumedPackage())) {
@@ -405,9 +526,11 @@ public final class Spieltester {
     }
 
     private void run() throws Exception {
-        event("start", "Spieltester v1 (S1b), " + (ende - start) / 60000 + " min, "
+        event("start", "Spieltester v1, " + (ende - start) / 60000 + " min, "
             + (questFahrer != null ? "Quest " + questFahrer.zeile.nummer + " " + questFahrer.zeile.name + " (Rückzug unter " + ll.rueckzugPct + " %)"
-                : ll.leeren ? "Gebiet leeren wie der Idle-Modus (Rückzug unter " + ll.rueckzugPct + " %)" : "bis Gebiet " + gehirn.zielGebiet)
+                : ll.leeren ? "Gebiet leeren wie der Idle-Modus (Rückzug unter " + ll.rueckzugPct + " %)"
+                : auftrag != null ? "Auftrag \"" + auftrag.text + "\" (" + (auftragBis - start) / 1000 + " s" + (gehirn.friedlich ? ", friedlich" : "") + ")"
+                : "bis Gebiet " + gehirn.zielGebiet)
             + (nurLager ? ", nur Lager verlassen" : "") + ", Ordner " + dir);
         Thread reader = new Thread(this::readLoop, "port");
         reader.setDaemon(true);
@@ -420,11 +543,17 @@ public final class Spieltester {
                 long now = SystemClock.uptimeMillis();
                 if (now >= ende) {
                     event("ende", "Zeit um");
+                    endeGrund = "Zeit des Laufs um";
                     break;
                 }
                 if (new File(STOP).exists()) {
                     event("ende", "Stopp-Datei");
+                    endeGrund = "Stopp-Datei";
                     break;
+                }
+                if (wine == null && !abspielModus && now - laeuftAm >= 1000) {
+                    laeuftAm = now;
+                    laeuftMarke();
                 }
                 schritt(now);
                 if (now - letzterBericht > 30_000) {
@@ -436,12 +565,18 @@ public final class Spieltester {
         }
         catch (Throwable e) {
             event("fehler", String.valueOf(e));
+            endeGrund = "Fehler " + e;
         }
         finally {
             try {
                 fahrer.allesLoslassen();
             }
             catch (Throwable ignored) {}
+            if (auftrag != null && !auftrag.fertig()) {
+                auftrag.ende(Auftrag.Ergebnis.ABGEBROCHEN, endeGrund.isEmpty() ? "Lauf beendet" : endeGrund);
+                event("auftrag", auftrag.status());
+            }
+            if (wine == null && !abspielModus) new File(LAEUFT).delete();
             bericht(true);
             events.close();
             try {
@@ -450,12 +585,21 @@ public final class Spieltester {
             catch (IOException ignored) {}
             new File(STOP).delete();
         }
-        System.exit(0);
+        System.exit(auftrag != null && auftrag.fertig() ? auftrag.ergebnis.exitCode : 0);
     }
+
 
 
     private void schritt(long now) throws Exception {
         fahrer.takt(now);
+        if (auftrag != null && !auftrag.fertig() && now >= auftragBis) {
+
+            auftrag.ende(Auftrag.Ergebnis.ZEIT_UM, (auftragBis - start) / 1000 + " s, zuletzt " + auftrag.unterwegs);
+            auftragMelden(now);
+            fahrer.allesLoslassen();
+            beenden = true;
+            return;
+        }
         if (!vordergrund) {
             loslassen("D2-App nicht im Vordergrund");
             return;
@@ -465,7 +609,7 @@ public final class Spieltester {
             loslassen("kein Zustand (Menü, Laden, Pause)");
             if (now - Math.max(zustandAm, start) > 20_000 && now - ohneZustandGemeldet > 120_000) {
                 ohneZustandGemeldet = now;
-                befund("kein_zustand", "seit " + (now - Math.max(zustandAm, start)) / 1000 + " s kein Spielzustand; Mod: " + modStatus, null);
+                befund("kein_zustand", "seit " + (now - Math.max(zustandAm, start)) / 1000 + " s kein Spielzustand; Mod: " + modStatus);
             }
             return;
         }
@@ -473,18 +617,24 @@ public final class Spieltester {
         letzteSeq = z.seq;
         if (neu) beobachten(z, now);
         if (stadtgang.aktiv()) stadtgang.beobachten(z);
+
+
         if (neu) {
             for (Waechter.Befund b : waechter.pruefen(z, fahrer.laeuft(), now)) {
                 if (b.art.equals("festgefahren")) gehirn.festgefahren(now);
-                if (b.auffaellig) befund(b.art, b.text, b.issue);
+                if (b.auffaellig) befund(b.art, b.text);
                 else event(b.art, b.text);
             }
         }
         Zustand.Layout l = layout;
+        if (auftrag != null && auftragVorab(z, l, now)) return;
         if (quest != null ? !quest.vorSchritt(z, l, now) : ll.leeren && !ll.leerenSchritt(z, l, now)) return;
 
-        if (wegpunkte.kursZiel > 0) fahrer.verhalten.fensterDurchlassen = wegpunkte.aktiv();
+
+        if (wegpunkte.kursZiel > 0 || auftrag != null) fahrer.verhalten.fensterDurchlassen = wegpunkte.aktiv();
+
         if (!fahrer.vorbereiten(z, l, now, waechter.totSeit())) return;
+
 
         if (!stadtgang.aktiv() && stadtgang.faellig(z, now)) {
             Zustand.Figur f = figur;
@@ -499,34 +649,48 @@ public final class Spieltester {
         gehirn.layout = l;
         if (wine != null) z.ausgelassen.addAll(wine.ausgelassen());
         if (!tastenGemeldet && Zustand.Layout.TRAENKE_TASTEN.equals(l.traenke)) {
+
+
             tastenGemeldet = true;
             befund("traenke_tasten", "Tränke auf festen Tasten („Taste 1/2“): Heil- und Mana-Tipps fallen weg, es trinkt nur "
                 + "die Automatik der App mit den Schwellen der Spielhilfen (nicht unter " + gehirn.trinkenPct + " % wie Idle). "
-                + "Für Läufe mit Trinkschwelle „nur Gürtel“ oder „Gürtel, sonst Inventar“ wählen", null);
+                + "Für Läufe mit Trinkschwelle „nur Gürtel“ oder „Gürtel, sonst Inventar“ wählen");
         }
         if (wine != null) gehirn.gehaltenesZiel = wine.gehaltenesZiel();
         if (ll.leeren && wine != null && !stadtgang.aktiv() && !z.stadt && anlegenSchritt(z, l, now)) return;
         rollenSchritt(z);
-        Gehirn.Absicht a = wegpunkte.kurs(z, now);
+        Gehirn.Absicht a = auftrag != null ? null : wegpunkte.kurs(z, now);
+        if (auftrag != null) {
+
+            if (gehirn.imKampf()) auftrag.kampfAm = now;
+            a = auftrag.schritt(z, ziele, figur, gehirn, wegpunkte, now);
+            auftragMelden(now);
+            if (auftrag.fertig()) {
+                fahrer.allesLoslassen();
+                beenden = true;
+                return;
+            }
+        }
         if (a == null) a = quest != null ? quest.denken(z, ziele, figur, now) : stadtgang.aktiv() ? stadtgang.denken(z, figur, now) : gehirn.denken(z, ziele, now);
         if (!wegpunkte.meldung.equals(letzteWegpunktMeldung)) {
             letzteWegpunktMeldung = wegpunkte.meldung;
             event("wegpunkt", letzteWegpunktMeldung + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
-            if (letzteWegpunktMeldung.startsWith("Wegpunkt abgebrochen")) befund("wegpunkt", wegpunkte.abbruch, null);
-            if (letzteWegpunktMeldung.startsWith("Kurs abgebrochen")) befund("wegpunkt", wegpunkte.kursEnde, null);
+            if (letzteWegpunktMeldung.startsWith("Wegpunkt abgebrochen")) befund("wegpunkt", wegpunkte.abbruch);
+            if (letzteWegpunktMeldung.startsWith("Kurs abgebrochen")) befund("wegpunkt", wegpunkte.kursEnde);
         }
+
         if (ll.gebietLeerEnde(stadtgang.aktiv(), l, now)) return;
         fahrer.anwenden(a, l, now);
         if (wine != null) wine.ignorieren(gehirn.ignorierte(now));
         Puffer puffer = gehirn.kampfwahl.puffer;
         if (puffer.befund != null && !puffer.befund.equals(letzterPufferBefund)) {
             letzterPufferBefund = puffer.befund;
-            befund("puffer", puffer.befund, null);
+            befund("puffer", puffer.befund);
         }
         if (!stadtgang.meldung.equals(letzteStadtMeldung)) {
             letzteStadtMeldung = stadtgang.meldung;
             event("stadtgang", letzteStadtMeldung + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
-            if (letzteStadtMeldung.startsWith("Stadtgang abgebrochen")) befund("stadtgang", stadtgang.abbruch, null);
+            if (letzteStadtMeldung.startsWith("Stadtgang abgebrochen")) befund("stadtgang", stadtgang.abbruch);
         }
         if (gehirn.kampfMeldungen != kampfMeldungen) {
             kampfMeldungen = gehirn.kampfMeldungen;
@@ -545,6 +709,68 @@ public final class Spieltester {
     private void loslassen(String warum) {
         fahrer.loslassen(warum);
     }
+
+
+
+
+
+    private boolean auftragVorab(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
+        if (auftrag.fertig()) return true;
+        if (z.tot()) auftrag.ende(Auftrag.Ergebnis.ABGEBROCHEN, "Figur tot");
+        else if (now >= auftragBis) auftrag.ende(Auftrag.Ergebnis.ZEIT_UM, (auftragBis - start) / 1000 + " s, zuletzt " + auftrag.unterwegs);
+        if (auftrag.fertig()) {
+            auftragMelden(now);
+            fahrer.allesLoslassen();
+            beenden = true;
+            return true;
+        }
+        Zustand.Figur f = figur;
+        if (f == null || now - f.ms > 3000) {
+            loslassen("Auftrag: warte auf die Figur (Typ 7)");
+            auftrag.unterwegs = "warte auf die Figur";
+            auftragMelden(now);
+            return true;
+        }
+        if (!f.name.startsWith(Zustand.Figur.TEST_PREFIX)) {
+            auftrag.ende(Auftrag.Ergebnis.ABGEBROCHEN, "Figur „" + f.name + "“ ist keine Testfigur (st-…)");
+            auftragMelden(now);
+            fremdeFigur(f, l);
+            return true;
+        }
+        return false;
+    }
+
+
+    private void auftragMelden(long now) {
+        String s = auftrag.status();
+        if (s.equals(auftragStatus) || !auftrag.fertig() && now - auftragStatusAm < 2000) return;
+        auftragStatus = s;
+        auftragStatusAm = now;
+        event("auftrag", s);
+        writeStatus((auftrag.fertig() ? "beendet" : "läuft") + " " + dir + " · " + (now - start) / 1000 + " s · " + s);
+    }
+
+
+    private static void laeuftMarke() {
+        File f = new File(LAEUFT);
+        try {
+            if (!f.exists()) new FileWriter(f).close();
+            f.setLastModified(System.currentTimeMillis());
+        }
+        catch (IOException ignored) {}
+    }
+
+    private static void writeStatus(String line) {
+        try (Writer w = new FileWriter(STATUS)) {
+            w.write(line + "\n");
+        }
+        catch (IOException ignored) {}
+    }
+
+
+
+
+
 
     private boolean anlegenSchritt(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
         int[] an = z.anlegen;
@@ -588,11 +814,17 @@ public final class Spieltester {
         return false;
     }
 
+
+
+
+
     private void fremdeFigur(Zustand.Figur f, Zustand.Layout l) throws InterruptedException {
         fahrer.allesLoslassen();
         long now = SystemClock.uptimeMillis();
         fahrer.tippen("menu_pause", "Pause: fremde Figur", l, now);
         boolean pausiert = false;
+
+
         long bis = now + 2000;
         for (int i = 0; i < 80 && !pausiert && (SystemClock.uptimeMillis() < bis || fahrer.nachholenOffen()); i++) {
             Thread.sleep(100);
@@ -604,14 +836,16 @@ public final class Spieltester {
             pausiert = z != null && z.pause;
         }
         befund("fremde_figur", "Figur „" + f.name + "“ ist nicht die Testfigur „" + testfigur + "“: Finger los, "
-            + (pausiert ? "pausiert" : "Pause NICHT bestätigt") + ", Ende", null);
+            + (pausiert ? "pausiert" : "Pause NICHT bestätigt") + ", Ende");
         beenden = true;
     }
+
 
 
     private void beobachten(Zustand z, long now) {
         zustaende++;
         if (startGebiet < 0) startGebiet = z.gebiet;
+
         if (letzterZustandAm > 0 && letztesGebiet >= 0) {
             Long t = zeitInGebiet.get(letztesGebiet);
             zeitInGebiet.put(letztesGebiet, (t == null ? 0 : t) + Math.min(2000, now - letzterZustandAm));
@@ -638,12 +872,13 @@ public final class Spieltester {
     }
 
 
-    private void befund(String art, String text, String issue) {
+
+    private void befund(String art, String text) {
         int nr = ++befundNr;
         String name = String.format(Locale.ROOT, "befund-%02d-%s", nr, art);
-        event("befund", art + ": " + text + (issue != null ? " (" + issue + ")" : ""));
+        event("befund", art + ": " + text);
         try (Writer w = new FileWriter(new File(dir, name + ".txt"))) {
-            w.write("# " + art + (issue != null ? " " + issue : "") + "\n" + text + "\n\n## Letzte Zustandszeilen\n");
+            w.write("# " + art + "\n" + text + "\n\n## Letzte Zustandszeilen\n");
             synchronized (lastStates) {
                 for (String s : lastStates) w.write(s + "\n");
             }
@@ -658,8 +893,8 @@ public final class Spieltester {
         }
         catch (IOException ignored) {}
         bild(name);
-        befunde.add(String.format(Locale.ROOT, "%s · **%s**%s: %s ([Bild](%s.png), [Zustand](%s.txt))", uhr(), art,
-            issue != null ? " (" + issue + ")" : "", text, name, name));
+        befunde.add(String.format(Locale.ROOT, "%s · **%s**: %s ([Bild](%s.png), [Zustand](%s.txt))", uhr(), art,
+            text, name, name));
     }
 
     private void bild(String name) {
@@ -707,7 +942,7 @@ public final class Spieltester {
         long draussen = 0;
         for (Map.Entry<Integer, Long> e : zeitInGebiet.entrySet()) if (!stadt(e.getKey())) draussen += e.getValue();
         StringBuilder b = new StringBuilder();
-        b.append("# Spieltest-Bericht (Spieltester v1, S1b)\n\n");
+        b.append("# Spieltest-Bericht (Spieltester v1)\n\n");
         b.append("- Start: ").append(startZeit).append(fertig ? ", beendet" : ", läuft noch").append(" · Dauer ")
             .append(dauer / 60000).append(" min ").append(dauer / 1000 % 60).append(" s\n");
         b.append("- Gebiet: Start ").append(startGebiet < 0 ? "–" : gebietName(startGebiet)).append(", zuletzt ")
@@ -747,6 +982,7 @@ public final class Spieltester {
             .append(", abgebrochen ").append(wegpunkte.abbrueche)
             .append(wegpunkte.kursEnde != null ? " · Kurs abgebrochen: " + wegpunkte.kursEnde : "").append("\n");
         if (questFahrer != null) {
+
             QuestZeile qz = questFahrer.zeile;
             b.append("- Quest ").append(qz.nummer).append(' ').append(qz.name).append(": ")
                 .append(questFahrer.ende == null ? "läuft (" + questFahrer.phase() + ")" : questFahrer.ende)
@@ -783,6 +1019,7 @@ public final class Spieltester {
                 .append(ll.messung.text(aktiv, kills, gehirn.hindernisse))
                 .append(" · Rückzug unter ").append(ll.rueckzugPct).append(" % · Ende: ").append(!leerenEnde.isEmpty() ? leerenEnde : fertig ? "Zeit um bzw. Stopp" : "läuft").append("\n");
         }
+        if (auftrag != null) b.append("- Auftrag: ").append(auftrag.text).append(" → ").append(auftrag.status()).append("\n");
         b.append("- Mod: ").append(modStatus).append("\n\n## Auffälligkeiten\n\n");
         if (befunde.isEmpty()) b.append("keine\n");
         for (String s : befunde) b.append("- ").append(s).append("\n");
@@ -791,6 +1028,12 @@ public final class Spieltester {
             w.write(b.toString());
         }
         catch (IOException ignored) {}
+        if (auftrag != null) {
+
+            writeStatus((fertig ? "beendet" : "läuft") + " " + dir + " · " + dauer / 1000 + " s · " + auftrag.status()
+                + (z == null ? "" : " · Gebiet " + z.gebiet + (z.weltlage() ? " · Lage " + Math.round(z.wx) + "," + Math.round(z.wy) : "")));
+            return;
+        }
         try (Writer w = new FileWriter(STATUS)) {
             w.write((fertig ? "beendet" : "läuft") + " " + dir + " · " + dauer / 1000 + " s · Gebiet " + (z == null ? "–" : gebietName(z.gebiet))
                 + " · draußen " + draussen / 1000 + " s · Lager " + lagerZeiten + " ms · Kills " + getoetet.size() + " · Tode " + waechter.tode
@@ -798,6 +1041,8 @@ public final class Spieltester {
         }
         catch (IOException ignored) {}
     }
+
+
 
 
     private void zeile(String line) throws IOException {
@@ -823,6 +1068,7 @@ public final class Spieltester {
         }
         else if (t.equals("figur")) figur = Zustand.Figur.parse(o);
         else if (t.equals("quest")) {
+
             JSONArray w = o.optJSONArray("woerter");
             if (quest != null) {
                 int[] worte = null;
@@ -834,6 +1080,7 @@ public final class Spieltester {
             }
         }
         else if (t.equals("fertigkeiten") && wine == null) {
+
             Fertigkeiten f = Fertigkeiten.ausJson(o);
             gehirn.kampfwahl.tabelle(f);
             event("fertigkeiten", f == null ? "keine Fertigkeiten" : "Klasse " + o.optInt("klasse") + ": " + o.optJSONArray("liste").length() + " Fertigkeiten");
@@ -851,6 +1098,8 @@ public final class Spieltester {
             }
         }
         else if (t.equals("karte")) {
+
+
             int gebiet = o.optInt("gebiet");
             Karte k = gehirn.karte();
             if (k == null || k.level != gebiet) {
@@ -887,6 +1136,7 @@ public final class Spieltester {
         }
     }
 
+
     private void mitschreiben(String line) {
         try {
             synchronized (portMitschrift) {
@@ -910,6 +1160,7 @@ public final class Spieltester {
                 event("port", "Verbindung beendet");
             }
             catch (IOException e) {
+
             }
             try {
                 Thread.sleep(2000);
@@ -942,6 +1193,13 @@ public final class Spieltester {
                 return;
             }
         }
+    }
+
+
+    private static String paket() {
+        String p = System.getProperty("d2t.paket");
+        if (p == null || p.isEmpty()) p = System.getenv("D2T_PAKET");
+        return p == null || p.isEmpty() ? "at.d2android" : p;
     }
 
     private static String resumedPackage() {

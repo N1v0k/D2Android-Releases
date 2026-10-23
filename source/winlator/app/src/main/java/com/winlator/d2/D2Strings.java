@@ -7,12 +7,19 @@ import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
 public final class D2Strings {
+
     private static final String[] LANGUAGES = {"eng", "esp", "deu", "fra", "por", "ita", "jpn", "kor", "sin", "chi", "pol", "rus"};
     private final byte[][] tables = new byte[3][];
     private final String language;
 
     public D2Strings(D2Sprites sprites) throws IOException {
+
         byte[] use = sprites.read("data\\local\\use");
         int index = use != null && use.length > 0 ? use[0] & 0xFF : 0;
         String wanted = index < LANGUAGES.length ? LANGUAGES[index] : "eng";
@@ -20,6 +27,7 @@ public final class D2Strings {
         for (String lng : new String[]{wanted, "eng"}) {
             byte[] base = sprites.read("data\\local\\lng\\" + lng + "\\string.tbl");
             byte[] expansion = sprites.read("data\\local\\lng\\" + lng + "\\expansionstring.tbl");
+
             if (base == null || expansion == null) continue;
             tables[0] = base;
             tables[1] = sprites.read("data\\local\\lng\\" + lng + "\\patchstring.tbl");
@@ -30,12 +38,18 @@ public final class D2Strings {
         language = found;
     }
 
+
     D2Strings(byte[] base, byte[] patch, byte[] expansion, String language) {
         tables[0] = base;
         tables[1] = patch;
         tables[2] = expansion;
         this.language = language;
     }
+
+
+
+
+
 
     public static void rememberGameLanguage(android.content.Context context, java.io.File gameDir) {
         try (D2Sprites sprites = new D2Sprites(gameDir)) {
@@ -48,15 +62,22 @@ public final class D2Strings {
         }
     }
 
+
     public String language() {
         return language;
     }
+
+
+
+
 
     public String get(String key) {
         byte[] wanted = key.getBytes(Charset.forName("windows-1252"));
         for (int table : new int[]{1, 2, 0}) {
             byte[] d = tables[table];
             if (d == null || d.length < 21) continue;
+
+
             int count = u16(d, 2), slots = s32(d, 4), base = 21 + count * 2;
             if (slots <= 0) continue;
             for (int i = 0; i < slots; i++) {
@@ -76,6 +97,7 @@ public final class D2Strings {
         return null;
     }
 
+
     public String get(int id) {
         if (id < 0) return null;
         int table = id < 10000 ? 0 : (id < 20000 ? 1 : 2);
@@ -92,6 +114,11 @@ public final class D2Strings {
         while (end < d.length && end - at < Math.max(length, 1) && d[end] != 0) end++;
         return text(d, at, end);
     }
+
+
+
+
+
 
     private static String text(byte[] d, int at, int end) {
         String text;

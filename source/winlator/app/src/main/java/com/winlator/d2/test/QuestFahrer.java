@@ -3,45 +3,94 @@ package com.winlator.d2.test;
 import java.util.EnumMap;
 import java.util.Map;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 public final class QuestFahrer {
+
+
+
+
     public enum Phase { VORBEREITEN, REISEN, ERLEDIGEN, ABGEBEN, FERTIG }
+
+
+
+
 
     public enum Auftrag { WARTEN, TOT, LEEREN, HINGEHEN, STADTGANG, ENDE }
 
+
     public static final int MAX_TODE = 3, MAX_RUECKKEHR = 2, MAX_ABBRUECHE = 3;
+
     public enum Ende { ABGESCHLOSSEN, SCHON_ERLEDIGT, ZU_OFT_GESTORBEN, NICHT_LEER, KEINE_BELOHNUNG, NICHT_ERREICHT, ZEIT_UM }
+
+
+
+
     public static final long HINGEHEN_OHNE_WECHSEL_MS = 4 * 60_000;
     static final int ERLEDIGT = Quests.ERLEDIGT, BELOHNUNG_OFFEN = Quests.BELOHNUNG_OFFEN;
 
     public static final String ABGESCHLOSSEN = "Quest abgeschlossen", SCHON_ERLEDIGT = "schon erledigt",
         ZU_OFT_GESTORBEN = "zu oft gestorben";
+
     public final String nichtLeer, keineBelohnung, nichtErreicht;
+
 
     public final QuestZeile zeile;
 
     private Phase phase;
     private long phaseSeit;
     private final Map<Phase, Long> dauer = new EnumMap<>(Phase.class);
+
     public String ende;
     public Ende endeCode;
+
+
+
+
     private int letztesGebiet = -1, letztesZiel = -1;
     private long wechselAm;
     private Auftrag letzterAuftrag;
+
     private boolean abgabeGesprochen;
+
     public final int maxTode;
+
     public int tode, rueckkehr;
+
     public int abbrueche;
     private boolean totGezaehlt;
     private boolean leerErsatz;
+
+
+
+
+
+
     public static final long NACHSUCHE_OHNE_FEIND_MS = 4 * 60_000;
+
     public static final int NACHSUCHE_MAX_RUNDEN = 5;
     public static final long NACHSUCHE_MAX_MS = 8 * 60_000;
     private long nachsucheSeit, letzterFeindAm;
     private int nachsucheRunden;
     private boolean nachsucheAngefordert;
+
     public int nachsuchen;
+
     private boolean zuFuss;
+
     private int punkteVorher = -1;
+
     public String meldung = "";
 
     public QuestFahrer(QuestZeile zeile) {
@@ -61,11 +110,13 @@ public final class QuestFahrer {
         return phase;
     }
 
+
     public Map<Phase, Long> dauer(long now) {
         Map<Phase, Long> m = new EnumMap<>(dauer);
         if (phase != null && phase != Phase.FERTIG) m.merge(phase, now - phaseSeit, Long::sum);
         return m;
     }
+
 
     public void starten(int stufe, int wort, long now) {
         if (wort >= 0 && (wort & ERLEDIGT) != 0) beenden(Ende.SCHON_ERLEDIGT, SCHON_ERLEDIGT, now);
@@ -73,6 +124,7 @@ public final class QuestFahrer {
         else if (stufe >= 0 && stufe < zeile.mindeststufe) wechseln(Phase.VORBEREITEN, now, "Leveln (" + zeile.levelName + ") bis Stufe " + zeile.mindeststufe);
         else wechseln(Phase.REISEN, now, "Ziel: " + zeile.name);
     }
+
 
     public Auftrag auftrag(int gebiet, int stufe, int wort, long now) {
         if (phase == null) {
@@ -117,9 +169,11 @@ public final class QuestFahrer {
             case ERLEDIGEN:
                 return gebiet == ziel ? Auftrag.LEEREN : Auftrag.HINGEHEN;
             default:
+
                 return zuFuss && gebiet != zeile.stadt ? Auftrag.HINGEHEN : Auftrag.STADTGANG;
         }
     }
+
 
     public void keinPortal() {
         if (phase != Phase.ABGEBEN || zuFuss) return;
@@ -132,13 +186,20 @@ public final class QuestFahrer {
         return Auftrag.LEEREN;
     }
 
+
     public int zielGebiet() {
         return phase == Phase.VORBEREITEN ? zeile.levelGebiet : phase == Phase.ABGEBEN ? zeile.stadt : zeile.zielGebiet();
     }
 
+
     public void leerenEnde(String grund, int gebiet, long now) {
         leerenEnde(grund, gebiet, -1, now);
     }
+
+
+
+
+
 
     public void leerenEnde(String grund, int gebiet, int wort, long now) {
         if (!"Gebiet leer".equals(grund)) return;
@@ -166,19 +227,23 @@ public final class QuestFahrer {
         }
     }
 
+
     public boolean nachsucheAbholen() {
         boolean r = nachsucheAngefordert;
         nachsucheAngefordert = false;
         return r;
     }
 
+
     public void nachsucheLeer(long now) {
         if (phase == Phase.ERLEDIGEN) zurAbgabeErsatz(now, "nichts mehr offen");
     }
 
+
     public void feindGesehen(long now) {
         letzterFeindAm = now;
     }
+
 
     private void zurAbgabeErsatz(long now, String notausgang) {
         leerErsatz = true;
@@ -186,6 +251,11 @@ public final class QuestFahrer {
         wechseln(Phase.ABGEBEN, now, zeile.ort + " leer (Abdeckung" + (nachsuchen > 0 ? ", nach " + nachsuchen + " Nachsuchen" : "")
             + (notausgang != null ? ", Notausgang: " + notausgang : "") + "): zu " + zeile.abgabe);
     }
+
+
+
+
+
 
     public Auftrag tot(boolean tot, long now) {
         if (!tot) {
@@ -199,6 +269,11 @@ public final class QuestFahrer {
         return phase == Phase.FERTIG ? Auftrag.ENDE : Auftrag.TOT;
     }
 
+
+
+
+
+
     public void stadtgangAbbruch(String grund, long now) {
         if (phase != Phase.ABGEBEN) return;
         if (grund.startsWith("kein Portal") || grund.startsWith("Portal nimmt nicht an")) {
@@ -211,6 +286,7 @@ public final class QuestFahrer {
         else meldung = "Stadtgang abgebrochen (" + grund + "): noch einmal (" + abbrueche + " von " + MAX_ABBRUECHE + ")";
     }
 
+
     public void tod(long now) {
         if (phase == Phase.FERTIG) return;
         tode++;
@@ -218,10 +294,16 @@ public final class QuestFahrer {
         else meldung = "Tod " + tode + " in Phase " + phase + ": weiter in derselben Phase";
     }
 
+
     public void vorAbgabe(int punkte) {
         abgabeGesprochen = true;
         punkteVorher = punkte;
     }
+
+
+
+
+
 
     public void nachAbgabe(int punkte, int wort, long now) {
         if (phase != Phase.ABGEBEN) return;
@@ -245,6 +327,7 @@ public final class QuestFahrer {
         leerErsatz = false;
         wechseln(Phase.ERLEDIGEN, now, zeile.abgabe + " ohne Belohnung: zurück ins Zielgebiet (" + rueckkehr + " von " + MAX_RUECKKEHR + ")");
     }
+
 
     public boolean leerNurErsatz() {
         return leerErsatz;

@@ -6,14 +6,29 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
+
+
+
+
+
+
+
+
 final class D2GuestOutput {
     static final String FILE = "guest-stderr.log";
     static final String PREV = "guest-stderr.prev.log";
+
     static final long MAX_BYTES = 4L * 1024 * 1024;
+
     static final long ZIP_BYTES = 256L * 1024;
+
     static final long CHECK_MS = 60_000;
 
     private D2GuestOutput() {}
+
+
+
+
 
     static File start(File file, String header) {
         File prev = new File(file.getParentFile(), PREV);
@@ -29,6 +44,10 @@ final class D2GuestOutput {
             return null;
         }
     }
+
+
+
+
 
     static boolean limit(File file, long max, String when) {
         if (file == null) return false;

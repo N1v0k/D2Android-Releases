@@ -1,12 +1,32 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include "d2stashcore.c"
 
 #define RVA_GameSave          0x39C20
 #define STASH_CODE_DEPOSIT    SRV_CODE_STASH_DEPOSIT
 #define STASH_CODE_WITHDRAW   SRV_CODE_STASH_WITHDRAW
 #define STASH_CODE_DEPOSITALL SRV_CODE_STASH_ALL
+
 enum { STASH_OK = 1, STASH_FULL, STASH_NOT_ALLOWED, STASH_LOCKED, STASH_SAVING, STASH_NOT_YET };
 enum { SAVE_NONE, SAVE_OK, SAVE_NOT_SAVED, SAVE_NOT_CONFIRMED };
+
 enum { STASH_WHY_NONE, STASH_WHY_BROKEN, STASH_WHY_UNSAVED, STASH_WHY_UNREADABLE, STASH_WHY_MISSING, STASH_WHY_THREAD,
     STASH_WHY_VERSION };
 
@@ -29,6 +49,7 @@ static char stashDir[MAX_PATH];
 static char stashName[17];
 static int stashHardcore;
 DWORD stashGameSave;
+
 
 static void stashFindDir(void) {
     HMODULE adv = LoadLibraryA("advapi32.dll");
@@ -61,6 +82,7 @@ static void stashPath(char* out, const char* suffix) {
     snprintf(out, MAX_PATH, "%s_LOD_%sD2Android_Materialien.d2l%s", stashDir, stashHardcore ? "HC_" : "", suffix);
 }
 
+
 static int stashReadFile(const char* path, char* buf, int size) {
     HANDLE h = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (h == INVALID_HANDLE_VALUE) return GetLastError() == ERROR_FILE_NOT_FOUND ? -1 : -2;
@@ -69,6 +91,10 @@ static int stashReadFile(const char* path, char* buf, int size) {
     CloseHandle(h);
     return ok && got < (DWORD) size ? (int) got : -2;
 }
+
+
+
+
 
 static int stashWrite(const unsigned* v) {
     char text[4096], back[4096], path[MAX_PATH], tmp[MAX_PATH];
@@ -88,6 +114,7 @@ static int stashWrite(const unsigned* v) {
     return MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ? 1 : -1;
 }
 
+
 static int stashBrokenAside(void) {
     char pattern[MAX_PATH];
     WIN32_FIND_DATAA found;
@@ -98,11 +125,13 @@ static int stashBrokenAside(void) {
     return 1;
 }
 
+
 static void stashLoad(void* player) {
     void* pdata = RDP(player, U_DATA);
     char name[17] = {0};
     if (!readable(pdata, 16)) return;
     memcpy(name, pdata, 16);
+
     if (!name[0] || strcmp(name, stashName) == 0) return;
     memset(&stash, 0, sizeof(stash));
     stashLoadedOk = stashInUse = stashBroken = stashUnsaved = 0;
@@ -123,6 +152,7 @@ static void stashLoad(void* player) {
         logLine("stash: %s not readable, no Materialien", path);
         return;
     }
+
     if (header < 0) {
         stashBroken = 1;
         stashBrokenWhy = STASH_WHY_VERSION;
@@ -151,6 +181,7 @@ static void stashLoad(void* player) {
         char aside[MAX_PATH], suffix[48];
         SYSTEMTIME t;
         GetLocalTime(&t);
+
         for (int k = 0; k < 100; k++) {
             snprintf(suffix, sizeof(suffix), ".kaputt-%04u%02u%02u-%02u%02u%02u%s%.0d", t.wYear, t.wMonth, t.wDay,
                 t.wHour, t.wMinute, t.wSecond, k ? "-" : "", k);
@@ -169,6 +200,7 @@ static void stashLoad(void* player) {
     logLine("stash: loaded for %s (%s)", stashName, stashHardcore ? "hardcore" : "softcore");
 }
 
+
 static DWORD stashD2sSum(const BYTE* d, DWORD n) {
     DWORD sum = 0;
     for (DWORD i = 0; i < n; i++) sum = ((sum << 1) | (sum >> 31)) + (i >= 12 && i < 16 ? 0 : d[i]);
@@ -183,6 +215,7 @@ static void stashMark(const char* path, StashFileMark* m) {
     m->time = m->there ? a.ftLastWriteTime : (FILETIME) {0, 0};
     m->size = m->there ? a.nFileSizeLow : 0;
 }
+
 
 static int stashConfirmed(const char* path, const StashFileMark* before, int kind) {
     StashFileMark now;
@@ -202,6 +235,8 @@ static int stashConfirmed(const char* path, const StashFileMark* before, int kin
 }
 
 #ifdef D2MOD_TESTCMDS
+
+
 static int stashTestHalt, stashTestNoConfirm;
 static void stashTest(BYTE op, BYTE value) {
     if (op == 1) stashTestHalt = value;
@@ -217,6 +252,7 @@ static void stashTestHere(int point) {
 #define stashTestHere(point) ((void) 0)
 #define stashTestNoConfirm 0
 #endif
+
 
 __attribute__((used)) int __stdcall stashBeforeSave(void);
 __attribute__((used)) int __stdcall stashBeforeSave(void) {
@@ -245,6 +281,8 @@ __attribute__((used)) int __stdcall stashBeforeSave(void) {
             logLine("stash: pre-write failed (%d): the game is NOT saved, Materialien locked", w);
             return 0;
         }
+
+
         logLine("stash: pre-write failed (%d), only withdrawals: the game saves, Materialien locked", w);
     }
     stashTestHere(1);
@@ -258,13 +296,16 @@ __attribute__((used)) void __stdcall stashMarkFiles(void);
 __attribute__((used)) void __stdcall stashMarkFiles(void) {
     snprintf(stashFiles[0], MAX_PATH, "%s%s.d2s", stashDir, stashName);
     snprintf(stashFiles[1], MAX_PATH, "%s%s.d2x", stashDir, stashName);
+
     snprintf(stashFiles[2], MAX_PATH, "%s_LOD_%sSharedStashSave.sss", stashDir, stashHardcore ? "HC_" : "");
     for (int i = 0; i < 3; i++) stashMark(stashFiles[i], &stashMarks[i]);
 }
 
+
 __attribute__((used)) void __stdcall stashAfterSave(void);
 __attribute__((used)) void __stdcall stashAfterSave(void) {
     if (!stashSaving) return;
+
     int files = plugyLoaded && plugySavePatched ? 3 : 1, all = 1;
     for (int i = 0; i < files; i++) if (!stashConfirmed(stashFiles[i], &stashMarks[i], i)) all = 0;
     if (stashTestNoConfirm) all = 0;
@@ -292,6 +333,10 @@ __attribute__((used)) void __stdcall stashAfterSave(void) {
     InterlockedExchange(&stashSaving, 0);
 }
 
+
+
+
+
 void stashSaveTramp(void);
 __asm__(
     ".globl _stashSaveTramp\n"
@@ -316,6 +361,7 @@ __asm__(
     "  xorl %eax, %eax\n"
     "  ret $8\n");
 
+
 #define RVA_QuestCreateItem 0xD2F50
 #define RVA_RemoveItem      0xB4530
 #define RVA_SendPacket      0xDB780
@@ -323,6 +369,7 @@ __asm__(
 #define ITEMQUAL_NORMAL     2
 
 static DWORD stashFnCreate, stashFnRemove, stashFnSend;
+
 
 static int stashCheckItemFns(DWORD game) {
     static const BYTE create[] = {0x83, 0xEC, 0x08, 0x53, 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x18, 0x8B, 0xF0};
@@ -339,6 +386,11 @@ static int stashCheckItemFns(DWORD game) {
     stashFnSend = (DWORD) d;
     return 1;
 }
+
+
+
+
+
 
 static void* stashCreate(void* game, void* player, DWORD code) {
     void* item;
@@ -364,6 +416,7 @@ static void stashRemove(void* game, void* player, void* item) {
         : "ecx", "edx", "memory", "cc");
 }
 
+
 static void stashSendRemove(void* player, DWORD id) {
     void* pdata = RDP(player, U_DATA);
     void* netClient = readable(pdata, PDATA_CLIENT + 4) ? RDP(pdata, PDATA_CLIENT) : NULL;
@@ -379,6 +432,7 @@ static void stashSendRemove(void* player, DWORD id) {
         : [fn] "m"(stashFnSend), [d] "r"(packet)
         : "ecx", "edx", "memory", "cc");
 }
+
 
 static void* stashServerItem(void* player, DWORD id, int* kind) {
     void* inventory = RDP(player, U_INVENTORY);
@@ -398,6 +452,7 @@ static void* stashServerItem(void* player, DWORD id, int* kind) {
     }
     return NULL;
 }
+
 
 static void stashHook(void) {
     static const DWORD sites[] = {0x39D11, 0x93C3F, 0xBE6DA, 0xBE77A, 0xBE7F6, 0xBF3AC, 0xBF5D9, 0xBFB9E};
@@ -431,6 +486,7 @@ static void stashHook(void) {
         VirtualProtect(at, 5, old, &old);
     }
     if (done < sizeof(sites) / sizeof(sites[0])) {
+
         for (unsigned i = 0; i < done; i++) {
             BYTE* at = (BYTE*) (game + sites[i]);
             DWORD old;
@@ -449,6 +505,7 @@ static void stashHook(void) {
     logLine("stash: save wrapped at 8 call sites");
 }
 
+
 static LONG stashPending;
 static DWORD stashPendingCode;
 static int stashLastResult;
@@ -457,15 +514,18 @@ static int stashAllLeft;
 static int stashOrderOpen;
 static BYTE stashDone;
 
+
 static void stashAnswer(int result) {
     stashLastResult = result;
     stashDone++;
 }
 
+
 static void stashBusyDrop(void) {
     logLine("stash: command refused: the inventory is being sorted");
     stashAnswer(STASH_SAVING);
 }
+
 
 static void stashOrderOver(int result) {
     stashOrderOpen = 0;
@@ -480,11 +540,13 @@ static int stashSubmit(DWORD code, LONG a1, LONG a2) {
     return stashPending != 0;
 }
 
+
 static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
     const char* why = stashHooked != 1 || !stashFnCreate ? "not available" : !stashLoadedOk || stashBroken ? "no stash file"
         : !singlePlayerGame() ? "not single player" : worldPaused() ? "paused" : !getUiVar(0x19) ? "stash closed"
         : stashUnsaved ? "locked (last save)" : stashOrderOpen || stashPending || stashAllLeft ? "busy" : NULL;
     if (why) {
+
         stashAnswer(!strcmp(why, "busy") ? STASH_SAVING : !strcmp(why, "locked (last save)") ? STASH_LOCKED : STASH_NOT_ALLOWED);
         logLine("stash: command %u refused: %s", kind, why);
         return;
@@ -498,6 +560,7 @@ static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
     }
     else if (kind != 3) stashOrderOver(STASH_NOT_ALLOWED);
     else {
+
         void* inventory = RDP(player, U_INVENTORY);
         int guard = 0;
         stashAllLeft = 0;
@@ -515,6 +578,12 @@ static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
     }
 }
 
+
+
+
+
+
+
 static void stashNewGame(void) {
     static DWORD resets;
     if (resets == srvResets) return;
@@ -524,6 +593,7 @@ static void stashNewGame(void) {
     if (stashOrderOpen) stashOrderOver(STASH_NOT_ALLOWED);
     if (stashLoadedOk) logLine("stash: server queue reset (new game): orders dropped, stash kept");
 }
+
 
 static void stashForget(void) {
     static int told;
@@ -545,11 +615,20 @@ static void stashOrders(void) {
         if (!stashAllLeft) stashOrderOver((int) answer);
         else stashLastResult = (int) answer;
     }
+
     if (!stashPending && stashAllLeft && !sortBusy() && !stashSubmit(STASH_CODE_DEPOSIT, (LONG) stashAllIds[--stashAllLeft], 0)) {
         stashAllLeft = 0;
         stashOrderOver(STASH_NOT_ALLOWED);
     }
 }
+
+
+
+
+
+
+
+
 
 #define PKT_STASH 10
 static void sendStash(void* player) {
@@ -572,6 +651,12 @@ static void sendStash(void* player) {
         | (stashUnsaved || stashBroken || stashOtherThread ? 8 : 0);
     BYTE why = !stashFnCreate ? STASH_WHY_MISSING : stashBroken ? (BYTE) stashBrokenWhy : stashUnsaved ? STASH_WHY_UNSAVED
         : stashOtherThread ? STASH_WHY_THREAD : STASH_WHY_NONE;
+
+
+
+
+
+
     short x = -32768, y = -32768;
     if (skillTreeKnown) {
         x = (short) ((LONG) RD32(client, RVA_PanelOffX) - 80);
@@ -607,6 +692,7 @@ static void sendStash(void* player) {
     sendPacket(&p);
 }
 
+
 static void stashTick(void* player) {
     if (!player) {
         stashPending = 0;
@@ -622,6 +708,11 @@ static void stashTick(void* player) {
     stashOrders();
     sendStash(player);
 }
+
+
+
+
+
 
 static LONG stashServer(DWORD code, LONG arg1, LONG arg2, void* game, void* unit, LONG* moved) {
     *moved = 0;

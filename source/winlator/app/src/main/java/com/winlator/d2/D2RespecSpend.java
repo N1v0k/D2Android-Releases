@@ -2,8 +2,21 @@ package com.winlator.d2;
 
 import com.winlator.d2.test.Fertigkeiten;
 
+
+
+
+
+
+
+
+
+
+
+
+
 public final class D2RespecSpend {
     public static final int OFF = 0, WAITING = 1, RUNNING = 2, DONE = 3, CANCELLED = 4;
+
     static final long WAIT_MS = 20_000;
 
     private int state = OFF;
@@ -13,6 +26,7 @@ public final class D2RespecSpend {
     private D2PointSpend spend = new D2PointSpend();
     private String why;
     private int left;
+
 
     public void start(int heroClass, String name) {
         this.heroClass = heroClass;
@@ -32,15 +46,22 @@ public final class D2RespecSpend {
         return state;
     }
 
+
     public void cancel(String reason) {
         if (!active()) return;
         state = CANCELLED;
         why = reason;
     }
 
+
     public void clear() {
         if (!active()) state = OFF;
     }
+
+
+
+
+
 
     public void step(D2PointPlan.Build build, Fertigkeiten table, D2Points p, int heroClass, String name, boolean ready,
                      long now, D2PointSpend.Out out) {
@@ -99,9 +120,11 @@ public final class D2RespecSpend {
         return spend.statsSpent();
     }
 
+
     public int left() {
         return left;
     }
+
 
     public String why() {
         return why;

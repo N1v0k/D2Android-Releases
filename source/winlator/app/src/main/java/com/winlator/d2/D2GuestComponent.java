@@ -16,23 +16,40 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
+
+
 public class D2GuestComponent extends EnvironmentComponent {
     private final File rootDir;
     private final String guestCommand;
     private final EnvVars envVars;
     private final Callback<Integer> terminationCallback;
+
     private final String stdinText;
     private static int pid = -1;
     private static final Object lock = new Object();
+
     private String stopReason;
+
     private static String[] runReason;
+
     private static volatile String endReason;
+
+
+
+
     private static List<Integer> stoppedPids;
     private static List<String> stoppedNames;
     private static long stoppedAt, resumedAt;
+
     private static long stoppedUptime;
+
     private static int interruptionsAtPause;
+
     private static volatile Watch watch;
+
     private final File outputFile;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable checkOutput = new Runnable() {
@@ -42,6 +59,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             if (running()) handler.postDelayed(this, D2GuestOutput.CHECK_MS);
         }
     };
+
     private static volatile long endSinceResumeMs = -1;
 
     public D2GuestComponent(File rootDir, String guestCommand, EnvVars envVars, Callback<Integer> terminationCallback) {
@@ -51,6 +69,7 @@ public class D2GuestComponent extends EnvironmentComponent {
     public D2GuestComponent(File rootDir, String guestCommand, EnvVars envVars, Callback<Integer> terminationCallback, String stdinText) {
         this(rootDir, guestCommand, envVars, terminationCallback, stdinText, null);
     }
+
 
     public D2GuestComponent(File rootDir, String guestCommand, EnvVars envVars, Callback<Integer> terminationCallback, String stdinText, File outputFile) {
         this.outputFile = outputFile;
@@ -77,6 +96,7 @@ public class D2GuestComponent extends EnvironmentComponent {
                     endReason = reason[0];
                     endSinceResumeMs = resumedAt != 0 ? SystemClock.elapsedRealtime() - resumedAt : -1;
                 }
+
                 Watch w = watch;
                 if (w != null) w.gameEnded();
                 if (terminationCallback != null) terminationCallback.call(status);
@@ -84,6 +104,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             if (outputFile != null) handler.postDelayed(checkOutput, D2GuestOutput.CHECK_MS);
         }
     }
+
 
     private void limitOutput(String when) {
         if (outputFile != null && D2GuestOutput.limit(outputFile, D2GuestOutput.MAX_BYTES, when)) {
@@ -101,11 +122,13 @@ public class D2GuestComponent extends EnvironmentComponent {
         }
     }
 
+
     public void setStopReason(String reason) {
         synchronized (lock) {
             stopReason = reason;
         }
     }
+
 
     public static boolean guestsStopped() {
         synchronized (lock) {
@@ -113,15 +136,21 @@ public class D2GuestComponent extends EnvironmentComponent {
         }
     }
 
+
     public static boolean running() {
         synchronized (lock) {
             return pid != -1;
         }
     }
 
+
+
+
+
     public static String endReason() {
         return endReason;
     }
+
 
     public static long endSinceResumeMs() {
         return endSinceResumeMs;
@@ -142,6 +171,8 @@ public class D2GuestComponent extends EnvironmentComponent {
             D2GuestList.Result found = guestList();
             List<ProcessHelper.PStat> processes = found.processes;
             int guests = 0, stopped = 0;
+
+
             boolean note = stoppedPids == null;
             if (note) {
                 stoppedPids = new ArrayList<>();
@@ -163,6 +194,7 @@ public class D2GuestComponent extends EnvironmentComponent {
                     stopped++;
                 }
             }
+
             D2Trace.log("guest pause: " + stopped + " of " + guests + " guest processes stopped (" + processes.size() + " listed"
                 + (found.onlyByRuntime > 0 ? ", " + found.onlyByRuntime + " only by the runtime check" : "") + ")");
         }
@@ -175,6 +207,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             if (pid == -1) return;
             D2GuestList.Result found = guestList();
             List<ProcessHelper.PStat> processes = found.processes;
+
             long sleepMs = stoppedPids != null ? D2GuestWatch.deepSleepMs(SystemClock.elapsedRealtime() - stoppedAt,
                 SystemClock.uptimeMillis() - stoppedUptime) : -1;
             long stoppedMs = stoppedPids != null ? SystemClock.elapsedRealtime() - stoppedAt : -1;
@@ -189,6 +222,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             for (ProcessHelper.PStat process : processes) {
                 if (process.guestProcess) guests++;
                 if (process.guestProcess && process.state == ProcessHelper.PState.STOPPED) {
+
                     String comm = D2GuestWatch.comm(PROC, process.pid);
                     long now = System.nanoTime();
                     ProcessHelper.resumeProcess(process.pid);
@@ -201,9 +235,11 @@ public class D2GuestComponent extends EnvironmentComponent {
             }
             if (continued > 0) w.begin(first);
             resumedAt = SystemClock.elapsedRealtime();
+
             D2Trace.log("guest resume: " + continued + " of " + guests + " guest processes continued (" + processes.size() + " listed"
                 + (found.onlyByRuntime > 0 ? ", " + found.onlyByRuntime + " only by the runtime check" : "") + ")"
                 + (sleepMs >= 0 ? ", deep sleep " + sleepMs / 1000 + " s of " + stoppedMs / 1000 + " s" : "")
+
                 + ", " + (interruptionsInPause >= 0 ? interruptionsInPause + " connector interruptions survived in the pause, " : "")
                 + interruptions + " since the start");
             for (String line : conts) D2Trace.log(line);
@@ -213,9 +249,19 @@ public class D2GuestComponent extends EnvironmentComponent {
 
     private static final File PROC = new File("/proc");
 
+
+
+
+
     private D2GuestList.Result guestList() {
         return D2GuestList.find(PROC, rootDir, Process.myUid(), Process.myPid());
     }
+
+
+
+
+
+
 
     private static void noteStatus(List<ProcessHelper.PStat> processes, long stoppedMs) {
         List<String> unusual = new ArrayList<>();
@@ -223,6 +269,7 @@ public class D2GuestComponent extends EnvironmentComponent {
         int read = 0;
         for (ProcessHelper.PStat process : processes) {
             if (!process.guestProcess || process.state == ProcessHelper.PState.ZOMBIE || process.state == ProcessHelper.PState.DEAD) continue;
+
             if (stoppedMs < 0 && process.state != ProcessHelper.PState.STOPPED) continue;
             String name = D2ExitText.shortName(process.name);
             D2GuestWatch.Status status = D2GuestWatch.read(PROC, process.pid, D2GuestWatch.WINESERVER.equals(name));
@@ -236,8 +283,15 @@ public class D2GuestComponent extends EnvironmentComponent {
             D2Trace.log(line);
         }
         if (line != null || stoppedMs >= D2ExitText.RESUME_WORTH_NOTING_MS) for (String l : lines) D2Trace.log(l);
+
         else if (read > 0) D2Trace.log("guest status before resume: " + read + " read, all stopped, no signal pending");
     }
+
+
+
+
+
+
 
     private static final class Watch implements Runnable {
         private final List<Integer> pids = new ArrayList<>();
@@ -264,6 +318,7 @@ public class D2GuestComponent extends EnvironmentComponent {
 
         @Override
         public void run() {
+
             int count = pids.size();
             boolean[] ended = new boolean[count];
             String[] paths = new String[count];
@@ -274,6 +329,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             }
             int left = count, round = 0;
             while (left > 0 && elapsedMs() < D2GuestWatch.WATCH_MS) {
+
                 round++;
                 long roundNanos = System.nanoTime() - firstNanos;
                 for (int i = 0; i < count; i++) {
@@ -298,6 +354,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             if (watch == this) watch = null;
         }
 
+
         void gameEnded() {
             try {
                 long left = Math.min(D2GuestWatch.END_WAIT_MS, D2GuestWatch.WATCH_MS - elapsedMs());
@@ -317,6 +374,7 @@ public class D2GuestComponent extends EnvironmentComponent {
                 line = D2GuestWatch.goneLine(new ArrayList<>(gone), pids.size(), elapsedMs(), gameEnded);
             }
             D2Trace.log(line);
+
             if (gameEnded || any) D2ExitLog.note(line);
         }
 
@@ -324,6 +382,11 @@ public class D2GuestComponent extends EnvironmentComponent {
             return (System.nanoTime() - firstNanos) / 1_000_000;
         }
     }
+
+
+
+
+
 
     private static void noteMissingGuests(List<ProcessHelper.PStat> processes, long sleepMs) {
         if (stoppedPids == null) return;
@@ -334,6 +397,7 @@ public class D2GuestComponent extends EnvironmentComponent {
             String name = stoppedNames.get(i);
             ProcessHelper.PStat now = null;
             for (ProcessHelper.PStat process : processes) if (process.pid == stoppedPid) now = process;
+
             boolean gone = now == null || (!name.equals(D2ExitText.shortName(now.name)) && now.state != ProcessHelper.PState.ZOMBIE);
             if (gone) missing.add(D2ExitText.guest(name, stoppedPid, -1));
             else if (now.state == ProcessHelper.PState.ZOMBIE || now.state == ProcessHelper.PState.DEAD) {
@@ -347,6 +411,7 @@ public class D2GuestComponent extends EnvironmentComponent {
         }
         stoppedPids = null;
     }
+
 
     private static int zombieStatus(int pid) {
         try {
