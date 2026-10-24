@@ -230,7 +230,7 @@ public class D2InstallActivity extends D2Activity {
         for (D2InstallPlan.Language l : D2InstallPlan.Language.values()) {
             RadioButton b = new RadioButton(this);
             b.setId(radioId(l));
-            String name = getString(l == D2InstallPlan.Language.EN_US ? R.string.install_lang_en : R.string.install_lang_de);
+            String name = languageName(l);
             b.setText(l.available ? name : getString(R.string.install_lang_soon, name));
             boolean usable = l.available && (!languageLocked || l == language);
             b.setTextColor(usable ? D2Style.TEXT : D2Style.HINT);
@@ -572,17 +572,23 @@ public class D2InstallActivity extends D2Activity {
 
 
 
-    private java.util.Map<String, String> finalReference() throws IOException {
-        return reference(language);
+
+
+    private String finalCheck(File game, D2InstallPlan.Language lang) throws IOException {
+        java.util.Map<String, String> own = ownReference(lang);
+        String problem = own != null ? D2InstallCheck.verify(game, own) : D2InstallCheck.verifyLanguageNeutral(game, GameLocator.reference(this));
+        D2Trace.log("install: final check " + lang.locale + " (" + (own != null ? "own list" : "language-neutral") + "): "
+            + (problem == null ? "passed" : problem));
+        return problem;
     }
 
-    private java.util.Map<String, String> reference(D2InstallPlan.Language lang) throws IOException {
+
+    private java.util.Map<String, String> ownReference(D2InstallPlan.Language lang) throws IOException {
         try (java.io.InputStream in = getAssets().open("checksums-113d-" + lang.locale + ".txt")) {
             return GameVersion.parseList(in);
         }
         catch (java.io.FileNotFoundException e) {
-            if (lang == D2InstallPlan.Language.EN_US) return GameLocator.reference(this);
-            throw new IOException("no reference list for " + lang.locale);
+            return lang == D2InstallPlan.Language.EN_US ? GameLocator.reference(this) : null;
         }
     }
 
@@ -894,11 +900,20 @@ public class D2InstallActivity extends D2Activity {
                 }
                 else {
                     for (String name : D2InstallCheck.VARYING) D2MpqAttributes.hide(new File(game, name));
-                    problem = D2InstallCheck.verify(game, finalReference());
 
-                    if (problem != null && D2InstallPlan.folderLanguage(game) == null) {
+                    if (ownReference(language) == null) {
+                        for (String name : GameLocator.reference(this).keySet()) {
+                            File archive = new File(game, name);
+                            if (D2InstallCheck.structural(name) && archive.isFile()) D2MpqAttributes.hide(archive);
+                        }
+                    }
+                    problem = finalCheck(game, language);
+
+
+                    if (problem != null && D2InstallPlan.folderLanguage(game) == null
+                        && (language == D2InstallPlan.Language.EN_US || language == D2InstallPlan.Language.DE_DE)) {
                         D2InstallPlan.Language other = language == D2InstallPlan.Language.EN_US ? D2InstallPlan.Language.DE_DE : D2InstallPlan.Language.EN_US;
-                        if (D2InstallCheck.verify(game, reference(other)) == null) {
+                        if (finalCheck(game, other) == null) {
                             language = other;
                             problem = null;
                         }
@@ -1241,7 +1256,7 @@ public class D2InstallActivity extends D2Activity {
         work(() -> {
             boolean ready;
             try {
-                D2InstallFetch.verifyProduct(D2InstallPlan.installerDir(download(), next), installerSums(), next.code, language.locale);
+                verifyInstallers(download(), next);
                 ready = true;
             }
             catch (IOException e) {
@@ -1260,10 +1275,42 @@ public class D2InstallActivity extends D2Activity {
     }
 
 
-    private java.util.Map<String, String> installerSums() throws IOException {
-        try (java.io.InputStream in = getAssets().open("install/installer-sha256-" + language.locale + ".txt")) {
-            return D2InstallFetch.parseChecksums(new String(com.winlator.core.StreamUtils.copyToByteArray(in),
-                java.nio.charset.StandardCharsets.UTF_8));
+
+
+
+
+    private void verifyInstallers(File download, D2InstallPlan.Product product) throws IOException {
+        File dir = D2InstallPlan.installerDir(download, product);
+        String sums = assetText("install/installer-sha256-" + language.locale + ".txt");
+        if (sums != null) {
+            D2InstallFetch.verifyProduct(dir, D2InstallFetch.parseChecksums(sums), product.code, language.locale);
+            D2Trace.log("install: " + product.code + " installers verified (sha256 " + language.locale + ")");
+            return;
+        }
+        String pins = assetText("install/installer-manifest-" + language.locale + ".txt");
+        if (pins == null) throw new D2InstallFetch.Refused("no installer reference for " + language.locale);
+        D2InstallManifest.verifyProduct(dir, downloaderFile(download, product), D2InstallManifest.parsePins(pins), product.code, language.locale);
+        D2Trace.log("install: " + product.code + " installers verified (manifest " + language.locale + ")");
+    }
+
+
+    private String assetText(String name) throws IOException {
+        try (java.io.InputStream in = getAssets().open(name)) {
+            return new String(com.winlator.core.StreamUtils.copyToByteArray(in), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        catch (java.io.FileNotFoundException e) {
+            return null;
+        }
+    }
+
+
+    private String languageName(D2InstallPlan.Language l) {
+        switch (l) {
+            case DE_DE: return getString(R.string.install_lang_de);
+            case FR_FR: return getString(R.string.install_lang_fr);
+            case ES_ES: return getString(R.string.install_lang_es);
+            case IT_IT: return getString(R.string.install_lang_it);
+            default: return getString(R.string.install_lang_en);
         }
     }
 
@@ -1364,17 +1411,12 @@ public class D2InstallActivity extends D2Activity {
         D2Trace.log("install: downloader " + product.code + " ended at " + percent + " %");
         closeScreen();
         File download = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        String list = "install/installer-sha256-" + language.locale + ".txt";
         int gen = generation;
         work(() -> {
             String error = null;
             try {
                 killGuests();
-                String text;
-                try (java.io.InputStream in = getAssets().open(list)) {
-                    text = new String(com.winlator.core.StreamUtils.copyToByteArray(in), java.nio.charset.StandardCharsets.UTF_8);
-                }
-                D2InstallFetch.verifyProduct(D2InstallPlan.installerDir(download, product), D2InstallFetch.parseChecksums(text), product.code, language.locale);
+                verifyInstallers(download, product);
             }
             catch (IOException e) {
                 error = e.getMessage();

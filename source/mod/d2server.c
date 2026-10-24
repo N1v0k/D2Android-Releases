@@ -32,6 +32,8 @@
 
 
 
+
+
 #define STAT_LIFE             6
 
 typedef int (__fastcall *PacketHandler_t)(void* game, void* unit, BYTE* packet, DWORD size);
@@ -70,6 +72,7 @@ typedef struct {
     volatile LONG seq;
     DWORD code;
     LONG arg, arg2;
+    LONG arg3, arg4;
     LONG answer, count;
 } SrvSlot;
 static SrvSlot srvQueue[SRV_QUEUE];
@@ -86,7 +89,7 @@ static SrvSlot* srvSlot(LONG seq) {
 }
 
 
-static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
+static LONG srvSubmitEx(DWORD code, LONG arg, LONG arg2, LONG arg3, LONG arg4) {
     SrvSlot* s = NULL;
     for (int i = 0; i < SRV_QUEUE && !s; i++) if (srvQueue[i].state == SRV_FREE) s = &srvQueue[i];
     if (!s) return 0;
@@ -96,6 +99,8 @@ static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
     s->code = code;
     s->arg = arg;
     s->arg2 = arg2;
+    s->arg3 = arg3;
+    s->arg4 = arg4;
     s->answer = s->count = 0;
     InterlockedExchange(&s->seq, seq);
     InterlockedExchange(&s->state, SRV_WAITING);
@@ -104,6 +109,10 @@ static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
     *(LONG*) (packet + 5) = seq;
     fSendPacket(9, 1, packet);
     return seq;
+}
+
+static LONG srvSubmit(DWORD code, LONG arg, LONG arg2) {
+    return srvSubmitEx(code, arg, arg2, 0, 0);
 }
 
 
@@ -255,11 +264,13 @@ static LONG srvEffects(void* game, void* unit) {
 
 
 
+
 #define SRV_CODE_WARP       0xA0D20121u
 #define SRV_CODE_PLACE      0xA0D20122u
 #define SRV_CODE_INVUL_ON   0xA0D20123u
 #define SRV_CODE_INVUL_OFF  0xA0D20124u
 #define SRV_CODE_DIFFICULTY 0xA0D20125u
+#define SRV_CODE_DIRECT     0xA0D20127u
 #define RVA_LevelWarpUnit   0x5DFC0
 #define RVA_PlaceUnit       0x6F3A0
 #define GAME_DIFFICULTY     0x6D
@@ -281,7 +292,7 @@ static DWORD srvCallWarp(DWORD fn, void* game, void* unit, DWORD level, DWORD ti
 }
 
 
-static const BYTE WAYPOINT_LEVELS[] = {1, 40, 75, 103, 109, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
+static const BYTE WAYPOINT_LEVELS[] = {1, 40, 75, 103, 109, 74, 46, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
     79, 80, 81, 83, 101, 106, 107, 111, 112, 113, 115, 117, 118, 129, 123};
 
 static int isWaypointLevel(DWORD level) {
@@ -293,12 +304,39 @@ static const BYTE warpStart[] = {0x83, 0xEC, 0x0C, 0x53, 0x55, 0x8B, 0x6C, 0x24,
 static const BYTE placeStart[] = {0x83, 0xEC, 0x2C, 0x53, 0x55, 0x8B, 0x6C, 0x24, 0x3C, 0x85, 0xED, 0x56, 0x57, 0x8B, 0xD8, 0x8B, 0xF1, 0x8B, 0xFA};
 
 
+
+
+
+
+
+
+#define ORD_StreamRoom      10501
+#define ORD_SrvGetLevel     10122
+#define ORD_SrvInitLevel    10736
+typedef void* (__stdcall *StreamRoom_t)(void*, DWORD, DWORD);
+typedef BYTE* (__stdcall *SrvGetLevel_t)(void*, DWORD);
+typedef void (__stdcall *SrvInitLevel_t)(void*);
+static const BYTE streamStart[] = {0x8B, 0x44, 0x24, 0x04, 0x85, 0xC0, 0x75, 0x1F, 0x68, 0x13, 0x03, 0x00, 0x00};
+static const BYTE srvGetLevelStart[] = {0x8B, 0x4C, 0x24, 0x04, 0x8B, 0x81, 0x7C, 0x04, 0x00, 0x00};
+static const BYTE srvInitLevelStart[] = {0x56, 0x8B, 0x74, 0x24, 0x08, 0x8B, 0x86, 0xB4, 0x01, 0x00, 0x00};
+
+
+static void* srvCommonFn(int ord, const BYTE* start, unsigned size) {
+    BYTE* fn = common ? (BYTE*) GetProcAddress((HMODULE) common, (LPCSTR) ord) : NULL;
+    return readable(fn, size) && memcmp(fn, start, size) == 0 ? fn : NULL;
+}
+
+
+
 static int resumeFunctionsKnown(void) {
     DWORD game = (DWORD) GetModuleHandleA("D2Game.dll");
     BYTE* warp = (BYTE*) (game + RVA_LevelWarpUnit);
     BYTE* place = (BYTE*) (game + RVA_PlaceUnit);
     return game && readable(warp, sizeof(warpStart)) && memcmp(warp, warpStart, sizeof(warpStart)) == 0
-        && readable(place, sizeof(placeStart)) && memcmp(place, placeStart, sizeof(placeStart)) == 0;
+        && readable(place, sizeof(placeStart)) && memcmp(place, placeStart, sizeof(placeStart)) == 0
+        && srvCommonFn(ORD_StreamRoom, streamStart, sizeof(streamStart))
+        && srvCommonFn(ORD_SrvGetLevel, srvGetLevelStart, sizeof(srvGetLevelStart))
+        && srvCommonFn(ORD_SrvInitLevel, srvInitLevelStart, sizeof(srvInitLevelStart));
 }
 
 
@@ -311,8 +349,9 @@ static LONG srvWarp(void* game, void* unit, LONG level, LONG maxFrame, LONG* fra
 
     *frame = (LONG) RD32(game, GAME_FRAME);
     if (maxFrame > 0 && (DWORD) *frame > (DWORD) maxFrame) return 4;
-    int town = level == 1 || level == 40 || level == 75 || level == 103 || level == 109;
-    srvCallWarp((DWORD) fn, game, unit, (DWORD) level, town ? 13 : 0);
+
+    int tile13 = level == 1 || level == 40 || level == 75 || level == 103 || level == 109 || level == 46 || level == 74;
+    srvCallWarp((DWORD) fn, game, unit, (DWORD) level, tile13 ? 13 : 0);
     return 1;
 }
 
@@ -341,6 +380,60 @@ static LONG srvPlace(void* game, void* unit, LONG x, LONG y) {
 }
 
 
+static DWORD srvCallPlaceIn(DWORD fn, void* game, void* unit, void* room, DWORD x, DWORD y) {
+    DWORD eax = y, ecx = x, edx = (DWORD) room;
+    __asm__ volatile ("push $0\n\tpush $0\n\tpush %%esi\n\tpush %%edi\n\tcall *%%ebx"
+                      : "+a"(eax), "+c"(ecx), "+d"(edx)
+                      : "D"(game), "S"(unit), "b"(fn)
+                      : "memory", "cc");
+    return eax;
+}
+
+
+
+
+
+
+
+
+
+static LONG srvDirect(void* game, void* unit, const SrvSlot* s, LONG* frame) {
+    BYTE* place = (BYTE*) (srvGame + RVA_PlaceUnit);
+    StreamRoom_t stream = (StreamRoom_t) srvCommonFn(ORD_StreamRoom, streamStart, sizeof(streamStart));
+    SrvGetLevel_t getLevel = (SrvGetLevel_t) srvCommonFn(ORD_SrvGetLevel, srvGetLevelStart, sizeof(srvGetLevelStart));
+    SrvInitLevel_t initLevel = (SrvInitLevel_t) srvCommonFn(ORD_SrvInitLevel, srvInitLevelStart, sizeof(srvInitLevelStart));
+    if (!readable(place, sizeof(placeStart)) || memcmp(place, placeStart, sizeof(placeStart)) != 0 || !stream || !getLevel
+        || !initLevel) return 3;
+    DWORD levelNo = (DWORD) s->arg & 0xFF, maxFrame = (DWORD) s->arg >> 8, here, first, end, firstHere, endHere;
+    long x = s->arg2 & 0xFFFF, y = ((DWORD) s->arg2 >> 16) & 0xFFFF;
+    long rx = s->arg3 & 0xFFFF, ry = ((DWORD) s->arg3 >> 16) & 0xFFFF, rw = s->arg4 & 0xFFFF, rh = ((DWORD) s->arg4 >> 16) & 0xFFFF;
+    if (!srvLivingPlayer(unit) || !readable(game, GAME_FRAME + 4) || !playerLevel(unit, &here) || isTown(levelNo)
+        || !actOf(levelNo, &first, &end) || !actOf(here, &firstHere, &endHere) || first != firstHere) return 2;
+    *frame = (LONG) RD32(game, GAME_FRAME);
+    if (maxFrame > 0 && (DWORD) *frame > maxFrame) return 4;
+    void* act = RDP(unit, U_ACT);
+    void* misc = readable(act, ACT_MISC + 4) ? RDP(act, ACT_MISC) : NULL;
+    BYTE* level = misc ? getLevel(misc, levelNo) : NULL;
+    if (!readable(level, LEVEL_NO + 4) || RD32(level, LEVEL_NO) != levelNo) return 2;
+    if (!RDP(level, LEVEL_ROOM2)) initLevel(level);
+
+    int same = 0, rooms = 0;
+    for (void* r2 = RDP(level, LEVEL_ROOM2); readable(r2, 0x60) && rooms < 4096; r2 = RDP(r2, ROOM2_NEXT), rooms++) {
+        long ox = (long) RD32(r2, ROOM2_X) * 5, oy = (long) RD32(r2, ROOM2_Y) * 5;
+        long w = (long) RD32(r2, ROOM2_W) * 5, h = (long) RD32(r2, ROOM2_H) * 5;
+        if (x < ox || y < oy || x >= ox + w || y >= oy + h) continue;
+        same = ox == rx && oy == ry && w == rw && h == rh;
+        break;
+    }
+    if (!same) return 5;
+    BYTE* room = stream(act, (DWORD) x / 5, (DWORD) y / 5);
+    void* room2 = readable(room, ROOM1_ROOM2 + 4) ? RDP(room, ROOM1_ROOM2) : NULL;
+    void* roomLevel = readable(room2, ROOM2_LEVEL + 4) ? RDP(room2, ROOM2_LEVEL) : NULL;
+    if (!readable(roomLevel, LEVEL_NO + 4) || RD32(roomLevel, LEVEL_NO) != levelNo) return 6;
+    return srvCallPlaceIn((DWORD) place, game, unit, room, (DWORD) x, (DWORD) y) ? 1 : 0;
+}
+
+
 static LONG srvInvulnerable(void* unit, int on, LONG* count) {
     if (!srvLivingPlayer(unit)) return 0;
     DWORD* flags = (DWORD*) ((BYTE*) unit + SU_FLAGS);
@@ -356,6 +449,11 @@ static LONG srvInvulnerable(void* unit, int on, LONG* count) {
 #define SRV_CODE_STASH_ALL      0xA0D20873u
 static LONG stashServer(DWORD code, LONG arg1, LONG arg2, void* game, void* unit, LONG* moved);
 
+#ifdef D2MOD_TESTCMDS
+#define SRV_CODE_DIRECT_TEST 0xA0D2F127u
+static LONG srvDirectTest(void* game, void* unit, LONG level, LONG xy, LONG* frame);
+#endif
+
 static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     switch (s->code) {
     case SRV_CODE_HEAL: return srvHeal(unit);
@@ -370,6 +468,10 @@ static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     case SRV_CODE_PLACE: return srvPlace(game, unit, s->arg, s->arg2);
     case SRV_CODE_INVUL_ON: return srvInvulnerable(unit, 1, &s->count);
     case SRV_CODE_INVUL_OFF: return srvInvulnerable(unit, 0, &s->count);
+    case SRV_CODE_DIRECT: return srvDirect(game, unit, s, &s->count);
+#ifdef D2MOD_TESTCMDS
+    case SRV_CODE_DIRECT_TEST: return srvDirectTest(game, unit, s->arg, s->arg2, &s->count);
+#endif
     default: return 0;
     }
 }
@@ -533,6 +635,33 @@ static void srvTestTwo(DWORD now) {
 }
 
 
+
+
+
+static LONG srvDirectTest(void* game, void* unit, LONG level, LONG xy, LONG* frame) {
+    SrvGetLevel_t getLevel = (SrvGetLevel_t) srvCommonFn(ORD_SrvGetLevel, srvGetLevelStart, sizeof(srvGetLevelStart));
+    SrvInitLevel_t initLevel = (SrvInitLevel_t) srvCommonFn(ORD_SrvInitLevel, srvInitLevelStart, sizeof(srvInitLevelStart));
+    void* act = srvLivingPlayer(unit) ? RDP(unit, U_ACT) : NULL;
+    void* misc = readable(act, ACT_MISC + 4) ? RDP(act, ACT_MISC) : NULL;
+    BYTE* lv = misc && getLevel && initLevel ? getLevel(misc, (DWORD) level) : NULL;
+    if (!readable(lv, LEVEL_NO + 4)) return 2;
+    if (!RDP(lv, LEVEL_ROOM2)) initLevel(lv);
+    long x = xy & 0xFFFF, y = ((DWORD) xy >> 16) & 0xFFFF;
+    int n = 0;
+    SrvSlot s = {0};
+    for (void* r2 = RDP(lv, LEVEL_ROOM2); readable(r2, 0x60) && n < 4096; r2 = RDP(r2, ROOM2_NEXT), n++) {
+        long ox = (long) RD32(r2, ROOM2_X) * 5, oy = (long) RD32(r2, ROOM2_Y) * 5;
+        long w = (long) RD32(r2, ROOM2_W) * 5, h = (long) RD32(r2, ROOM2_H) * 5;
+        if (x == 0 && n == y) x = ox + w / 2, y = oy + h / 2;
+        if (x > 0 && x >= ox && y >= oy && x < ox + w && y < oy + h && !s.arg4) s.arg3 = ox | oy << 16, s.arg4 = w | h << 16;
+    }
+    logLine("server direct test: level %ld, %d rooms, to %ld,%ld", (long) level, n, x, y);
+    s.arg = level;
+    s.arg2 = x | y << 16;
+    return srvDirect(game, unit, &s, frame);
+}
+
+
 static LONG srvProbeSeq;
 static DWORD srvProbeCode, srvProbeAt;
 
@@ -555,6 +684,7 @@ static void updateServerQueueTest(DWORD now) {
         static const DWORD codes[] = {0, SRV_CODE_DIFFICULTY, SRV_CODE_WARP, SRV_CODE_INVUL_ON, SRV_CODE_INVUL_OFF, SRV_CODE_PLACE};
         int op = srvProbeWanted & 0xFF;
         if (op == 5) srvProbe(SRV_CODE_PLACE, srvProbeX, srvProbeY, now);
+        else if (op == 8) srvProbe(SRV_CODE_DIRECT_TEST, (srvProbeWanted >> 8) & 0xFF, srvProbeX | srvProbeY << 16, now);
         else if (op >= 1 && op <= 4) srvProbe(codes[op], (srvProbeWanted >> 8) & 0xFF, 0, now);
         srvProbeWanted = 0;
     }

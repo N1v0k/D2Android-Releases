@@ -107,6 +107,103 @@ final class D2Sound {
     }
 
 
+
+
+    static final String[] SFX_ARCHIVES = {"patch_d2.mpq", "d2exp.mpq", "d2sfx.mpq"};
+
+    private static final long LATE_MS = 1000;
+
+    private static SoundPool sfxPool;
+    private static final java.util.Map<String, Integer> sfxIds = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, String> sfxLoading = new java.util.HashMap<>();
+    private static final java.util.Set<String> sfxStarted = new java.util.HashSet<>();
+    private static final java.util.Map<String, Long> sfxWanted = new java.util.HashMap<>();
+
+
+
+
+
+
+    static synchronized void play(Context context, String file) {
+        if (file == null || !D2Settings.sound(context)) return;
+        Integer id = sfxIds.get(file);
+        if (id != null) {
+            sfxPool.play(id, 1f, 1f, 1, 0, 1f);
+            return;
+        }
+        sfxWanted.put(file, android.os.SystemClock.uptimeMillis());
+        if (!sfxStarted.add(file)) return;
+        final Context app = context.getApplicationContext();
+        if (sfxPool == null) {
+            sfxPool = new SoundPool.Builder().setMaxStreams(4).setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build();
+            sfxPool.setOnLoadCompleteListener((p, sample, status) -> {
+                synchronized (D2Sound.class) {
+                    String f = sfxLoading.remove(sample);
+                    if (f == null) return;
+                    Long wanted = sfxWanted.remove(f);
+                    if (status != 0) {
+                        sfxStarted.remove(f);
+                        new File(app.getCacheDir(), sfxCache(f)).delete();
+                        return;
+                    }
+                    sfxIds.put(f, sample);
+                    if (wanted != null && android.os.SystemClock.uptimeMillis() - wanted <= LATE_MS) p.play(sample, 1f, 1f, 1, 0, 1f);
+                }
+            });
+        }
+        new Thread(() -> loadSfx(app, file), "GameSound").start();
+    }
+
+    private static void loadSfx(Context app, String file) {
+        File cached = new File(app.getCacheDir(), sfxCache(file));
+        try {
+            if (!cached.isFile() || cached.length() == 0) {
+                byte[] wav = null;
+                for (String archive : SFX_ARCHIVES) {
+                    wav = read(GameLocator.gameDir(app), archive, "data\\global\\sfx\\" + file);
+                    if (wav != null) break;
+                }
+                if (wav == null) {
+                    D2Trace.log("game sound " + file + " not loaded: not in the archives");
+                    failed(file);
+                    return;
+                }
+                File part = new File(app.getCacheDir(), sfxCache(file) + ".part");
+                try (FileOutputStream out = new FileOutputStream(part)) {
+                    out.write(wav);
+                }
+                if (!part.renameTo(cached)) throw new IOException("cache not renamed");
+            }
+            synchronized (D2Sound.class) {
+                int id = sfxPool.load(cached.getPath(), 1);
+                if (id == 0) {
+                    cached.delete();
+                    D2Trace.log("game sound " + file + " not loaded: SoundPool refused it");
+                    failed(file);
+                    return;
+                }
+                sfxLoading.put(id, file);
+            }
+        }
+        catch (Throwable e) {
+            D2Trace.log("game sound " + file + " not loaded: " + e);
+            failed(file);
+        }
+    }
+
+
+    private static synchronized void failed(String file) {
+        sfxStarted.remove(file);
+        sfxWanted.remove(file);
+    }
+
+
+    static String sfxCache(String file) {
+        return "d2-sfx-" + file.replace('\\', '-').replace('/', '-');
+    }
+
+
     static byte[] read(File gameDir, String archive, String name) throws IOException {
         if (gameDir == null) return null;
         File[] files = gameDir.listFiles();

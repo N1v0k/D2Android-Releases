@@ -15,8 +15,51 @@ import java.util.Set;
 
 
 
+
+
+
+
+
+
+
 final class D2UsedObjects {
+
+    static final long USED_OBJECT_MS = 3000;
+
+    static final long FAILED_TRY_MS = 4000;
+
+    static final long NONE = -1;
+
     private final Map<Long, Long> until = new HashMap<>();
+
+
+
+
+
+    static long untilAfterTry(int kind, boolean stillThere, long now) {
+        if (kind == D2ModState.OBJECT_SHRINE) return now + USED_OBJECT_MS;
+        if (kind == D2ModState.OBJECT_CHEST && stillThere) return now + FAILED_TRY_MS;
+        return NONE;
+    }
+
+
+
+
+
+
+    static boolean isReported(D2ModState s, int unitType, long id) {
+        if (s == null) return false;
+        if (unitType == D2ModState.UNIT_ITEM) {
+            for (D2ModState.Thing item : s.items) if (item.id == id) return true;
+            return false;
+        }
+        if (unitType == D2ModState.UNIT_MONSTER) {
+            for (D2ModState.Monster monster : s.monsters) if (monster.id == id) return true;
+            return false;
+        }
+        for (D2ModState.Thing object : s.objects) if (object.id == id && unitType(object.kind) == unitType) return true;
+        return false;
+    }
 
 
     static int unitType(int kind) {

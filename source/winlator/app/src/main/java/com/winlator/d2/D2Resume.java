@@ -31,8 +31,15 @@ public final class D2Resume {
     }
 
 
-    static final int[] WAYPOINT_LEVELS = {1, 40, 75, 103, 109, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
+    static final int[] WAYPOINT_LEVELS = {1, 40, 75, 103, 109, 74, 46, 3, 4, 5, 6, 27, 29, 32, 35, 48, 42, 57, 43, 44, 52, 76, 77, 78,
         79, 80, 81, 83, 101, 106, 107, 111, 112, 113, 115, 117, 118, 129, 123};
+
+    static final int LAST_LEVEL = 136;
+
+
+
+
+    static final int[] NOT_HARDCORE = {};
     static final long CONFIRM_MS = 5000;
 
 
@@ -108,6 +115,24 @@ public final class D2Resume {
     static boolean hasWaypoint(int level) {
         for (int l : WAYPOINT_LEVELS) if (l == level) return true;
         return false;
+    }
+
+    private static boolean in(int[] levels, int level) {
+        for (int l : levels) if (l == level) return true;
+        return false;
+    }
+
+
+
+
+
+
+
+    public static boolean levelAllowed(int level, boolean direct, Boolean hardcore) {
+        if (level <= 0 || level > LAST_LEVEL || isTown(level)) return false;
+        boolean hc = hardcore == null || hardcore;
+        if (hc && in(NOT_HARDCORE, level)) return false;
+        return direct || hasWaypoint(level);
     }
 
 
@@ -220,6 +245,15 @@ public final class D2Resume {
 
     public Why decide(boolean on, boolean singlePlayer, boolean idle, String folder, String name, D2ResumeState s,
                       long fileSize, long fileTime) {
+        return decide(on, singlePlayer, idle, folder, name, s, fileSize, fileTime, Boolean.FALSE);
+    }
+
+
+
+
+
+    public Why decide(boolean on, boolean singlePlayer, boolean idle, String folder, String name, D2ResumeState s,
+                      long fileSize, long fileTime, Boolean hardcore) {
         entry = null;
         if (!on) return Why.OFF;
         if (!singlePlayer) return Why.NOT_SINGLE_PLAYER;
@@ -230,7 +264,7 @@ public final class D2Resume {
         if (e == null) return Why.NO_ENTRY;
         if (e.size != fileSize || e.time != fileTime) return Why.SAVE_CHANGED;
         if (e.seed != s.seed) return Why.OTHER_MAP;
-        if (!hasWaypoint(e.level) || isTown(e.level)) return Why.LEVEL;
+        if (!levelAllowed(e.level, s.direct, hardcore)) return Why.LEVEL;
         entry = e;
         return Why.OK;
     }
@@ -241,9 +275,14 @@ public final class D2Resume {
 
 
     public Entry stored(boolean on, String folder, String name, int difficulty, long fileSize, long fileTime) {
+        return stored(on, folder, name, difficulty, fileSize, fileTime, Boolean.FALSE);
+    }
+
+
+    public Entry stored(boolean on, String folder, String name, int difficulty, long fileSize, long fileTime, Boolean hardcore) {
         if (!on || folder == null || name == null) return null;
         Entry e = Entry.fromJson(store.get(key(folder, name, difficulty)));
-        if (e == null || e.size != fileSize || e.time != fileTime || !hasWaypoint(e.level) || isTown(e.level)) return null;
+        if (e == null || e.size != fileSize || e.time != fileTime || !levelAllowed(e.level, true, hardcore)) return null;
         return e;
     }
 

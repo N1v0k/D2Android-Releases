@@ -44,6 +44,7 @@ final class D2ResumeArea {
             @Override public void put(String key, String value) { }
             @Override public void remove(String key) { }
         });
-        return resume.stored(true, folder, character.name, difficulty, save.length(), save.lastModified());
+        return resume.stored(true, folder, character.name, difficulty, save.length(), save.lastModified(),
+            (character.status & 4) != 0);
     }
 }

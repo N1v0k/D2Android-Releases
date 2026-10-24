@@ -30,7 +30,10 @@ static void note(const char *what, long value) {
 }
 
 
-static const char *GO[] = {"Agree", "I Agree", "OK", "Install", "Ja", "Zustimmen", "Installieren", NULL};
+
+
+static const char *GO[] = {"Agree", "I Agree", "OK", "Install", "Ja", "Zustimmen", "Installieren",
+                           "J'accepte", "Installer", "Aceptar", "Instalar", "S\xec", "Installa", NULL};
 static int isGoButton(const char *txt) {
     char plain[256]; int n = 0;
     for (const char *p = txt; *p && n < 255; p++) if (*p != '&') plain[n++] = *p;
@@ -39,8 +42,14 @@ static int isGoButton(const char *txt) {
     return 0;
 }
 
+
+
+
 static int wrongKeyText(const char *txt) {
-    return strstr(txt, "not correct") || strstr(txt, "invalid") || strstr(txt, "nicht korrekt") || strstr(txt, "ung\xfcltig");
+    return strstr(txt, "not correct") || strstr(txt, "invalid") || strstr(txt, "nicht korrekt") || strstr(txt, "ung\xfcltig")
+        || strstr(txt, "pas correctes") || strstr(txt, "est incorrecte")
+        || strstr(txt, "no es correcta") || (strstr(txt, "clave") && strstr(txt, "no es v\xe1lida"))
+        || strstr(txt, "non sono corrette") || (strstr(txt, "chiave") && strstr(txt, "non \xe8 valida"));
 }
 static BOOL CALLBACK child(HWND w, LPARAM l) {
     char cls[64], txt[256];

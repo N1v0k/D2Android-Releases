@@ -37,6 +37,28 @@ final class WineFinger implements Finger {
 
     boolean ohneDurchgaenge;
 
+
+
+
+
+    boolean modAuftrag(String was) {
+        String[] w = was.split(" ");
+        if (w.length != 2) return false;
+        try {
+            long n = Long.parseLong(w[1]);
+            if (w[0].equals("npc") && n >= 0 && n < 16) {
+                send(cmd(8, 0, 0).put((byte) n));
+                return true;
+            }
+            if (w[0].equals("reparieren") && n > 0) {
+                send(cmd(29, 0, 0).put(new byte[8]).putInt((int) n));
+                return true;
+            }
+        }
+        catch (NumberFormatException ignored) {}
+        return false;
+    }
+
     private final DatagramSocket socket;
     private final InetAddress local;
     private final Fahrer.Protokoll protokoll;
@@ -429,6 +451,7 @@ final class WineFinger implements Finger {
             if (ohneDurchgaenge && (d.art == OBJECT_PORTAL || d.art == OBJECT_ENTRANCE)) continue;
 
             if (d.art != OBJECT_ENTRANCE && d.art != OBJECT_CORPSE && left.contains(d.id)) continue;
+            if (Objektwahl.nehmenNie(d.art, d.extra, z.objektDetails.get(d.id))) continue;
             int type = d.art == OBJECT_ENTRANCE ? UNIT_TILE : d.art == OBJECT_CORPSE ? UNIT_PLAYER : UNIT_OBJECT;
 
             if (s <= range) list.add(new Object[]{d.art == OBJECT_CORPSE ? -1.0 : s, type, d.id, d.art});
@@ -445,7 +468,7 @@ final class WineFinger implements Finger {
         Object[] best = list.get(0);
         protokoll.event("wine", "Nehmen: Einheit Typ " + best[1] + " ID " + best[2]);
 
-        genutzt.begonnen((Long) best[2], best.length > 3 ? (Integer) best[3] : -1, joyRichtung, now);
+        genutzt.begonnen((Long) best[2], (Integer) best[1], best.length > 3 ? (Integer) best[3] : -1, joyRichtung, now);
 
         send(cmd(15, 0, 0).put((byte) (int) (Integer) best[1]).put((byte) 0).put((byte) 0).put((byte) 0).putInt((int) (long) (Long) best[2]));
     }

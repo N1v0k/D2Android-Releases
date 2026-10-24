@@ -23,7 +23,9 @@ public final class Rueckzug {
 
     public enum Grund {
         KEIN_PORTAL, NUR_AKT_1_2, ZU_OFT, NICHT_GESTARTET, STADT_OHNE_PORTAL, STADT_VERLASSEN_OHNE_PORTAL, FALSCHE_STADT,
-        GEBIET_VERLASSEN, NICHT_GEHEILT, STADTGANG_ABGEBROCHEN, NICHT_AM_PORTAL
+        GEBIET_VERLASSEN, NICHT_GEHEILT, STADTGANG_ABGEBROCHEN, NICHT_AM_PORTAL,
+
+        KAPUTT
     }
 
 
@@ -39,6 +41,7 @@ public final class Rueckzug {
             case GEBIET_VERLASSEN: return "Gebiet verlassen";
             case NICHT_GEHEILT: return "Heilen hat nicht gewirkt";
             case STADTGANG_ABGEBROCHEN: return "Stadtgang abgebrochen";
+            case KAPUTT: return "Teil kaputt, Reparieren ging nicht";
             default: return "nicht am eigenen Portal zurück";
         }
     }
@@ -62,6 +65,17 @@ public final class Rueckzug {
     public Rueckzug() {
         stadtgang.mitTruhe = false;
         stadtgang.alleMs = 0;
+        stadtgang.mitSchmied = true;
+    }
+
+
+
+
+
+    public static boolean reparaturFaellig(Zustand z) {
+        if (z.stadt || !z.rot()) return false;
+        for (Zustand.Ding d : z.feinde()) if (z.bodenAbstand(d) < 600) return false;
+        return true;
     }
 
     public boolean aktiv() {
@@ -170,6 +184,11 @@ public final class Rueckzug {
         }
         else {
             if (z.gebiet != startGebiet) return ende(Ergebnis.ENDE_DRAUSSEN, Grund.GEBIET_VERLASSEN, " (" + z.gebiet + ")");
+        }
+
+
+        if (stadtJetzt && stadtgang.schritt() == Stadtgang.Schritt.ZUM_PORTAL && z.rot()) {
+            return ende(Ergebnis.ENDE_STADT, Grund.KAPUTT, " (" + stadtgang.reparatur + ")");
         }
 
         if (stadtJetzt && stadtgang.schritt() == Stadtgang.Schritt.ZUM_PORTAL && z.lebenMax > 0 && z.lebenPct < GEHEILT_PCT) {

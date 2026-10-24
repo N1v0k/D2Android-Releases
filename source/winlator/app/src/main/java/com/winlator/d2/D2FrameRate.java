@@ -14,6 +14,11 @@ public final class D2FrameRate {
 
 
 
+    public static final int DEFAULT = 120;
+
+
+
+
 
     public static final int[] STEPS = {UNLIMITED, 144, 120, 90, 60, 40, 30};
 
@@ -40,6 +45,17 @@ public final class D2FrameRate {
     public static int effective(int stored, float[] rates) {
         int fps = normalize(stored);
         return offered(fps, rates) ? fps : UNLIMITED;
+    }
+
+
+
+
+
+
+    public static int resolve(boolean chosen, int stored, float[] rates) {
+        if (chosen) return effective(stored, rates);
+        for (int step : STEPS) if (step != UNLIMITED && step <= DEFAULT && offered(step, rates)) return step;
+        return 60;
     }
 
 

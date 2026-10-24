@@ -17,7 +17,7 @@ public final class D2Materials {
     public static final int CAP_POSSIBLE = 1, CAP_SINGLE = 2, CAP_OPEN = 4, CAP_LOCKED = 8;
 
     public static final int RESULT_NONE = 0, RESULT_OK = 1, RESULT_FULL = 2, RESULT_NOT_ALLOWED = 3, RESULT_LOCKED = 4,
-        RESULT_BUSY = 5;
+        RESULT_BUSY = 5, RESULT_CURSOR = 7;
 
     public static final int SAVE_NONE = 0, SAVE_OK = 1, SAVE_NOT_SAVED = 2, SAVE_NOT_CONFIRMED = 3;
 
@@ -59,6 +59,53 @@ public final class D2Materials {
 
     public static String code(int kind) {
         return kind >= 0 && kind < KINDS ? CODES[kind] : null;
+    }
+
+
+
+
+
+    public static String sound(int kind) {
+        if (kind < 0 || kind >= KINDS) return null;
+        return kind < RUNES ? "item\\rune.wav" : kind < SKULLS_FIRST ? "item\\gem.wav" : "item\\skull.wav";
+    }
+
+
+
+
+
+    public static final int SYMBOL_RUNE = 0, SYMBOL_GEM = SKULLS_FIRST - 1;
+
+
+
+
+    static final int[] SYMBOL_RUNE_BOX = {-5, -3, 17}, SYMBOL_GEM_BOX = {5, 4, 17};
+
+    static final int[] SYMBOL_ALONE_BOX = {0, 0, 24};
+
+
+
+
+
+    public static int[][] symbol(boolean rune, boolean gem) {
+        if (rune && gem) return new int[][]{box(SYMBOL_RUNE, SYMBOL_RUNE_BOX), box(SYMBOL_GEM, SYMBOL_GEM_BOX)};
+        if (rune) return new int[][]{box(SYMBOL_RUNE, SYMBOL_ALONE_BOX)};
+        if (gem) return new int[][]{box(SYMBOL_GEM, SYMBOL_ALONE_BOX)};
+        return new int[0][];
+    }
+
+    private static int[] box(int kind, int[] b) {
+        return new int[]{kind, b[0], b[1], b[2]};
+    }
+
+
+
+
+
+    public static int soundKind(int order, int arg, Snapshot s) {
+        if (order == ORDER_WITHDRAW) return arg >= 0 && arg < KINDS ? arg : -1;
+        if (order == ORDER_DEPOSIT_ALL && s != null) for (int k = 0; k < KINDS; k++) if (s.inventory[k] > 0) return k;
+        return -1;
     }
 
 
@@ -327,7 +374,7 @@ public final class D2Materials {
 
     public static final int NOTE_NONE = 0, NOTE_INVENTORY_FULL = 1, NOTE_STASH_FULL = 2, NOTE_NOT_NOW = 3,
         NOTE_BUSY = 4, NOTE_LOCKED_BROKEN = 5, NOTE_LOCKED_UNSAVED = 6, NOTE_LOCKED_UNREADABLE = 7, NOTE_LOCKED = 8,
-        NOTE_NOT_SAVED = 9, NOTE_NOT_CONFIRMED = 10, NOTE_LOCKED_VERSION = 11;
+        NOTE_NOT_SAVED = 9, NOTE_NOT_CONFIRMED = 10, NOTE_LOCKED_VERSION = 11, NOTE_CURSOR = 12;
 
 
     public static int resultNote(int order, int result, int why) {
@@ -336,6 +383,7 @@ public final class D2Materials {
             case RESULT_NOT_ALLOWED: return NOTE_NOT_NOW;
             case RESULT_LOCKED: return lockNote(why);
             case RESULT_BUSY: return NOTE_BUSY;
+            case RESULT_CURSOR: return NOTE_CURSOR;
             default: return NOTE_NONE;
         }
     }
@@ -386,6 +434,26 @@ public final class D2Materials {
                 return;
             }
             waiting.addLast(new int[]{order, arg, count});
+        }
+
+
+
+
+
+        public int add(int order, int arg, int count, boolean cursorTaken) {
+            if (cursorTaken) return NOTE_CURSOR;
+            add(order, arg, count);
+            return NOTE_NONE;
+        }
+
+
+
+
+
+        public boolean dropForCursor(boolean cursorTaken) {
+            if (!cursorTaken || waiting.isEmpty()) return false;
+            waiting.clear();
+            return true;
         }
 
         public boolean hasWaiting() {

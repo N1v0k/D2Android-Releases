@@ -6,9 +6,19 @@ package com.winlator.d2;
 
 
 
+
+
+
 final class D2StartLayout {
     final int width, height;
     final float u;
+
+    final float left, right;
+
+
+
+
+    static final float MIN_HEIGHT_UNITS = 500 + 214 + 620;
 
     final float scale, cutX;
 
@@ -33,7 +43,9 @@ final class D2StartLayout {
     D2StartLayout(int width, int height) {
         this.width = width;
         this.height = height;
-        u = width / 900f;
+        u = Math.min(width / 900f, height / MIN_HEIGHT_UNITS);
+        left = (width - 900 * u) / 2;
+        right = left + 900 * u;
         scale = 1.95f * u;
         cutX = (D2StartArt.SCREEN_W - width / scale) / 2;
         backdropHeight = (int) Math.ceil(height / scale) + 1;
@@ -53,17 +65,17 @@ final class D2StartLayout {
         buttonsTop = listBottom + 58 * u;
         rowHeight = 214 * u;
         cardHeight = 200 * u;
-        cardLeft = 30 * u;
-        cardRight = width - 62 * u;
-        figureX = 105 * u;
-        textX = 200 * u;
-        whenRight = width - 82 * u;
+        cardLeft = left + 30 * u;
+        cardRight = right - 62 * u;
+        figureX = left + 105 * u;
+        textX = left + 200 * u;
+        whenRight = right - 82 * u;
         textScale = 2 * u;
         statusScale = 2.4f * u;
         statusBandTop = 446 * u;
         statusBandBottom = listTop - 3 * u;
         smallScale = 1 * u;
-        scrollX = width - 40 * u;
+        scrollX = right - 40 * u;
     }
 
 
@@ -86,7 +98,7 @@ final class D2StartLayout {
 
 
     Status status(D2GameFont font, String text) {
-        float step = font.height * 0.9f, band = statusBandBottom - statusBandTop, room = width - 60 * u;
+        float step = font.height * 0.9f, band = statusBandBottom - statusBandTop, room = right - left - 60 * u;
         float k = statusScale;
         while (true) {
             java.util.List<String> lines = font.wrap(text, room / k);

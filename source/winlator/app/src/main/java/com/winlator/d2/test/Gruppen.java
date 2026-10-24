@@ -17,7 +17,7 @@ import java.util.Set;
 
 public final class Gruppen {
 
-    public static final int CHAMPION = 1, BOSS = 2, DIENER = 4, SUPERUNIQUE = 8;
+    public static final int CHAMPION = 1, BOSS = 2, DIENER = 4, SUPERUNIQUE = 8, AKTBOSS = Zustand.MONSTER_AKTBOSS;
     static final double ABSTAND = 160, STARK_AB = 6;
 
     public static final class Gruppe {
@@ -50,7 +50,7 @@ public final class Gruppen {
         public String text() {
             String s = "Gruppe " + anzahl() + ", Stärke " + String.format(Locale.GERMAN, "%.1f", staerke);
             if (!stark()) return s;
-            return s + ", stark" + (art == SUPERUNIQUE ? " (Superunique)" : art == BOSS ? " (Boss)" : art == CHAMPION ? " (Champion)" : "");
+            return s + ", stark" + (art == AKTBOSS ? " (Akt-Boss)" : art == SUPERUNIQUE ? " (Superunique)" : art == BOSS ? " (Boss)" : art == CHAMPION ? " (Champion)" : "");
         }
     }
 
@@ -59,7 +59,7 @@ public final class Gruppen {
 
     static double gewicht(int flags) {
         if ((flags & SUPERUNIQUE) != 0) return 8;
-        if ((flags & BOSS) != 0) return 6;
+        if ((flags & (BOSS | AKTBOSS)) != 0) return 6;
         if ((flags & CHAMPION) != 0) return 3;
         if ((flags & DIENER) != 0) return 1.5;
         return 1;
@@ -67,6 +67,7 @@ public final class Gruppen {
 
 
     private static int art(int flags) {
+        if ((flags & AKTBOSS) != 0) return AKTBOSS;
         if ((flags & SUPERUNIQUE) != 0) return SUPERUNIQUE;
         if ((flags & BOSS) != 0) return BOSS;
         if ((flags & CHAMPION) != 0) return CHAMPION;
@@ -74,7 +75,7 @@ public final class Gruppen {
     }
 
     private static int rang(int art) {
-        return art == SUPERUNIQUE ? 3 : art == BOSS ? 2 : art == CHAMPION ? 1 : 0;
+        return art == AKTBOSS ? 4 : art == SUPERUNIQUE ? 3 : art == BOSS ? 2 : art == CHAMPION ? 1 : 0;
     }
 
 

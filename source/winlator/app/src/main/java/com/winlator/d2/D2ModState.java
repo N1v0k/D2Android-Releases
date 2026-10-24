@@ -44,6 +44,7 @@ public final class D2ModState {
 
         OBJECT_CORPSE = 7;
 
+
     public static final int MONSTER_CHAMPION = 1, MONSTER_UNIQUE = 2, MONSTER_MINION = 4, MONSTER_SUPERUNIQUE = 8, MONSTER_TOWN_NPC = 16;
 
     public static final class Monster {

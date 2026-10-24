@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -102,6 +103,8 @@ public final class Spieltester {
     private com.winlator.d2.D2Tabellen tabellen;
     private final Anlegen anlegen = new Anlegen();
     private final Set<Long> lebendGesehen = new HashSet<>(), getoetet = new HashSet<>();
+
+    private final Map<Long, String> aktBosse = new LinkedHashMap<>();
     private final Map<Integer, Long> zeitInGebiet = new HashMap<>();
     private final long start = SystemClock.uptimeMillis();
     private final String startZeit;
@@ -184,6 +187,8 @@ public final class Spieltester {
             @Override public boolean leerenBeenden(String grund, boolean pause, Zustand.Layout l) throws InterruptedException {
                 return Spieltester.this.leerenBeenden(grund, pause, l);
             }
+
+            @Override public boolean modAuftrag(String was) { return wine != null && wine.modAuftrag(was); }
         });
         if (wine != null) gehirn.kampfwahl.tabelle(wineFertigkeiten(System.getProperty("d2t.spiel")));
         if (wine != null) wine.fertigkeiten = gehirn.kampfwahl.tabelle();
@@ -254,6 +259,8 @@ public final class Spieltester {
             else if (args[i].equals("--build") && i + 1 < args.length) build = args[++i];
             else if (args[i].equals("--stadtgang-alle") && i + 1 < args.length) stadtgangAlle = Long.parseLong(args[++i]) * 60_000L;
             else if (args[i].equals("--leeren")) leeren = true;
+            else if (args[i].equals("--jagd")) Jagd.an = true;
+            else if (args[i].equals("--ohne-jagd")) Jagd.an = false;
             else if (args[i].equals("--wegpunkt") && i + 1 < args.length) wegpunkt = Integer.parseInt(args[++i]);
             else if (args[i].equals("--rueckzug") && i + 1 < args.length) rueckzug = Integer.parseInt(args[++i]);
             else if (args[i].equals("--quest") && i + 1 < args.length) quest = Integer.parseInt(args[++i]);
@@ -475,11 +482,18 @@ public final class Spieltester {
     private int buildStufe = -1;
 
 
+    private Jagd jagd;
+
+    private Objekte objekte;
+
+
     private void wieIdle(int rueckzug) {
         ll.leeren = true;
         ll.rueckzugPct = rueckzug;
         gehirn.gebietLeeren = true;
         gehirn.trinkenPct = Gehirn.trinkSchwelle(rueckzug);
+        if (objekte == null) gehirn.zwischenziele.add(objekte = new Objekte(gehirn));
+        if (jagd == null) gehirn.zwischenziele.add(jagd = new Jagd(gehirn));
         fahrer.verhalten.todWeiter = false;
         fahrer.verhalten.pauseBeenden = false;
         fahrer.verhalten.fensterSchliessen = false;
@@ -865,9 +879,18 @@ public final class Spieltester {
             letztesGebiet = z.gebiet;
         }
         if (inStadtSeit < 0 && z.stadt) inStadtSeit = now;
-        for (Zustand.Ding d : z.feinde()) lebendGesehen.add(d.id);
+        for (Zustand.Ding d : z.feinde()) {
+            lebendGesehen.add(d.id);
+            if (Zustand.aktBoss(d) && !aktBosse.containsKey(d.id)) {
+                aktBosse.put(d.id, d.name);
+                event("aktboss", "gesehen: " + d.name + " (Monster " + d.id + ", Gebiet " + z.gebiet + ")");
+            }
+        }
         for (Zustand.Ding d : z.leichen) {
-            if (lebendGesehen.contains(d.id) && getoetet.add(d.id)) event("kill", "Monster " + d.id);
+            if (lebendGesehen.contains(d.id) && getoetet.add(d.id)) {
+                event("kill", "Monster " + d.id);
+                if (aktBosse.containsKey(d.id)) event("aktboss", "getötet: " + aktBosse.get(d.id) + " (Monster " + d.id + ")");
+            }
         }
     }
 
@@ -972,11 +995,23 @@ public final class Spieltester {
         if (ll.leeren) b.append("- Gebiet leeren an der Grenze: Rückzüge von der Grenze ").append(gehirn.grenzRueckzuege)
             .append(", Monster im Ausgangsbereich übergangen ").append(gehirn.jenseitsUebergangen).append(", Blöcke ")
             .append(gehirn.abdeckungText(SystemClock.uptimeMillis())).append(", Wege ohne Ziel ").append(gehirn.wegeOhne).append("\n");
+
+        Stadtgang sg = ll.rueckzug.stadtgang;
+        if (ll.leeren && ll.rueckzug.anzahl() > 0) b.append("- Rückzüge ").append(ll.rueckzug.anzahl()).append(", Reparaturen ")
+            .append(sg.reparaturen).append(sg.reparatur.isEmpty() ? "" : " (zuletzt: " + sg.reparatur + ")").append("\n");
         b.append("- Wächter: Joystick ohne Wirkung ").append(waechter.joystickOhneWirkung).append(", Angriff ohne Wirkung ")
             .append(waechter.angriffOhneWirkung).append("\n");
         b.append("- Leben zuletzt: ").append(z == null ? "–" : z.leben + "/" + z.lebenMax).append(" · Heiltränke im Gürtel ")
             .append(z == null ? "–" : String.valueOf(z.heilGuertel)).append("\n");
         b.append("- Kills (Leichen zuvor lebend gesehener Monster): ").append(getoetet.size()).append(" · Tode: ").append(waechter.tode).append("\n");
+        if (!aktBosse.isEmpty()) {
+            b.append("- Akt-Bosse:");
+            for (Map.Entry<Long, String> e : aktBosse.entrySet()) {
+                b.append(' ').append(e.getValue()).append(getoetet.contains(e.getKey()) ? " getötet" : " gesehen").append(';');
+            }
+            b.setLength(b.length() - 1);
+            b.append("\n");
+        }
         if (wegpunkte.kursZiel > 0) b.append("- Wegpunkte: Ziel Gebiet ").append(wegpunkte.kursZiel).append(", Phase ")
             .append(wegpunkte.kursPhase).append("/3, aktiviert ").append(wegpunkte.aktiviert).append(", Reisen ").append(wegpunkte.reisen)
             .append(", abgebrochen ").append(wegpunkte.abbrueche)
@@ -1016,7 +1051,7 @@ public final class Spieltester {
             b.append("- Gebiet leeren (wie Idle, --leeren): ").append(ll.leerenGebiet < 0 ? "nicht aktiv geworden" : gebietName(ll.leerenGebiet))
                 .append(" · aktiv ").append(aktiv / 60000).append(" min ").append(aktiv / 1000 % 60).append(" s · Kills ").append(kills)
                 .append(String.format(Locale.ROOT, " (%.1f/min)", aktiv > 0 ? kills * 60000.0 / aktiv : 0))
-                .append(ll.messung.text(aktiv, kills, gehirn.hindernisse))
+                .append(ll.messung.text(aktiv, kills, gehirn.hindernisse)).append(jagd != null ? jagd.text() : " · ohne Jagd").append(objekte != null ? objekte.text() : "")
                 .append(" · Rückzug unter ").append(ll.rueckzugPct).append(" % · Ende: ").append(!leerenEnde.isEmpty() ? leerenEnde : fertig ? "Zeit um bzw. Stopp" : "läuft").append("\n");
         }
         if (auftrag != null) b.append("- Auftrag: ").append(auftrag.text).append(" → ").append(auftrag.status()).append("\n");
@@ -1066,7 +1101,10 @@ public final class Spieltester {
             layout = Zustand.Layout.parse(o);
             if (wine != null) wine.layout(layout);
         }
-        else if (t.equals("figur")) figur = Zustand.Figur.parse(o);
+        else if (t.equals("figur")) {
+            figur = Zustand.Figur.parse(o);
+            if (objekte != null) objekte.schluessel = Objekte.hatSchluessel(figur);
+        }
         else if (t.equals("quest")) {
 
             JSONArray w = o.optJSONArray("woerter");

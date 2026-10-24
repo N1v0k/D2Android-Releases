@@ -76,6 +76,8 @@ public final class D2ModItems {
 
     public final boolean shopPossible;
 
+    public final boolean sellPossible;
+
     public final D2PotionShop.Job shopJob;
 
     public final int shopWares;
@@ -106,6 +108,7 @@ public final class D2ModItems {
         newLootVisible = (flags & 8) != 0;
         takePossible = (flags & 16) != 0;
         shopPossible = (flags & 32) != 0;
+        sellPossible = (flags & 64) != 0;
         beltMoves = u8(b);
         beltRows = u8(b);
         for (int k = 0; k < 3; k++) {

@@ -33,6 +33,10 @@ final class D2MaterialsWindow {
         void cancel(Runnable r);
 
         boolean sorting();
+
+        void sound(String file);
+
+        boolean cursorTaken();
     }
 
     static final long LONG_PRESS_MS = 400;
@@ -41,6 +45,8 @@ final class D2MaterialsWindow {
     private final D2Materials.Orders orders = new D2Materials.Orders();
     private boolean open, backupRunning;
     private int tab = D2Materials.TAB_RUNES, selected = -1, choiceKind = -1;
+
+    private int soundKind = -1;
 
     private boolean entryDown, closingTap, longFired, outOfCell, pressing;
     private int downHit = D2Materials.HIT_NONE;
@@ -101,6 +107,14 @@ final class D2MaterialsWindow {
         if (over != null && s != null) {
             int note = D2Materials.resultNote(over[0], over[1], s.why);
             if (note != D2Materials.NOTE_NONE) host.note(text(note));
+
+            else if (over[1] == D2Materials.RESULT_OK && soundKind >= 0) host.sound(D2Materials.sound(soundKind));
+            soundKind = -1;
+        }
+
+        if (orders.dropForCursor(host.cursorTaken())) {
+            D2Trace.log("materials: waiting orders dropped: an item on the cursor");
+            host.note(text(D2Materials.NOTE_CURSOR));
         }
         if (!orders.hasWaiting()) return;
         if (!host.backedUp()) {
@@ -111,7 +125,10 @@ final class D2MaterialsWindow {
             return;
         }
         int[] next = orders.next(s, now, !backupRunning && !host.sorting());
-        if (next != null) host.send(next[0], next[1], next[2]);
+        if (next != null) {
+            soundKind = D2Materials.soundKind(next[0], next[1], s);
+            host.send(next[0], next[1], next[2]);
+        }
     }
 
 
@@ -220,7 +237,7 @@ final class D2MaterialsWindow {
         if (choiceKind >= 0) {
             int choice = D2Materials.choiceHit(choiceKind, s.stash[choiceKind], lx, ly);
             if (choice >= 0) {
-                orders.add(D2Materials.ORDER_WITHDRAW, choiceKind, D2Materials.choiceCount(choice));
+                order(D2Materials.ORDER_WITHDRAW, choiceKind, D2Materials.choiceCount(choice));
                 choiceKind = -1;
                 return;
             }
@@ -237,12 +254,20 @@ final class D2MaterialsWindow {
             int carried = 0;
             for (int n : s.inventory) carried += n;
             if (carried == 0) host.note(host.text(R.string.materials_nothing));
-            else orders.add(D2Materials.ORDER_DEPOSIT_ALL, 0, 0);
+            else order(D2Materials.ORDER_DEPOSIT_ALL, 0, 0);
         }
         else if (hit >= 0) {
             selected = hit;
-            if (s.stash[hit] > 0) orders.add(D2Materials.ORDER_WITHDRAW, hit, 1);
+            if (s.stash[hit] > 0) order(D2Materials.ORDER_WITHDRAW, hit, 1);
         }
+    }
+
+
+    private void order(int order, int arg, int count) {
+        int note = orders.add(order, arg, count, host.cursorTaken());
+        if (note == D2Materials.NOTE_NONE) return;
+        D2Trace.log("materials: order " + order + " arg " + arg + " not sent: an item on the cursor");
+        host.note(text(note));
     }
 
 
@@ -262,12 +287,15 @@ final class D2MaterialsWindow {
             fill.setColor(Color.argb(220, 20, 18, 16));
             canvas.drawRect(rect, fill);
         }
-        android.graphics.Bitmap el = hud.materialPicture(0);
-        if (el != null) {
-            float size = 24 * scale, cx = rect.centerX() + (open || entryDown ? scale : 0), cy = rect.centerY() + (open || entryDown ? scale : 0);
-            float w = Math.min(size, size * el.getWidth() / el.getHeight()), h = Math.min(size, size * el.getHeight() / el.getWidth());
+
+        float down = open || entryDown ? scale : 0, middleX = rect.centerX() + down, middleY = rect.centerY() + down;
+        android.graphics.Bitmap rune = hud.materialPicture(D2Materials.SYMBOL_RUNE), gem = hud.materialPicture(D2Materials.SYMBOL_GEM);
+        for (int[] box : D2Materials.symbol(rune != null, gem != null)) {
+            android.graphics.Bitmap b = box[0] == D2Materials.SYMBOL_RUNE ? rune : gem;
+            float size = box[3] * scale, cx = middleX + box[1] * scale, cy = middleY + box[2] * scale;
+            float w = Math.min(size, size * b.getWidth() / b.getHeight()), h = Math.min(size, size * b.getHeight() / b.getWidth());
             rect.set(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2);
-            canvas.drawBitmap(el, null, rect, locked ? grey : picture);
+            canvas.drawBitmap(b, null, rect, locked ? grey : picture);
         }
         if (open) {
             toView(D2Materials.ENTRY_X - 1, D2Materials.ENTRY_Y - 1, D2Materials.ENTRY_SIZE + 2, D2Materials.ENTRY_SIZE + 2);
@@ -277,8 +305,9 @@ final class D2MaterialsWindow {
         }
         if (!open) return;
 
+
         toView(D2Materials.WIN_X, D2Materials.WIN_Y, D2Materials.WIN_W, D2Materials.WIN_H);
-        fill.setColor(Color.argb(240, 9, 8, 7));
+        fill.setColor(Color.rgb(9, 8, 7));
         canvas.drawRect(rect, fill);
         float k = scale;
 
@@ -379,6 +408,7 @@ final class D2MaterialsWindow {
             case D2Materials.NOTE_LOCKED_VERSION: return host.text(R.string.materials_locked_version);
             case D2Materials.NOTE_NOT_SAVED: return host.text(R.string.materials_not_saved);
             case D2Materials.NOTE_NOT_CONFIRMED: return host.text(R.string.materials_not_confirmed);
+            case D2Materials.NOTE_CURSOR: return host.text(R.string.materials_cursor);
             default: return host.text(R.string.materials_locked);
         }
     }

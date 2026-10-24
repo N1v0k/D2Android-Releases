@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
@@ -230,8 +231,9 @@ public class D2SettingsActivity extends D2Activity {
                 box.addView(label(e.label));
                 box.addView(hint(getString(R.string.settings_language_hint)));
                 RadioGroup languageGroup = new RadioGroup(this);
-                String[] languages = {D2Text.AUTO, D2Text.GERMAN, D2Text.ENGLISH};
-                int[] languageLabels = {R.string.settings_language_auto, R.string.settings_language_de, R.string.settings_language_en};
+                String[] languages = {D2Text.AUTO, D2Text.GERMAN, D2Text.ENGLISH, D2Text.FRENCH, D2Text.SPANISH, D2Text.ITALIAN};
+                int[] languageLabels = {R.string.settings_language_auto, R.string.settings_language_de, R.string.settings_language_en,
+                    R.string.settings_language_fr, R.string.settings_language_es, R.string.settings_language_it};
                 String current = D2Settings.appLanguage(this);
                 for (int i = 0; i < languages.length; i++) {
                     addOption(languageGroup, ID_LANGUAGE + i, getString(languageLabels[i]));
@@ -278,7 +280,7 @@ public class D2SettingsActivity extends D2Activity {
 
                     if (!offered) option.setAlpha(0.45f);
                 }
-                frameRateGroup.check(ID_FRAME_RATE + D2FrameRate.effective(D2Settings.frameRate(this), rates));
+                frameRateGroup.check(ID_FRAME_RATE + D2Settings.frameRate(this, rates));
                 frameRateGroup.setOnCheckedChangeListener((group, id) -> {
                     if (id != View.NO_ID) D2Settings.setFrameRate(this, id - ID_FRAME_RATE);
                 });
@@ -327,7 +329,16 @@ public class D2SettingsActivity extends D2Activity {
                     String key = "plugy" + D2PlugY.EXTRA_KEYS[i];
                     if (!key.equals(e.key)) continue;
                     if (!D2PlugY.isBundled(this)) return null;
-                    return check(e.label, D2Settings.plugyExtra(this, D2PlugY.EXTRA_KEYS[i], D2PlugY.EXTRA_DEFAULTS[i]), key);
+                    String iniKey = D2PlugY.EXTRA_KEYS[i];
+                    Runnable changed = !D2PlugY.REGEN_MAP.equals(iniKey) ? null : () -> {
+
+                        if (D2Settings.plugyExtraChanged(this, iniKey, D2Settings.regenMap(this)))
+                            Toast.makeText(this, getString(R.string.resume_off_regen), Toast.LENGTH_LONG).show();
+                        helpersPanel.post(() -> {
+                            if (D2HelperEntries.SET_GAME.equals(D2HelpersPanel.group(helpersPanel))) buildPage(D2HelperEntries.SET_GAME);
+                        });
+                    };
+                    return check(e.label, D2Settings.plugyExtra(this, iniKey, D2PlugY.EXTRA_DEFAULTS[i]), key, changed);
                 }
                 return null;
             case "background": {
@@ -353,6 +364,14 @@ public class D2SettingsActivity extends D2Activity {
             }
             case "install":
                 return button(e.label, this::install);
+            case "shortcut": {
+                box.addView(hint(getString(R.string.settings_shortcut_hint)));
+                TextView shortcutStatus = new TextView(this);
+                D2Style.text(shortcutStatus);
+                box.addView(button(e.label, () -> shortcutStatus.setText(D2GameShortcut.offer(this))), matchWidth());
+                box.addView(shortcutStatus);
+                return box;
+            }
             case "savesShare":
                 box.addView(hint(getString(R.string.settings_saves_hint)));
                 box.addView(button(e.label, this::shareSaves), matchWidth());
@@ -415,7 +434,8 @@ public class D2SettingsActivity extends D2Activity {
 
     private View button(String text, Runnable action) {
         D2SettingsLook look = D2SettingsLook.get();
-        if (look != null) return new D2GameText.Stone(this, look, true, text.replace(" …", ""), action);
+
+        if (look != null) return new D2GameText.Stone(this, look, true, text.replace(" …", "").replace(" ...", ""), action);
         Button button = new Button(this);
         button.setText(text);
         button.setOnClickListener((v) -> action.run());

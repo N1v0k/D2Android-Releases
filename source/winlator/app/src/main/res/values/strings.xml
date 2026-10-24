@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-23). -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-24). -->
 
 
 <resources>
@@ -19,6 +19,9 @@
     <string name="settings_language_auto">Automatic (like the game)</string>
     <string name="settings_language_de">German</string>
     <string name="settings_language_en">English</string>
+    <string name="settings_language_fr">French</string>
+    <string name="settings_language_es">Spanish</string>
+    <string name="settings_language_it">Italian</string>
 
 
     <string name="settings_size">Picture size</string>
@@ -54,6 +57,7 @@
     <string name="settings_plugy_ActiveCowPortalWhenCowKingWasKilled">Cow level even after the Cow King</string>
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathak\'s portal stays open</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain stands by the Harrogath waypoint</string>
+    <string name="settings_plugy_AlwaysRegenMapInSP">New map at every load</string>
     <string name="settings_plugy_hint">Works from the next game start. Before that the app backs up your saves to Download/%1$s.</string>
 
     <string name="plugy_stats_plus_hint">Tap: 1 point, double tap: 5 points, long press: all free points</string>
@@ -340,6 +344,7 @@
     <string name="materials_stash_full">Store full</string>
     <string name="materials_not_now">Not possible right now</string>
     <string name="materials_busy">Store busy – again in a moment</string>
+    <string name="materials_cursor">Put down the item on the cursor first</string>
     <string name="materials_locked_broken">Materials file damaged and set aside (.kaputt-…)</string>
     <string name="materials_locked_unsaved">Last save failed – the store stays locked until a save works</string>
     <string name="materials_locked_unreadable">Materials file not readable</string>
@@ -477,6 +482,7 @@
     <string name="idle_rz_not_at_portal">not back at the own portal</string>
     <string name="idle_rz_wrong_way">area changed without the own portal</string>
     <string name="idle_rz_round_failed">town round failed</string>
+    <string name="idle_rz_broken">a broken item, repairing did not work</string>
     <string name="idle_rz_no_town_data">no town data</string>
     <string name="idle_board_retreat">Idle: retreat %1$d - town portal, healer - tap to end</string>
     <string name="idle_board_preparing">Idle preparing ... - tap to end</string>
@@ -527,7 +533,7 @@
     <string name="helper_padMap_info">Tap a box to give a button a job. You put a skill on F1–F8 in edit mode: press the pad button, point at the skill with the stick, press A. Holding \"Take\" opens the ring of targets: the stick chooses, A takes, the cross left/right turns the page.</string>
     <string name="helper_pad_layer1">Button</string>
     <string name="helper_pad_layer2">With LT held</string>
-    <string name="helper_pad_fixed">Always the same: left stick walks, holding LT gives the second row, the cross drinks from the belt, Start opens the game menu (hold: app menu), View as assigned below, the inventory by default (hold: a wheel of the game\'s windows, a stick chooses, let go opens). In windows the stick moves the pointer, A clicks, Y closes; holding R3 in the inventory sorts it.</string>
+    <string name="helper_pad_fixed">Always the same: left stick walks, holding LT gives the second row, the cross drinks from the belt, Start opens the game menu (hold: app menu), View as assigned below, the inventory by default (hold: a wheel of the game\'s windows, a stick chooses, let go opens). In windows the stick moves the pointer, A clicks, B/X click right (in a shop: buy, on your own items sell), Y closes; holding R3 in the inventory sorts it.</string>
     <string name="helper_pad_none">No gamepad seen yet</string>
     <string name="helper_pad_seen">Seen: %1$s, last button %2$s</string>
     <string name="helper_padDeadzone_label">How far the stick has to move</string>
@@ -662,6 +668,11 @@
     <string name="install_quit_and_install_lose">Quit and install</string>
     <string name="launch_install_interrupted_saves">The installation of Diablo II is not finished yet. There are saved games in its folder, so it goes on in a new folder. Your saved games stay in the old folder. Tap \"Continue installing\".</string>
     <string name="settings_install">Install Diablo II …</string>
+    <string name="settings_shortcut">Add game icon</string>
+    <string name="settings_shortcut_hint">Puts a shortcut with the Diablo II icon from your game folder on the home screen, as on the PC. The app\'s own icon stays.</string>
+    <string name="settings_shortcut_asked">The home screen asks whether to add it.</string>
+    <string name="settings_shortcut_no_icon">No icon found: choose the game folder with Game.exe first.</string>
+    <string name="settings_shortcut_unsupported">This home screen does not take shortcuts from apps.</string>
     <string name="install_title">Install Diablo II</string>
     <string name="install_action_keys">Enter the keys again</string>
     <string name="install_action_access">Allow access</string>
@@ -709,8 +720,12 @@
     <string name="install_leave">Back</string>
     <string name="install_intro">The app downloads Diablo II and Lord of Destruction with Blizzard\'s official downloader, installs them with your own CD keys and updates the game to 1.13d. Everything lands in Download/D2Android. Use Wi-Fi: about 2 GB are downloaded.</string>
     <string name="install_language">Game language</string>
+
     <string name="install_lang_en">English (enUS)</string>
-    <string name="install_lang_de">German (deDE)</string>
+    <string name="install_lang_de">Deutsch (deDE)</string>
+    <string name="install_lang_fr">Français (frFR)</string>
+    <string name="install_lang_es">Español (esES)</string>
+    <string name="install_lang_it">Italiano (itIT)</string>
     <string name="install_lang_soon">%1$s – soon</string>
     <string name="install_space">Free space in Download/</string>
     <string name="install_space_ok">%1$s GB free – enough (at least %2$s GB needed).</string>
@@ -1023,21 +1038,28 @@
     <string name="resume_waypoint">At the waypoint of %1$s</string>
     <string name="resume_refused">Resume not possible: %1$s</string>
     <string name="resume_cancelled">Resume cancelled</string>
+
+    <string name="resume_exit_town">Back to town</string>
+    <string name="resume_exit_continue">Continue</string>
+    <string name="resume_off_regen">\"Go on where I was\" is off: PlugY builds a new map at every load</string>
     <string-array name="resume_reasons">
         <item>–</item>
         <item>not single player</item>
         <item>character not ready (window, item on the cursor, pause)</item>
         <item>another difficulty</item>
         <item>another map</item>
-        <item>no waypoint there</item>
+        <item>not possible there (a town or another act)</item>
         <item>the mod cannot do it</item>
-        <item>the jump to the waypoint failed</item>
+        <item>the jump failed</item>
         <item>the map is different there</item>
         <item>the place is blocked</item>
-        <item>a jump failed</item>
+        <item>did not arrive at the place</item>
         <item>it took too long</item>
         <item>cancelled</item>
         <item>too late, the game has been running for over a minute</item>
+        <item>–</item>
+        <item>–</item>
+        <item>PlugY builds a new map at every load</item>
     </string-array>
 
     <string name="difficulty_normal">Normal</string>

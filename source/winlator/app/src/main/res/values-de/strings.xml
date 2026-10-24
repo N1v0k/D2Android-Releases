@@ -16,6 +16,9 @@
     <string name="settings_language_auto">Automatisch (wie das Spiel)</string>
     <string name="settings_language_de">Deutsch</string>
     <string name="settings_language_en">Englisch</string>
+    <string name="settings_language_fr">Französisch</string>
+    <string name="settings_language_es">Spanisch</string>
+    <string name="settings_language_it">Italienisch</string>
 
 
     <string name="settings_size">Bildgröße</string>
@@ -51,6 +54,7 @@
     <string name="settings_plugy_ActiveCowPortalWhenCowKingWasKilled">Kuh-Level auch nach dem Kuhkönig</string>
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathaks Portal bleibt offen</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain steht beim Wegpunkt in Harrogath</string>
+    <string name="settings_plugy_AlwaysRegenMapInSP">Karte bei jedem Laden neu</string>
     <string name="settings_plugy_hint">Gilt ab dem nächsten Spielstart. Vorher sichert die App deine Spielstände nach Download/%1$s.</string>
 
     <string name="plugy_stats_plus_hint">Tipp: 1 Punkt, Doppeltipp: 5 Punkte, lange drücken: alle freien Punkte</string>
@@ -337,6 +341,7 @@
     <string name="materials_stash_full">Lager voll</string>
     <string name="materials_not_now">Geht gerade nicht</string>
     <string name="materials_busy">Lager beschäftigt, gleich noch einmal</string>
+    <string name="materials_cursor">Erst den Gegenstand am Zeiger ablegen</string>
     <string name="materials_locked_broken">Lagerdatei beschädigt und beiseitegelegt (.kaputt-…)</string>
     <string name="materials_locked_unsaved">Letztes Speichern gescheitert – Lager gesperrt, bis ein Speichern gelingt</string>
     <string name="materials_locked_unreadable">Lagerdatei nicht lesbar</string>
@@ -474,6 +479,7 @@
     <string name="idle_rz_not_at_portal">nicht am eigenen Portal zurück</string>
     <string name="idle_rz_wrong_way">Gebiet ohne eigenes Portal gewechselt</string>
     <string name="idle_rz_round_failed">Stadtgang abgebrochen</string>
+    <string name="idle_rz_broken">Teil kaputt, Reparieren ging nicht</string>
     <string name="idle_rz_no_town_data">keine Stadtdaten</string>
     <string name="idle_board_retreat">Idle: Rückzug %1$d - Stadtportal, Heiler - antippen beendet</string>
     <string name="idle_board_preparing">Idle bereitet vor ... - antippen beendet</string>
@@ -524,7 +530,7 @@
     <string name="helper_padMap_info">Tippe auf ein Feld, um einer Taste eine Aufgabe zu geben. Eine Fertigkeit auf F1–F8 legst du im Bearbeiten-Modus fest: Pad-Taste drücken, mit dem Stick auf die Fertigkeit zeigen, A drücken. „Nehmen“ lange halten öffnet den Ring der Ziele: Stick wählt, A nimmt, Kreuz links/rechts blättert.</string>
     <string name="helper_pad_layer1">Taste</string>
     <string name="helper_pad_layer2">Mit LT gehalten</string>
-    <string name="helper_pad_fixed">Immer gleich: linker Stick läuft, LT halten gibt die zweite Reihe, Kreuz trinkt aus dem Gürtel, Start öffnet das Spielmenü (halten: App-Menü), View wie unten belegt, ab Werk das Inventar (halten: Rad mit den Fenstern des Spiels, ein Stick wählt, loslassen öffnet). In Fenstern bewegt der Stick den Zeiger, A klickt, Y schließt; R3 halten ordnet das offene Inventar.</string>
+    <string name="helper_pad_fixed">Immer gleich: linker Stick läuft, LT halten gibt die zweite Reihe, Kreuz trinkt aus dem Gürtel, Start öffnet das Spielmenü (halten: App-Menü), View wie unten belegt, ab Werk das Inventar (halten: Rad mit den Fenstern des Spiels, ein Stick wählt, loslassen öffnet). In Fenstern bewegt der Stick den Zeiger, A klickt, B/X klicken rechts (im Laden: kaufen, auf eigenen Gegenständen verkaufen), Y schließt; R3 halten ordnet das offene Inventar.</string>
     <string name="helper_pad_none">Noch kein Gamepad gesehen</string>
     <string name="helper_pad_seen">Gesehen: %1$s, letzte Taste %2$s</string>
     <string name="helper_padDeadzone_label">Wie weit der Stick sich bewegen muss</string>
@@ -659,6 +665,11 @@
     <string name="install_quit_and_install_lose">Beenden und installieren</string>
     <string name="launch_install_interrupted_saves">Die Installation von Diablo II ist noch nicht fertig. In ihrem Ordner liegen Spielstände, deshalb macht sie in einem neuen Ordner weiter. Deine Spielstände bleiben im alten Ordner. Tippe auf „Installation fortsetzen“.</string>
     <string name="settings_install">Diablo II installieren …</string>
+    <string name="settings_shortcut">Spielsymbol anlegen</string>
+    <string name="settings_shortcut_hint">Legt eine Verknüpfung mit dem Diablo-II-Symbol aus deinem Spielordner auf den Startbildschirm, wie am PC. Das Symbol der App bleibt.</string>
+    <string name="settings_shortcut_asked">Der Startbildschirm fragt, ob er sie anlegen soll.</string>
+    <string name="settings_shortcut_no_icon">Kein Symbol gefunden: zuerst den Spielordner mit Game.exe wählen.</string>
+    <string name="settings_shortcut_unsupported">Dieser Startbildschirm nimmt keine Verknüpfungen von Apps an.</string>
     <string name="install_title">Diablo II installieren</string>
     <string name="install_action_keys">Keys neu eingeben</string>
     <string name="install_action_access">Zugriff erlauben</string>
@@ -706,8 +717,12 @@
     <string name="install_leave">Zurück</string>
     <string name="install_intro">Die App lädt Diablo II und Lord of Destruction mit Blizzards offiziellem Downloader, installiert sie mit deinen eigenen CD-Keys und bringt das Spiel auf 1.13d. Alles landet in Download/D2Android. Bitte WLAN nutzen: es werden rund 2 GB geladen.</string>
     <string name="install_language">Spielsprache</string>
-    <string name="install_lang_en">Englisch (enUS)</string>
+
+    <string name="install_lang_en">English (enUS)</string>
     <string name="install_lang_de">Deutsch (deDE)</string>
+    <string name="install_lang_fr">Français (frFR)</string>
+    <string name="install_lang_es">Español (esES)</string>
+    <string name="install_lang_it">Italiano (itIT)</string>
     <string name="install_lang_soon">%1$s – bald</string>
     <string name="install_space">Freier Platz in Download/</string>
     <string name="install_space_ok">%1$s GB frei – reicht (mindestens %2$s GB nötig).</string>
@@ -1020,21 +1035,27 @@
     <string name="resume_waypoint">Am Wegpunkt %1$s</string>
     <string name="resume_refused">Weiterspielen nicht möglich: %1$s</string>
     <string name="resume_cancelled">Weiterspielen abgebrochen</string>
+    <string name="resume_exit_town">Zurück zur Stadt</string>
+    <string name="resume_exit_continue">Fortsetzen</string>
+    <string name="resume_off_regen">„Dort weiterspielen, wo ich war“ ist aus: PlugY baut die Karte bei jedem Laden neu</string>
     <string-array name="resume_reasons">
         <item>–</item>
         <item>nicht im Einzelspieler</item>
         <item>Charakter nicht bereit (Fenster, Gegenstand am Zeiger, Pause)</item>
         <item>anderer Schwierigkeitsgrad</item>
         <item>andere Karte</item>
-        <item>dort kein Wegpunkt</item>
+        <item>dort nicht möglich (Stadt oder anderer Akt)</item>
         <item>die Mod kann es nicht</item>
-        <item>Sprung zum Wegpunkt misslungen</item>
+        <item>der Sprung misslang</item>
         <item>die Karte ist dort anders</item>
         <item>die Stelle ist versperrt</item>
-        <item>ein Sprung misslang</item>
+        <item>nicht an der Stelle angekommen</item>
         <item>es dauerte zu lange</item>
         <item>abgebrochen</item>
         <item>zu spät, das Spiel läuft schon länger als eine Minute</item>
+        <item>–</item>
+        <item>–</item>
+        <item>PlugY baut die Karte bei jedem Laden neu</item>
     </string-array>
 
     <string name="difficulty_normal">Normal</string>

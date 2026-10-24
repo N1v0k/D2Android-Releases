@@ -393,8 +393,8 @@ public final class D2HelperEntries {
         section(SET_GAME, "start", "gameLines", "frameRate", "skipIntro", "mod", "appLanguage");
         section(SET_GAME, "plugy", "plugy", "bigStash", "autosave", "respec", "statsPages", "plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue");
 
-        section(SET_GAME, "plugy_extras", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint");
-        section(SET_SAVES, "ordner", "gameFolder", "install");
+        section(SET_GAME, "plugy_extras", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP");
+        section(SET_SAVES, "ordner", "gameFolder", "install", "shortcut");
         section(SET_SAVES, "spielstaende", "savesShare", "savesLoad");
         section(SET_HELP, "hilfe", "intro", "background");
         section(SET_HELP, "fehlersuche", "diagnose", "report");
@@ -402,7 +402,7 @@ public final class D2HelperEntries {
         for (String k : new String[]{"gameFolder", "install", "savesShare", "savesLoad"}) SCOPE.put(k, BEFORE_START);
         for (String k : new String[]{"gameLines", "frameRate", "skipIntro", "mod", "appLanguage", "plugy", "bigStash", "autosave",
             "respec", "statsPages"}) SCOPE.put(k, NEXT_START);
-        for (String k : new String[]{"plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint"}) SCOPE.put(k, NEXT_START);
+        for (String k : new String[]{"plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP"}) SCOPE.put(k, NEXT_START);
         keywords("aimBlind", "toter winkel blind spot hinter ruecken behind auto aim");
         keywords("damageStyle", "schaden zahlen schadenszahlen damage numbers dmg");
         keywords("damageDps", "dps schaden pro sekunde damage per second");
@@ -420,6 +420,7 @@ public final class D2HelperEntries {
         keywords("xpBar", "erfahrung experience xp exp stufe level leiste bar");
         keywords("padEnabled", "gamepad controller pad xbox");
         keywords("padMap", "gamepad controller pad tasten buttons belegung zuweisung");
+        keywords("padCursorSpeed", "gamepad controller pad zeiger cursor maus mouse pointer tempo speed geschwindigkeit");
         keywords("bigStash", "truhe stash gross big kiste");
         keywords("plugy", "plugy truhe stash shared geteilt runenwoerter ladder");
         keywords("players", "spieler players schwierigkeit drops");
@@ -432,7 +433,7 @@ public final class D2HelperEntries {
         keywords("autoRejuv", "verjuengung rejuv trank potion");
         keywords("autoGold", "gold aufheben pick up");
         keywords("itemLabels", "namen labels alt boden items gegenstaende");
-        keywords("appLanguage", "sprache language deutsch englisch");
+        keywords("appLanguage", "sprache language deutsch englisch langue idioma lingua francais espanol italiano");
         keywords("gameLines", "groesse size zeilen aufloesung resolution schrift");
         keywords("frameRate", "fps bildrate frame rate akku battery");
         keywords("skipIntro", "intro videos filme movies");
@@ -442,6 +443,7 @@ public final class D2HelperEntries {
         keywords("savesLoad", "spielstaende saves laden load backup");
         keywords("gameFolder", "ordner folder spielordner pfad");
         keywords("install", "installieren install download");
+        keywords("shortcut", "verknuepfung shortcut symbol icon startbildschirm home screen launcher desktop");
         keywords("intro", "einfuehrung tour hilfe help");
         keywords("diagnose", "diagnose fehler log logs");
         keywords("report", "fehler melden bug report");
@@ -459,6 +461,7 @@ public final class D2HelperEntries {
         keywords("plugyActiveCowPortalWhenCowKingWasKilled", "plugy kuh cow level portal");
         keywords("plugyActiveDoNotCloseNihlathakPortal", "plugy nihlathak portal");
         keywords("plugyMoveCainNearHarrogathWaypoint", "plugy cain harrogath wegpunkt waypoint");
+        keywords("plugyAlwaysRegenMapInSP", "plugy karte map neu new regen laden load fortsetzen weiterspielen");
         keywords("autosave", "speichern save automatisch");
         keywords("hud", "leiste hud kugeln orbs kompakt");
         keywords("valueLine", "wert bewertung value");
@@ -533,8 +536,9 @@ public final class D2HelperEntries {
             {"sound", "settings_sound"}, {"appLanguage", "settings_language"}, {"gameLines", "settings_size"}, {"frameRate", "settings_frame_rate"},
             {"skipIntro", "settings_skip_intro"}, {"mod", "settings_mod"}, {"plugy", "settings_plugy_use"},
             {"bigStash", "settings_plugy_big_stash"}, {"autosave", "settings_plugy_autosave"}, {"respec", "settings_plugy_respec"},
-            {"statsPages", "settings_plugy_stats"}, {"plugyActiveSharedGold", "settings_plugy_ActiveSharedGold"}, {"plugyActiveLadderRunewords", "settings_plugy_ActiveLadderRunewords"}, {"plugyActiveDisplayItemLevel", "settings_plugy_ActiveDisplayItemLevel"}, {"plugyActiveDisplayBaseStatsValue", "settings_plugy_ActiveDisplayBaseStatsValue"}, {"plugyActiveWorldEvent", "settings_plugy_ActiveWorldEvent"}, {"plugyActiveUberQuest", "settings_plugy_ActiveUberQuest"}, {"plugyActiveCowPortalWhenCowKingWasKilled", "settings_plugy_ActiveCowPortalWhenCowKingWasKilled"}, {"plugyActiveDoNotCloseNihlathakPortal", "settings_plugy_ActiveDoNotCloseNihlathakPortal"}, {"plugyMoveCainNearHarrogathWaypoint", "settings_plugy_MoveCainNearHarrogathWaypoint"}, {"background", "settings_background"}, {"gameFolder", "settings_game_folder"},
-            {"install", "settings_install"}, {"savesShare", "settings_saves_share"}, {"savesLoad", "settings_saves_load"},
+            {"statsPages", "settings_plugy_stats"}, {"plugyActiveSharedGold", "settings_plugy_ActiveSharedGold"}, {"plugyActiveLadderRunewords", "settings_plugy_ActiveLadderRunewords"}, {"plugyActiveDisplayItemLevel", "settings_plugy_ActiveDisplayItemLevel"}, {"plugyActiveDisplayBaseStatsValue", "settings_plugy_ActiveDisplayBaseStatsValue"}, {"plugyActiveWorldEvent", "settings_plugy_ActiveWorldEvent"}, {"plugyActiveUberQuest", "settings_plugy_ActiveUberQuest"}, {"plugyActiveCowPortalWhenCowKingWasKilled", "settings_plugy_ActiveCowPortalWhenCowKingWasKilled"}, {"plugyActiveDoNotCloseNihlathakPortal", "settings_plugy_ActiveDoNotCloseNihlathakPortal"}, {"plugyMoveCainNearHarrogathWaypoint", "settings_plugy_MoveCainNearHarrogathWaypoint"}, {"plugyAlwaysRegenMapInSP", "settings_plugy_AlwaysRegenMapInSP"}, {"background", "settings_background"}, {"gameFolder", "settings_game_folder"},
+            {"install", "settings_install"}, {"shortcut", "settings_shortcut"}, {"savesShare", "settings_saves_share"},
+            {"savesLoad", "settings_saves_load"},
             {"news", "news_title"}, {"updateCheck", "settings_update_check"}, {"licenses", "licenses_title"},
             {"about", "settings_about"}, {"editButtons", "settings_edit_buttons"}};
         for (String[] item : items) l.add(new Entry(Kind.HOST, item[0], item[1], null, null, false, null, null));

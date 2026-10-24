@@ -277,7 +277,9 @@ public class D2TouchOverlay extends View {
     private Boolean itemLabelsSetting;
 
     private boolean runChecked;
-    private long lastRetarget;
+
+    private final D2Retarget retarget = new D2Retarget();
+    private final Runnable retargetLater = this::retargetAfterGap;
 
     private static final Set<Integer> CORPSE_SKILLS = new HashSet<>(java.util.Arrays.asList(70, 74, 80, 95, 131, 142, 150));
 
@@ -544,15 +546,16 @@ public class D2TouchOverlay extends View {
 
 
 
-    private final D2UsedObjects usedObjects = new D2UsedObjects();
 
-    private static final long USED_OBJECT_MS = 3000;
+    private final D2UsedObjects usedObjects = new D2UsedObjects();
 
 
     private java.util.Set<Long> leftOutObjects() {
         return usedObjects.objectIds(SystemClock.uptimeMillis());
     }
     private int pickupObjectKind = -1;
+
+    private int pickupUnitType = -1;
 
     private static final long UI_UNKNOWN = -3, UI_OUT_OF_GAME = -2;
     private long appliedUiKey = UI_UNKNOWN;
@@ -615,6 +618,8 @@ public class D2TouchOverlay extends View {
             @Override public String text(int id, Object... args) { return D2TouchOverlay.this.text(id, args); }
             @Override public boolean idle() { return idle.phase() != D2Idle.Phase.OFF; }
             @Override public boolean focused() { return windowFocused; }
+            @Override public void arrivalPause() { setPaused(true); }
+            @Override public void saveNow() { if (autosave && mod != null && mod.plugyLoaded) save(SystemClock.uptimeMillis()); }
         });
         strokePaint.setStyle(Paint.Style.STROKE);
         strokePaint.setStrokeWidth(2 * dp);
@@ -1929,6 +1934,8 @@ public class D2TouchOverlay extends View {
         @Override public void schedule(Runnable r, long delayMs) { handler.postDelayed(r, delayMs); }
         @Override public void cancel(Runnable r) { handler.removeCallbacks(r); }
         @Override public boolean sorting() { return !sortSettled(); }
+        @Override public void sound(String file) { D2Sound.play(getContext(), file); }
+        @Override public boolean cursorTaken() { return D2TouchOverlay.this.cursorTaken(); }
     }
 
 
@@ -1995,20 +2002,26 @@ public class D2TouchOverlay extends View {
     }
 
     private void drawPause(Canvas canvas) {
-        fillPaint.setColor(Color.argb(120, 0, 0, 0));
+        D2ResumeExit exit = resumeHint.exit();
+
+        boolean arrival = exit.active();
+        fillPaint.setColor(Color.argb(arrival ? 40 : 120, 0, 0, 0));
         canvas.drawRect(0, 0, getWidth(), getHeight(), fillPaint);
         D2Hud graphics = hud;
-        float cy = getHeight() * 0.42f;
+        float exitH = exit.height(menuTextScale(), dp), cy = getHeight() * (arrival ? 0.68f : 0.42f) - exitH / 2;
         if (graphics != null) graphics.drawText(canvas, text(R.string.paused), getWidth() / 2f, cy, menuTextScale() * 2);
         else {
             textPaint.setTextSize(30 * dp);
             canvas.drawText(text(R.string.paused), getWidth() / 2f, cy, textPaint);
         }
+        exit.draw(canvas, graphics, getWidth() / 2f, cy + 28 * dp, menuTextScale(), dp, padActive, SystemClock.uptimeMillis());
+        cy += exitH;
 
-        if (graphics != null) graphics.drawText(canvas, text(R.string.tap_to_continue), getWidth() / 2f, cy + 48 * dp, menuTextScale(), 0xD2CEC6);
-        else {
+        String tapLine = exit.tapText(text(R.string.tap_to_continue));
+        if (tapLine != null && graphics != null) graphics.drawText(canvas, tapLine, getWidth() / 2f, cy + 48 * dp, menuTextScale(), 0xD2CEC6);
+        else if (tapLine != null) {
             textPaint.setTextSize(14 * dp);
-            canvas.drawText(text(R.string.tap_to_continue), getWidth() / 2f, cy + 48 * dp, textPaint);
+            canvas.drawText(tapLine, getWidth() / 2f, cy + 48 * dp, textPaint);
         }
 
         D2InfoStrip info = infoStrip;
@@ -2582,6 +2595,7 @@ public class D2TouchOverlay extends View {
         }
         if (pauseWanted) {
             touch.role = ROLE_RESUME;
+            resumeHint.exit().down(x, y, touch.downTime);
             return;
         }
         if (assignButton != null && !editMode) {
@@ -2897,7 +2911,7 @@ public class D2TouchOverlay extends View {
             else assignAt(touch.x, touch.y);
         }
         else if (touch.role == ROLE_RESUME) {
-            if (!cancelled) setPaused(false);
+            if (!cancelled && resumeHint.exit().tapped(touch.x, touch.y, touch.downTime)) setPaused(false);
         }
         else if (touch.role == ROLE_TREE_PICK) {
             touch.button.pressed = false;
@@ -3215,6 +3229,7 @@ public class D2TouchOverlay extends View {
             if (walksWhenNobody()) attackWalkFromPlace();
             else follow(aimPoint(dirX, dirY, 0.12f));
         }
+
 
         else if (action == ACTION_SKILL && !skillAimedByDrag && skillTargetId == 0 && !teleportHeld
             && skillPressAt >= 0) follow(aimPoint(dirX, dirY, 0.26f));
@@ -3881,10 +3896,12 @@ public class D2TouchOverlay extends View {
             afterSelect(token, rightSkill, selecting, skill, () -> firstSkillCast(token, D2ModLink.PHASE_DOWN, id));
             return;
         }
-        int[] p = target != null ? monsterPoint(target) : aimPoint(dirX, dirY, 0.26f);
         buttonPending = target != null;
-        enqueue(waitMs(30), moveTo(p[0], p[1]), settle(target != null ? HOVER_SETTLE_MS : 40));
-        if (target != null) enqueue(hoverSearch(target.id, target.x, target.y, MONSTER_OFFSETS));
+        if (target != null) {
+            int[] p = monsterPoint(target);
+            enqueue(waitMs(30), moveTo(p[0], p[1]), settle(HOVER_SETTLE_MS), hoverSearch(target.id, target.x, target.y, MONSTER_OFFSETS));
+        }
+        else enqueue(waitMs(30), aimGround());
 
 
         if (D2SkillAim.shiftNeeded(skillLeft, target != null)) setShift(true);
@@ -5261,22 +5278,25 @@ public class D2TouchOverlay extends View {
 
 
 
+
+
     private void retargetByJoystick(boolean attack) {
         if (!joystickActive || !hasDirection || (!attack && (skillAimedByDrag || skillOnCorpses))) return;
         long now = SystemClock.uptimeMillis();
-        if (now - lastRetarget < 250) return;
+        handler.removeCallbacks(retargetLater);
+        long wait = retarget.waitMs(now);
+        if (wait > 0) {
+            handler.postDelayed(retargetLater, wait);
+            return;
+        }
         D2ModState s = mod;
         if (s == null) return;
         long id = attack ? attackTargetId : skillTargetId;
         D2ModState.Monster next = pickTarget(pressSkill(attack));
         if (next == null || next.id == id) return;
         D2ModState.Monster current = findMonster(id);
-        if (current != null) {
-            float dx = current.x - s.playerX, dy = current.y - s.playerY;
-            double length = Math.hypot(dx, dy);
-            if (length > 1 && (dx * dirX + dy * dirY) / length >= Math.cos(Math.toRadians(aimNow().coneDeg))) return;
-        }
-        lastRetarget = now;
+        if (current != null && D2Retarget.keeps(current.x - s.playerX, current.y - s.playerY, dirX, dirY, aimNow().coneDeg)) return;
+        retarget.changed(now);
         D2Trace.log("retarget by joystick: " + id + " -> " + next.id + " " + next.name);
         if (attack) attackTargetId = next.id;
         else skillTargetId = next.id;
@@ -5286,6 +5306,11 @@ public class D2TouchOverlay extends View {
         if (!attack) skillDownSent();
         else attackPressAt = now;
         performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+
+    private void retargetAfterGap() {
+        if (directAttack && (action == ACTION_ATTACK || action == ACTION_SKILL)) retargetByJoystick(action == ACTION_ATTACK);
     }
 
 
@@ -5303,6 +5328,7 @@ public class D2TouchOverlay extends View {
 
 
     private void releaseDirect() {
+        handler.removeCallbacks(retargetLater);
         if (!directAttack) return;
         directAttack = false;
         handler.removeCallbacks(keepAlive);
@@ -5482,6 +5508,14 @@ public class D2TouchOverlay extends View {
 
     private static final int ORDER_TAP = 0, ORDER_RANK = 1, ORDER_NEAR = 2;
 
+
+    private static int[] objectDetails(long[] triples, long id) {
+        for (int i = 0; triples != null && i + 2 < triples.length; i += 3) {
+            if (triples[i] == id) return new int[]{(int) triples[i + 1], (int) triples[i + 2]};
+        }
+        return null;
+    }
+
     private List<Object> interactCandidates(int order) {
         boolean byRank = order == ORDER_RANK, near = order == ORDER_NEAR;
         D2ModState s = mod;
@@ -5507,11 +5541,16 @@ public class D2TouchOverlay extends View {
                 scores.put(item, D2InteractRank.key(rank, distance));
             }
         }
+        boolean idleNehmen = idle.running() || D2SpieltestPort.playing();
+        long[] details12 = idleNehmen ? modLink.objectDetails(2000) : null;
         for (D2ModState.Thing object : s.objects) {
             if (usedObjects.leftOut(object.kind, object.id, SystemClock.uptimeMillis())) continue;
 
 
             if (idle.clearing() && (object.kind == D2ModState.OBJECT_PORTAL || object.kind == D2ModState.OBJECT_ENTRANCE)) continue;
+
+
+            if (idleNehmen && com.winlator.d2.test.Objektwahl.nehmenNie(object.kind, object.extra, objectDetails(details12, object.id))) continue;
             double distance = isoDistance(object.x - s.playerX, object.y - s.playerY);
             if (distance > range) continue;
 
@@ -5992,6 +6031,7 @@ public class D2TouchOverlay extends View {
 
 
         pickupObjectKind = thing instanceof D2ModState.Thing && mod != null && mod.objects.contains(thing) ? ((D2ModState.Thing) thing).kind : -1;
+        pickupUnitType = thingType(thing);
         pickupStart = SystemClock.uptimeMillis();
         pickupEntrance = thing instanceof D2ModState.Thing && ((D2ModState.Thing) thing).kind == D2ModState.OBJECT_ENTRANCE
             && mod != null && mod.objects.contains(thing);
@@ -6087,10 +6127,8 @@ public class D2TouchOverlay extends View {
             finishPickup();
             return;
         }
-        boolean gone = true;
-        for (D2ModState.Thing item : s.items) if (item.id == pickupId) gone = false;
-        for (D2ModState.Thing object : s.objects) if (object.id == pickupId) gone = false;
-        for (D2ModState.Monster monster : s.monsters) if (monster.id == pickupId) gone = false;
+
+        boolean gone = !D2UsedObjects.isReported(s, pickupUnitType, pickupId);
         if (gone || s.isPanelOpen() || SystemClock.uptimeMillis() - pickupStart > pickupTimeout) finishPickup();
     }
 
@@ -6104,9 +6142,17 @@ public class D2TouchOverlay extends View {
         if (action != ACTION_PICKUP) return;
         long now = SystemClock.uptimeMillis();
         usedObjects.expire(now);
-        if (pickupObjectKind == D2ModState.OBJECT_CHEST) usedObjects.use(pickupObjectKind, pickupId, Long.MAX_VALUE);
-        if (pickupObjectKind == D2ModState.OBJECT_SHRINE) usedObjects.use(pickupObjectKind, pickupId, now + USED_OBJECT_MS);
+
+        long leftOutUntil = D2UsedObjects.untilAfterTry(pickupObjectKind,
+            D2UsedObjects.isReported(mod, D2ModState.UNIT_OBJECT, pickupId), now);
+        if (leftOutUntil != D2UsedObjects.NONE) {
+            usedObjects.use(pickupObjectKind, pickupId, leftOutUntil);
+            if (pickupObjectKind == D2ModState.OBJECT_CHEST) {
+                D2Trace.log("pickup: chest " + pickupId + " still closed, left out " + D2UsedObjects.FAILED_TRY_MS + " ms");
+            }
+        }
         pickupObjectKind = -1;
+        pickupUnitType = -1;
         pickupId = 0;
         pickupForHeld = false;
         pickupEntrance = false;
@@ -6616,10 +6662,14 @@ public class D2TouchOverlay extends View {
     }
 
 
-    boolean padResume() {
+
+
+
+    boolean padResume(int button) {
         if (!pauseWanted) return false;
-        setPaused(false);
-        return true;
+        boolean offered = resumeHint.exit().active();
+        if (resumeHint.exit().pad(button, SystemClock.uptimeMillis())) setPaused(false);
+        return button == D2Gamepad.A || button == D2Gamepad.START || offered;
     }
 
 
@@ -6807,6 +6857,15 @@ public class D2TouchOverlay extends View {
         }
         if (D2Gamepad.ownButtonTakes(click) && padClickOwn(click)) return;
         targetX = targetY = -1;
+
+
+
+        boolean shopOpen = s != null && s.isOpen(D2ModState.UI_NPCSHOP);
+        D2ModItems carried = shopOpen ? modLink.items() : null;
+        int action = D2Gamepad.padShopClick(owner.label, click, shopOpen, s != null ? s.hoverItemPlace : -1,
+            s != null ? s.hoverItemX : -1, s != null ? s.hoverItemY : -1, carried != null && carried.sellPossible);
+        if (action == D2Gamepad.CLICK_SELL) modLink.sell(s.hoverItemX, s.hoverItemY);
+        if (action != click) return;
         if (click == D2Gamepad.CLICK_LEFT) {
             setLmb(true);
             owner.heldAction = HELD_LEFT_CLICK;
@@ -7556,6 +7615,35 @@ public class D2TouchOverlay extends View {
     }
 
 
+
+
+
+
+
+    private Step aimGround() {
+        final long[] start = {0}, arrived = {0};
+        final int[] at = new int[2];
+        return (now) -> {
+            if (start[0] == 0) start[0] = now;
+
+            if (arrived[0] != 0 && (targetX != at[0] || targetY != at[1])) arrived[0] = 0;
+            if (arrived[0] == 0) {
+
+                if (!skillAimedByDrag) {
+                    int[] p = aimPoint(dirX, dirY, 0.26f);
+                    setTarget(p[0], p[1]);
+                }
+                if (targetX >= 0 && isAtTarget()) {
+                    arrived[0] = now;
+                    at[0] = targetX;
+                    at[1] = targetY;
+                }
+            }
+            return D2SkillAim.groundAimDone(now - start[0], arrived[0] == 0 ? -1 : now - arrived[0]);
+        };
+    }
+
+
     private void follow(int[] p) {
         setTarget(p[0], p[1]);
         schedulePump(0);
@@ -7900,6 +7988,7 @@ public class D2TouchOverlay extends View {
             pauseWanted = false;
             handler.removeCallbacks(sendPause);
             modLink.pause(false);
+            resumeHint.exit().hide();
         }
         invalidate();
     }

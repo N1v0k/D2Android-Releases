@@ -12,6 +12,8 @@ package com.winlator.d2;
 
 public final class D2PotionShop {
     public static final int COMMAND = 16;
+
+    public static final int REPAIR_COMMAND = 29;
     public static final int RESERVE_MAX = 10, RESERVE_DEFAULT = 5;
 
     public static final int[] MIN_GOLD_STEPS = {0, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000};
@@ -20,7 +22,7 @@ public final class D2PotionShop {
 
     public static final int STATE_NONE = 0, STATE_RUNNING = 1, STATE_DONE = 2;
     public static final int END_DONE = 0, END_GOLD = 1, END_NO_WARE = 2, END_REFUSED = 3, END_CLOSED = 4, END_BAD_LIST = 5,
-        END_STASH_FULL = 6, END_NO_OWN_PAGE = 7, END_TIME = 8, END_UNAVAILABLE = 9, END_INVENTORY_FULL = 10;
+        END_STASH_FULL = 6, END_NO_OWN_PAGE = 7, END_TIME = 8, END_UNAVAILABLE = 9, END_INVENTORY_FULL = 10, END_PARTIAL = 11;
 
 
     public static final class Job {

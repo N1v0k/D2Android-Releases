@@ -19,6 +19,14 @@ public final class LeerenLauf {
         String gebietName(int gebiet);
         void ohneDurchgaenge(boolean ohne);
         boolean leerenBeenden(String grund, boolean pause, Zustand.Layout l) throws InterruptedException;
+
+
+
+
+
+        default boolean modAuftrag(String was) {
+            return false;
+        }
     }
 
     private final Gehirn gehirn;
@@ -33,7 +41,7 @@ public final class LeerenLauf {
 
     int leerenGebiet = -1, leerenKillsStart;
     long leerenSeit;
-    private long leerenVorbereitet, zieleOkAm, rueckzugGemeldet;
+    private long leerenVorbereitet, zieleOkAm, rueckzugGemeldet, reparaturGemeldet;
 
     final Rueckzug rueckzug = new Rueckzug();
 
@@ -129,6 +137,22 @@ public final class LeerenLauf {
                 + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
             return false;
         }
+
+        if (Rueckzug.reparaturFaellig(z)) {
+            Rueckzug.Grund warum = rueckzug.warumNicht(z, u.portale(), now);
+            if (warum == null) {
+                fahrer.allesLoslassen();
+                rueckzug.starten(z, now);
+                imRueckzug = true;
+                event("rueckzug", "Rückzug " + rueckzug.anzahl() + " zum Reparieren (Teil kaputt), Portale " + u.portale()
+                    + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
+                return false;
+            }
+            if (now - reparaturGemeldet > 60_000) {
+                reparaturGemeldet = now;
+                event("rueckzug", "Teil kaputt, kein Rückzug: " + Rueckzug.text(warum));
+            }
+        }
         if (rueckzugPct == 0 && z.lebenMax > 0 && z.lebenPct < RUECKZUG_PCT && now - rueckzugGemeldet > 10_000) {
             rueckzugGemeldet = now;
             event("rueckzug", "Leben " + z.lebenPct + " %: der Idle-Modus hätte hier (unter " + RUECKZUG_PCT + " %) beendet");
@@ -174,7 +198,12 @@ public final class LeerenLauf {
         }
         fahrer.verhalten.fensterDurchlassen = rueckzug.fensterErlaubt();
         if (!fahrer.vorbereiten(z, l, now, u.totSeit())) return false;
-        fahrer.anwenden(rueckzug.denken(z, u.figur(), now), l, now);
+        Gehirn.Absicht a = rueckzug.denken(z, u.figur(), now);
+        if (a.modAuftrag != null) {
+            a.getippt = u.modAuftrag(a.modAuftrag);
+            event("auftrag", a.modAuftrag + (a.getippt ? "" : ": nicht möglich"));
+        }
+        fahrer.anwenden(a, l, now);
         return false;
     }
 

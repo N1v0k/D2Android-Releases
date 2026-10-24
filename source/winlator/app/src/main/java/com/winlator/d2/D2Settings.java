@@ -48,8 +48,12 @@ public final class D2Settings {
     }
 
 
-    public static int frameRate(Context context) {
-        return D2FrameRate.normalize(prefs(context).getInt(KEY_FRAME_RATE, D2FrameRate.UNLIMITED));
+
+
+
+    public static int frameRate(Context context, float[] rates) {
+        SharedPreferences p = prefs(context);
+        return D2FrameRate.resolve(p.contains(KEY_FRAME_RATE), p.getInt(KEY_FRAME_RATE, D2FrameRate.UNLIMITED), rates);
     }
 
     public static void setFrameRate(Context context, int fps) {
@@ -514,8 +518,28 @@ public final class D2Settings {
     static final String KEY_RESUME = "resume";
 
 
+
+
+
     public static boolean resume(Context context) {
-        return prefs(context).getBoolean(KEY_RESUME, false);
+        return D2PlugY.resumeAllowed(prefs(context).getBoolean(KEY_RESUME, false), plugy(context), regenMap(context));
+    }
+
+
+    public static boolean regenMap(Context context) {
+        return plugyExtra(context, D2PlugY.REGEN_MAP, false);
+    }
+
+
+    public static boolean resumeBlocked(Context context) {
+        return !D2PlugY.resumeAllowed(true, plugy(context), regenMap(context));
+    }
+
+
+    static boolean plugyExtraChanged(Context context, String iniKey, boolean on) {
+        if (!D2PlugY.switchesResumeOff(iniKey, on) || !prefs(context).getBoolean(KEY_RESUME, false)) return false;
+        prefs(context).edit().putBoolean(KEY_RESUME, false).apply();
+        return true;
     }
 
     static final String KEY_SOUND = "sound";

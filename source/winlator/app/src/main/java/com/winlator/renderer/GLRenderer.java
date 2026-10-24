@@ -1,4 +1,4 @@
-package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-24).
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -167,25 +167,24 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     @Override
     public void onMapWindow(Window window) {
         xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+        requestOther();
     }
 
     @Override
     public void onUnmapWindow(Window window) {
         xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+        requestOther();
     }
 
     @Override
     public void onChangeWindowZOrder(Window window) {
         xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+        requestOther();
     }
 
     @Override
     public void onUpdateWindowContent(Window window) {
-        com.winlator.d2.D2FrameCounts.glContent.incrementAndGet();
-        xServerView.requestRender();
+        requestFrame(com.winlator.d2.D2FrameCounts.glContent);
     }
 
     @Override
@@ -194,12 +193,12 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
             xServerView.queueEvent(this::updateScene);
         }
         else xServerView.queueEvent(() -> updateWindowPosition(window));
-        xServerView.requestRender();
+        requestOther();
     }
 
     @Override
     public void onUpdateWindowAttributes(Window window, Bitmask mask) {
-        if (mask.isSet(WindowAttributes.FLAG_CURSOR)) xServerView.requestRender();
+        if (mask.isSet(WindowAttributes.FLAG_CURSOR)) requestOther();
     }
 
     @Override
@@ -207,12 +206,52 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
 
 
-        if (!pointerShown() && magnifierZoom == 1.0f && !screenOffsetYRelativeToCursor) {
-            com.winlator.d2.D2FrameCounts.glPointerSkipped.incrementAndGet();
-            return;
+
+        if (com.winlator.d2.D2FrameCounts.pointerFrame(pointerShown(), magnifierZoom != 1.0f || screenOffsetYRelativeToCursor)) {
+            requestFrame(com.winlator.d2.D2FrameCounts.glPointer);
         }
-        com.winlator.d2.D2FrameCounts.glPointer.incrementAndGet();
-        xServerView.requestRender();
+    }
+
+
+
+
+
+
+    private void requestFrame(java.util.concurrent.atomic.AtomicInteger reason) {
+        reason.incrementAndGet();
+        long wait = framePacer.request(System.nanoTime());
+        if (wait == 0) xServerView.requestRender();
+        else if (wait > 0) {
+
+            com.winlator.d2.D2FrameCounts.glPaced.incrementAndGet();
+            paceHandler.postDelayed(paceDue, (wait + 999_999) / 1_000_000);
+        }
+        else com.winlator.d2.D2FrameCounts.glPaced.incrementAndGet();
+    }
+
+
+
+
+
+
+    private final com.winlator.d2.D2FramePacer framePacer = new com.winlator.d2.D2FramePacer();
+    private final android.os.Handler paceHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable paceDue = this::paceDue;
+
+    private void paceDue() {
+        long wait = framePacer.due(System.nanoTime());
+        if (wait == 0) xServerView.requestRender();
+        else paceHandler.postDelayed(paceDue, (wait + 999_999) / 1_000_000);
+    }
+
+
+    public void setFrameLimit(int fps) {
+        framePacer.setLimit(fps);
+    }
+
+
+    public void requestOther() {
+        requestFrame(com.winlator.d2.D2FrameCounts.glOther);
     }
 
 
@@ -310,7 +349,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     public void toggleFullscreen() {
         toggleFullscreen = true;
-        xServerView.requestRender();
+        requestOther();
     }
 
     private Drawable createRootCursorDrawable() {
@@ -389,7 +428,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     public void setCursorVisible(boolean cursorVisible) {
         this.cursorVisible = cursorVisible;
-        xServerView.requestRender();
+        requestOther();
     }
 
     public boolean isCursorVisible() {
@@ -419,7 +458,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     public void setScreenOffsetYRelativeToCursor(boolean screenOffsetYRelativeToCursor) {
         this.screenOffsetYRelativeToCursor = screenOffsetYRelativeToCursor;
-        xServerView.requestRender();
+        requestOther();
     }
 
     public boolean isForceWindowsFullscreen() {
@@ -440,7 +479,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     public void setMagnifierZoom(float magnifierZoom) {
         this.magnifierZoom = magnifierZoom;
-        xServerView.requestRender();
+        requestOther();
     }
 
     public int[] getPixelsARGB(int x, int y, int width, int height, boolean flipY) {
@@ -502,6 +541,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
                 callback.call(bitmap);
             }
         });
-        xServerView.requestRender();
+        requestOther();
     }
 }

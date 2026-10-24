@@ -234,7 +234,7 @@ static void sendItems(void* player, void** units, int count) {
     Packet p;
     putHeader(&p, PKT_ITEMS);
     putU8(&p, (itemNameAvailable ? 1 : 0) | (beltMoveAvailable ? 2 : 0) | (labelFilterAvailable ? 4 : 0)
-        | (newLootVisible(now) ? 8 : 0) | (takeAvailable ? 16 : 0) | (shopAvailable ? 32 : 0) | (stackMax(0) ? 128 : 0));
+        | (newLootVisible(now) ? 8 : 0) | (takeAvailable ? 16 : 0) | (shopAvailable ? 32 : 0) | (sellAvailable ? 64 : 0) | (stackMax(0) ? 128 : 0));
     putU8(&p, beltMoves);
     putU8(&p, c.rows);
     for (int k = 0; k < 3; k++) {

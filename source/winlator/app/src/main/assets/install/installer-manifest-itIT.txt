@@ -1,0 +1,6 @@
+380cc6b91d3527c8d9b17a4e68dd3fc98b4d20bb  D2DV
+293addf89eef0753b1255a5a4f2b1637f0c5db88  D2XP
+# Blizzard's 1.14b installers (itIT): info hash (SHA-1 of the bencoded "info" dictionary) of the manifest inside the
+# downloader of downloader.battle.net (getLegacy, locale=itIT), read on 24.10.2026 (tools/installer-manifest.py).
+# D2DV 1598487196 bytes, D2XP 537222711 bytes in all. D2InstallManifest checks Installer.exe and "Installer Tome.mpq" against
+# the manifest's piece hashes before Installer.exe runs; a new installer build needs new values.

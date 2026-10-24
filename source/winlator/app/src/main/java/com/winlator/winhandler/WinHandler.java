@@ -1,4 +1,4 @@
-package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
+package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-10-24).
 
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -354,7 +354,9 @@ public class WinHandler {
                 xServer.pointer.setX(x);
                 xServer.pointer.setY(y);
                 cursorFeedbacks++;
-                activity.getXServerView().requestRender();
+
+
+                activity.getXServerView().getRenderer().onPointerMove(x, y);
                 break;
             }
             case RequestCodes.OPEN_URL: {

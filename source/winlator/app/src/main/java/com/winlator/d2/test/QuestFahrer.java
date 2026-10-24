@@ -32,7 +32,7 @@ public final class QuestFahrer {
 
     public static final int MAX_TODE = 3, MAX_RUECKKEHR = 2, MAX_ABBRUECHE = 3;
 
-    public enum Ende { ABGESCHLOSSEN, SCHON_ERLEDIGT, ZU_OFT_GESTORBEN, NICHT_LEER, KEINE_BELOHNUNG, NICHT_ERREICHT, ZEIT_UM }
+    public enum Ende { ABGESCHLOSSEN, SCHON_ERLEDIGT, ZU_OFT_GESTORBEN, NICHT_LEER, KEINE_BELOHNUNG, NICHT_ERREICHT, ZEIT_UM, KAPUTT }
 
 
 
@@ -338,6 +338,11 @@ public final class QuestFahrer {
         phase = neu;
         phaseSeit = now;
         meldung = text;
+    }
+
+
+    public void kaputt(String grund, long now) {
+        if (phase != Phase.FERTIG) beenden(Ende.KAPUTT, grund, now);
     }
 
     private void beenden(Ende code, String grund, long now) {

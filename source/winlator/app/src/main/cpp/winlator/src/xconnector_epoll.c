@@ -1,4 +1,4 @@
-#include <stdbool.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-23).
+#include <stdbool.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-24).
 #include <jni.h>
 #include <sys/epoll.h>
 #include <sys/poll.h>

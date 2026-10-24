@@ -403,6 +403,52 @@ public final class Auftrag {
     private int personTxt = -1;
 
 
+    final Gegnerwahl gegnerwahl = new Gegnerwahl();
+    private final java.util.Map<Long, Long> gegnerGesperrt = new java.util.HashMap<>();
+    private long gegnerId = -1, gegnerAm;
+
+    static final long GEGNER_NEU_MS = 1500;
+
+    static final long GEGNER_SPERRE_MS = 60_000;
+
+
+
+
+
+
+    private Zustand.Ding gegner(Zustand z, Zustand.Ziele ziele, Gehirn g, long now) {
+        java.util.Set<Long> ignoriert = g.ignorierte(now);
+        Karte k = g.karte();
+        if (k == null || k.level != z.gebiet || k.feld((int) z.wx, (int) z.wy) == Karte.UNBEKANNT) {
+            Zustand.Ding nah = null;
+            for (Zustand.Ding d : z.feinde()) {
+                if (ignoriert.contains(d.id)) continue;
+                if (nah == null || z.bodenAbstand(d) < z.bodenAbstand(nah)) nah = d;
+            }
+            return nah;
+        }
+
+        if (!g.gebietLeeren) g.zielpruefung.pruefen(z, k, z.feinde(), now);
+        if (gegnerId >= 0 && now - gegnerAm < GEGNER_NEU_MS) {
+            for (Zustand.Ding d : z.feinde()) if (d.id == gegnerId && !ignoriert.contains(d.id)) return d;
+        }
+        Gegnerwahl.Wahl w = gegnerwahl.waehlen(z, ziele, k, g.zielpruefung, 0, new Gegnerwahl.Filter() {
+            @Override public boolean auslassen(Zustand.Ding d) {
+                if (ignoriert.contains(d.id)) return true;
+                Long bis = gegnerGesperrt.get(d.id);
+                return bis != null && now < bis;
+            }
+
+            @Override public void ohneWeg(Zustand.Ding d) {
+                gegnerGesperrt.put(d.id, now + GEGNER_SPERRE_MS);
+            }
+        });
+        gegnerId = w != null ? w.d.id : -1;
+        gegnerAm = now;
+        return w != null ? w.d : null;
+    }
+
+
     private Gehirn.Absicht suchen(Zustand z, Zustand.Ziele ziele, boolean zieleDa, Gehirn g, long now) {
         if (z.stadt) {
             ende(Ergebnis.NICHT_GEFUNDEN, "in der Stadt gibt es keine " + (art == Art.GEGNER ? "Gegner" : art == Art.SCHREIN ? "Schreine" : "Truhen"));
@@ -419,10 +465,14 @@ public final class Auftrag {
                 ende(Ergebnis.ANGEKOMMEN, best.text() + " in Kampfweite");
                 return warten();
             }
-            Zustand.Ding nah = null;
-            if (best != null) for (Zustand.Ding d : best.mitglieder) if (nah == null || z.bodenAbstand(d) < z.bodenAbstand(nah)) nah = d;
-            if (nah != null) ziel = Gehirn.weltlage(z, nah);
-            was = best == null ? "Gegner" : best.text();
+
+            Zustand.Ding nah = gegner(z, ziele, g, now);
+            if (nah != null) {
+                ziel = Gehirn.weltlage(z, nah);
+                Gruppen.Gruppe von = Gruppen.von(Gruppen.bilden(z, g.ignorierte(now)), nah.id);
+                was = (von != null ? von.text() : "Gegner") + " (" + nah.name + ")";
+            }
+            else was = best != null && gegnerwahl.unerreichbar > 0 ? "erreichbarer Gegner" : "Gegner";
         }
         else {
             int objArt = art == Art.SCHREIN ? OBJ_SCHREIN : OBJ_TRUHE;

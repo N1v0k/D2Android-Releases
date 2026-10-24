@@ -29,6 +29,12 @@ final class D2ResumeHint {
 
 
         boolean focused();
+
+
+        void arrivalPause();
+
+
+        void saveNow();
     }
 
 
@@ -81,8 +87,15 @@ final class D2ResumeHint {
     private final D2Resume.GameWatch games = new D2Resume.GameWatch();
     private long gameSince, countdownUntil, sentAt, lastPoll;
     private boolean decided, cancelled, sending, reported;
-    private int lastState = -1;
+    private int lastState = -1, lastExitState;
+
+    private long exitSaveAt;
+    private boolean exitToTown;
+
+    static final long EXIT_SAVE_MS = 1000, EXIT_SAVE_MAX_MS = 3000;
     private final RectF area = new RectF();
+
+    private final D2ResumeExit exit;
 
     D2ResumeHint(Context context, D2ModLink link, Host host) {
         this.context = context;
@@ -95,6 +108,17 @@ final class D2ResumeHint {
             @Override public void put(String key, String value) { prefs.edit().putString(key, value).commit(); }
             @Override public void remove(String key) { prefs.edit().remove(key).commit(); }
         });
+        this.exit = new D2ResumeExit(new D2ResumeExit.Host() {
+            @Override public void send(int kind) { link.resumeExit(kind); }
+            @Override public String text(int which) {
+                return host.text(which == D2ResumeExit.TEXT_TOWN ? R.string.resume_exit_town : R.string.resume_exit_continue);
+            }
+        });
+    }
+
+
+    D2ResumeExit exit() {
+        return exit;
     }
 
     void setGameDir(File dir) {
@@ -170,6 +194,9 @@ final class D2ResumeHint {
             decided = cancelled = sending = reported = false;
             countdownUntil = 0;
             lastState = -1;
+            lastExitState = 0;
+            exitSaveAt = 0;
+            exit.hide();
             resume.forget();
             decision = DECISION_NONE;
         }
@@ -185,7 +212,7 @@ final class D2ResumeHint {
             decided = true;
             File f = heroFile(name);
             D2Resume.Why why = resume.decide(D2Settings.resume(context), link.singlePlayer(), host.idle(), folder, name, r,
-                f != null ? f.length() : -1, f != null ? f.lastModified() : -1);
+                f != null ? f.length() : -1, f != null ? f.lastModified() : -1, D2SaveHeader.hardcore(saveDir, name));
             D2Trace.log("resume: " + why + (r != null ? " · " + r : ""));
 
             if (decide(why == D2Resume.Why.OK) != DECISION_GOES) return;
@@ -220,8 +247,37 @@ final class D2ResumeHint {
             String level = levelName(resume.entry != null ? resume.entry.level : r.level);
             D2Trace.log("resume: done, state " + r.state + " reason " + r.reason);
             if (r.state == D2ResumeState.STATE_SPOT) host.note(host.text(R.string.resume_spot, level), 2500);
-            else if (r.state == D2ResumeState.STATE_WAYPOINT) host.note(host.text(R.string.resume_waypoint, level), 2500);
+
+            else if (r.state == D2ResumeState.STATE_WAYPOINT) host.note(host.text(R.string.resume_waypoint,
+                D2Resume.hasWaypoint(r.level) ? levelName(r.level) : level), 2500);
             else host.note(host.text(R.string.resume_refused, reasonText(r.reason)), 3000);
+
+
+            if (r.state != D2ResumeState.STATE_REFUSED || r.offer != 0) {
+                exit.show(r.exitKnown ? r.offer : 0, now);
+                host.arrivalPause();
+            }
+        }
+
+        if (exit.active() && r != null && r.exitKnown && r.offer == 0) {
+            D2Trace.log("resume: way out no longer offered by the mod");
+            exit.hide();
+        }
+
+        if (r != null && r.exitState != lastExitState) {
+            lastExitState = r.exitState;
+            if (exit.wayOutChosen() && (r.exitState == D2ResumeState.EXIT_TOWN || r.exitState == D2ResumeState.EXIT_WAYPOINT)) {
+                D2Trace.log("resume: way out done (" + r.exitState + "), saving in a moment");
+                exitSaveAt = now + EXIT_SAVE_MS;
+                exitToTown = r.exitState == D2ResumeState.EXIT_TOWN;
+            }
+            else if (r.exitState == D2ResumeState.EXIT_REFUSED) D2Trace.log("resume: way out refused by the mod");
+        }
+
+        if (exitSaveAt != 0 && r != null && now >= exitSaveAt
+            && (!exitToTown || D2Resume.isTown(r.level) || now >= exitSaveAt - EXIT_SAVE_MS + EXIT_SAVE_MAX_MS)) {
+            exitSaveAt = 0;
+            host.saveNow();
         }
     }
 

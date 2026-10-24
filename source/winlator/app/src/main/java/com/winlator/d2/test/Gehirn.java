@@ -48,6 +48,12 @@ public final class Gehirn {
 
 
         public boolean getippt;
+
+
+
+
+
+        public String modAuftrag;
         public String grund = "";
     }
 
@@ -102,6 +108,27 @@ public final class Gehirn {
 
 
     public boolean gebietLeeren;
+
+
+
+
+    public final java.util.List<Zwischenziel> zwischenziele = new java.util.ArrayList<>();
+    private Zwischenziel zwischen;
+    private Zwischenziel.Ziel zwischenZiel;
+    private boolean zwischenDa;
+    private long zwischenGefragtAm;
+
+    private boolean hauptDa, hauptEingang, hauptBlock;
+    private double hauptX, hauptY, hauptBesterAbstand;
+    private String hauptName = "";
+    private long hauptSeit, hauptMaxMs, hauptBesterAm;
+    private int hauptWandSeite, hauptLetzteSeite;
+
+    public int hauptzielFortgesetzt;
+
+    static final long ZWISCHEN_NEU_MS = 1500;
+
+    static final double ZWISCHEN_NACHFUEHREN = 8;
 
     public int trinkenPct = TRINKEN_PCT;
 
@@ -169,6 +196,16 @@ public final class Gehirn {
 
 
 
+    public java.util.List<Wegsuche.Punkt> geplanterWeg() {
+        if (zwischen == null || weg == null || zielX != wegZielX || zielY != wegZielY) return null;
+        return java.util.Collections.unmodifiableList(weg);
+    }
+
+
+
+
+
+
     private double vorgabeX = Double.NaN, vorgabeY = Double.NaN;
     private String vorgabeName = "";
     private boolean vorgabeEingang;
@@ -211,6 +248,11 @@ public final class Gehirn {
     private boolean zielEingang;
     private long eingangTippAm;
     private int eingangTipps;
+
+    private long eingangNichtVornSeit;
+
+
+    static final long EINGANG_VORN_MS = 3000, EINGANG_PORTAL_MS = 6000;
 
 
 
@@ -306,6 +348,7 @@ public final class Gehirn {
         Absicht a = new Absicht();
         if (richtungSeit == 0) richtungSeit = now;
         if (z.gebiet != letztesGebiet) {
+            if (zwischen != null) zwischenEnde(Zwischenziel.WEG, now);
             if (letztesGebiet >= 0 && z.stadt && !z.weltlage()) neueRichtung(now, richtung + Math.PI);
             zielX = Double.NaN;
             schlechteZiele.clear();
@@ -371,6 +414,7 @@ public final class Gehirn {
                 if (gruppe == null) gruppe = Gruppen.von(gruppen, feind.id);
                 kampfGruppe(z, gruppe, now);
                 kampf = true;
+                if (zwischen != null) zwischenEnde(Zwischenziel.AUFGEGEBEN, now);
 
 
                 Zustand.Ding ziel = angegriffen(z, feind, now);
@@ -615,6 +659,7 @@ public final class Gehirn {
         for (Zustand.Ding d : z.objekte) {
             if (ohneDurchgaenge && (d.art == OBJEKT_PORTAL || d.art == OBJEKT_EINGANG)) continue;
             if (z.istAusgelassen(d)) continue;
+            if (Objektwahl.nehmenNie(d.art, d.extra, z.objektDetails.get(d.id))) continue;
             double t = z.bodenAbstand(d);
             if (t <= reach && (d.art == OBJEKT_LEICHE || t <= score + GLEICH)) return false;
         }
@@ -753,6 +798,17 @@ public final class Gehirn {
             if (cos < Math.cos(Math.toRadians(l.zielkegel))) return false;
         }
         return true;
+    }
+
+
+
+
+
+
+    public java.util.Set<Long> uebersprungene(long now) {
+        java.util.Set<Long> out = new HashSet<>(jenseits);
+        for (Map.Entry<Long, Long> e : ignoriert.entrySet()) if (now < e.getValue()) out.add(e.getKey());
+        return out;
     }
 
 
@@ -1061,8 +1117,7 @@ public final class Gehirn {
             nichtDrueckbar.add(d.id);
 
 
-
-            if (!u.erreichbar || u.weg == null || u.weg.isEmpty() || (d.extra & GEFAEHRLICH) != 0) ausgeschlossen.add(d.id);
+            if (!u.erreichbar || u.weg == null || u.weg.isEmpty()) ausgeschlossen.add(d.id);
         }
     }
 
@@ -1111,8 +1166,6 @@ public final class Gehirn {
     }
 
 
-    static final int GEFAEHRLICH = 2 | 4 | 8;
-
     private final Set<Long> nichtDrueckbar = new HashSet<>(), ausgeschlossen = new HashSet<>();
     private long anlaufZiel = -1;
 
@@ -1124,11 +1177,24 @@ public final class Gehirn {
 
     private void gehen(Zustand z, Zustand.Ziele ziele, long now, Absicht a) {
 
+
+        Zwischenziel.Ziel gefolgt = null;
+        if (zwischen != null) {
+            if (zwischenFolgen(z, now, a)) return;
+            gefolgt = zwischenZiel;
+        }
+        else if ((zielBlock || zielName.startsWith("Erkunden")) && now - zwischenGefragtAm > ZWISCHEN_NEU_MS) {
+            zwischenWaehlen(z, ziele, now);
+        }
+
         boolean erledigt = zielBlock && abdeckung != null && abdeckung.zielErledigt();
         if (Double.isNaN(zielX) || erledigt || now - zielSeit > zielMaxMs || (now - besterAbstandAm > KEIN_FORTSCHRITT_MS)) {
             if (!Double.isNaN(zielX) && !erledigt) zielAufgegeben(now);
             waehleZiel(z, ziele, now);
         }
+
+
+        if (zwischen != null && zwischenZiel != gefolgt && zwischenFolgen(z, now, a)) return;
         if (keinZiel(a)) return;
         double dx = zielX - z.wx, dy = zielY - z.wy, rest = Math.hypot(dx, dy);
         if (eingangErsatz && Math.hypot(z.wx - ersatzX, z.wy - ersatzY) > KNOTEN_ERREICHT) {
@@ -1139,6 +1205,7 @@ public final class Gehirn {
         if (zielEingang && (rest < 4 || eingangErsatz) && now - eingangTippAm > 2500 && a.tippen == null) {
 
 
+            if (eingangWartet(z, now, a)) return;
             if (++eingangTipps > 4) {
                 navigation = "Eingang " + zielName + ": " + (eingangTipps - 1) + " Tipps ohne Gebietswechsel – anderes Ziel";
                 schlechteZiele.put(zielName, now + SCHLECHT_MS);
@@ -1148,6 +1215,7 @@ public final class Gehirn {
                 return;
             }
             eingangTippAm = now;
+            eingangNichtVornSeit = 0;
             a.tippen = "interact";
             a.richtung = Double.NaN;
             a.grund = "Eingang " + zielName + ": antippen";
@@ -1528,6 +1596,11 @@ public final class Gehirn {
 
 
     private void zielAufgegeben(long now) {
+        if (zwischen != null) {
+            zwischenEnde(Zwischenziel.AUFGEGEBEN, now);
+            zieleGewechselt++;
+            return;
+        }
         schlechteZiele.put(zielName, now + SCHLECHT_MS);
         zieleGewechselt++;
         if (zielBlock && abdeckung != null) abdeckung.fehlschlag();
@@ -1584,6 +1657,7 @@ public final class Gehirn {
 
 
     private void waehleZiel(Zustand z, Zustand.Ziele ziele, long now) {
+        if (zwischen != null) zwischenEnde(Zwischenziel.AUFGEGEBEN, now);
         Zustand.Ziele.Ausgang best = null;
         double bestScore = Double.MAX_VALUE;
 
@@ -1689,11 +1763,165 @@ public final class Gehirn {
         zielSeit = now;
         zielMaxMs = ZIEL_MAX_MS;
         eingangTipps = 0;
+        eingangNichtVornSeit = 0;
         eingangErsatz = false;
         besterAbstand = Math.hypot(zielX - z.wx, zielY - z.wy);
         besterAbstandAm = now;
         wandSeite = letzteSeite = 0;
         navigation = "neues Ziel: " + zielName + " (" + Math.round(besterAbstand) + " Subtiles)";
+
+        zwischenWaehlen(z, ziele, now);
+    }
+
+
+
+
+
+
+
+
+    private boolean eingangWartet(Zustand z, long now, Absicht a) {
+        Zustand.Ding eingang = null;
+        for (Zustand.Ding d : z.objekte) {
+            if (d.art != OBJEKT_EINGANG || !z.weltlage()) continue;
+            double[] w = weltlage(z, d);
+            if (Math.hypot(w[0] - zielX, w[1] - zielY) <= 8 && (eingang == null || z.bodenAbstand(d) < z.bodenAbstand(eingang))) eingang = d;
+        }
+        Objekte.Vorn v = Objekte.vorn(z, gebietLeeren);
+        boolean portal = v != null && !v.item && v.ding.art == OBJEKT_PORTAL;
+        boolean vorn = eingang != null && v != null && !v.item && v.ding.id == eingang.id && !v.gleich;
+        if (vorn || v == null || (eingang == null && !portal)) {
+            eingangNichtVornSeit = 0;
+            return false;
+        }
+        if (eingangNichtVornSeit == 0) eingangNichtVornSeit = now;
+        long seit = now - eingangNichtVornSeit;
+        if (!portal && seit >= EINGANG_VORN_MS) return false;
+        if (portal && seit >= EINGANG_PORTAL_MS) {
+            navigation = "Eingang " + zielName + ": ein Portal liegt näher – anderes Ziel";
+            schlechteZiele.put(zielName, now + SCHLECHT_MS);
+            zieleGewechselt++;
+            eingangNichtVornSeit = 0;
+            zielX = zielY = Double.NaN;
+            a.richtung = Double.NaN;
+            a.grund = navigation;
+            return true;
+        }
+        a.richtung = eingang != null ? Math.atan2(eingang.y - z.py, eingang.x - z.px) : Double.NaN;
+        a.grund = "Eingang " + zielName + ": erst näher (" + (portal ? "Portal" : v.item ? "Gegenstand" : "Objekt " + v.ding.art) + " vorn)";
+        navigation = a.grund;
+        return true;
+    }
+
+
+    private boolean zwischenWaehlen(Zustand z, Zustand.Ziele ziele, long now) {
+        zwischenGefragtAm = now;
+        if (!gebietLeeren || z.stadt || !z.weltlage() || zwischenziele.isEmpty()) return false;
+        for (Zwischenziel zw : zwischenziele) {
+            Zwischenziel.Ziel g = zw.waehlen(z, ziele, now);
+            if (g == null) continue;
+
+            hauptDa = !Double.isNaN(zielX);
+            hauptX = zielX;
+            hauptY = zielY;
+            hauptName = zielName;
+            hauptEingang = zielEingang;
+            hauptBlock = zielBlock;
+            hauptSeit = zielSeit;
+            hauptMaxMs = zielMaxMs;
+            hauptBesterAbstand = besterAbstand;
+            hauptBesterAm = besterAbstandAm;
+            hauptWandSeite = wandSeite;
+            hauptLetzteSeite = letzteSeite;
+            zwischen = zw;
+            zwischenZiel = g;
+            zwischenDa = false;
+
+
+            weg = null;
+            if (tuer.aktiv()) tuer.abbrechen();
+            zielX = g.x;
+            zielY = g.y;
+            zielName = g.name;
+            zielEingang = zielBlock = false;
+            zielSeit = now;
+            zielMaxMs = ZIEL_MAX_MS;
+            eingangTipps = 0;
+            eingangErsatz = false;
+            besterAbstand = Math.hypot(zielX - z.wx, zielY - z.wy);
+            besterAbstandAm = now;
+            wandSeite = letzteSeite = 0;
+            navigation = "neues Ziel: " + zielName + " (" + Math.round(besterAbstand) + " Subtiles)";
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
+    private boolean zwischenFolgen(Zustand z, long now, Absicht a) {
+        Zwischenziel.Ziel n = zwischen.nachfuehren(zwischenZiel, z, now);
+        if (n == null) {
+            zwischenEnde(Zwischenziel.WEG, now);
+            return false;
+        }
+        zwischenZiel = n;
+        if (zwischenDa || Math.hypot(n.x - z.wx, n.y - z.wy) < n.radius) {
+            zwischenDa = true;
+            if (zwischen.handeln(n, z, a, now)) {
+                if (a.tippen == null && a.grund.isEmpty()) a.grund = n.name + ": dort";
+                return true;
+            }
+            zwischenEnde(Zwischenziel.ERREICHT, now);
+            return false;
+        }
+        if (now - besterAbstandAm > n.fristMs) {
+            zwischenEnde(Zwischenziel.AUFGEGEBEN, now);
+            zieleGewechselt++;
+            return false;
+        }
+        if (Math.hypot(n.x - zielX, n.y - zielY) > ZWISCHEN_NACHFUEHREN) {
+            zielX = n.x;
+            zielY = n.y;
+        }
+        return false;
+    }
+
+
+
+
+
+    private void zwischenEnde(int wie, long now) {
+        Zwischenziel zw = zwischen;
+        Zwischenziel.Ziel g = zwischenZiel;
+        zwischen = null;
+        zwischenZiel = null;
+        zwischenDa = false;
+
+
+        weg = null;
+        if (tuer.aktiv()) tuer.abbrechen();
+        if (hauptDa) {
+            hauptzielFortgesetzt++;
+            zielX = hauptX;
+            zielY = hauptY;
+            zielName = hauptName;
+            zielEingang = hauptEingang;
+            zielBlock = hauptBlock;
+            zielSeit = hauptSeit;
+            zielMaxMs = hauptMaxMs;
+            besterAbstand = hauptBesterAbstand;
+            besterAbstandAm = hauptBesterAm;
+            wandSeite = hauptWandSeite;
+            letzteSeite = hauptLetzteSeite;
+        }
+        else zielX = zielY = Double.NaN;
+        hauptDa = false;
+        navigation = g.name + ": " + (wie == Zwischenziel.ERREICHT ? "erreicht" : wie == Zwischenziel.AUFGEGEBEN ? "aufgegeben" : "weg")
+            + (Double.isNaN(zielX) ? "" : ", weiter zu " + zielName);
+        zw.ende(g, wie, now);
     }
 
 

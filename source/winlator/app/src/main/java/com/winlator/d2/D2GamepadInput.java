@@ -164,7 +164,8 @@ final class D2GamepadInput {
         if (pressed) {
             overlay.onRealPad();
             overlay.padUsed(true);
-            swallowed[button] = (button == D2Gamepad.A || button == D2Gamepad.START) && overlay.padResume()
+
+            swallowed[button] = overlay.padResume(button)
                 || button == D2Gamepad.A && overlay.deathTap();
             if (swallowed[button]) return;
         }

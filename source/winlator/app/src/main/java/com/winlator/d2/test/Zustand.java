@@ -17,6 +17,8 @@ import java.util.Set;
 
 public final class Zustand {
     public static final int MONSTER_TOWN_NPC = 16;
+
+    public static final int MONSTER_AKTBOSS = 128;
     public static final int ITEM_GOLD = 1, ITEM_POTION = 2, ITEM_RUNE = 3, ITEM_GEM = 4;
 
     public static final class Ding {
@@ -38,6 +40,19 @@ public final class Zustand {
     public long ms;
     public int seq, gebiet, px, py, gw, gh, lebenPct, manaPct, leben, lebenMax, heilGuertel;
     public boolean stadt, pause, panel, npc, heilWirkt;
+
+
+
+
+
+
+    public int[][] haltbarkeit = new int[0][];
+    public int[] menue = new int[0];
+    public long[] reparatur;
+
+    public static final int UI_NPC_MENUE = 8, UI_LADEN = 0x0C;
+
+    public static final int MENUE_HANDELN_REPARIEREN = 0xD06;
 
 
 
@@ -79,6 +94,13 @@ public final class Zustand {
 
     public final Map<Long, Beute> beute = new HashMap<>();
 
+
+
+
+    public final Map<Long, int[]> objektDetails = new HashMap<>();
+
+    public int[] schreine = new int[0];
+
     public long zellen = -1;
 
 
@@ -112,6 +134,7 @@ public final class Zustand {
 
 
 
+
     public final Set<Long> ausgelassen = new HashSet<>();
 
 
@@ -133,6 +156,24 @@ public final class Zustand {
         z.pause = o.optBoolean("pause");
         z.panel = o.optBoolean("panel");
         z.npc = o.optBoolean("npc");
+        JSONArray hb = o.optJSONArray("haltbarkeit");
+        if (hb != null) {
+            z.haltbarkeit = new int[hb.length()][];
+            for (int i = 0; i < hb.length(); i++) {
+                JSONArray e = hb.optJSONArray(i);
+                z.haltbarkeit[i] = new int[]{e != null ? e.optInt(0) : 0, e != null ? e.optInt(1) : 0};
+            }
+        }
+        JSONArray mn = o.optJSONArray("menue");
+        if (mn != null) {
+            z.menue = new int[mn.length()];
+            for (int i = 0; i < mn.length(); i++) z.menue[i] = mn.optInt(i);
+        }
+        JSONArray rp = o.optJSONArray("reparatur");
+        if (rp != null && rp.length() >= 5) {
+            z.reparatur = new long[5];
+            for (int i = 0; i < 5; i++) z.reparatur[i] = rp.optLong(i);
+        }
         z.fenster = o.optString("fenster", "0");
         z.hover = o.optInt("hover", -1);
         z.waffen = o.optInt("waffen", -1);
@@ -169,6 +210,11 @@ public final class Zustand {
         if (buffs != null) {
             z.puffer = new int[buffs.length()];
             for (int i = 0; i < buffs.length(); i++) z.puffer[i] = buffs.optInt(i, -1);
+        }
+        JSONArray sr = o.optJSONArray("schreine");
+        if (sr != null) {
+            z.schreine = new int[sr.length()];
+            for (int i = 0; i < sr.length(); i++) z.schreine[i] = sr.optInt(i, -1);
         }
         JSONArray an = o.optJSONArray("anlegen");
         if (an != null && an.length() >= 7) {
@@ -215,6 +261,11 @@ public final class Zustand {
         }
         z.zellen = o.optLong("zellen", -1);
         things(o.optJSONArray("objekte"), z.objekte);
+        JSONArray od = o.optJSONArray("objektDetails");
+        for (int i = 0; od != null && i < od.length(); i++) {
+            JSONArray a = od.optJSONArray(i);
+            if (a != null && a.length() >= 3) z.objektDetails.put(a.optLong(0), new int[]{a.optInt(1), a.optInt(2)});
+        }
         things(o.optJSONArray("leichen"), z.leichen);
         JSONArray left = o.optJSONArray("ausgelassen");
         if (left != null) for (int i = 0; i < left.length(); i++) z.ausgelassen.add(left.optLong(i));
@@ -257,6 +308,38 @@ public final class Zustand {
 
     public double abstand(Ding d) {
         return Math.hypot(d.x - px, d.y - py);
+    }
+
+
+    public static boolean aktBoss(Ding d) {
+        return (d.extra & MONSTER_AKTBOSS) != 0;
+    }
+
+
+    public boolean gelbOderRot() {
+        return haltbarkeit.length > 0;
+    }
+
+
+    public boolean rot() {
+        for (int[] h : haltbarkeit) if (h[1] == 2) return true;
+        return false;
+    }
+
+
+    public boolean offen(int ui) {
+        try {
+            return (Long.parseUnsignedLong(fenster, 16) >> ui & 1) != 0;
+        }
+        catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+
+    public int menueZeile(int textId) {
+        for (int i = 0; i < menue.length; i++) if (menue[i] == textId) return i;
+        return -1;
     }
 
 

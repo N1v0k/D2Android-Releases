@@ -29,9 +29,16 @@ public final class D2InstallPlan {
     static final String DOWNLOADER_URL = "https://downloader.battle.net/download/getLegacy?os=win&locale=%s&product=%s";
 
 
+
+
+
+
     public enum Language {
         EN_US("enUS", true),
-        DE_DE("deDE", true);
+        DE_DE("deDE", true),
+        FR_FR("frFR", true),
+        ES_ES("esES", true),
+        IT_IT("itIT", true);
 
         public final String locale;
         public final boolean available;

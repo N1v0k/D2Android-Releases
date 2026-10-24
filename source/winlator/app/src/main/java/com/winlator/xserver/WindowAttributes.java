@@ -1,4 +1,4 @@
-package com.winlator.xserver;
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-24).
 
 import com.winlator.core.Bitmask;
 import com.winlator.xconnector.XInputStream;
@@ -130,6 +130,7 @@ public class WindowAttributes {
     }
 
     public void update(Bitmask valueMask, XInputStream inputStream, XClient client) {
+        Cursor cursorBefore = cursor;
         for (int index : valueMask) {
             switch (index) {
                 case FLAG_BACKGROUND_PIXEL:
@@ -172,7 +173,16 @@ public class WindowAttributes {
             }
         }
 
-        client.xServer.windowManager.triggerOnUpdateWindowAttributes(window, valueMask);
+
+
+
+        if (valueMask.isSet(FLAG_CURSOR) && cursor == cursorBefore) {
+            Bitmask changed = new Bitmask(valueMask.getBits());
+            changed.unset(FLAG_CURSOR);
+            valueMask = changed;
+            com.winlator.d2.D2FrameCounts.cursorUnchanged.incrementAndGet();
+        }
+        if (!valueMask.isEmpty()) client.xServer.windowManager.triggerOnUpdateWindowAttributes(window, valueMask);
     }
 
     public boolean isTransparent() {

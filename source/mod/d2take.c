@@ -58,6 +58,15 @@ static void takeUnit(void* player, DWORD type, DWORD id, DWORD now) {
         return;
     }
     double d = unitDistance(player, unit);
+
+    if (type == UNIT_TILE) {
+        double tx, ty;
+        unitPosition(unit, &tx, &ty);
+        if (tileUnderGate(lastGates, nLastGates, (int) tx, (int) ty)) {
+            trace("take type 5 id %lu: a closed object stands on it, not taken", (unsigned long) id);
+            return;
+        }
+    }
     const char* how = "click";
 
     stopWalk(player);

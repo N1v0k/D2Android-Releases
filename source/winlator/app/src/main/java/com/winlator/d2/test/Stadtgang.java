@@ -10,7 +10,10 @@ package com.winlator.d2.test;
 
 
 public final class Stadtgang {
-    public enum Schritt { AUS, PORTAL_OEFFNEN, INS_PORTAL, ZUM_HEILER, REDEN, DIALOG_ZU, ZUR_TRUHE, TRUHE, ZUM_PORTAL, ZURUECK }
+    public enum Schritt {
+        AUS, PORTAL_OEFFNEN, INS_PORTAL, ZUM_HEILER, REDEN, DIALOG_ZU, ZUM_SCHMIED, REDEN_SCHMIED, LADEN_OEFFNEN, REPARIEREN,
+        LADEN_ZU, ZUR_TRUHE, TRUHE, ZUM_PORTAL, ZURUECK
+    }
 
 
     public int minHeil = 2;
@@ -23,6 +26,23 @@ public final class Stadtgang {
     public long pauseNachGangMs = 180_000;
 
     public boolean mitTruhe = true;
+
+
+
+
+
+    public boolean mitSchmied;
+
+    public int reparaturen;
+    public String reparatur = "";
+    public boolean rotUebrig;
+
+    private long auftrag;
+    static final int AUFTRAG_FERTIG = 2;
+
+    static final int ENDE_FERTIG = 0, ENDE_GOLD = 1, ENDE_LADEN_ZU = 4, ENDE_ZEIT = 8, ENDE_NICHT_VERFUEGBAR = 9, ENDE_TEILWEISE = 11;
+
+    static final long REPARIEREN_MAX_MS = 20_000;
     public int gaenge, abbrueche;
 
     public String meldung = "", abbruch;
@@ -63,6 +83,9 @@ public final class Stadtgang {
 
     public void starten(long now) {
         weiter(Schritt.PORTAL_OEFFNEN, now, "Stadtgang: Portal öffnen");
+        auftrag = 0;
+        rotUebrig = false;
+        reparatur = "";
         abbruch = null;
         truheOffen = portalGetippt = false;
         ankunftX = ankunftY = Double.NaN;
@@ -132,12 +155,82 @@ public final class Stadtgang {
             case DIALOG_ZU: {
                 if (!z.npc && !z.panel) {
                     if (lebenNachher < z.leben) lebenNachher = z.leben;
-                    return weiterIn(a, mitTruhe ? Schritt.ZUR_TRUHE : Schritt.ZUM_PORTAL, now, "Dialog zu, Leben " + z.leben + "/" + z.lebenMax);
+                    Schritt naechster = mitSchmied && z.gelbOderRot() ? Schritt.ZUM_SCHMIED : nachDemSchmied();
+                    return weiterIn(a, naechster, now, "Dialog zu, Leben " + z.leben + "/" + z.lebenMax);
                 }
                 if (now - letzterTipp > 1500) {
                     letzterTipp = now;
                     a.tippen = "menu_esc";
                     a.grund = "Stadtgang: Dialog schließen";
+                }
+                return a;
+            }
+            case ZUM_SCHMIED: {
+                int txt = schmied(z.gebiet);
+                Zustand.Figur.Ort o = txt < 0 ? null : ort(f, Zustand.Figur.ORT_PERSON, txt);
+                if (o == null) return ohneReparatur(a, "kein Schmied in den Orten" + (txt < 0 ? "" : " (txt " + txt + ")"), now);
+                if (Math.hypot(o.x - z.wx, o.y - z.wy) < NAH_SUBTILES) return weiterIn(a, Schritt.REDEN_SCHMIED, now, "beim Schmied");
+                gehe(z, o.x, o.y, now, a, "zum Schmied " + o.txt + (o.geladen() ? "" : " (Startplatz)"));
+                return a;
+            }
+            case REDEN_SCHMIED: {
+                if (z.offen(Zustand.UI_LADEN)) return weiterIn(a, Schritt.REPARIEREN, now, "Laden offen");
+                if (z.menueZeile(Zustand.MENUE_HANDELN_REPARIEREN) >= 0) return weiterIn(a, Schritt.LADEN_OEFFNEN, now, "Menü offen");
+                if (now - letzterTipp > TIPP_ABSTAND_MS) {
+                    letzterTipp = now;
+                    if (z.npc) {
+
+                        a.tippen = "menu_esc";
+                        a.grund = "Stadtgang: Begrüßung des Schmieds überspringen";
+                        return a;
+                    }
+                    if (versuche >= 3) return ohneReparatur(a, "Schmied antwortet nicht", now);
+                    versuche++;
+                    a.tippen = "interact";
+                    a.grund = "Stadtgang: mit dem Schmied reden";
+                }
+                return a;
+            }
+            case LADEN_OEFFNEN: {
+                if (z.offen(Zustand.UI_LADEN)) return weiterIn(a, Schritt.REPARIEREN, now, "Laden offen");
+                int zeile = z.menueZeile(Zustand.MENUE_HANDELN_REPARIEREN);
+                if (zeile < 0) return ohneReparatur(a, "keine Menüzeile Handeln/Reparieren", now);
+                if (now - letzterTipp > TIPP_ABSTAND_MS) {
+                    if (versuche >= 3) return ohneReparatur(a, "Laden geht nicht auf", now);
+                    versuche++;
+                    letzterTipp = now;
+                    a.modAuftrag = "npc " + zeile;
+                    a.grund = "Stadtgang: Handeln/Reparieren (Zeile " + zeile + ")";
+                }
+                return a;
+            }
+            case REPARIEREN: {
+                long[] r = z.reparatur;
+                if (auftrag != 0 && r != null && r[0] == auftrag && r[1] == AUFTRAG_FERTIG) {
+                    reparaturen++;
+                    rotUebrig = r[4] != 0;
+                    reparatur = grundText((int) r[2]) + ", " + r[3] + " Teile" + (rotUebrig ? ", kaputtes Teil übrig" : "");
+                    return weiterIn(a, Schritt.LADEN_ZU, now, "Reparieren: " + reparatur);
+                }
+                if (auftrag != 0 && now - seit > REPARIEREN_MAX_MS) return ohneReparatur(a, "keine Antwort der Mod", now);
+                if (auftrag == 0 || (now - letzterTipp > TIPP_ABSTAND_MS && (r == null || r[0] != auftrag))) {
+                    if (versuche >= 3) return ohneReparatur(a, "Auftrag kommt nicht an", now);
+                    if (auftrag == 0) auftrag = (now % 1_000_000_000L) + 1;
+                    versuche++;
+                    letzterTipp = now;
+                    a.modAuftrag = "reparieren " + auftrag;
+                    a.grund = "Stadtgang: reparieren (Auftrag " + auftrag + ")";
+                }
+                return a;
+            }
+            case LADEN_ZU: {
+                if (!z.npc && !z.panel && !z.offen(Zustand.UI_LADEN) && !z.offen(Zustand.UI_NPC_MENUE)) {
+                    return weiterIn(a, nachDemSchmied(), now, "Laden zu");
+                }
+                if (now - letzterTipp > 1500) {
+                    letzterTipp = now;
+                    a.tippen = "menu_esc";
+                    a.grund = "Stadtgang: Laden schließen";
                 }
                 return a;
             }
@@ -172,6 +265,44 @@ public final class Stadtgang {
             }
             default:
                 return a;
+        }
+    }
+
+
+    private Schritt nachDemSchmied() {
+        return mitTruhe ? Schritt.ZUR_TRUHE : Schritt.ZUM_PORTAL;
+    }
+
+
+
+
+
+    private Gehirn.Absicht ohneReparatur(Gehirn.Absicht a, String warum, long now) {
+        reparaturen++;
+        reparatur = "nicht repariert: " + warum;
+        rotUebrig = true;
+        return weiterIn(a, Schritt.LADEN_ZU, now, "Reparieren: " + reparatur);
+    }
+
+
+    static String grundText(int grund) {
+        switch (grund) {
+            case ENDE_FERTIG: return "alles repariert";
+            case ENDE_TEILWEISE: return "teilweise (Gold)";
+            case ENDE_GOLD: return "nichts bezahlbar";
+            case ENDE_LADEN_ZU: return "Laden zu";
+            case ENDE_ZEIT: return "Zeit um";
+            case ENDE_NICHT_VERFUEGBAR: return "nicht verfügbar";
+            default: return "Grund " + grund;
+        }
+    }
+
+
+    static int schmied(int gebiet) {
+        switch (gebiet) {
+            case 1: return 154;
+            case 40: return 178;
+            default: return -1;
         }
     }
 
@@ -225,7 +356,8 @@ public final class Stadtgang {
 
 
     public boolean fensterErlaubt() {
-        return schritt == Schritt.REDEN || schritt == Schritt.DIALOG_ZU;
+        return schritt == Schritt.REDEN || schritt == Schritt.DIALOG_ZU || schritt == Schritt.REDEN_SCHMIED
+            || schritt == Schritt.LADEN_OEFFNEN || schritt == Schritt.REPARIEREN || schritt == Schritt.LADEN_ZU;
     }
 
 

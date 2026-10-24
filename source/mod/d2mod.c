@@ -858,6 +858,7 @@ static int isHelperUnitName(const wchar_t* name) {
 
 
 #include "d2monrules.h"
+#include "d2bosses.c"
 
 static int readable(const void* p, UINT_PTR size);
 
@@ -3060,6 +3061,7 @@ static void setPlayers(int count) {
 static void resumeCommand(void* player, const BYTE* buf, int n);
 static int resumeSaveGate(void);
 static void putResumeFields(Packet* p);
+static void putResumeExitFields(Packet* p);
 
 static void plugyCommand(BYTE code) {
     int gate = code == 0x24 ? resumeSaveGate() : 0;
@@ -3130,16 +3132,48 @@ static void putPlayerName(Packet* p, void* player) {
     for (int k = 0; k < 16; k++) putU8(p, readable(pdata, 16) ? RD8(pdata, k) : 0);
 }
 
+
+
+
+
+
+
+
+
+
+static int isClosedGate(const BYTE* txt, DWORD mode) {
+    if (mode != 0 || txt[OTXT_SELECTABLE0]) return 0;
+    for (int m = 1; m < 8; m++) if (txt[OTXT_SELECTABLE0 + m]) return 1;
+    return 0;
+}
+
+#define GATE_RADIUS 2
+#define MAX_GATES   16
+
+
+static int tileUnderGate(int (*gates)[2], int nGates, int x, int y) {
+    for (int i = 0; i < nGates; i++) {
+        int dx = gates[i][0] - x, dy = gates[i][1] - y;
+        if (dx >= -GATE_RADIUS && dx <= GATE_RADIUS && dy >= -GATE_RADIUS && dy <= GATE_RADIUS) return 1;
+    }
+    return 0;
+}
+
+
+static int lastGates[MAX_GATES][2], nLastGates;
+
 #include "d2labels.c"
 #include "d2take.c"
 
 static int shopAvailable;
+static int sellAvailable;
 static DWORD shopJobKey(int part);
 static void putShopJob(Packet* p);
 #include "d2items.c"
 #include "d2loot.c"
 #include "d2shop.c"
 #include "d2compare.c"
+#include "d2sell.c"
 #include "d2buffs.c"
 #include "d2equip.c"
 #include "d2sort.c"
@@ -3156,6 +3190,7 @@ static void stashTest(BYTE op, BYTE value);
 #include "d2map.c"
 #include "d2quest.c"
 #include "d2teleport.c"
+#include "d2objects.c"
 #include "d2value.c"
 #include "d2diff.c"
 #include "d2statprobe.c"
@@ -3188,12 +3223,12 @@ static void handleCommands(void* player, int stale) {
         noteCommand(cmd);
 
         if (pauseApplied && (cmd == CMD_DRINK || cmd == CMD_WALK || cmd == CMD_UNIT || cmd == CMD_PORTAL || cmd == CMD_BELT || cmd == CMD_TAKE
-            || cmd == CMD_SHOP_POTIONS)) continue;
+            || cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR || cmd == CMD_SELL)) continue;
 
 
 
         if (sortBusy() && (cmd == CMD_TAKE || cmd == CMD_BELT || cmd == CMD_EQUIP || cmd == CMD_PORTAL || cmd == CMD_UNIT
-            || cmd == CMD_SHOP_POTIONS || cmd == CMD_STASH)) {
+            || cmd == CMD_SHOP_POTIONS || cmd == CMD_STASH || cmd == CMD_SELL)) {
             if (cmd == CMD_STASH) stashBusyDrop();
             continue;
         }
@@ -3205,7 +3240,8 @@ static void handleCommands(void* player, int stale) {
         if (cmd == CMD_BELT && n >= 9 && player && buf[8] <= 2) moveToBelt(player, buf[8] + 1);
         if (cmd == CMD_STACKS && n >= 9 && player && buf[8] <= 1) setLargeStacks(buf[8] && singlePlayerGame());
         if (cmd == CMD_POINTS && n >= 11 && player) pointsCommand(player, buf, n);
-        if (cmd == CMD_SHOP_POTIONS && player) shopCommand(player, buf, n);
+        if ((cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR) && player) shopCommand(player, buf, n);
+        if (cmd == CMD_SELL && player) sellCommand(player, buf, n);
         if (cmd == CMD_LABELS && n >= 9) labelFilterCommand(buf, n);
         if (cmd == CMD_VALUE) valueCommand(buf, n);
         if (cmd == CMD_FRAMES) framesCommand(buf, n);
@@ -3238,6 +3274,12 @@ static void handleCommands(void* player, int stale) {
             srvProbeX = *(WORD*) (buf + 9);
             srvProbeY = *(WORD*) (buf + 11);
             srvProbeWanted = 5;
+        }
+
+        else if (cmd == 90 && player && n >= 14 && buf[8] == 8) {
+            srvProbeX = *(WORD*) (buf + 10);
+            srvProbeY = *(WORD*) (buf + 12);
+            srvProbeWanted = 8 | buf[9] << 8;
         }
         else if (cmd == 90 && player && n >= 9) srvProbeWanted = buf[8] | (n >= 10 ? buf[9] << 8 : 0);
 
@@ -3895,6 +3937,7 @@ static void collectAndSend(void* player) {
     int nMonsters = 0, nItems = 0, nObjects = 0, nCorpses = 0, rawMonsters = 0;
     Candidate corpse = {0};
     int units = 0;
+    int gates[MAX_GATES][2], nGates = 0;
     for (void* room = RDP(act, ACT_ROOM1); room && units < 4096; room = RDP(room, ROOM1_NEXT)) {
         for (void* unit = RDP(room, ROOM1_UNITS); unit && units < 4096; unit = RDP(unit, U_LISTNEXT), units++) {
             DWORD type = RD32(unit, U_TYPE);
@@ -3952,6 +3995,11 @@ static void collectAndSend(void* player) {
                             txt[OTXT_SELECTABLE0 + (omode < 8 ? omode : 0)]);
                     }
                 }
+                if (txt && nGates < MAX_GATES && isClosedGate(txt, omode)) {
+                    gates[nGates][0] = (int) x;
+                    gates[nGates][1] = (int) y;
+                    nGates++;
+                }
                 if (!txt || !txt[OTXT_SELECTABLE0 + (omode < 8 ? omode : 0)]) continue;
 
 
@@ -3965,6 +4013,30 @@ static void collectAndSend(void* player) {
                 addCandidate(objectList, &nObjects, unit, ux, uy, psx, psy);
             }
         }
+    }
+
+    memcpy(lastGates, gates, sizeof(gates));
+    nLastGates = nGates;
+    if (nGates) {
+        static DWORD gateTileLogged;
+        int kept = 0;
+        for (int i = 0; i < nObjects; i++) {
+            void* unit = objectList[i].unit;
+            if (RD32(unit, U_TYPE) == UNIT_TILE) {
+                double tx, ty;
+                unitPosition(unit, &tx, &ty);
+                if (tileUnderGate(gates, nGates, (int) tx, (int) ty)) {
+                    if (gateTileLogged != RD32(unit, U_ID) + 1) {
+                        gateTileLogged = RD32(unit, U_ID) + 1;
+                        logLine("entrance %lu at %d,%d left out: a closed object stands on it", (unsigned long) RD32(unit, U_ID),
+                            (int) tx, (int) ty);
+                    }
+                    continue;
+                }
+            }
+            objectList[kept++] = objectList[i];
+        }
+        nObjects = kept;
     }
     nMonsters = keepNearest(monsterList, nMonsters, MAX_MONSTERS);
     nItems = keepNearest(itemList, nItems, MAX_ITEMS);
@@ -3983,6 +4055,7 @@ static void collectAndSend(void* player) {
         if (bits & 0x10) flags |= 4;
         if (bits & 0x02) flags |= 8;
         if (isTown(levelNo)) flags |= 16;
+        if (isActBoss(RD32(unit, U_TXTNO))) flags |= 128;
         putU32(&p, RD32(unit, U_ID));
         putU16(&p, (WORD) (short) monsterList[i].x);
         putU16(&p, (WORD) (short) monsterList[i].y);
@@ -4210,6 +4283,10 @@ static void collectAndSend(void* player) {
     for (int i = 0; i < nItems; i++) itemUnits[i] = itemList[i].unit;
     logNewItems(itemUnits, nItems);
     sendItems(player, itemUnits, nItems);
+
+    void* objectUnits[MAX_OBJECTS];
+    for (int i = 0; i < nObjects; i++) objectUnits[i] = objectList[i].unit;
+    sendObjectDetails(objectUnits, nObjects);
     sendGoals(player, levelNo);
     sendPlaytest(player, act, levelNo);
     sendEffects(player);
@@ -4360,6 +4437,80 @@ static void noteWorldFrames(DWORD now) {
 }
 
 
+#ifdef D2MOD_TESTCMDS
+#define U_GFXFRAME    0x44
+#define PATH_TARGET   0x58
+
+
+
+
+
+
+
+
+
+static void swingTrace(void* player) {
+    static DWORD lastMode = 0xFFFFFFFF, lastFrame, lastTarget = 0xFFFFFFFF, lastTargetMode;
+    if (!player) {
+        lastMode = lastTarget = 0xFFFFFFFF;
+        return;
+    }
+
+
+    void* last = lastTarget != 0xFFFFFFFF ? findUnit(lastTarget, UNIT_MONSTER) : NULL;
+    if (last) {
+        DWORD m = RD32(last, U_MODE);
+        if (m != lastTargetMode && (m == 6 || m == 3))
+            trace("swing: monster %lu %s", (unsigned long) lastTarget, m == 6 ? "blocks" : "gets hit");
+        lastTargetMode = m;
+    }
+    DWORD mode = RD32(player, U_MODE), frame = RD32(player, U_GFXFRAME);
+    int swinging = (mode >= 7 && mode <= 16 && mode != 9) || mode == 18;
+    int start = swinging && (mode != lastMode || frame < lastFrame);
+    lastMode = mode;
+    lastFrame = frame;
+    if (!start) return;
+    double px, py, x, y;
+    unitPosition(player, &px, &py);
+    void* path = RDP(player, U_PATH);
+    DWORD ttype = path ? RD32(path, PATH_TARGET + 4) : 0, tid = path ? RD32(path, PATH_TARGET + 8) : 0;
+    void* target = path ? RDP(path, PATH_TARGET) : NULL;
+    double tdist = -1;
+    if (target) {
+        unitPosition(target, &x, &y);
+        tdist = __builtin_sqrt((x - px) * (x - px) + (y - py) * (y - py));
+    }
+    double hdist = -1;
+    void* heldUnit = held.active ? findUnit(held.id, held.type) : NULL;
+    if (heldUnit) {
+        unitPosition(heldUnit, &x, &y);
+        hdist = __builtin_sqrt((x - px) * (x - px) + (y - py) * (y - py));
+    }
+    DWORD nearId = 0xFFFFFFFF;
+    double ndist = -1;
+    void* act = RDP(player, U_ACT);
+    int units = 0;
+    for (void* room = act ? RDP(act, ACT_ROOM1) : NULL; room && units < 4096; room = RDP(room, ROOM1_NEXT)) {
+        for (void* unit = RDP(room, ROOM1_UNITS); unit && units < 4096; unit = RDP(unit, U_LISTNEXT), units++) {
+            if (RD32(unit, U_TYPE) != UNIT_MONSTER || !isValidMonster(unit, 0)) continue;
+            unitPosition(unit, &x, &y);
+            double d = __builtin_sqrt((x - px) * (x - px) + (y - py) * (y - py));
+            if (ndist < 0 || d < ndist) {
+                ndist = d;
+                nearId = RD32(unit, U_ID);
+            }
+        }
+    }
+    if (target && ttype == UNIT_MONSTER && tid != lastTarget) {
+        lastTarget = tid;
+        lastTargetMode = RD32(target, U_MODE);
+    }
+    trace("swing: mode %lu, direction %u, path target %s type %lu id %lu at %.1f, held %lu at %.1f, nearest monster %lu at %.1f subtiles",
+        (unsigned long) mode, path ? (unsigned) RD8(path, PATH_DIR) : 0xFFu, target ? "unit" : "none", (unsigned long) ttype, (unsigned long) tid, tdist,
+        (unsigned long) (held.active ? held.id : 0xFFFFFFFF), hdist, (unsigned long) nearId, ndist);
+}
+#endif
+
 static void gameTick(void) {
     static int moreHooks;
     if (!moreHooks) {
@@ -4450,6 +4601,7 @@ static void gameTick(void) {
     STEP(updateDamage(player, now));
 #ifdef D2MOD_TESTCMDS
     STEP(updateServerQueueTest(now));
+    STEP(swingTrace(player));
 #endif
     STEP(stashTick(player));
     STEP(updateMap(player, now));

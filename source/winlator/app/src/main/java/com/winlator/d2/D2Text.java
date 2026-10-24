@@ -13,7 +13,8 @@ import java.util.Locale;
 
 
 public final class D2Text {
-    public static final String AUTO = "auto", GERMAN = "de", ENGLISH = "en";
+    public static final String AUTO = D2AppLanguage.AUTO, GERMAN = D2AppLanguage.GERMAN, ENGLISH = D2AppLanguage.ENGLISH,
+        FRENCH = D2AppLanguage.FRENCH, SPANISH = D2AppLanguage.SPANISH, ITALIAN = D2AppLanguage.ITALIAN;
 
     private static volatile int generation;
 
@@ -21,11 +22,8 @@ public final class D2Text {
 
 
     public static String language(Context context) {
-        String chosen = D2Settings.appLanguage(context);
-        if (GERMAN.equals(chosen) || ENGLISH.equals(chosen)) return chosen;
-        String game = D2Settings.gameLanguage(context);
-        if (game != null) return "deu".equals(game) ? GERMAN : ENGLISH;
-        return "de".equals(Locale.getDefault().getLanguage()) ? GERMAN : ENGLISH;
+
+        return D2AppLanguage.pick(D2Settings.appLanguage(context), D2Settings.gameLanguage(context), Locale.getDefault().getLanguage());
     }
 
 

@@ -232,8 +232,11 @@ public class D2GameActivity extends D2Activity {
 
 
 
-        frameLimit = D2FrameRate.effective(D2Settings.frameRate(this), D2Screen.refreshRates(this));
+        frameLimit = D2Settings.frameRate(this, D2Screen.refreshRates(this));
         displayRefresh = D2Screen.applyLimit(this, frameLimit);
+
+        screen.getXServerView().getRenderer().setFrameLimit(frameLimit);
+        D2Trace.log("renderer: at most " + (frameLimit > 0 ? frameLimit + " frames a second" : "as many frames as asked"));
 
         Executors.newSingleThreadExecutor().execute(this::startEnvironment);
     }
@@ -253,6 +256,7 @@ public class D2GameActivity extends D2Activity {
         env.put("D2_ALSA_RATE", "22050");
 
         D2Runtime.enableDxvkLog(this, env, getIntent().getBooleanExtra(EXTRA_LOG, false));
+
 
 
         String frameRate = D2FrameRate.envValue(frameLimit);

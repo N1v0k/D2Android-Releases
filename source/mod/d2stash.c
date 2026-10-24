@@ -24,7 +24,7 @@
 #define STASH_CODE_WITHDRAW   SRV_CODE_STASH_WITHDRAW
 #define STASH_CODE_DEPOSITALL SRV_CODE_STASH_ALL
 
-enum { STASH_OK = 1, STASH_FULL, STASH_NOT_ALLOWED, STASH_LOCKED, STASH_SAVING, STASH_NOT_YET };
+enum { STASH_OK = 1, STASH_FULL, STASH_NOT_ALLOWED, STASH_LOCKED, STASH_SAVING, STASH_NOT_YET, STASH_CURSOR };
 enum { SAVE_NONE, SAVE_OK, SAVE_NOT_SAVED, SAVE_NOT_CONFIRMED };
 
 enum { STASH_WHY_NONE, STASH_WHY_BROKEN, STASH_WHY_UNSAVED, STASH_WHY_UNREADABLE, STASH_WHY_MISSING, STASH_WHY_THREAD,
@@ -541,13 +541,16 @@ static int stashSubmit(DWORD code, LONG a1, LONG a2) {
 }
 
 
+
 static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
     const char* why = stashHooked != 1 || !stashFnCreate ? "not available" : !stashLoadedOk || stashBroken ? "no stash file"
         : !singlePlayerGame() ? "not single player" : worldPaused() ? "paused" : !getUiVar(0x19) ? "stash closed"
-        : stashUnsaved ? "locked (last save)" : stashOrderOpen || stashPending || stashAllLeft ? "busy" : NULL;
+        : stashUnsaved ? "locked (last save)" : stashOrderOpen || stashPending || stashAllLeft ? "busy"
+        : equipCursorItem(player) ? "an item on the cursor" : NULL;
     if (why) {
 
-        stashAnswer(!strcmp(why, "busy") ? STASH_SAVING : !strcmp(why, "locked (last save)") ? STASH_LOCKED : STASH_NOT_ALLOWED);
+        stashAnswer(!strcmp(why, "busy") ? STASH_SAVING : !strcmp(why, "locked (last save)") ? STASH_LOCKED
+            : !strcmp(why, "an item on the cursor") ? STASH_CURSOR : STASH_NOT_ALLOWED);
         logLine("stash: command %u refused: %s", kind, why);
         return;
     }
@@ -721,6 +724,15 @@ static LONG stashServer(DWORD code, LONG arg1, LONG arg2, void* game, void* unit
     if (stashOtherThread || GetCurrentThreadId() != stashThread) return STASH_NOT_ALLOWED;
     if (stashUnsaved) return STASH_LOCKED;
     if (!game || !unit || RD32(unit, U_TYPE) != 0) return STASH_NOT_ALLOWED;
+
+
+
+
+
+    if (equipCursorItem(unit)) {
+        logLine("stash: order %lx refused: an item on the cursor", (unsigned long) code);
+        return STASH_CURSOR;
+    }
     if (code == STASH_CODE_DEPOSIT) {
         int kind = -1;
         void* item = stashServerItem(unit, (DWORD) arg1, &kind);

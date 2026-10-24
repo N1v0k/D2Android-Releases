@@ -324,6 +324,11 @@ public final class D2ModLink {
             D2Materials.Snapshot parsed = D2Materials.parse(data, length, SystemClock.uptimeMillis());
             if (parsed != null) materials = parsed;
         }
+        else if (type == PKT_OBJECTS) {
+
+            long[] parsed = parseObjectDetails(data, length);
+            if (parsed != null) objectDetails = new Stamped<>(parsed, SystemClock.uptimeMillis());
+        }
         else if (type == D2MapFetch.PKT_MAP) {
 
             String line = mapFetch.packet(data, length, SystemClock.uptimeMillis());
@@ -565,6 +570,34 @@ public final class D2ModLink {
     public void materials(int order, int arg, int count) {
         D2Trace.log("-> materials order " + order + " arg " + arg + " count " + count);
         send(command(D2Materials.CMD_MATERIALS, 12).put(D2Materials.payload(order, arg, count)));
+    }
+
+
+    static final int PKT_OBJECTS = 12;
+
+    private volatile Stamped<long[]> objectDetails;
+
+
+
+
+
+    public long[] objectDetails(long maxAgeMs) {
+        Stamped<long[]> current = objectDetails;
+        return Stamped.fresh(current, maxAgeMs);
+    }
+
+
+    static long[] parseObjectDetails(byte[] d, int length) {
+        if (length < 9) return null;
+        int n = d[8] & 0xFF;
+        if (length < 9 + 7 * n) return null;
+        long[] out = new long[3 * n];
+        for (int i = 0, at = 9; i < n; i++, at += 7) {
+            out[3 * i] = (d[at] & 0xFFL) | (d[at + 1] & 0xFFL) << 8 | (d[at + 2] & 0xFFL) << 16 | (d[at + 3] & 0xFFL) << 24;
+            out[3 * i + 1] = (d[at + 4] & 0xFF) | (d[at + 5] & 0xFF) << 8;
+            out[3 * i + 2] = d[at + 6] & 0xFF;
+        }
+        return out;
     }
 
 
@@ -916,6 +949,27 @@ public final class D2ModLink {
             .put((byte) Math.min(40, need.healBelt)).put((byte) Math.min(40, need.manaBelt)).putInt(minGold).putInt((int) job));
     }
 
+    private int sellRequest;
+
+
+
+
+
+    public void sell(int x, int y) {
+        int request = ++sellRequest;
+        D2Trace.log("-> sell cell " + x + "," + y + " request " + request);
+        send(command(D2Gamepad.CMD_SELL, 8).put(D2Gamepad.sellPayload(x, y, request)));
+    }
+
+
+
+
+
+    public void repair(long job) {
+        D2Trace.log("-> repair job " + job);
+        send(command(D2PotionShop.REPAIR_COMMAND, 12).put((byte) 0).put((byte) 0).put((byte) 0).put((byte) 0).putInt(0).putInt((int) job));
+    }
+
 
 
 
@@ -977,6 +1031,12 @@ public final class D2ModLink {
         send(command(CMD_RESUME, 20).put((byte) 1).putShort((short) level).putShort((short) x).putShort((short) y)
             .putInt((int) seed).putShort((short) roomX).putShort((short) roomY).putShort((short) roomW).putShort((short) roomH)
             .put((byte) difficulty));
+    }
+
+
+    public void resumeExit(int kind) {
+        D2Trace.log("-> resume way out " + (kind == 2 ? "to town" : "to the waypoint"));
+        send(command(CMD_RESUME, 1).put((byte) kind));
     }
 
 

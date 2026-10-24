@@ -1,4 +1,4 @@
-package com.winlator.renderer;
+package com.winlator.renderer;  // Modified by D2Android (changes 2026-10-09 to 2026-10-24).
 
 import android.opengl.GLES20;
 
@@ -19,12 +19,12 @@ public class EffectComposer {
 
     public synchronized void addEffect(Effect effect) {
         if (!effects.contains(effect)) effects.add(effect);
-        renderer.xServerView.requestRender();
+        renderer.requestOther();
     }
 
     public synchronized void removeEffect(Effect effect) {
         effects.remove(effect);
-        renderer.xServerView.requestRender();
+        renderer.requestOther();
     }
 
     public synchronized  <T extends Effect> T getEffect(Class<T> effectClass) {

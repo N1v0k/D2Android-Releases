@@ -37,6 +37,8 @@
 
 
 
+
+
 #define RVA_DrawUnitInfoCall 0x1D457
 #define RVA_DrawUnitInfo     0x1A730
 #define RVA_GameDamage       0x8BCB0
@@ -45,6 +47,8 @@
 #define RVA_GameSetStatThunk 0xA3C4
 #define RVA_GameRegen        0x86390
 #define RVA_GameRegenSet     0x8649A
+#define RVA_GamePlayerRegen  0x91C60
+#define RVA_GamePlayerRegenSet 0x91CC2
 #define RVA_GameStateListThunk 0xA49C
 #define ORD_GetStatListWithState 10429
 #define RVA_GameListStatThunk 0xA97C
@@ -75,6 +79,16 @@
 #include "d2damagerules.c"
 
 static int damageSites;
+static int damageServerSite;
+
+
+
+
+
+
+static volatile LONG dmgShieldId = -1;
+static volatile LONG dmgShielded;
+static LONG dmgShieldedSeen;
 static int damagePatched;
 static int damageDrawApplied;
 static DWORD damageNumbersUntil, damageDpsUntil, damageElementUntil, damageAppDpsUntil;
@@ -94,6 +108,7 @@ static volatile LONG dmgDotWritten;
 static LONG dmgDotRead;
 static int poisonSite;
 static int poisonPatched;
+static int playerRegenSite, playerRegenPatched;
 static void* (__stdcall *fGetStatListWithState)(void*, DWORD);
 static LONG (__stdcall *fGetStatListStat)(void*, DWORD, DWORD);
 static DmgDot dmgDot[DMG_DOT_SLOTS];
@@ -106,7 +121,28 @@ static struct { DWORD at, value; } dmgHits[DMG_HITS];
 static DWORD dmgHitNext;
 
 
-__attribute__((force_align_arg_pointer)) void __cdecl noteDamage(void* defender, DWORD newLife, void* attacker, BYTE* damage) {
+
+static void noteDamageHit(void* defender, DWORD newLife, void* attacker, BYTE* damage);
+__attribute__((force_align_arg_pointer)) DWORD __cdecl noteDamage(void* defender, DWORD newLife, void* attacker, BYTE* damage) {
+    LONG shield = dmgShieldId;
+    if (shield != -1 && readable(defender, 0x10) && RD32(defender, U_TYPE) == 0 && (LONG) RD32(defender, U_ID) == shield) {
+
+
+        if (readable(damage, 0x48)) {
+            static const int AFTER[] = {0x14, 0x18, 0x28, 0x2C, 0x30, 0x34, 0x3C, 0x40, 0x44};
+            for (unsigned i = 0; i < sizeof(AFTER) / sizeof(AFTER[0]); i++) *(LONG*) (damage + AFTER[i]) = 0;
+        }
+        DWORD old = fGetUnitStat(defender, 6, 0);
+        if (newLife < old) {
+            InterlockedIncrement(&dmgShielded);
+            return old;
+        }
+    }
+    noteDamageHit(defender, newLife, attacker, damage);
+    return 0xFFFFFFFF;
+}
+
+static void noteDamageHit(void* defender, DWORD newLife, void* attacker, BYTE* damage) {
     if (!dmgRecord || !readable(defender, 0x10) || RD32(defender, U_TYPE) != UNIT_MONSTER || !readable(damage, 0x50)) return;
     DWORD old = fGetUnitStat(defender, 6, 0);
     if (old <= newLife) return;
@@ -205,6 +241,39 @@ __asm__(
     "    jmp *_dmgSetUnitStat\n"
 );
 
+
+
+
+
+
+
+__attribute__((force_align_arg_pointer)) DWORD __cdecl notePlayerRegen(void* unit, DWORD newLife) {
+    LONG shield = dmgShieldId;
+    if (shield == -1 || !readable(unit, 0x10) || RD32(unit, U_TYPE) != 0 || (LONG) RD32(unit, U_ID) != shield) return 0xFFFFFFFF;
+    DWORD old = fGetUnitStat(unit, 6, 0);
+    if (newLife >= old) return 0xFFFFFFFF;
+    InterlockedIncrement(&dmgShielded);
+    return old;
+}
+
+void playerRegenStub(void);
+__asm__(
+    ".text\n"
+    ".globl _playerRegenStub\n"
+    "_playerRegenStub:\n"
+
+    "    pushal\n"
+    "    pushl 0x2C(%esp)\n"
+    "    pushl 0x28(%esp)\n"
+    "    call _notePlayerRegen\n"
+    "    addl $8, %esp\n"
+    "    cmpl $-1, %eax\n"
+    "    je 1f\n"
+    "    movl %eax, 0x2C(%esp)\n"
+    "1:  popal\n"
+    "    jmp *_dmgSetUnitStat\n"
+);
+
 void damageStub(void);
 __asm__(
     ".text\n"
@@ -218,7 +287,10 @@ __asm__(
     "    pushl 0x30(%esp)\n"
     "    call _noteDamage\n"
     "    addl $16, %esp\n"
-    "    popal\n"
+    "    cmpl $-1, %eax\n"
+    "    je 1f\n"
+    "    movl %eax, 0x2C(%esp)\n"
+    "1:  popal\n"
     "    jmp *_dmgSetUnitStat\n"
 );
 
@@ -244,6 +316,7 @@ static void checkDamageSites(void) {
     int draw = callAt(client, RVA_DrawUnitInfoCall, RVA_DrawUnitInfo) && RD8(client, RVA_DrawUnitInfoCall - 1) == 0x50
         && fDrawText && fSetTextSize && fGetTextWidth;
     damageSites = server && draw;
+    damageServerSite = server;
     damagePatched = server && dmgCallTarget(game + RVA_GameDamageSet) == (DWORD) damageStub;
     logLine(damageSites ? "damage numbers sites verified%s" : "damage numbers sites not as expected (server %d, draw %d)",
         damageSites ? (damagePatched ? " (stub already in place)" : "") : "", server, draw);
@@ -264,6 +337,15 @@ static void checkDamageSites(void) {
     fGetStatListStat = poisonSite ? (LONG (__stdcall *)(void*, DWORD, DWORD)) statFn : NULL;
     fGetStatListWithState = poisonSite ? (void* (__stdcall *)(void*, DWORD)) listFn : NULL;
     poisonPatched = poisonSite && dmgCallTarget(game + RVA_GameRegenSet) == (DWORD) poisonStub;
+
+    static const BYTE playerRegen[] = {0x51, 0x53, 0x56, 0x6A, 0x00, 0x8B, 0xF0, 0x6A, 0x4A, 0x56};
+    static const BYTE playerRegenSet[] = {0x81, 0xFF, 0x00, 0x01, 0x00, 0x00, 0x7D, 0x05, 0xBF, 0x00, 0x01, 0x00, 0x00, 0x6A, 0x00,
+        0x57, 0x6A, 0x06, 0x56};
+    playerRegenSite = damageServerSite && bytesAre(game + RVA_GamePlayerRegen, playerRegen, sizeof(playerRegen))
+        && bytesAre(game + RVA_GamePlayerRegenSet - sizeof(playerRegenSet), playerRegenSet, sizeof(playerRegenSet))
+        && (callAt(game, RVA_GamePlayerRegenSet, RVA_GameSetStatThunk) || dmgCallTarget(game + RVA_GamePlayerRegenSet) == (DWORD) playerRegenStub);
+    playerRegenPatched = playerRegenSite && dmgCallTarget(game + RVA_GamePlayerRegenSet) == (DWORD) playerRegenStub;
+    logLine(playerRegenSite ? "shield: player regeneration site verified" : "shield: player regeneration site not as expected");
     if (damageSites) logLine(poisonSite ? "poison numbers site verified%s" : "poison numbers site not as expected: no poison numbers",
         poisonPatched ? " (stub already in place)" : "");
 }
@@ -284,8 +366,9 @@ static int damagePatchCall(DWORD rva, void (*stub)(void)) {
 
 
 static LONG damagePatchServer(void) {
-    if (!damageSites || !damagePatchCall(RVA_GameDamageSet, damageStub)) return 0;
-    return 1 | (poisonSite && damagePatchCall(RVA_GameRegenSet, poisonStub) ? 2 : 0);
+    if (!damageServerSite || !damagePatchCall(RVA_GameDamageSet, damageStub)) return 0;
+    return 1 | (poisonSite && damagePatchCall(RVA_GameRegenSet, poisonStub) ? 2 : 0)
+        | (playerRegenSite && damagePatchCall(RVA_GamePlayerRegenSet, playerRegenStub) ? 4 : 0);
 }
 
 
@@ -375,7 +458,49 @@ static void applyDamageDraw(int on) {
 }
 
 
+
+
+
+static void damageShieldPrepare(void* player) {
+
+    if (player) InterlockedExchange(&dmgShieldId, (LONG) RD32(player, U_ID));
+    logLine(damageServerSite ? "damage: the protected hero keeps his life on every hit" : "damage: no shield, the sites are not as expected");
+    if (!damageServerSite || damagePatched || srvState != 1) return;
+    if (dmgRequest && dmgRequestResets != srvResets) dmgRequest = 0;
+    if (dmgRequest) return;
+    dmgRequest = srvSubmit(SRV_CODE_DAMAGE, 0, 0);
+    dmgRequestResets = srvResets;
+    logLine("damage: patch asked for the shield while resuming");
+}
+
+
+static void damageShieldStep(void* player) {
+    LONG answer;
+    if (dmgRequest && dmgRequestResets != srvResets) dmgRequest = 0;
+    if (dmgRequest && !damagePatched && srvTake(dmgRequest, &answer, NULL)) {
+        dmgRequest = 0;
+        damagePatched = (answer & 1) != 0;
+        poisonPatched = (answer & 2) != 0;
+        playerRegenPatched = (answer & 4) != 0;
+        logLine(damagePatched ? "damage numbers: stub in place (server thread), poison numbers %s, player regeneration %s"
+                : "damage numbers: patch refused, no numbers", poisonPatched ? "on" : "off", playerRegenPatched ? "shielded" : "not shielded");
+        if (!damagePatched) damageSites = damageServerSite = 0;
+    }
+    LONG shield = player && rsm.guardOn && !rsm.offWanted ? (LONG) RD32(player, U_ID) : -1;
+    if (shield != dmgShieldId) {
+        InterlockedExchange(&dmgShieldId, shield);
+        if (damagePatched || dmgRequest) logLine(shield != -1 ? "damage: the protected hero keeps his life on every hit" : "damage: shield off");
+    }
+    LONG kept = InterlockedCompareExchange(&dmgShielded, 0, 0);
+    if (kept != dmgShieldedSeen) {
+        logLine("damage: %ld hit(s) on the protected hero kept off", (long) (kept - dmgShieldedSeen));
+        dmgShieldedSeen = kept;
+    }
+}
+
+
 static void updateDamage(void* player, DWORD now) {
+    damageShieldStep(player);
     if (!damageSites) return;
 
     if (player && singlePlayerGame() && (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))))
@@ -386,21 +511,9 @@ static void updateDamage(void* player, DWORD now) {
     damageStyle = (int) (now - damageElementUntil) < 0 ? DMG_STYLE_ELEMENT : DMG_STYLE_SIMPLE;
     int wanted = (damageNumbersOn || damageDpsOn) && player && singlePlayerGame();
 
-    if (wanted && !damagePatched && srvState == 1) {
-        if (dmgRequest && dmgRequestResets != srvResets) dmgRequest = 0;
-        LONG answer;
-        if (!dmgRequest) {
-            dmgRequest = srvSubmit(SRV_CODE_DAMAGE, 0, 0);
-            dmgRequestResets = srvResets;
-        }
-        else if (srvTake(dmgRequest, &answer, NULL)) {
-            dmgRequest = 0;
-            damagePatched = (answer & 1) != 0;
-            poisonPatched = (answer & 2) != 0;
-            logLine(damagePatched ? "damage numbers: stub in place (server thread), poison numbers %s" : "damage numbers: patch refused, no numbers",
-                poisonPatched ? "on" : "off");
-            if (!damagePatched) damageSites = 0;
-        }
+    if (wanted && !damagePatched && srvState == 1 && !dmgRequest) {
+        dmgRequest = srvSubmit(SRV_CODE_DAMAGE, 0, 0);
+        dmgRequestResets = srvResets;
     }
     InterlockedExchange(&dmgRecord, wanted && damagePatched);
     int draw = wanted && damagePatched;

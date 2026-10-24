@@ -95,6 +95,9 @@ final class D2Idle {
     private int seqAfterUnpause = -1, level = -1;
     private Gehirn gehirn;
 
+    private com.winlator.d2.test.Objekte objekte;
+    private long keyCheckedAt;
+
     private com.winlator.d2.test.Anlegen anlegen;
 
     private volatile boolean equipBusy;
@@ -105,6 +108,8 @@ final class D2Idle {
     private Fahrer fahrer;
     private String reason = "";
     private Rueckzug rueckzug;
+
+    private long repairNotedAt;
 
     private boolean pauseLater;
     private long pauseLaterUntil, levelChangedAt;
@@ -393,6 +398,9 @@ final class D2Idle {
                 equipBusy = false;
                 points = new D2PointSpend();
                 gehirn.gebietLeeren = true;
+                objekte = new com.winlator.d2.test.Objekte(gehirn);
+                gehirn.zwischenziele.add(objekte);
+                gehirn.zwischenziele.add(new com.winlator.d2.test.Jagd(gehirn));
                 gehirn.trinkenPct = Gehirn.trinkSchwelle(retreatPercent);
                 gehirn.zielGebiet = s.levelNo;
                 gehirn.kampfwahl.tabelle(host.skills());
@@ -457,6 +465,23 @@ final class D2Idle {
                 host.redraw();
                 return;
             }
+
+            if (Rueckzug.reparaturFaellig(z)) {
+                Rueckzug.Grund why = rueckzug.warumNicht(z, s.portals, now);
+                if (why == null) {
+                    fahrer.loslassen("Rückzug");
+                    rueckzug.starten(z, now);
+                    phase = Phase.RETREAT;
+                    since = now;
+                    trace("retreat " + rueckzug.anzahl() + " to repair (a broken item) from level " + s.levelNo + ", portals " + s.portals);
+                    host.redraw();
+                    return;
+                }
+                if (now - repairNotedAt > 60_000) {
+                    repairNotedAt = now;
+                    trace("broken item, no retreat: " + Rueckzug.text(why));
+                }
+            }
             countKills(z);
             stepPoints(s, link, z, now, false);
             Zustand.Layout l = Zustand.Layout.parse(new JSONObject(host.layout()));
@@ -471,6 +496,7 @@ final class D2Idle {
             if (karte != null && gehirn.karte() != karte) gehirn.setKarte(karte);
             gehirn.layout = l;
             if (equipStep(link, z, now)) return;
+            keyStep(link, now);
             Gehirn.Absicht a = gehirn.denken(z, ziele, now);
             traceNavigation();
 
@@ -496,6 +522,24 @@ final class D2Idle {
         if (gehirn.navigation.equals(lastNavigation)) return;
         lastNavigation = gehirn.navigation;
         trace("navigation: " + lastNavigation);
+    }
+
+
+    private void keyStep(D2ModLink link, long now) {
+        if (objekte == null || now - keyCheckedAt < 5000) return;
+        keyCheckedAt = now;
+        byte[] data = link.figur();
+        boolean key = false;
+        if (data != null) {
+            try {
+                String fl = D2SpieltestPort.figurJson(data, data.length, now);
+                if (fl != null) key = com.winlator.d2.test.Objekte.hatSchluessel(com.winlator.d2.test.Zustand.Figur.parse(new JSONObject(fl)));
+            }
+            catch (org.json.JSONException e) {
+                key = false;
+            }
+        }
+        objekte.schluessel = key;
     }
 
 
@@ -565,7 +609,8 @@ final class D2Idle {
             return;
         }
         try {
-            String line = D2SpieltestPort.toJson(s, now, null, host.leftOutObjects());
+
+            String line = D2SpieltestPort.toJson(s, now, link, host.leftOutObjects());
             Zustand z = Zustand.parse(new JSONObject(line), line);
 
             if (now - startedAt > durationMs) {
@@ -620,6 +665,7 @@ final class D2Idle {
             fahrer.verhalten.fensterDurchlassen = rueckzug.fensterErlaubt();
             if (!fahrer.vorbereiten(z, l, now, now)) return;
             Gehirn.Absicht a = rueckzug.denken(z, f, now);
+            if (a.modAuftrag != null) a.getippt = modOrder(link, a.modAuftrag);
 
             if (a.tippen == null && z.stadt && fahrer.leisteAufgeklappt && l.sichtbar("menu_toggle")) {
                 a.tippen = "menu_toggle";
@@ -689,6 +735,7 @@ final class D2Idle {
             if (karte != null && gehirn.karte() != karte) gehirn.setKarte(karte);
             gehirn.layout = l;
             if (!quest.imStadtgang() && !quest.imRueckzug() && !z.stadt && equipStep(link, z, now)) return;
+            keyStep(link, now);
             Gehirn.Absicht a = quest.denken(z, goals, questFigur, now);
             traceNavigation();
             if (questLeeren.gebietLeerEnde(quest.imStadtgang(), l, now)) {
@@ -723,6 +770,12 @@ final class D2Idle {
         gehirn.kampfwahl.tabelle(host.skills());
         gehirn.zielwahlUebergehtIgnorierte = true;
 
+        objekte = new com.winlator.d2.test.Objekte(gehirn);
+        keyCheckedAt = 0;
+        gehirn.zwischenziele.add(objekte);
+
+        gehirn.zwischenziele.add(new com.winlator.d2.test.Jagd(gehirn));
+
         fahrer = new Fahrer(finger, (art, text) -> D2Trace.log("idle " + art + ": " + text));
         Stadtgang stadtgang = new Stadtgang();
         stadtgang.alleMs = 0;
@@ -738,6 +791,7 @@ final class D2Idle {
             @Override public String gebietName(int gebiet) { return Integer.toString(gebiet); }
             @Override public void ohneDurchgaenge(boolean ohne) { questOhneDurchgaenge = ohne; }
             @Override public boolean leerenBeenden(String grund, boolean pause, Zustand.Layout l) { return quest.questLeerenEnde(grund); }
+            @Override public boolean modAuftrag(String was) { return modOrder(link, was); }
         });
         questLeeren.rueckzugPct = retreatPercent;
         quest = new QuestLauf(questZeile, QUEST_MAX_TODE, gehirn, fahrer, stadtgang, questLeeren, new QuestLauf.Umgebung() {
@@ -789,6 +843,7 @@ final class D2Idle {
                 case KEINE_BELOHNUNG: why = host.text(R.string.idle_quest_no_reward, name, questZeile.abgabe); break;
                 case NICHT_ERREICHT: why = host.text(R.string.idle_quest_not_reached, name, questZeile.abgabe); break;
                 case ZEIT_UM: why = host.text(R.string.idle_quest_stuck, name, QuestFahrer.HINGEHEN_OHNE_WECHSEL_MS / 60_000); break;
+                case KAPUTT: why = host.text(R.string.idle_retreat_ended, host.text(R.string.idle_rz_broken)); break;
                 default: why = host.text(R.string.idle_quest_stopped, name); break;
             }
         }
@@ -814,6 +869,29 @@ final class D2Idle {
     }
 
 
+
+
+
+    private static boolean modOrder(D2ModLink link, String order) {
+        String[] w = order.split(" ");
+        if (link == null || w.length != 2) return false;
+        try {
+            long n = Long.parseLong(w[1]);
+            trace("order " + order);
+            if (w[0].equals("npc") && n >= 0 && n < 16) {
+                link.npc((int) n);
+                return true;
+            }
+            if (w[0].equals("reparieren") && n > 0) {
+                link.repair(n);
+                return true;
+            }
+        }
+        catch (NumberFormatException ignored) {}
+        return false;
+    }
+
+
     private String retreatText(Rueckzug.Grund g) {
         if (g == null) return "";
         switch (g) {
@@ -823,6 +901,7 @@ final class D2Idle {
             case GEBIET_VERLASSEN: return host.text(R.string.idle_left_area);
             case NICHT_GEHEILT: return host.text(R.string.idle_rz_not_healed);
             case NICHT_AM_PORTAL: return host.text(R.string.idle_rz_not_at_portal);
+            case KAPUTT: return host.text(R.string.idle_rz_broken);
             case STADT_OHNE_PORTAL: case STADT_VERLASSEN_OHNE_PORTAL: case FALSCHE_STADT: return host.text(R.string.idle_rz_wrong_way);
             default: return host.text(R.string.idle_rz_round_failed);
         }

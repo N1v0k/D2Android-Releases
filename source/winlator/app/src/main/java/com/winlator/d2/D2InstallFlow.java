@@ -10,7 +10,10 @@ import java.io.File;
 final class D2InstallFlow {
     static final long MB = 1024L * 1024, GB = 1024 * MB;
 
-    static final long INSTALLER_BYTES = 2100 * MB;
+
+
+
+    static final long INSTALLER_BYTES = 2200 * MB;
 
     static final long GAME_BYTES = 2400 * MB;
 

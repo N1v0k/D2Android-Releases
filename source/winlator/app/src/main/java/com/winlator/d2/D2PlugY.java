@@ -109,12 +109,31 @@ public final class D2PlugY {
 
 
 
+
     static final String[] EXTRA_KEYS = {"ActiveSharedGold", "ActiveLadderRunewords", "ActiveDisplayItemLevel",
         "ActiveDisplayBaseStatsValue", "ActiveWorldEvent", "ActiveUberQuest", "ActiveCowPortalWhenCowKingWasKilled",
-        "ActiveDoNotCloseNihlathakPortal", "MoveCainNearHarrogathWaypoint"};
-    static final boolean[] EXTRA_DEFAULTS = {true, true, true, false, false, false, false, false, false};
+        "ActiveDoNotCloseNihlathakPortal", "MoveCainNearHarrogathWaypoint", "AlwaysRegenMapInSP"};
+    static final boolean[] EXTRA_DEFAULTS = {true, true, true, false, false, false, false, false, false, false};
+
+    static final String REGEN_MAP = "AlwaysRegenMapInSP";
 
     static final int FIRST_GAME_CHANGE = 4;
+
+
+
+
+
+    static boolean resumeAllowed(boolean resumeOn, boolean plugyOn, boolean regenMapOn) {
+        return resumeOn && !(plugyOn && regenMapOn);
+    }
+
+
+
+
+
+    static boolean switchesResumeOff(String iniKey, boolean on) {
+        return on && REGEN_MAP.equals(iniKey);
+    }
 
 
     static boolean[] extras(Context context) {

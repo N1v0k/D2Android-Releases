@@ -309,7 +309,7 @@ final class D2StartPage extends FrameLayout {
             if (count != null) centred(canvas, count, l.countY, k);
             Paint line = new Paint();
             line.setColor(Color.rgb(110, 96, 60));
-            canvas.drawRect(40 * l.u, l.lineY, l.width - 40 * l.u, l.lineY + Math.max(1, 2 * l.u), line);
+            canvas.drawRect(l.left + 40 * l.u, l.lineY, l.right - 40 * l.u, l.lineY + Math.max(1, 2 * l.u), line);
             centred(canvas, classic, l.classicY, 1.6f * l.smallScale);
             centred(canvas, footer, l.footerY, 1.4f * l.smallScale);
         }

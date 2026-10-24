@@ -438,6 +438,12 @@ public final class QuestLauf {
         fahrer.allesLoslassen();
         int gebiet = ll.leerenGebiet;
         event("leeren", "beendet (Quest " + questFahrer.zeile.nummer + "): " + grund);
+
+        if (grund.startsWith("Rückzug: " + Rueckzug.text(Rueckzug.Grund.KAPUTT))) {
+            ll.questLeerenZurueck();
+            questFahrer.kaputt(grund, SystemClock.uptimeMillis());
+            return false;
+        }
         ll.questLeerenZurueck();
         long now = SystemClock.uptimeMillis();
         if (!grund.startsWith("tot")) questFahrer.leerenEnde(grund, gebiet, wortGueltig(now), now);

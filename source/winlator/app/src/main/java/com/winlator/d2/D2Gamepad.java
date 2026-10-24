@@ -255,7 +255,11 @@ public final class D2Gamepad {
 
 
 
-    public static final int CURSOR_SPEED_MIN = 50, CURSOR_SPEED_MAX = 200, CURSOR_SPEED_DEFAULT = 100;
+
+
+
+
+    public static final int CURSOR_SPEED_MIN = 50, CURSOR_SPEED_MAX = 200, CURSOR_SPEED_DEFAULT = 80;
     static final long POINTER_CROSS_MS = 1200;
 
     static final long BOOST_AFTER_MS = 400, BOOST_RAMP_MS = 600;
@@ -347,6 +351,53 @@ public final class D2Gamepad {
 
 
     public static final int CLICK_NONE = 0, CLICK_LEFT = 1, CLICK_RIGHT = 2, CLICK_ESC = 3;
+
+    public static final int CLICK_SELL = 4;
+
+    static final int PLACE_INVENTORY = 0;
+
+
+
+
+
+
+
+    public static int padShopClick(String label, int click, boolean shopOpen, int hoverPlace, int hoverX, int hoverY,
+            boolean sellPossible) {
+        if (shopClick(click, shopOpen, hoverPlace) == CLICK_SELL) {
+            if (sellPossible && hoverX >= 0 && hoverY >= 0) {
+                D2Trace.log("pad " + label + ": sell cell " + hoverX + "," + hoverY + " (mod)");
+                return CLICK_SELL;
+            }
+            D2Trace.log("pad " + label + ": sell not possible (no sell by packet)");
+            return CLICK_NONE;
+        }
+
+        if (click != CLICK_LEFT && shopOpen && hoverPlace < 0) D2Trace.log("pad " + label + ": right click in a shop (buy)");
+        return click;
+    }
+
+
+    public static final int CMD_SELL = 30;
+
+
+
+
+
+    public static byte[] sellPayload(int x, int y, int request) {
+        return new byte[]{0, (byte) x, (byte) y, 0, (byte) request, (byte) (request >> 8), (byte) (request >> 16), (byte) (request >> 24)};
+    }
+
+
+
+
+
+
+
+
+    public static int shopClick(int click, boolean shopOpen, int hoverPlace) {
+        return click == CLICK_RIGHT && shopOpen && hoverPlace == PLACE_INVENTORY ? CLICK_SELL : click;
+    }
 
 
 

@@ -506,6 +506,11 @@ public final class D2HelpersPanel {
 
         String needs = D2HelperEntries.dependsOn(e.key);
         if (needs != null && !bool(context, needs)) setEnabled(box, false);
+
+        if ("resume".equals(e.key) && D2Settings.resumeBlocked(context)) {
+            box.addView(note(context, D2Text.get(context, com.winlator.R.string.resume_off_regen)));
+            setEnabled(box, false);
+        }
         return box;
     }
 

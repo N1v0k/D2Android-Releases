@@ -582,6 +582,35 @@ public final class D2SpieltestPort {
                 o.put("beute", beute).put("zellen", details.usedCells);
             }
             o.put("objekte", things(s.objects));
+
+            D2Effects.Effect[] effects = link != null ? link.effects() : null;
+            if (effects != null) {
+                JSONArray sr = new JSONArray();
+                for (D2Effects.Effect e : effects) if (e.state >= 128 && e.state <= 137) sr.put(e.state);
+                o.put("schreine", sr);
+            }
+
+
+            long[] objectDetails = link != null ? link.objectDetails(2000) : null;
+            if (objectDetails != null) {
+                JSONArray od = new JSONArray();
+                for (int i = 0; i + 2 < objectDetails.length; i += 3) {
+                    od.put(new JSONArray().put(objectDetails[i]).put(objectDetails[i + 1]).put(objectDetails[i + 2]));
+                }
+                o.put("objektDetails", od);
+            }
+
+
+            JSONArray hb = new JSONArray();
+            for (int i = 0; i < s.damagedLocation.length; i++) hb.put(new JSONArray().put(s.damagedLocation[i]).put(s.damagedState[i]));
+            o.put("haltbarkeit", hb);
+            JSONArray mn = new JSONArray();
+            if (s.npcMenuIds != null) for (int id : s.npcMenuIds) mn.put(id);
+            o.put("menue", mn);
+            D2PotionShop.Job job = details != null ? details.shopJob : null;
+            if (job != null && job.command == D2PotionShop.REPAIR_COMMAND) {
+                o.put("reparatur", new JSONArray().put(job.id).put(job.state).put(job.reason).put(job.a).put(job.b));
+            }
             o.put("leichen", things(s.corpses));
             if (ausgelassen != null && !ausgelassen.isEmpty()) {
                 JSONArray left = new JSONArray();

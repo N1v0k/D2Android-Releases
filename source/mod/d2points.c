@@ -499,5 +499,6 @@ static void putPointsBlock(Packet* p) {
     putU32(p, hero ? fGetUnitStat(hero, 14, 0) : 0);
     putU32(p, hero ? fGetUnitStat(hero, 15, 0) : 0);
     putExperience(p, hero);
+    putResumeExitFields(p);
     p->data[lengthAt] = (BYTE) (p->len - lengthAt - 1);
 }
