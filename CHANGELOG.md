@@ -3,6 +3,12 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.4.1 (2026-10-24)
+
+- After the fight with Duriel, Tyrael can be talked to with "Take" and A, so he opens the portal to Lut Gholein. Anya in the ice in act 5 can be talked to the same way.
+- Hellforge: placing Mephisto's Soulstone and smashing it with the hammer works with "Take" and A, not only with the pointer.
+- Gamepad A with no monster in reach walks to a chest or anything else "Take" offers and opens it, even when the character is not standing right next to it.
+
 ## 1.4.0 (2026-10-24)
 
 - Materials: an item could be lost when you took something out of the materials window while another item hung on the pointer. This affected every release since 1.2.0 and is fixed: with an item on the pointer the window now takes nothing and says why.
