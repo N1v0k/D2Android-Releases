@@ -44,4 +44,43 @@ static int monsterRowVerdict(unsigned long monFlags, unsigned nameStr, int town)
     return !isHelperNameStr(nameStr);
 }
 
+
+
+
+
+
+
+static int isPersonOutsideTownRow(unsigned long monFlags, unsigned nameStr) {
+    return (monFlags & MONSTATS_INTERACT) != 0 && !isHelperNameStr(nameStr);
+}
+
+
+
+
+
+
+
+static int isAncientStatue(unsigned long cls) {
+    return cls >= 537 && cls <= 539;
+}
+
+
+
+#define MON_OUT    0
+#define MON_TARGET 1
+#define MON_PERSON 2
+
+
+
+
+
+
+
+static int monsterReport(int town, int ally, unsigned long cls, unsigned long monFlags, unsigned nameStr) {
+    if (town) return monsterRowVerdict(monFlags, nameStr, 1) ? MON_PERSON : MON_OUT;
+    if (isPersonOutsideTownRow(monFlags, nameStr) && !isAncientStatue(cls)) return MON_PERSON;
+    if (ally) return MON_OUT;
+    return monsterRowVerdict(monFlags, nameStr, 0) ? MON_TARGET : MON_OUT;
+}
+
 #endif

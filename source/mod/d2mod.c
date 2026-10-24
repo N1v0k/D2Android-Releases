@@ -890,29 +890,45 @@ static void* findMercenary(void* player) {
 }
 
 
-static int isValidMonster(void* unit, int town) {
+static int monsterLeftOut(void* unit) {
     static const DWORD bad[] = {227, 283, 326, 327, 328, 329, 330, 410, 411, 412, 413, 414, 415, 416, 366, 406,
         351, 352, 353, 266, 408, 516, 517, 518, 519, 522, 523, 543, 545};
     DWORD mode = RD32(unit, U_MODE), txt = RD32(unit, U_TXTNO);
-    if (mode == 0 || mode == 12) return 0;
-    if (txt == 608 && mode == 8) return 0;
-    if (txt == 68 && mode == 14) return 0;
-    if ((txt == 258 || txt == 261) && mode == 14) return 0;
-    for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) if (txt == bad[i]) return 0;
-    if (isMercenary(txt)) return 0;
+    if (mode == 0 || mode == 12) return 1;
+    if (txt == 608 && mode == 8) return 1;
+    if (txt == 68 && mode == 14) return 1;
+    if ((txt == 258 || txt == 261) && mode == 14) return 1;
+    for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) if (txt == bad[i]) return 1;
+    if (isMercenary(txt)) return 1;
 
 
 
-    if (isSummon(txt)) return 0;
-    if (!town && fGetUnitStat(unit, 172, 0) == 2) return 0;
+    return isSummon(txt);
+}
+
+
+
+
+
+
+static int monsterReportOf(void* unit, int town) {
+    if (monsterLeftOut(unit)) return MON_OUT;
+    int ally = fGetUnitStat(unit, 172, 0) == 2;
 
 
     BYTE* row = monStatsRow(unit);
-
-    if (row) return monsterRowVerdict(RD32(row, MONSTATS_FLAGS), RD16(row, MONSTATS_NAMESTR), town);
+    if (row) return monsterReport(town, ally, RD32(unit, U_TXTNO), RD32(row, MONSTATS_FLAGS), RD16(row, MONSTATS_NAMESTR));
+    if (!town && ally) return MON_OUT;
     const wchar_t* name = unitName(unit);
-    if (name && isHelperUnitName(name)) return 0;
-    return 1;
+    if (name && isHelperUnitName(name)) return MON_OUT;
+    return town ? MON_PERSON : MON_TARGET;
+}
+
+
+
+static int isValidMonster(void* unit, int town) {
+    int report = monsterReportOf(unit, town);
+    return town ? report != MON_OUT : report == MON_TARGET;
 }
 
 typedef struct {
@@ -3525,6 +3541,17 @@ static int isOpenQuestEntrance(const BYTE* txt, DWORD mode) {
 
 
 
+static int isQuestObjectInUse(const BYTE* txt, DWORD mode) {
+    return mode != 0 && txt[OTXT_SUBCLASS] == 0 && txt[OTXT_OPERATEFN] == 49;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -3964,7 +3991,7 @@ static void collectAndSend(void* player) {
             }
             if (type == UNIT_MONSTER && nMonsters < MAX_CANDIDATES) {
                 rawMonsters++;
-                if (!isValidMonster(unit, isTown(levelNo))) continue;
+                if (monsterReportOf(unit, isTown(levelNo)) == MON_OUT) continue;
                 addCandidate(monsterList, &nMonsters, unit, ux, uy, psx, psy);
             }
             else if (type == UNIT_ITEM && nItems < MAX_CANDIDATES) {
@@ -4004,7 +4031,8 @@ static void collectAndSend(void* player) {
 
 
 
-                int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0 || isOpenQuestEntrance(txt, omode);
+                int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0 || isOpenQuestEntrance(txt, omode)
+                    || isQuestObjectInUse(txt, omode);
                 if (RD32(unit, U_MODE) != 0 && !alwaysUsable) continue;
                 addCandidate(objectList, &nObjects, unit, ux, uy, psx, psy);
             }
@@ -4054,7 +4082,24 @@ static void collectAndSend(void* player) {
         if (bits & 0x08) flags |= 2;
         if (bits & 0x10) flags |= 4;
         if (bits & 0x02) flags |= 8;
-        if (isTown(levelNo)) flags |= 16;
+
+        if (monsterReportOf(unit, isTown(levelNo)) == MON_PERSON) {
+            flags |= 16;
+
+            static DWORD personLogged[16], personLevel, personNext;
+            if (personLevel != levelNo) {
+                memset(personLogged, 0, sizeof(personLogged));
+                personLevel = levelNo;
+            }
+            int seen = 0;
+            for (int k = 0; k < 16; k++) if (personLogged[k] == RD32(unit, U_ID) + 1) seen = 1;
+            if (!isTown(levelNo) && !seen) {
+                personLogged[personNext] = RD32(unit, U_ID) + 1;
+                personNext = (personNext + 1) % 16;
+                logLine("person outside town: monstats %lu id %lu in level %lu, ally %d", (unsigned long) RD32(unit, U_TXTNO),
+                    (unsigned long) RD32(unit, U_ID), (unsigned long) levelNo, fGetUnitStat(unit, 172, 0) == 2);
+            }
+        }
         if (isActBoss(RD32(unit, U_TXTNO))) flags |= 128;
         putU32(&p, RD32(unit, U_ID));
         putU16(&p, (WORD) (short) monsterList[i].x);

@@ -61,6 +61,8 @@ public final class D2ModState {
             this.name = name;
         }
 
+
+
         public boolean isTownNpc() {
             return (flags & MONSTER_TOWN_NPC) != 0;
         }

@@ -663,7 +663,9 @@ public final class Gehirn {
             double t = z.bodenAbstand(d);
             if (t <= reach && (d.art == OBJEKT_LEICHE || t <= score + GLEICH)) return false;
         }
-        if (z.stadt) for (Zustand.Ding d : z.monster) {
+        for (Zustand.Ding d : z.monster) {
+
+            if (!z.stadt && (d.extra & Zustand.MONSTER_TOWN_NPC) == 0) continue;
             double t = z.bodenAbstand(d);
             if (t <= reach && t <= score + GLEICH) return false;
         }

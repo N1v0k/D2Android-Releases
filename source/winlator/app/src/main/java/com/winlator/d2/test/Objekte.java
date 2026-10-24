@@ -340,7 +340,9 @@ public final class Objekte implements Zwischenziel {
             double t = z.bodenAbstand(d);
             if (t <= reach && (d.art == 7 || t <= score + GLEICH)) return false;
         }
-        if (z.stadt) for (Zustand.Ding d : z.monster) {
+        for (Zustand.Ding d : z.monster) {
+
+            if (!z.stadt && (d.extra & Zustand.MONSTER_TOWN_NPC) == 0) continue;
             double t = z.bodenAbstand(d);
             if (t <= reach && t <= score + GLEICH) return false;
         }
@@ -373,7 +375,9 @@ public final class Objekte implements Zwischenziel {
             v = besser(v, d, false, t, best);
             if (v != null && v.ding == d) best = t;
         }
-        if (z.stadt) for (Zustand.Ding d : z.monster) {
+        for (Zustand.Ding d : z.monster) {
+
+            if (!z.stadt && (d.extra & Zustand.MONSTER_TOWN_NPC) == 0) continue;
             double t = z.bodenAbstand(d);
             if (t > reach) continue;
             v = besser(v, d, false, t, best);

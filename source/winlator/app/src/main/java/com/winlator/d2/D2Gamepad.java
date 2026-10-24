@@ -242,6 +242,7 @@ public final class D2Gamepad {
 
 
 
+
     public static int attackOrTake(boolean npcTalking, boolean npcMenu, boolean inTown, boolean aimOn, boolean attackRight,
                                    boolean monsterPicked, boolean monsterInAttackReach, boolean takeClose) {
         if (npcTalking) return A_SKIP_TALK;
@@ -250,6 +251,19 @@ public final class D2Gamepad {
         if (monsterPicked) return A_ATTACK;
         if (aimOn && !attackRight && !monsterInAttackReach && takeClose) return A_TAKE;
         return A_ATTACK;
+    }
+
+
+    public static final float TAKE_REACH_OF_HEIGHT = 0.55f;
+
+
+
+
+
+
+
+    public static boolean aTakes(double isoDistance, int gameHeight) {
+        return isoDistance <= gameHeight * TAKE_REACH_OF_HEIGHT;
     }
 
 

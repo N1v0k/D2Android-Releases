@@ -5521,7 +5521,7 @@ public class D2TouchOverlay extends View {
         D2ModState s = mod;
         List<Object> list = new ArrayList<>();
         if (s == null) return list;
-        float range = s.gameHeight * 0.55f;
+        float range = s.gameHeight * D2Gamepad.TAKE_REACH_OF_HEIGHT;
         final Map<Object, Double> scores = new HashMap<>();
         D2ModItems details = modLink.items();
 
@@ -5557,11 +5557,12 @@ public class D2TouchOverlay extends View {
             if (byRank) scores.put(object, D2InteractRank.key(D2InteractRank.object(object.kind), distance));
             else scores.put(object, !near && object.kind == D2ModState.OBJECT_CORPSE ? -1 : distance);
         }
-        if (s.inTown) {
-            for (D2ModState.Monster person : s.monsters) {
-                double distance = isoDistance(person.x - s.playerX, person.y - s.playerY);
-                if (distance <= range) scores.put(person, byRank ? D2InteractRank.key(D2InteractRank.person(), distance) : distance);
-            }
+
+
+        for (D2ModState.Monster person : s.monsters) {
+            if (!s.inTown && !person.isTownNpc()) continue;
+            double distance = isoDistance(person.x - s.playerX, person.y - s.playerY);
+            if (distance <= range) scores.put(person, byRank ? D2InteractRank.key(D2InteractRank.person(), distance) : distance);
         }
         list.addAll(scores.keySet());
         Collections.sort(list, (a, b) -> Double.compare(scores.get(a), scores.get(b)));
@@ -6558,8 +6559,15 @@ public class D2TouchOverlay extends View {
         int what = D2Gamepad.attackOrTake(s != null && s.npcTalking, npcMenuOpen(), inTown, aim.on, attackRightSkill() >= 0,
             picked, inReach, close != null);
 
+
+        String at = "";
+        if (close != null && s != null) {
+            float cx = close instanceof D2ModState.Monster ? ((D2ModState.Monster) close).x : ((D2ModState.Thing) close).x;
+            float cy = close instanceof D2ModState.Monster ? ((D2ModState.Monster) close).y : ((D2ModState.Thing) close).y;
+            at = ", at " + Math.round(isoDistance(cx - s.playerX, cy - s.playerY)) + " px";
+        }
         D2Trace.log("attack or take: " + what + " (picked " + picked + ", monster in reach " + inReach + ", close "
-            + (close != null) + ", aim " + aim.on + ")");
+            + (close != null) + ", aim " + aim.on + at + ")");
         switch (what) {
             case D2Gamepad.A_SKIP_TALK:
                 pressKey(VK_ESCAPE);
@@ -6579,14 +6587,15 @@ public class D2TouchOverlay extends View {
 
 
 
+
+
     private Object closeTakeCandidate() {
         D2ModState s = mod;
         if (s == null) return null;
-        float reach = s.inTown ? s.gameHeight * 0.55f : s.gameHeight * aimNow().reachPct(true) / 100f;
         for (Object thing : interactCandidates(ORDER_TAP)) {
             float x = thing instanceof D2ModState.Monster ? ((D2ModState.Monster) thing).x : ((D2ModState.Thing) thing).x;
             float y = thing instanceof D2ModState.Monster ? ((D2ModState.Monster) thing).y : ((D2ModState.Thing) thing).y;
-            if (isoDistance(x - s.playerX, y - s.playerY) <= reach) return thing;
+            if (D2Gamepad.aTakes(isoDistance(x - s.playerX, y - s.playerY), s.gameHeight)) return thing;
         }
         return null;
     }

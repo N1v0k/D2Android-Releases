@@ -456,7 +456,9 @@ final class WineFinger implements Finger {
 
             if (s <= range) list.add(new Object[]{d.art == OBJECT_CORPSE ? -1.0 : s, type, d.id, d.art});
         }
-        if (z.stadt) for (Zustand.Ding d : z.monster) {
+        for (Zustand.Ding d : z.monster) {
+
+            if (!z.stadt && (d.extra & Zustand.MONSTER_TOWN_NPC) == 0) continue;
             double s = z.bodenAbstand(d);
             if (s <= range) list.add(new Object[]{s, UNIT_MONSTER, d.id});
         }
