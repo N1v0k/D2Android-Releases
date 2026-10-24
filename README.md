@@ -122,7 +122,8 @@ playable on a phone, not to change the game.
 - Widescreen picture that fills the whole display, in three sizes: **Large (540 lines, extra sharp)**, the default,
   **Medium (600 lines, like the original)** or **Small (720 lines, more of the world)**.
 - **Frames per second:** limit the frame rate to 30, 40 or 60, on screens that support it also 90, 120 or 144, to
-  save battery and keep the phone cooler. Unlimited by default.
+  save battery and keep the phone cooler. At most 120 by default (60 or 90 on screens that cannot show more);
+  "Unlimited" is still there.
 - Walk directly: monsters, people and item names in the way do not interrupt walking.
 - Saves before every pause; pauses in the background or with the screen off (the sound is muted at once); a
   notification brings you back or saves and quits.

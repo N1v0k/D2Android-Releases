@@ -3,6 +3,22 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.4.0 (2026-10-24)
+
+- Materials: an item could be lost when you took something out of the materials window while another item hung on the pointer. This affected every release since 1.2.0 and is fixed: with an item on the pointer the window now takes nothing and says why.
+- Installation also offers the game in French, Spanish and Italian.
+- The app is now also in French, Spanish and Italian. In the settings, "App language" set to "Automatic (like the game)" follows the game's language.
+- Gamepad in a shop: X or B over one of your own items sells it; over the vendor's goods they still buy.
+- Frames per second: at most 120 by default, or the display's highest rate if that is lower; a value you chose stays. The app now also keeps to this limit with the gamepad, with touch and when nothing moves.
+- The gamepad pointer in windows is a little slower by default (80 %).
+- The start page fits on low screens, such as 4:3 handhelds in landscape.
+- The materials window has an opaque background, the game's sounds and a new icon with a rune and a gem.
+- Settings: "Add game icon" puts a shortcut with the Diablo II icon from your game folder on the home screen; the app's own icon stays.
+- Chests open with "Take" and A and are not offered again afterwards; after a failed try a chest is left out only briefly.
+- While you hold an attack, the joystick switches to another target faster and the target no longer flips back and forth.
+- Act 3 sewers: "Take" and A no longer lead down the stairs before the lever has opened the gate.
+- "Go on where I was" (test, off by default): after loading, the character stands right at the saved spot, also in dungeons. The game waits paused, with the world visible, until you tap "Continue" or "Back to town"; after "Continue" the character cannot be hurt for 3 seconds. It stays off when PlugY builds a new map at every load.
+
 ## 1.3.2 (2026-10-23)
 
 - Tal Rasha's Chamber can be entered with the controller (A) or "Take" once the Horadric Staff is in place; before, only a mouse click worked. Stand a few steps in front of the opening, not in the rubble.
