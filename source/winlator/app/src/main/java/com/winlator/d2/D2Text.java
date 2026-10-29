@@ -28,15 +28,26 @@ public final class D2Text {
 
 
     public static Context wrap(Context context) {
-        Locale locale = new Locale(language(context));
+        return wrap(context, language(context));
+    }
+
+    private static Context wrap(Context context, String language) {
         Configuration config = new Configuration(context.getResources().getConfiguration());
-        config.setLocale(locale);
+        config.setLocale(new Locale(language));
         return context.createConfigurationContext(config);
     }
 
 
+
+
+
+    private static final D2TextCache<Configuration, Resources> cache = new D2TextCache<>(Configuration::new);
+
+
     public static Resources resources(Context context) {
-        return wrap(context).getResources();
+        String language = language(context);
+        Resources own = context.getResources();
+        return cache.get(own, language, own.getConfiguration(), () -> wrap(context, language).getResources());
     }
 
     public static String get(Context context, int id, Object... args) {

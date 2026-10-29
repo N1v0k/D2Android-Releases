@@ -33,6 +33,8 @@ public final class D2PlugY {
     public static void install(Context context, File shadowDir, boolean enabled) throws IOException {
         File dll = new File(shadowDir, "PlugY.dll");
         D2Settings.setRespecStarted(context, false);
+
+        D2Settings.setLadderStarted(context, false);
         if (!enabled || !isBundled(context)) {
 
             if (dll.exists() && !dll.delete()) throw new IOException("PlugY.dll lässt sich nicht entfernen");
@@ -44,9 +46,11 @@ public final class D2PlugY {
         String[] files = context.getAssets().list(ASSET_DIR + "/PlugY");
         if (files != null) for (String name : files) FileUtils.copy(context, ASSET_DIR + "/PlugY/" + name, new File(folder, name));
         boolean respec = D2Settings.respec(context);
-        FileUtils.writeString(new File(shadowDir, "PlugY.ini"), ini(D2Settings.bigStash(context), respec,
-            D2Settings.statsPages(context), extras(context)));
+        boolean[] extras = extras(context);
+        FileUtils.writeString(new File(shadowDir, "PlugY.ini"), withSharedStash(ini(D2Settings.bigStash(context), respec,
+            D2Settings.statsPages(context), extras), D2Settings.sharedStash(context)));
         D2Settings.setRespecStarted(context, respec);
+        D2Settings.setLadderStarted(context, extras[java.util.Arrays.asList(EXTRA_KEYS).indexOf("ActiveLadderRunewords")]);
     }
 
 
@@ -136,10 +140,59 @@ public final class D2PlugY {
     }
 
 
+
+
+
+
+    static final boolean RESUME_DEFAULT = true;
+
+
+    static boolean resumeSwitch(Boolean stored) {
+        return stored != null ? stored : RESUME_DEFAULT;
+    }
+
+
+
+
+
+    static Boolean storedResume(Boolean stored, boolean regenMapOn) {
+        return stored == null && regenMapOn ? Boolean.FALSE : stored;
+    }
+
+
+
+
+
+    static boolean mustStoreResumeOff(String iniKey, boolean on, Boolean stored) {
+        return switchesResumeOff(iniKey, on) && resumeSwitch(stored);
+    }
+
+
+
+
+
     static boolean[] extras(Context context) {
         boolean[] on = new boolean[EXTRA_KEYS.length];
-        for (int i = 0; i < on.length; i++) on[i] = D2Settings.plugyExtra(context, EXTRA_KEYS[i], EXTRA_DEFAULTS[i]);
+        for (int i = 0; i < on.length; i++) on[i] = D2Settings.plugyExtraEffective(context, EXTRA_KEYS[i], EXTRA_DEFAULTS[i]);
         return on;
+    }
+
+
+
+
+
+
+    static String withSharedStash(String ini, boolean on) {
+        if (on) return ini;
+        return set(set(ini, "ActiveSharedStash", "0"), "ActiveSharedGold", "0");
+    }
+
+    private static String set(String ini, String key, String value) {
+        String k = "\r\n" + key + "=";
+        int at = ini.indexOf(k);
+        if (at < 0) throw new IllegalStateException("PlugY.ini without " + key);
+        int end = ini.indexOf("\r\n", at + k.length());
+        return ini.substring(0, at + k.length()) + value + ini.substring(end);
     }
 
 

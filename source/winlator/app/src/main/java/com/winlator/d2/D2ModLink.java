@@ -148,7 +148,18 @@ public final class D2ModLink {
     private volatile long[] experience;
     private volatile long gridFactsAt;
 
+    private volatile int drawnLayers = -1;
+    private volatile int[] grids;
+
+    private byte[] gridMask;
+    private int gridMaskSize;
+    private long gridMaskAt;
+
+    private volatile long sharedGold = -1;
+
     private volatile boolean appDps;
+
+    private volatile int xpBarBits;
     private volatile long attackKindAt;
 
     private volatile Stamped<byte[]> figur;
@@ -258,8 +269,20 @@ public final class D2ModLink {
                 }
             }
         }
+        else if (type == D2ModState.PKT_GRID && length >= 11) {
+            int w = data[8] & 0xFF, h = data[9] & 0xFF, n = data[10] & 0xFF;
+            if (length >= 11 + n) {
+                gridMask = java.util.Arrays.copyOfRange(data, 11, 11 + n);
+                gridMaskSize = w << 8 | h;
+                gridMaskAt = SystemClock.uptimeMillis();
+            }
+        }
         else if (type == D2ModState.PKT_ITEMS) {
             D2ModItems parsed = D2ModItems.parse(data, length);
+
+            if (parsed != null && gridMask != null && SystemClock.uptimeMillis() - gridMaskAt < 1000)
+                parsed.attachGrid(gridMaskSize >> 8, gridMaskSize & 0xFF, gridMask);
+            gridMask = null;
             if (parsed != null) items = new Stamped<>(parsed, SystemClock.uptimeMillis());
         }
         else if (type == D2ModState.PKT_EFFECTS && length >= 9) {
@@ -275,6 +298,9 @@ public final class D2ModLink {
             gridFacts = D2Points.parseGrid(data, length, extension);
             gridFactsAt = resumeStateAt;
             experience = D2Points.parseExperience(data, length, extension);
+            drawnLayers = D2Points.parseDrawnLayers(data, length, extension);
+            grids = D2Points.parseGrids(data, length, extension);
+            sharedGold = D2Points.parseSharedGold(data, length, extension);
             if (points != null && (last == null || last.points == null || last.points.counter != points.counter)) {
                 android.util.Log.i(TAG, points.toString());
             }
@@ -627,6 +653,13 @@ public final class D2ModLink {
 
     public static final int CAP2_TELE_HOVER = 0x02;
 
+    public static final int CAP2_LAYERS = 0x40;
+
+    public static final int CAP2_LAYERS_BAR = 0x80;
+
+
+    public static final int CAP2_XP_BAR = 0x20;
+
 
     public int capabilities2() {
         GameInfo info = gameInfo(3000);
@@ -797,13 +830,16 @@ public final class D2ModLink {
         boolean damageNumbers = D2DamageStyle.numbers(damageStyle), byElement = damageNumbers && D2DamageStyle.byElement(damageStyle);
         int extra = (compare ? 1 : 0) | (damageNumbers ? 2 : 0) | (damageDps ? 4 : 0) | (byElement ? 8 : 0) | (diffLines ? 16 : 0)
             | (appDps ? 32 : 0);
-        if (bits != lastHudBits || extra != lastHudExtra) {
+        int xp = xpBarBits & 7;
+        if (bits != lastHudBits || extra != lastHudExtra || xp != lastHudXp) {
             D2Trace.log("-> hud bits " + bits + (itemNames ? " (item names)" : "") + (mapHack ? " (map hack)" : "") + (compare ? " (compare)" : "")
-                + (damageNumbers ? (byElement ? " (damage numbers by element)" : " (damage numbers)") : "") + (damageDps ? " (DPS)" : "") + (diffLines ? " (comparison lines)" : ""));
+                + (damageNumbers ? (byElement ? " (damage numbers by element)" : " (damage numbers)") : "") + (damageDps ? " (DPS)" : "") + (diffLines ? " (comparison lines)" : "")
+                + (xp != 0 ? " (xp bar " + xp + ")" : ""));
         }
         lastHudBits = bits;
         lastHudExtra = extra;
-        send(command(CMD_HUD, 2).put((byte) bits).put((byte) extra));
+        lastHudXp = xp;
+        send(command(CMD_HUD, 3).put((byte) bits).put((byte) extra).put((byte) xp));
     }
 
 
@@ -945,11 +981,81 @@ public final class D2ModLink {
     public void refillPotions(long job, D2PotionShop.Need need, int minGold) {
         D2Trace.log("-> refill potions job " + job + ": heal " + need.heal + " (" + need.healBelt + " belt), mana " + need.mana
             + " (" + need.manaBelt + " belt), min gold " + minGold);
-        send(command(D2PotionShop.COMMAND, 12).put((byte) Math.min(40, need.heal)).put((byte) Math.min(40, need.mana))
+        send(command(D2PotionShop.COMMAND, 12).put((byte) Math.min(80, need.heal)).put((byte) Math.min(80, need.mana))
             .put((byte) Math.min(40, need.healBelt)).put((byte) Math.min(40, need.manaBelt)).putInt(minGold).putInt((int) job));
     }
 
+
+
+
+
+
+    public void buyPortals(long job, int count, int minGold, boolean tome) {
+        D2Trace.log("-> buy " + (tome ? "tome" : "scrolls") + " job " + job + ": " + count + ", min gold " + minGold);
+        send(command(D2PotionShop.COMMAND, 13).put((byte) Math.max(0, Math.min(40, count))).put((byte) 0).put((byte) 0).put((byte) 0)
+            .putInt(minGold).putInt((int) job).put((byte) (tome ? 2 : 1)));
+    }
+
+
+
+
+
+    public void lootJob(boolean sell, long job, long[] ids, long gold) {
+        int n = Math.min(48, ids.length);
+        D2Trace.log("-> " + (sell ? "sell" : "stash") + " loot job " + job + ": " + n + " items" + (gold > 0 ? ", gold " + gold : ""));
+
+        ByteBuffer b = command(sell ? 17 : 18, 12 + 4 * n).put((byte) n).put((byte) 0).put((byte) 0).put((byte) 0)
+            .putInt(sell ? 0 : (int) Math.min(Integer.MAX_VALUE, Math.max(0, gold))).putInt((int) job);
+        for (int i = 0; i < n; i++) b.putInt((int) ids[i]);
+        send(b);
+    }
+
+
+
+
+
+
+    public void buyWare(long job, long wareId, int count, int minGold) {
+        D2Trace.log("-> buy ware " + wareId + " job " + job + ": " + count + ", min gold " + minGold);
+        send(command(D2PotionShop.COMMAND, 17).put((byte) Math.max(0, Math.min(D2ShopGestures.MAX, count))).put((byte) 0)
+            .put((byte) 0).put((byte) 0).putInt(minGold).putInt((int) job).put((byte) 3).putInt((int) wareId));
+    }
+
     private int sellRequest;
+    private int moveRequest;
+
+
+
+
+
+    public void move(int place, int x, int y) {
+        int request = ++moveRequest;
+        D2Trace.log("-> move place " + place + " cell " + x + "," + y + " request " + request);
+        send(command(D2ItemMoves.CMD_MOVE, 8).put(D2ItemMoves.movePayload(place, x, y, request)));
+    }
+
+    private int cubeRequest;
+
+
+
+
+
+    public void cube(int[] ids) {
+        int request = ++cubeRequest;
+        D2Trace.log("-> cube " + java.util.Arrays.toString(ids) + " request " + request);
+        byte[] payload = D2RezeptEinlegen.payload(ids, request);
+        send(command(D2RezeptEinlegen.CMD_CUBE, payload.length).put(payload));
+    }
+
+
+
+
+
+    public void cubeOpen() {
+        D2Trace.log("-> cube open");
+        byte[] payload = D2RezeptOeffnen.payload();
+        send(command(D2RezeptOeffnen.CMD_CUBE_OPEN, payload.length).put(payload));
+    }
 
 
 
@@ -994,6 +1100,47 @@ public final class D2ModLink {
     }
 
 
+    public int drawnLayers() {
+        return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? drawnLayers : -1;
+    }
+
+
+
+
+
+    public int[] grids() {
+        return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? grids : null;
+    }
+
+
+    public long sharedGold() {
+        return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? sharedGold : -1;
+    }
+
+
+    public long drawnLayersAt() {
+        return gridFactsAt;
+    }
+
+
+    public static final int CMD_SOUND = 35, SOUND_BUTTON_CLICK = 4;
+
+
+
+
+
+    public void playSound(int id) {
+        D2Trace.log("-> sound " + id);
+        send(command(CMD_SOUND, 2).putShort((short) id));
+    }
+
+
+    public void sendLayer(byte[] packet) {
+        if (packet == null || packet.length < 8) return;
+        send(ByteBuffer.wrap(packet.clone()));
+    }
+
+
     public long[] experience() {
         return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? experience : null;
     }
@@ -1001,6 +1148,11 @@ public final class D2ModLink {
 
     public void setAppDps(boolean on) {
         appDps = on;
+    }
+
+
+    public void setXpBar(int bits) {
+        xpBarBits = bits;
     }
 
 
@@ -1053,7 +1205,7 @@ public final class D2ModLink {
     }
 
     private long lastHighlight = -2;
-    private int lastHudBits = -1, lastHudExtra = -1;
+    private int lastHudBits = -1, lastHudExtra = -1, lastHudXp = -1;
 
     private static String phaseName(int phase) {
         return phase == PHASE_DOWN ? "down" : phase == PHASE_HOLD ? "hold" : phase == PHASE_UP ? "up" : phase == PHASE_CLICK ? "click" : "phase " + phase;

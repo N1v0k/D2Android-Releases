@@ -21,6 +21,7 @@ import androidx.core.content.FileProvider;
 
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 
@@ -32,6 +33,8 @@ public class D2SettingsActivity extends D2Activity {
 
     public static final String EXTRA_SAVES = "d2_saves";
 
+    public static final String EXTRA_MODS = "d2_mods";
+
     private android.view.View helpersPanel;
 
     @Override
@@ -39,8 +42,79 @@ public class D2SettingsActivity extends D2Activity {
         if (D2HelpersPanel.back(helpersPanel)) return;
         super.onBackPressed();
     }
+
+
+
+
+    private D2PadHint.Bar padBar;
+    private boolean padOn;
+
+
+
+
+
+    @Override
+    D2PadPages.Page padPage() {
+        return settingsPad;
+    }
+
+    private final D2PadPages.Page settingsPad = new D2PadPages.Page() {
+        @Override
+        public View padFirstFocus() {
+            return D2HelpersPanel.firstFocus(helpersPanel);
+        }
+
+        @Override
+        public boolean onPad(int action, View focused) {
+            if (action == D2PadKeys.LB || action == D2PadKeys.RB) return D2HelpersPanel.step(helpersPanel, action == D2PadKeys.LB ? -1 : 1);
+            if (action == D2PadKeys.B) return D2HelpersPanel.padBack(helpersPanel);
+            if (action == D2PadKeys.START) {
+                if (playButton != null && playButton.isEnabled()) playButton.performClick();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void padActive(boolean active) {
+            if (active == padOn) return;
+            padOn = active;
+            if (active) updatePadHint();
+            else if (padBar != null) padBar.show(null);
+        }
+    };
+
+    private void updatePadHint() {
+        D2SettingsLook look = D2SettingsLook.get();
+        if (padBar == null) return;
+        if (look == null) {
+            padBar.show(null);
+            return;
+        }
+        View focus = getCurrentFocus();
+        boolean stepper = focus instanceof D2PadPages.Stepper && ((D2PadPages.Stepper) focus).padSteps();
+        int[] items = D2PadNav.settingsHints(stepper, focus != null && !focus.isInTouchMode(), true);
+        int[] glyphs = new int[items.length / 2];
+        String[] words = new String[glyphs.length];
+        for (int i = 0; i < glyphs.length; i++) {
+            glyphs[i] = items[2 * i];
+            words[i] = padWord(items[2 * i + 1]);
+        }
+        padBar.show(D2PadHint.picture(look.formal10, glyphs, words));
+    }
+
+    private String padWord(int word) {
+        switch (word) {
+            case D2PadNav.WORD_STEP: return getString(R.string.pad_hint_step);
+            case D2PadNav.WORD_CHOOSE: return getString(R.string.pad_hint_choose);
+            case D2PadNav.WORD_GROUP: return getString(R.string.pad_hint_group);
+            case D2PadNav.WORD_BACK: return getString(R.string.pad_hint_back);
+            case D2PadNav.WORD_PLAY: return getString(R.string.settings_play);
+            default: return "";
+        }
+    }
     private static final int ID_AUTO = 1000, ID_LANGUAGE = 1100, ID_FRAME_RATE = 1200, IMPORT_REQUEST_CODE = 4720,
-        FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722;
+        FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722, MOD_REQUEST_CODE = 4723;
 
     private TextView savesStatus;
 
@@ -59,12 +133,20 @@ public class D2SettingsActivity extends D2Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((from, to) -> {
+            if (padOn) updatePadHint();
+        });
         String group = savedInstanceState != null ? savedInstanceState.getString(STATE_GROUP) : null;
 
         if (group == null && getIntent().getBooleanExtra(EXTRA_SAVES, false)) group = D2HelperEntries.SET_SAVES;
+
+        if (group == null && getIntent().getBooleanExtra(EXTRA_MODS, false)) group = D2HelperEntries.SET_MODS;
         buildPage(group);
 
-        if (D2SettingsLook.get() == null) D2SettingsLook.load(this, () -> {
+
+
+        if (builtPlain) D2SettingsLook.load(this, () -> {
             if (!isFinishing() && !isDestroyed()) buildPage(D2HelpersPanel.group(helpersPanel));
         });
     }
@@ -74,25 +156,22 @@ public class D2SettingsActivity extends D2Activity {
         return false;
     }
 
-    @Override
-    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
 
 
-        if (newConfig.orientation != builtFor && D2SettingsLook.get() != null) buildPage(D2HelpersPanel.group(helpersPanel));
-    }
 
 
-    private int builtFor;
+    private boolean builtPlain;
 
 
     private void buildPage(String group) {
-        builtFor = getResources().getConfiguration().orientation;
+        spielweiseViews.clear();
         D2SettingsLook look = D2SettingsLook.get();
+        builtPlain = look == null;
         int pad = dp(16);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(pad, pad, pad, 0);
+        root.setClipToPadding(false);
         if (look != null) {
 
             root.setBackground(new CoverDrawable(look.backdrop));
@@ -141,6 +220,8 @@ public class D2SettingsActivity extends D2Activity {
         savesStatus = null;
         folderStatus = null;
         backgroundStatus = null;
+        argsLine = argsWarnings = null;
+        modsStatus = null;
         loadButton = null;
         helpersPanel = D2HelpersPanel.create(this, null, null, true, null, null, this::hostView);
         root.addView(helpersPanel, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -153,20 +234,36 @@ public class D2SettingsActivity extends D2Activity {
         LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         fp.leftMargin = fp.rightMargin = -pad;
         root.addView(foot, fp);
+
+        padBar = new D2PadHint.Bar(this);
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bp.leftMargin = bp.rightMargin = -pad;
+        root.addView(padBar, bp);
         setContentView(root);
+        if (padOn) updatePadHint();
         lockForImport(D2Saves.importRunning());
         if (group != null) D2HelpersPanel.open(helpersPanel, group);
     }
 
 
+
+
+
     private final class FootDrawable extends android.graphics.drawable.Drawable {
         private final android.graphics.Paint paint = new android.graphics.Paint();
+        private final android.graphics.Paint shade = new android.graphics.Paint();
+        private int shadeTop = Integer.MIN_VALUE, shadeBottom = Integer.MIN_VALUE;
 
         @Override
         public void draw(android.graphics.Canvas canvas) {
             android.graphics.Rect b = getBounds();
-            paint.setColor(0xC8000000);
-            canvas.drawRect(b, paint);
+            if (b.top != shadeTop || b.bottom != shadeBottom) {
+                shadeTop = b.top;
+                shadeBottom = b.bottom;
+                shade.setShader(new android.graphics.LinearGradient(0, b.top, 0, b.bottom, 0x00000000, 0x99000000,
+                    android.graphics.Shader.TileMode.CLAMP));
+            }
+            canvas.drawRect(b, shade);
             paint.setColor(0xFF8C7846);
             canvas.drawRect(b.left, b.top, b.right, b.top + Math.max(2, dp(1)), paint);
         }
@@ -230,6 +327,8 @@ public class D2SettingsActivity extends D2Activity {
             case "appLanguage": {
                 box.addView(label(e.label));
                 box.addView(hint(getString(R.string.settings_language_hint)));
+                String gameLanguage = gameLanguageName();
+                if (gameLanguage != null) box.addView(hint(getString(R.string.settings_language_game, gameLanguage)));
                 RadioGroup languageGroup = new RadioGroup(this);
                 String[] languages = {D2Text.AUTO, D2Text.GERMAN, D2Text.ENGLISH, D2Text.FRENCH, D2Text.SPANISH, D2Text.ITALIAN};
                 int[] languageLabels = {R.string.settings_language_auto, R.string.settings_language_de, R.string.settings_language_en,
@@ -297,30 +396,51 @@ public class D2SettingsActivity extends D2Activity {
                 soundBox.addView(hint(getString(R.string.settings_sound_hint)));
                 return soundBox;
             }
+            case "swPreset":
+                spielweiseKeep(box, () -> spielweisePreset(box));
+                return spielweisePreset(box);
+            case "swQuality": case "swNoDrop": case "swRunes": case "swBoss": case "swUniques": case "swGamble": case "swExp": case "swDensity": case "swLadder": case "swCow": case "swUber":
+            case "swWorld": case "swShared": case "swSort":
+                return spielweiseRow(D2Spielweise.byKey(e.key), e.label);
+            case "argDirect":
+                box.addView(hint(getString(R.string.settings_mods_start_hint)));
+                box.addView(hint(getString(R.string.settings_mods_by_hand)));
+                box.addView(check(e.label, D2Settings.argDirect(this), D2Settings.argKey(this, D2Settings.KEY_ARG_DIRECT), this::argsChanged));
+                box.addView(hint(getString(R.string.settings_arg_direct_hint)));
+                return box;
+            case "argTxt":
+                box.addView(check(e.label, D2Settings.argTxt(this), D2Settings.argKey(this, D2Settings.KEY_ARG_TXT), this::argsChanged));
+                box.addView(hint(getString(R.string.settings_arg_txt_hint)));
+                return box;
+            case "argNs":
+                box.addView(check(e.label, D2Settings.argNoSound(this), D2Settings.argKey(this, D2Settings.KEY_ARG_NS), this::argsChanged));
+                box.addView(hint(getString(R.string.settings_arg_ns_hint)));
+                return box;
+            case "argsFree":
+                return argsFree(box, e.label);
+            case "modsList":
+                return modsList(box);
+            case "modsImport":
+                return modsImport(box, e.label);
             case "skipIntro":
                 return check(e.label, D2Settings.skipIntro(this), D2Settings.KEY_SKIP_INTRO);
-            case "mod": {
-                D2SettingsLook look = D2SettingsLook.get();
-                if (look != null) return D2HelpersPanel.gameSwitch(this, look, e.label, D2Settings.modEnabled(this),
-                    (on) -> D2Settings.setModEnabled(this, on));
-                CheckBox modBox = new CheckBox(this);
-                modBox.setText(e.label);
-                modBox.setChecked(D2Settings.modEnabled(this));
-                D2Style.control(modBox);
-                modBox.setOnCheckedChangeListener((view, on) -> D2Settings.setModEnabled(this, on));
-                return modBox;
-            }
+            case "mod":
+                return guardedRow(GUARD_MOD, e.label);
             case "plugy":
                 if (!D2PlugY.isBundled(this)) return null;
-                box.addView(check(e.label, D2Settings.plugy(this), D2Settings.KEY_PLUGY));
+                box.addView(guardedRow(GUARD_PLUGY, e.label));
                 box.addView(hint(getString(R.string.settings_plugy_hint, D2Saves.BACKUP_FOLDER)));
+                box.addView(hint(getString(R.string.settings_plugy_moved)));
+                box.addView(hint(getString(R.string.settings_big_stash_moved)));
                 return box;
+            case "bigInventory":
+                return GameShadow.isModBundled(this) ? guardedRow(GUARD_BIG_INV, e.label) : null;
             case "bigStash":
-                return D2PlugY.isBundled(this) ? check(e.label, D2Settings.bigStash(this), D2Settings.KEY_BIG_STASH) : null;
+                return D2PlugY.isBundled(this) ? bigStashRow(e.label) : null;
             case "autosave":
                 return D2PlugY.isBundled(this) ? check(e.label, D2Settings.autosave(this), D2Settings.KEY_AUTOSAVE) : null;
             case "respec":
-                return D2PlugY.isBundled(this) ? check(e.label, D2Settings.respec(this), D2Settings.KEY_RESPEC) : null;
+                return D2PlugY.isBundled(this) ? spielweiseRow(D2Spielweise.RESPEC, e.label) : null;
             case "statsPages":
                 return D2PlugY.isBundled(this) ? check(e.label, D2Settings.statsPages(this), D2Settings.KEY_STATS_PAGES) : null;
             default:
@@ -338,7 +458,17 @@ public class D2SettingsActivity extends D2Activity {
                             if (D2HelperEntries.SET_GAME.equals(D2HelpersPanel.group(helpersPanel))) buildPage(D2HelperEntries.SET_GAME);
                         });
                     };
-                    return check(e.label, D2Settings.plugyExtra(this, iniKey, D2PlugY.EXTRA_DEFAULTS[i]), key, changed);
+                    View row = check(e.label, D2Settings.plugyExtra(this, iniKey, D2PlugY.EXTRA_DEFAULTS[i]), key, changed);
+
+                    if ("ActiveSharedGold".equals(iniKey) && !D2Settings.sharedStash(this)) {
+                        row.setEnabled(false);
+                        row.setClickable(false);
+                        row.setAlpha(0.45f);
+                        box.addView(row);
+                        box.addView(hint(getString(R.string.settings_shared_gold_off)));
+                        return box;
+                    }
+                    return row;
                 }
                 return null;
             case "background": {
@@ -348,7 +478,7 @@ public class D2SettingsActivity extends D2Activity {
                 D2Style.hint(backgroundStatus);
                 backgroundStatus.setPadding(dp(8), 0, 0, dp(4));
                 box.addView(backgroundStatus);
-                box.addView(button(getString(R.string.settings_background_open),
+                box.addView(button(D2ButtonTiers.TEXT, getString(R.string.settings_background_open),
                     () -> startActivity(new Intent(this, D2BackgroundActivity.class))), matchWidth());
                 return box;
             }
@@ -359,25 +489,25 @@ public class D2SettingsActivity extends D2Activity {
                 D2Style.text(folderStatus);
                 box.addView(folderStatus);
                 showFolder();
-                box.addView(button(getString(R.string.folder_choose), this::chooseFolder), matchWidth());
+                box.addView(button(D2ButtonTiers.PLAIN, getString(R.string.folder_choose), this::chooseFolder), matchWidth());
                 return box;
             }
             case "install":
-                return button(e.label, this::install);
+                return button(D2ButtonTiers.PLAIN, e.label, this::install);
             case "shortcut": {
                 box.addView(hint(getString(R.string.settings_shortcut_hint)));
                 TextView shortcutStatus = new TextView(this);
                 D2Style.text(shortcutStatus);
-                box.addView(button(e.label, () -> shortcutStatus.setText(D2GameShortcut.offer(this))), matchWidth());
+                box.addView(button(D2ButtonTiers.PLAIN, e.label, () -> shortcutStatus.setText(D2GameShortcut.offer(this))), matchWidth());
                 box.addView(shortcutStatus);
                 return box;
             }
             case "savesShare":
                 box.addView(hint(getString(R.string.settings_saves_hint)));
-                box.addView(button(e.label, this::shareSaves), matchWidth());
+                box.addView(button(D2ButtonTiers.PLAIN, e.label, this::shareSaves), matchWidth());
                 return box;
             case "savesLoad": {
-                loadButton = button(e.label, this::pickSavesZip);
+                loadButton = button(D2ButtonTiers.PLAIN, e.label, this::pickSavesZip);
                 box.addView(loadButton, matchWidth());
                 savesStatus = new TextView(this);
                 D2Style.text(savesStatus);
@@ -387,11 +517,17 @@ public class D2SettingsActivity extends D2Activity {
                 return box;
             }
             case "news":
-                return button(e.label, () -> startActivity(new Intent(this, D2NewsActivity.class)));
+                return button(D2ButtonTiers.TEXT, e.label, () -> startActivity(new Intent(this, D2NewsActivity.class)));
             case "updateCheck":
                 return check(e.label, D2Settings.updateCheck(this), D2Settings.KEY_UPDATE_CHECK);
+            case "telemetry":
+                box.addView(check(e.label, D2Settings.telemetry(this), D2Settings.KEY_TELEMETRY, () -> {
+                    if (!D2Settings.telemetry(this)) D2Telemetry.clear(this);
+                }));
+                box.addView(hint(getString(R.string.settings_telemetry_hint)));
+                return box;
             case "licenses":
-                return button(e.label, () -> startActivity(new Intent(this, D2LicensesActivity.class)));
+                return button(D2ButtonTiers.TEXT, e.label, () -> startActivity(new Intent(this, D2LicensesActivity.class)));
             case "about":
                 box.addView(label(e.label));
                 box.addView(hint(getString(R.string.about_disclaimer)));
@@ -432,10 +568,9 @@ public class D2SettingsActivity extends D2Activity {
     }
 
 
-    private View button(String text, Runnable action) {
+    private View button(int kind, String text, Runnable action) {
         D2SettingsLook look = D2SettingsLook.get();
-
-        if (look != null) return new D2GameText.Stone(this, look, true, text.replace(" …", "").replace(" ...", ""), action);
+        if (look != null) return D2ButtonTiers.make(this, look, kind, text, action);
         Button button = new Button(this);
         button.setText(text);
         button.setOnClickListener((v) -> action.run());
@@ -454,6 +589,27 @@ public class D2SettingsActivity extends D2Activity {
         D2Style.text(view);
         view.setPadding(dp(8), dp(6), 0, 0);
         return view;
+    }
+
+
+
+
+
+    private String gameLanguageName() {
+        String iso = D2AppLanguage.gameIso(D2Settings.gameLanguage(this));
+        if (iso == null) return null;
+        switch (iso) {
+            case D2AppLanguage.GERMAN: return getString(R.string.settings_language_de);
+            case D2AppLanguage.ENGLISH: return getString(R.string.settings_language_en);
+            case D2AppLanguage.FRENCH: return getString(R.string.settings_language_fr);
+            case D2AppLanguage.SPANISH: return getString(R.string.settings_language_es);
+            case D2AppLanguage.ITALIAN: return getString(R.string.settings_language_it);
+            default: {
+                java.util.Locale app = getResources().getConfiguration().getLocales().get(0);
+                String name = new java.util.Locale(iso).getDisplayLanguage(app);
+                return name.isEmpty() ? null : name.substring(0, 1).toUpperCase(app) + name.substring(1);
+            }
+        }
     }
 
     private View hint(String text) {
@@ -482,8 +638,18 @@ public class D2SettingsActivity extends D2Activity {
     }
 
     @Override
+    protected void onPause() {
+        pageResumed = false;
+        super.onPause();
+    }
+
+
+    private boolean pageResumed;
+
+    @Override
     protected void onResume() {
         super.onResume();
+        pageResumed = true;
 
         if (folderLine == null && folderStatus != null && folderStatus.isAttachedToWindow()) showFolder();
         folderKeeper.resumed();
@@ -494,6 +660,815 @@ public class D2SettingsActivity extends D2Activity {
         }
         if (backgroundStatus != null) backgroundStatus.setText(getString(R.string.settings_background_status, D2BackgroundActivity.summary(this)));
         if (soundButton != null) soundButton.update();
+    }
+
+
+
+
+    private TextView argsLine, argsWarnings;
+
+
+    private View argsFree(LinearLayout box, String label) {
+        box.addView(label(label));
+        box.addView(hint(getString(R.string.settings_args_free_hint)));
+        android.widget.EditText field = new android.widget.EditText(this);
+        field.setSingleLine(true);
+        field.setText(D2Settings.argsFree(this));
+        field.setHint(getString(R.string.settings_args_free_example));
+        field.setTextColor(0xFFC8B074);
+        field.setHintTextColor(D2Style.HINT);
+        field.setTextSize(14);
+        field.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        field.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        field.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void onTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void afterTextChanged(android.text.Editable text) {
+                D2Settings.setArgsFree(D2SettingsActivity.this, text.toString());
+                argsChanged();
+            }
+        });
+        LinearLayout.LayoutParams fp = matchWidth();
+        fp.leftMargin = dp(8);
+        box.addView(field, fp);
+        argsLine = new TextView(this);
+        argsLine.setTextSize(12);
+        argsLine.setTextColor(D2Style.GOLD);
+        argsLine.setPadding(dp(8), dp(2), 0, dp(2));
+        box.addView(argsLine);
+        argsWarnings = new TextView(this);
+        argsWarnings.setTextSize(12);
+        argsWarnings.setTextColor(D2Style.RED);
+        argsWarnings.setPadding(dp(8), 0, 0, dp(4));
+        box.addView(argsWarnings);
+        argsChanged();
+        return box;
+    }
+
+
+    private void argsChanged() {
+        if (argsLine == null) return;
+        argsLine.setText(getString(R.string.settings_args_line, D2Settings.gameArgs(this)));
+        D2StartArgs.Parsed parsed = D2StartArgs.parse(D2Settings.argsFree(this));
+        StringBuilder warn = new StringBuilder();
+        for (Object[] w : parsed.warnings) {
+            int id;
+            switch ((Integer) w[1]) {
+                case D2StartArgs.WARN_WINDOW: id = R.string.settings_args_warn_window; break;
+                case D2StartArgs.WARN_RENDERER: id = R.string.settings_args_warn_renderer; break;
+                case D2StartArgs.WARN_BATTLENET: id = R.string.settings_args_warn_battlenet; break;
+                default: id = R.string.settings_args_warn_fixed;
+            }
+            if (warn.length() > 0) warn.append('\n');
+            warn.append(getString(id, (String) w[0]));
+        }
+        if (!parsed.dropped.isEmpty()) {
+            if (warn.length() > 0) warn.append('\n');
+            warn.append(getString(R.string.settings_args_dropped, String.join(" ", parsed.dropped)));
+        }
+        argsWarnings.setText(warn);
+        argsWarnings.setVisibility(warn.length() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+
+
+
+    private TextView modsStatus;
+    private static volatile String modsLine;
+    private static volatile boolean modImportRunning;
+
+
+    private View modsList(LinearLayout box) {
+        box.addView(hint(getString(R.string.settings_mods_intro)));
+        D2ModInfo.Mod active = D2Mods.active(this);
+        box.addView(gemRow(D2StartArt.GEM_ORIGINAL, getString(R.string.settings_mods_original), active == null, () -> chooseMod(null)));
+        box.addView(hint(getString(R.string.settings_mods_original_hint)));
+        for (D2ModInfo.Mod mod : D2Mods.list()) {
+            boolean on = active != null && active.id.equals(mod.id);
+            box.addView(gemRow(D2StartArt.GEM_UNCHECKED, mod.name, on, () -> chooseMod(mod.id)));
+            int characters = D2SaveHeader.list(mod.saves()).size();
+            box.addView(hint(getString(R.string.settings_mods_data_unchecked, getResources().getQuantityString(R.plurals.settings_mods_characters, characters, characters))));
+            String proposed = (mod.direct ? D2StartArgs.DIRECT + " " : "") + (mod.txt ? D2StartArgs.TXT : "");
+            if (!proposed.trim().isEmpty()) box.addView(hint(getString(R.string.settings_mods_proposed, proposed.trim())));
+
+            if (mod.inventory) box.addView(hint(getString(R.string.settings_mods_own_grid)));
+            else if (mod.archives) box.addView(hint(getString(R.string.settings_mods_archives_grid)));
+            if (on) box.addView(hint(getString(R.string.settings_mods_spielweise_off)));
+            box.addView(button(D2ButtonTiers.PLAIN, getString(R.string.settings_mods_remove), () -> askRemoveMod(mod)), matchWidth());
+        }
+        box.addView(hint(getString(R.string.settings_mods_legend)));
+        return box;
+    }
+
+
+    private View gemRow(int gem, String name, boolean on, Runnable choose) {
+        D2SettingsLook look = D2SettingsLook.get();
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.graphics.Bitmap picture = look != null && look.gems[gem] != null ? look.gems[gem] : null;
+        if (picture != null) {
+            android.widget.ImageView icon = new android.widget.ImageView(this);
+            android.graphics.drawable.BitmapDrawable d = new android.graphics.drawable.BitmapDrawable(getResources(), picture);
+            d.setFilterBitmap(false);
+            icon.setImageDrawable(d);
+            icon.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            int k = Math.max(1, look.scale);
+            row.addView(icon, new LinearLayout.LayoutParams(picture.getWidth() * k, picture.getHeight() * k));
+        }
+        View text;
+        if (look != null) {
+            D2GameText line = new D2GameText(this, look, look.font16, 0xD2CEC6, name);
+            line.setPadding(dp(8), dp(8), dp(4), dp(4));
+            if (on) line.setValue(getString(R.string.settings_mods_active), 0xC8B074);
+            text = line;
+        }
+        else {
+            TextView line = new TextView(this);
+            line.setText(on ? name + "  (" + getString(R.string.settings_mods_active) + ")" : name);
+            D2Style.text(line);
+            line.setPadding(dp(8), dp(8), dp(4), dp(4));
+            text = line;
+        }
+        row.addView(text, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        row.setClickable(true);
+        row.setOnClickListener((v) -> choose.run());
+        return row;
+    }
+
+
+    private void chooseMod(String id) {
+        if (D2TouchOverlay.isGameRunning()) {
+            Toast.makeText(this, R.string.settings_mods_game_running, Toast.LENGTH_LONG).show();
+            return;
+        }
+        D2ModInfo.Mod before = D2Mods.active(this);
+        if (id == null ? before == null : before != null && before.id.equals(id)) return;
+
+        if (!D2Saves.beginImport()) {
+            Toast.makeText(this, R.string.settings_mods_busy, Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            D2Mods.setActive(this, id);
+        }
+        finally {
+            D2Saves.endImport();
+        }
+        D2Trace.log("mods: " + (id == null ? "original" : id) + " chosen");
+        buildPage(D2HelperEntries.SET_MODS);
+    }
+
+    private void askRemoveMod(D2ModInfo.Mod mod) {
+        if (D2TouchOverlay.isGameRunning()) {
+            Toast.makeText(this, R.string.settings_mods_game_running, Toast.LENGTH_LONG).show();
+            return;
+        }
+        TextView message = new TextView(this);
+        message.setText(getString(R.string.settings_mods_remove_ask, mod.name, D2Saves.BACKUP_FOLDER));
+        message.setTextSize(16);
+        int pad = dp(16);
+        message.setPadding(pad, pad, pad, 0);
+        D2Style.text(message);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(message)
+            .setPositiveButton(getString(R.string.settings_mods_remove_yes), (d, which) -> removeMod(mod))
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create();
+        dialog.show();
+        D2Sound.attach(dialog);
+        android.view.Window window = dialog.getWindow();
+        if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
+        for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE}) {
+            Button b = dialog.getButton(which);
+            if (b != null) b.setTextColor(D2Style.GOLD);
+        }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
+    }
+
+
+    private void removeMod(D2ModInfo.Mod mod) {
+        File modDir = mod.dir;
+        new Thread(() -> {
+            String line;
+
+
+            if (!D2Saves.beginImport()) {
+                modsStatus(getString(R.string.settings_mods_busy));
+                return;
+            }
+            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), modDir, "remove mod " + mod.id);
+            try {
+                if (lock.foreign) throw new IOException(folderLockText(this, lock, false));
+
+                if (D2Saves.recover(mod.saves())) D2SaveRepair.run(mod.saves());
+                File backup = D2Saves.newestSaveFile(mod.saves()) > 0 ? D2Saves.backup(mod.saves(), "vor-Mod-entfernen-" + mod.id) : null;
+                D2Mods.remove(this, mod);
+                line = getString(R.string.settings_mods_removed, mod.name)
+                    + (backup != null ? " " + getString(R.string.saves_backup_note, D2Saves.BACKUP_FOLDER + "/" + backup.getName()) : "");
+                D2Trace.log("mods: " + mod.id + " removed");
+            }
+            catch (IOException e) {
+                line = getString(R.string.settings_mods_remove_failed, String.valueOf(e.getMessage()));
+            }
+            finally {
+                if (!lock.foreign && !lock.unusable) D2FolderLock.release(modDir);
+                D2Saves.endImport();
+            }
+            String shown = line;
+            handler.post(() -> {
+                modsLine = shown;
+                if (!isFinishing() && !isDestroyed()) buildPage(D2HelperEntries.SET_MODS);
+            });
+        }).start();
+    }
+
+
+    private View modsImport(LinearLayout box, String label) {
+        box.addView(hint(getString(R.string.settings_mods_import_hint)));
+        box.addView(button(D2ButtonTiers.TEXT, label, this::pickMod), matchWidth());
+        modsStatus = new TextView(this);
+        D2Style.text(modsStatus);
+        modsStatus.setTextSize(13);
+        modsStatus.setPadding(dp(8), dp(2), 0, dp(4));
+        modsStatus.setText(modsLine != null ? modsLine : "");
+        box.addView(modsStatus);
+        return box;
+    }
+
+    private void modsStatus(String text) {
+        modsLine = text;
+        handler.post(() -> {
+            if (modsStatus != null) modsStatus.setText(text);
+        });
+    }
+
+    private void pickMod() {
+        if (D2TouchOverlay.isGameRunning()) {
+            modsStatus(getString(R.string.settings_mods_game_running));
+            return;
+        }
+        if (modImportRunning) {
+            modsStatus(getString(R.string.settings_mods_import_running));
+            return;
+        }
+        Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        pick.addCategory(Intent.CATEGORY_OPENABLE);
+        pick.setType("*/*");
+        pick.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed",
+            "application/x-7z-compressed", "application/octet-stream"});
+        try {
+            startActivityForResult(pick, MOD_REQUEST_CODE);
+        }
+        catch (RuntimeException e) {
+            modsStatus(getString(R.string.saves_no_picker));
+        }
+    }
+
+
+    private void importMod(Uri uri) {
+        String name = displayName(uri);
+        modImportRunning = true;
+        modsStatus(getString(R.string.settings_mods_import_copying, name, 0));
+        new Thread(() -> {
+            try (InputStream in = getContentResolver().openInputStream(uri)) {
+                if (in == null) throw new IOException("unreadable");
+                long[] shown = {0};
+                D2ModInfo.Mod mod = D2Mods.importArchive(in, name, (stage, done, total) -> {
+                    long mb = done / (1024 * 1024);
+                    if (mb == shown[0] && done != 0) return;
+                    shown[0] = mb;
+                    if (stage == 0) modsStatus(getString(R.string.settings_mods_import_copying, name, mb));
+                    else if (stage == 1) modsStatus(getString(R.string.settings_mods_import_checking, name));
+                    else modsStatus(getString(R.string.settings_mods_import_unpacking, name, mb, Math.max(1, total / (1024 * 1024))));
+                });
+
+
+                handler.post(() -> {
+                    if (pageResumed && !D2TouchOverlay.isGameRunning() && D2Saves.beginImport()) {
+                        try {
+                            D2Mods.setActive(this, mod.id);
+                        }
+                        finally {
+                            D2Saves.endImport();
+                        }
+                        D2Trace.log("mods: " + mod.id + " imported (" + mod.files + " files), chosen");
+                        modsLine = getString(R.string.settings_mods_imported, mod.name, mod.files);
+                    }
+                    else {
+                        D2Trace.log("mods: " + mod.id + " imported (" + mod.files + " files), not chosen (page left, game starting or running)");
+                        modsLine = getString(R.string.settings_mods_imported_not_chosen, mod.name, mod.files);
+                    }
+                });
+            }
+            catch (D2ModArchive.Failure f) {
+                modsLine = getString(R.string.settings_mods_import_failed, name, modFailure(f));
+                D2Trace.log("mods: import refused: " + f.reason);
+            }
+            catch (IOException | RuntimeException e) {
+                modsLine = getString(R.string.settings_mods_import_failed, name, String.valueOf(e.getMessage()));
+                D2Trace.log("mods: import failed: " + e);
+            }
+            finally {
+                modImportRunning = false;
+            }
+            handler.post(() -> {
+                if (!isFinishing() && !isDestroyed()) buildPage(D2HelperEntries.SET_MODS);
+            });
+        }).start();
+    }
+
+
+    private String displayName(Uri uri) {
+        try (android.database.Cursor c = getContentResolver().query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (c != null && c.moveToFirst() && !c.isNull(0)) return c.getString(0);
+        }
+        catch (RuntimeException e) {
+
+        }
+        String last = uri.getLastPathSegment();
+        return last != null ? last : "Mod";
+    }
+
+    private String modFailure(D2ModArchive.Failure f) {
+        String detail = f.detail != null ? f.detail : "";
+        switch (f.reason) {
+            case NOT_AN_ARCHIVE: return getString(R.string.settings_mods_fail_not_archive);
+            case BROKEN: return getString(R.string.settings_mods_fail_broken);
+            case UNSAFE_PATH: case LINK: case DUPLICATE: return getString(R.string.settings_mods_fail_unsafe, detail);
+            case TOO_MANY: case TOO_LARGE: case BOMB: return getString(R.string.settings_mods_fail_too_large);
+            case NO_GAME_FILES: return getString(R.string.settings_mods_fail_no_game_files);
+            case AMBIGUOUS: return getString(R.string.settings_mods_fail_ambiguous);
+            case CODE: return getString(R.string.settings_mods_fail_code, detail);
+            default: return getString(R.string.settings_mods_fail_space, detail);
+        }
+    }
+
+
+
+
+    private String[] spielweiseStages(D2Spielweise.Regulator r) {
+        if (r == D2Spielweise.QUALITY) return new String[]{getString(R.string.settings_sw_stage_original),
+            getString(R.string.settings_sw_quality_1), getString(R.string.settings_sw_quality_2)};
+        if (r == D2Spielweise.NODROP) return new String[]{getString(R.string.settings_sw_nodrop_one),
+            getString(R.string.settings_sw_nodrop_stage, 3), getString(R.string.settings_sw_nodrop_stage, 5),
+            getString(R.string.settings_sw_nodrop_stage, 8)};
+        if (r == D2Spielweise.RUNES) return new String[]{getString(R.string.settings_sw_stage_original),
+            getString(R.string.settings_sw_runes_stage, 2), getString(R.string.settings_sw_runes_stage, 4),
+            getString(R.string.settings_sw_runes_stage, 8)};
+        if (r == D2Spielweise.BOSS) return new String[]{getString(R.string.settings_off),
+            getString(R.string.settings_sw_boss_1), getString(R.string.settings_sw_boss_2)};
+        if (r == D2Spielweise.DENSITY) return new String[]{getString(R.string.settings_sw_density_0), getString(R.string.settings_sw_density_1),
+            getString(R.string.settings_sw_density_2), getString(R.string.settings_sw_density_3), getString(R.string.settings_sw_density_4)};
+        if (r == D2Spielweise.GAMBLE) return new String[]{getString(R.string.settings_sw_stage_original),
+            getString(R.string.settings_sw_gamble_1), getString(R.string.settings_sw_gamble_2)};
+        if (r == D2Spielweise.EXPERIENCE) return new String[]{getString(R.string.settings_sw_exp_0),
+            getString(R.string.settings_sw_exp_1), getString(R.string.settings_sw_exp_2)};
+        return new String[]{getString(R.string.settings_off), getString(R.string.settings_on)};
+    }
+
+
+    private String spielweiseInfo(D2Spielweise.Regulator r) {
+        if (r == D2Spielweise.QUALITY) return getString(R.string.settings_sw_quality_info);
+        if (r == D2Spielweise.NODROP) return getString(R.string.settings_sw_nodrop_info);
+        if (r == D2Spielweise.RUNES) return getString(R.string.settings_sw_runes_info);
+        if (r == D2Spielweise.BOSS) return getString(R.string.settings_sw_boss_info);
+        if (r == D2Spielweise.UNIQUES) return getString(R.string.settings_sw_uniques_info);
+        if (r == D2Spielweise.GAMBLE) return getString(R.string.settings_sw_gamble_info);
+        if (r == D2Spielweise.EXPERIENCE) return getString(R.string.settings_sw_exp_info);
+        if (r == D2Spielweise.DENSITY) return getString(R.string.settings_sw_density_info);
+        if (r == D2Spielweise.LADDER) return getString(R.string.settings_sw_ladder_info);
+        if (r == D2Spielweise.COW) return getString(R.string.settings_sw_cow_info);
+        if (r == D2Spielweise.UBER) return getString(R.string.settings_sw_uber_info);
+        if (r == D2Spielweise.SHARED) return getString(R.string.settings_sw_shared_info);
+        if (r == D2Spielweise.SORT) return getString(R.string.settings_sw_sort_info);
+        if (r == D2Spielweise.RESPEC) return getString(R.string.settings_sw_respec_info);
+        return getString(R.string.settings_sw_world_info);
+    }
+
+    private String presetName(String preset) {
+        return getString(D2Spielweise.CLASSIC.equals(preset) ? R.string.settings_sw_classic : R.string.settings_sw_enhanced);
+    }
+
+
+    private final java.util.Map<View, Runnable> spielweiseViews = new java.util.LinkedHashMap<>();
+
+
+
+
+
+    private void spielweiseKeep(View view, Runnable refill) {
+        spielweiseViews.put(view, refill);
+    }
+
+
+
+
+
+    private void spielweiseChanged() {
+        spielweiseViews.keySet().removeIf((v) -> !v.isAttachedToWindow());
+
+        for (java.util.Map.Entry<View, Runnable> e : new java.util.ArrayList<>(spielweiseViews.entrySet()))
+            D2PadFocus.keep(e.getKey(), e.getValue());
+    }
+
+
+
+
+
+    private View spielweisePreset(LinearLayout box) {
+        box.removeAllViews();
+        String preset = D2Settings.spielweisePreset(this);
+        boolean own = D2Settings.spielweiseOwn(this);
+        String state = own ? getString(R.string.settings_sw_own, presetName(preset)) : presetName(preset);
+        String next = D2Spielweise.nextPreset(preset);
+        D2SettingsLook look = D2SettingsLook.get();
+        if (look != null) {
+            D2GameText row = new D2GameText(this, look, look.font16, 0xD2CEC6, getString(R.string.settings_sw_preset));
+            row.setPadding(dp(8), dp(8), dp(4), dp(4));
+            row.setValue(state, 0xC8B074);
+            row.setClickable(true);
+            row.setOnClickListener((v) -> choosePreset(next));
+            box.addView(row);
+        }
+        else {
+            Button button = new Button(this);
+            button.setText(getString(R.string.settings_sw_preset) + ": " + state);
+            button.setOnClickListener((v) -> choosePreset(next));
+            box.addView(button);
+        }
+        boolean classic = D2Spielweise.CLASSIC.equals(preset) && !own;
+        box.addView(hint(getString(classic ? R.string.settings_sw_classic_hint : R.string.settings_sw_enhanced_hint)));
+        if (!D2Settings.modEnabled(this)) box.addView(hint(getString(R.string.settings_sw_needs_mod)));
+        D2ModInfo.Mod played = D2Mods.active(this);
+        if (played != null) box.addView(hint(getString(R.string.settings_sw_mod_active, played.name)));
+
+        box.addView(hint(getString(classic ? R.string.settings_sw_back_hint_classic : R.string.settings_sw_back_hint)));
+        return box;
+    }
+
+
+    private void choosePreset(String preset) {
+        if (bigStashBusy) return;
+        if (!D2Settings.spielweiseOwn(this)) {
+            applyPreset(preset);
+            return;
+        }
+        TextView message = new TextView(this);
+        message.setText(getString(R.string.settings_sw_discard, presetName(preset)));
+        message.setTextSize(16);
+        int pad = dp(16);
+        message.setPadding(pad, pad, pad, 0);
+        D2Style.text(message);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(message)
+            .setPositiveButton(getString(R.string.settings_sw_discard_yes), (d, which) -> applyPreset(preset))
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create();
+        dialog.show();
+        D2Sound.attach(dialog);
+        android.view.Window window = dialog.getWindow();
+        if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
+        for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE}) {
+            Button button = dialog.getButton(which);
+            if (button != null) button.setTextColor(D2Style.GOLD);
+        }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
+    }
+
+
+
+
+
+
+    private void applyPreset(String preset) {
+        if (bigStashBusy) return;
+        boolean invOn = D2Settings.bigInventory(this);
+        D2Settings.setSpielweisePreset(this, preset);
+        if (invOn && !D2Settings.bigInventory(this)) {
+            D2Settings.setBigInventory(this, true);
+            guardedOff(GUARD_BIG_INV, this::spielweiseChanged);
+        }
+        spielweiseChanged();
+    }
+
+
+
+
+
+
+    private static boolean plugyOnly(D2Spielweise.Regulator r) {
+        return r.plugyKey != null && !r.mod || r == D2Spielweise.SHARED || r == D2Spielweise.RESPEC;
+    }
+
+    private View spielweiseRow(D2Spielweise.Regulator r, String label) {
+        boolean plugyOnly = plugyOnly(r);
+        if (r.plugyKey != null && !D2PlugY.isBundled(this) && plugyOnly) return null;
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        spielweiseRow(r, label, box);
+        spielweiseKeep(box, () -> spielweiseRow(r, label, box));
+        return box;
+    }
+
+    private void spielweiseRow(D2Spielweise.Regulator r, String label, LinearLayout box) {
+        box.removeAllViews();
+        boolean plugyOnly = plugyOnly(r);
+        String[] stages = spielweiseStages(r);
+        int stage = D2Settings.spielweise(this, r);
+        String preset = D2Settings.spielweisePreset(this);
+
+        boolean usable = (!plugyOnly || D2Settings.plugy(this)) && D2Spielweise.usable(r, D2Settings.all(this));
+        Runnable next = () -> {
+            D2Settings.setSpielweise(this, r, r.next(D2Settings.spielweise(this, r)));
+            spielweiseChanged();
+        };
+        D2SettingsLook look = D2SettingsLook.get();
+        if (look != null) {
+            D2GameText row = new D2GameText(this, look, look.font16, 0xD2CEC6, label);
+            row.setPadding(dp(8), dp(8), dp(4), dp(4));
+            row.setValue(stages[stage], stage == 0 ? 0x707070 : 0xC8B074);
+            row.setClickable(usable);
+            if (usable) row.setOnClickListener((v) -> next.run());
+            row.step = (dir) -> {
+                int to = D2Settings.spielweise(this, r) + dir;
+                if (to < 0 || to >= r.stages) return false;
+                D2Settings.setSpielweise(this, r, to);
+                spielweiseChanged();
+                return true;
+            };
+            box.addView(row);
+        }
+        else {
+            Button button = new Button(this);
+            button.setText(label + ": " + stages[stage]);
+            button.setEnabled(usable);
+            button.setOnClickListener((v) -> next.run());
+            box.addView(button);
+        }
+        box.addView(hint(spielweiseInfo(r)));
+        if (stage != r.preset(preset)) box.addView(hint(getString(R.string.settings_sw_differs, presetName(preset), stages[r.preset(preset)])));
+        if (!usable) {
+            if (plugyOnly && !D2Settings.plugy(this)) box.addView(hint(getString(R.string.settings_sw_needs_plugy)));
+            box.setAlpha(0.45f);
+        }
+        else if (r == D2Spielweise.LADDER && !D2Settings.plugy(this)) box.addView(hint(getString(R.string.settings_sw_ladder_no_plugy)));
+    }
+
+
+
+
+    private boolean bigStashBusy;
+
+
+
+
+    static final int GUARD_BIG_STASH = 0, GUARD_PLUGY = 1, GUARD_MOD = 2;
+
+    static final int GUARD_BIG_INV = 3;
+
+    private boolean guardOn(int kind) {
+        if (kind == GUARD_PLUGY) return D2Settings.plugy(this);
+        if (kind == GUARD_MOD) return D2Settings.modEnabled(this);
+        if (kind == GUARD_BIG_INV) return D2Settings.bigInventory(this);
+        return D2Settings.bigStash(this);
+    }
+
+    private void guardSet(int kind, boolean on) {
+        if (kind == GUARD_PLUGY) D2Settings.putBoolean(this, D2Settings.KEY_PLUGY, on);
+        else if (kind == GUARD_MOD) D2Settings.setModEnabled(this, on);
+        else if (kind == GUARD_BIG_INV) D2Settings.setBigInventory(this, on);
+        else D2Settings.setBigStash(this, on);
+    }
+
+
+
+
+
+    private String guardStays(int kind) {
+        if (kind == GUARD_BIG_STASH) return getString(R.string.big_stash_on);
+        if (kind == GUARD_BIG_INV) return getString(R.string.big_inv_on);
+        return getString(kind == GUARD_PLUGY ? R.string.stash_guard_on_plugy : R.string.stash_guard_on_mod);
+    }
+
+
+    private String guardOff(int kind) {
+        if (kind == GUARD_BIG_STASH) return getString(R.string.big_stash_off);
+        if (kind == GUARD_BIG_INV) return getString(R.string.big_inv_off);
+        return getString(kind == GUARD_PLUGY ? R.string.stash_guard_off_plugy : R.string.stash_guard_off_mod);
+    }
+
+
+    private View bigStashRow(String label) {
+        return guardedRow(GUARD_BIG_STASH, label);
+    }
+
+
+
+
+
+    private View guardedRow(int kind, String label) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        Runnable[] fill = new Runnable[1];
+        fill[0] = () -> {
+            box.removeAllViews();
+            boolean on = guardOn(kind), usable = kind != GUARD_BIG_STASH || D2Settings.plugy(this);
+
+            boolean invLanguage = D2BigInventory.languageOk(D2Settings.gameLanguage(this));
+            if (kind == GUARD_BIG_INV) usable = on || D2Settings.modEnabled(this) && invLanguage;
+            String value = bigStashBusy ? getString(R.string.big_stash_checking) : getString(on ? R.string.settings_on : R.string.settings_off);
+            Runnable tap = () -> {
+                if (bigStashBusy) return;
+                if (!guardOn(kind)) guardSet(kind, true);
+                else guardedOff(kind, () -> {
+                    if (kind == GUARD_BIG_INV) spielweiseChanged();
+                    else if (box.isAttachedToWindow()) D2PadFocus.keep(box, fill[0]);
+                });
+                D2PadFocus.keep(box, fill[0]);
+                if (kind == GUARD_BIG_INV) spielweiseChanged();
+            };
+            D2SettingsLook look = D2SettingsLook.get();
+            if (look != null) {
+                D2GameText row = new D2GameText(this, look, look.font16, 0xD2CEC6, label);
+                row.setPadding(dp(8), dp(8), dp(4), dp(4));
+                row.setValue(value, on ? 0xC8B074 : 0x707070);
+                row.setClickable(usable);
+                if (usable) row.setOnClickListener((v) -> tap.run());
+                row.step = (dir) -> {
+                    if (guardOn(kind) == dir > 0 || bigStashBusy) return false;
+                    tap.run();
+                    return true;
+                };
+                box.addView(row);
+            }
+            else {
+                Button button = new Button(this);
+                button.setText(label + ": " + value);
+                button.setEnabled(usable);
+                button.setOnClickListener((v) -> tap.run());
+                box.addView(button);
+            }
+            if (kind == GUARD_BIG_INV) {
+                box.addView(hint(getString(R.string.settings_big_inventory_info)));
+
+                String preset = D2Settings.spielweisePreset(this);
+                int presetStage = D2Spielweise.INVENTORY.preset(preset);
+                if ((on ? 1 : 0) != presetStage) box.addView(hint(getString(R.string.settings_sw_differs, presetName(preset),
+                    getString(presetStage == 1 ? R.string.settings_on : R.string.settings_off))));
+                box.setAlpha(usable ? 1f : 0.45f);
+                if (!invLanguage) box.addView(hint(getString(R.string.settings_big_inventory_language)));
+                else if (!D2Settings.modEnabled(this)) box.addView(hint(getString(R.string.settings_big_inventory_needs_mod)));
+            }
+            if (kind == GUARD_BIG_STASH) {
+                box.addView(hint(getString(R.string.settings_big_stash_info)));
+                box.setAlpha(usable ? 1f : 0.45f);
+                if (!usable) box.addView(hint(getString(R.string.settings_sw_needs_plugy)));
+            }
+        };
+        fill[0].run();
+        if (kind == GUARD_BIG_INV) spielweiseKeep(box, fill[0]);
+        return box;
+    }
+
+
+
+
+
+
+
+
+
+
+    private void guardedOff(int kind, Runnable done) {
+        boolean big = kind == GUARD_BIG_STASH;
+
+        boolean inv = kind == GUARD_BIG_INV || kind == GUARD_MOD && D2Settings.bigInventory(this);
+
+        boolean plugyNow = D2PlugY.isBundled(this) && D2Settings.modEnabled(this) && D2Settings.plugy(this);
+        boolean stash = kind != GUARD_BIG_INV && (big || plugyNow);
+        if (!stash && !inv) {
+            guardSet(kind, false);
+            return;
+        }
+        if (D2TouchOverlay.isGameRunning()) {
+            bigStashMessage(getString(stash ? R.string.stash_guard_game_running : R.string.big_inv_game_running, guardStays(kind)));
+            return;
+        }
+        File gameDir = GameLocator.gameDir(this);
+        if (gameDir == null) {
+            guardSet(kind, false);
+            return;
+        }
+        bigStashBusy = true;
+        new Thread(() -> {
+            String message;
+
+            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), gameDir, "bigstash");
+            if (lock.foreign || lock.unusable) {
+                String text = folderLockText(this, lock, false);
+                handler.post(() -> {
+                    bigStashBusy = false;
+                    done.run();
+                    bigStashMessage(text);
+                });
+                return;
+            }
+
+            java.util.List<File> modLocks = new java.util.ArrayList<>();
+            try {
+
+                java.util.List<D2ModInfo.Mod> folders = new java.util.ArrayList<>();
+                folders.add(null);
+                for (D2ModInfo.Mod mod : D2Mods.list()) {
+                    D2FolderLock.Decision modLock = D2FolderLock.acquire(getPackageName(), appLabel(this), mod.dir, "bigstash mod " + mod.id);
+                    if (modLock.foreign) throw new IOException(folderLockText(this, modLock, false));
+                    if (!modLock.unusable) modLocks.add(mod.dir);
+                    folders.add(mod);
+                }
+                D2StashEdge.Sizes sizes = stash ? D2BigStash.sizes(gameDir) : null;
+                StringBuilder stashWhere = new StringBuilder(), invWhere = new StringBuilder();
+                for (D2ModInfo.Mod mod : folders) {
+                    File saves = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
+                    boolean judged = D2BigInventory.guarded(mod != null && mod.inventory);
+                    if (stash && judged) {
+                        java.util.List<D2StashEdge.Place> places = D2StashEdge.check(saves, mod != null ? D2BigStash.sizes(gameDir, mod) : sizes, big);
+                        if (!places.isEmpty()) appendWhere(stashWhere, mod, folders.size() > 1, D2BigStash.where(this, places));
+                    }
+                    if (inv && judged) {
+                        java.util.List<D2StashEdge.Place> places = D2BigInventoryGuard.check(gameDir, mod);
+                        if (!places.isEmpty()) appendWhere(invWhere, mod, folders.size() > 1, D2BigInventoryGuard.where(this, places));
+                    }
+                }
+                if (stashWhere.length() > 0 || invWhere.length() > 0) {
+
+                    StringBuilder text = new StringBuilder(guardStays(kind));
+                    if (stashWhere.length() > 0) text.append(' ').append(getString(big ? R.string.big_stash_reason
+                        : R.string.stash_guard_reason)).append("\n\n").append(stashWhere);
+                    if (invWhere.length() > 0) text.append(stashWhere.length() > 0 ? "\n\n" : " ")
+                        .append(getString(R.string.big_inv_reason)).append("\n\n").append(invWhere);
+                    message = text.toString();
+                }
+                else {
+
+                    String reason = big ? "vor-kleiner-Truhe" : kind == GUARD_BIG_INV ? "vor-kleinem-Inventar"
+                        : kind == GUARD_MOD ? "vor-ohne-Spielhilfen" : "vor-ohne-PlugY";
+                    java.util.List<String> names = new java.util.ArrayList<>();
+                    for (D2ModInfo.Mod mod : folders) {
+                        File backup = D2Saves.backup(mod != null ? mod.saves() : D2Saves.saveDir(gameDir),
+                            mod != null ? reason + "-" + mod.id : reason);
+                        if (backup != null) names.add(D2Saves.BACKUP_FOLDER + "/" + backup.getName());
+                    }
+                    guardSet(kind, false);
+                    message = names.isEmpty() ? null : getString(R.string.stash_guard_off_backup, guardOff(kind), String.join(", ", names));
+                }
+            }
+            catch (Exception e) {
+                message = getString(stash ? R.string.stash_guard_failed : R.string.big_inv_failed, guardStays(kind), savesError(e));
+            }
+            finally {
+                for (File dir : modLocks) D2FolderLock.release(dir);
+                D2FolderLock.release(gameDir);
+            }
+            String text = message;
+            handler.post(() -> {
+                bigStashBusy = false;
+                done.run();
+                if (text != null) bigStashMessage(text);
+            });
+        }, "D2BigStash").start();
+    }
+
+
+    private void appendWhere(StringBuilder out, D2ModInfo.Mod mod, boolean named, String lines) {
+        if (out.length() > 0) out.append('\n');
+        if (named) out.append(mod != null ? mod.name : getString(R.string.settings_mods_original)).append(":\n");
+        out.append(lines);
+    }
+
+
+    private void bigStashMessage(String text) {
+        if (isFinishing()) return;
+        TextView message = new TextView(this);
+        message.setText(text);
+        message.setTextSize(16);
+        int pad = dp(16);
+        message.setPadding(pad, pad, pad, 0);
+        D2Style.text(message);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(message);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(scroll)
+            .setPositiveButton(getString(android.R.string.ok), null)
+            .create();
+        dialog.show();
+        D2Sound.attach(dialog);
+        android.view.Window window = dialog.getWindow();
+        if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
+        Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (button != null) button.setTextColor(D2Style.GOLD);
     }
 
 
@@ -575,12 +1550,14 @@ public class D2SettingsActivity extends D2Activity {
             .setNegativeButton(getString(R.string.cancel), null)
             .create();
         dialog.show();
+        D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE}) {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(D2Style.GOLD);
         }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
     }
 
     private void openFolderPicker() {
@@ -649,9 +1626,13 @@ public class D2SettingsActivity extends D2Activity {
             return;
         }
         savesStatus(getString(R.string.saves_packing));
+
+        D2ModInfo.Mod mod = D2Mods.active(this);
+        File lockDir = mod != null ? mod.dir : gameDir;
+        File saves = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
         new Thread(() -> {
 
-            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), gameDir, "share");
+            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), lockDir, "share");
             if (lock.foreign || lock.unusable) {
                 savesStatus(folderLockText(this, lock, false));
                 return;
@@ -663,10 +1644,10 @@ public class D2SettingsActivity extends D2Activity {
                 File zip = new File(folder, D2Saves.zipName("Diablo2-Spielstaende"));
 
 
-                if (!D2TouchOverlay.isGameRunning() && D2Saves.recover(D2Saves.saveDir(gameDir))) D2SaveRepair.run(D2Saves.saveDir(gameDir));
-                int count = D2Saves.zip(D2Saves.saveDir(gameDir), zip);
+                if (!D2TouchOverlay.isGameRunning() && D2Saves.recover(saves)) D2SaveRepair.run(saves);
+                int count = D2Saves.zip(saves, zip);
                 if (count == 0) {
-                    savesStatus(getString(R.string.saves_none_found, D2Saves.saveDir(gameDir)));
+                    savesStatus(getString(R.string.saves_none_found, saves));
                     return;
                 }
                 Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".FileProvider", zip);
@@ -685,7 +1666,7 @@ public class D2SettingsActivity extends D2Activity {
                 savesStatus(getString(R.string.saves_share_failed, savesError(e)));
             }
             finally {
-                D2FolderLock.release(gameDir);
+                D2FolderLock.release(lockDir);
             }
         }, "D2SavesShare").start();
     }
@@ -743,6 +1724,10 @@ public class D2SettingsActivity extends D2Activity {
             pendingPick = () -> D2FolderPickDialog.show(this, dir, check, before, this::chooseFolder);
             return;
         }
+        if (requestCode == MOD_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) importMod(data.getData());
+            return;
+        }
         if (requestCode != IMPORT_REQUEST_CODE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
 
@@ -768,12 +1753,14 @@ public class D2SettingsActivity extends D2Activity {
             .setNegativeButton(getString(R.string.cancel), null)
             .create();
         dialog.show();
+        D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE}) {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(D2Style.GOLD);
         }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
     }
 
     private void importSaves(Uri uri) {
@@ -794,9 +1781,14 @@ public class D2SettingsActivity extends D2Activity {
         }
         lockForImport(true);
         savesStatus(getString(R.string.saves_loading));
+
+
+        D2ModInfo.Mod mod = D2Mods.active(this);
+        File lockDir = mod != null ? mod.dir : gameDir;
+        File saveDir = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
         new Thread(() -> {
 
-            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), gameDir, "import");
+            D2FolderLock.Decision lock = D2FolderLock.acquire(getPackageName(), appLabel(this), lockDir, "import");
             if (lock.foreign || lock.unusable) {
                 savesStatus(folderLockText(this, lock, false));
                 D2Saves.endImport();
@@ -804,7 +1796,6 @@ public class D2SettingsActivity extends D2Activity {
                 return;
             }
             try {
-                File saveDir = D2Saves.saveDir(gameDir);
                 if (D2Saves.recover(saveDir)) D2SaveRepair.run(saveDir);
                 File backup;
                 try {
@@ -824,7 +1815,7 @@ public class D2SettingsActivity extends D2Activity {
                 }
             }
             finally {
-                D2FolderLock.release(gameDir);
+                D2FolderLock.release(lockDir);
                 D2Saves.endImport();
                 handler.post(() -> lockForImport(false));
             }

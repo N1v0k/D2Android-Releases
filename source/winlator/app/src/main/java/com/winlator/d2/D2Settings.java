@@ -13,6 +13,9 @@ public final class D2Settings {
     static final String KEY_MOD = "mod";
 
     static final String KEY_UPDATE_CHECK = "updateCheck";
+
+
+    static final String KEY_TELEMETRY = "telemetry";
     static final String KEY_AUTO_GOLD = "autoGold";
 
     static final String KEY_SKIP_INTRO = "skipIntro";
@@ -69,6 +72,60 @@ public final class D2Settings {
         prefs(context).edit().putBoolean(KEY_MOD, enabled).apply();
     }
 
+
+    static final String KEY_ARG_DIRECT = "argDirect", KEY_ARG_TXT = "argTxt", KEY_ARG_NS = "argNs", KEY_ARGS_FREE = "argsFree";
+
+
+
+
+
+    static String argKey(Context context, String key) {
+        D2ModInfo.Mod mod = D2Mods.active(context);
+        return mod == null ? key : key + "@" + mod.id;
+    }
+
+    private static boolean argSwitch(Context context, String key) {
+        return argSwitch(context, key, D2Mods.active(context));
+    }
+
+    private static boolean argSwitch(Context context, String key, D2ModInfo.Mod mod) {
+        if (mod == null) return prefs(context).getBoolean(key, false);
+        boolean proposed = KEY_ARG_DIRECT.equals(key) ? mod.direct : KEY_ARG_TXT.equals(key) && mod.txt;
+        return prefs(context).getBoolean(key + "@" + mod.id, proposed);
+    }
+
+    public static boolean argDirect(Context context) {
+        return argSwitch(context, KEY_ARG_DIRECT);
+    }
+
+    public static boolean argTxt(Context context) {
+        return argSwitch(context, KEY_ARG_TXT);
+    }
+
+    public static boolean argNoSound(Context context) {
+        return argSwitch(context, KEY_ARG_NS);
+    }
+
+    public static String argsFree(Context context) {
+        return prefs(context).getString(argKey(context, KEY_ARGS_FREE), "");
+    }
+
+    public static void setArgsFree(Context context, String free) {
+        prefs(context).edit().putString(argKey(context, KEY_ARGS_FREE), free == null ? "" : free.trim()).apply();
+    }
+
+
+    public static String gameArgs(Context context) {
+        return gameArgs(context, D2Mods.active(context));
+    }
+
+
+    static String gameArgs(Context context, D2ModInfo.Mod mod) {
+        String free = prefs(context).getString(mod == null ? KEY_ARGS_FREE : KEY_ARGS_FREE + "@" + mod.id, "");
+        return D2StartArgs.commandLine(argSwitch(context, KEY_ARG_DIRECT, mod), argSwitch(context, KEY_ARG_TXT, mod),
+            argSwitch(context, KEY_ARG_NS, mod), free);
+    }
+
     public static String appLanguage(Context context) {
         return prefs(context).getString(KEY_APP_LANGUAGE, D2Text.AUTO);
     }
@@ -90,6 +147,37 @@ public final class D2Settings {
         return prefs(context).getBoolean(KEY_SKIP_INTRO, D2IntroMovies.SKIP_BY_DEFAULT);
     }
 
+
+
+
+
+    public static boolean bigInventory(Context context) {
+        return spielweise(context, D2Spielweise.INVENTORY) == 1;
+    }
+
+
+    static java.util.Map<String, ?> all(Context context) {
+        return prefs(context).getAll();
+    }
+
+
+    public static boolean sharedStash(Context context) {
+        return spielweise(context, D2Spielweise.SHARED) == 1;
+    }
+
+
+    public static boolean sortInventory(Context context) {
+        return spielweise(context, D2Spielweise.SORT) == 1;
+    }
+
+
+    static void setBigInventory(Context context, boolean on) {
+        SharedPreferences.Editor edit = prefs(context).edit();
+        if ((on ? 1 : 0) == D2Spielweise.INVENTORY.preset(spielweisePreset(context))) edit.remove(D2Spielweise.storeKey(D2Spielweise.INVENTORY));
+        else edit.putBoolean(D2Spielweise.storeKey(D2Spielweise.INVENTORY), on);
+        edit.apply();
+    }
+
     public static boolean autoGold(Context context) {
         return prefs(context).getBoolean(KEY_AUTO_GOLD, true);
     }
@@ -108,13 +196,98 @@ public final class D2Settings {
     }
 
 
+
+
+
+
     public static boolean bigStash(Context context) {
-        return prefs(context).getBoolean(KEY_BIG_STASH, false);
+        SharedPreferences p = prefs(context);
+        if (p.contains(KEY_BIG_STASH)) return p.getBoolean(KEY_BIG_STASH, false);
+        boolean startedBefore = p.getBoolean(GameLocator.KEY_FIRST_BACKUP_DONE, false)
+            || !p.getStringSet(GameLocator.KEY_BACKED_UP_DIRS, java.util.Collections.emptySet()).isEmpty();
+        boolean on = D2StashEdge.defaultOn(startedBefore);
+        p.edit().putBoolean(KEY_BIG_STASH, on).apply();
+        return on;
+    }
+
+
+    static void setBigStash(Context context, boolean on) {
+        prefs(context).edit().putBoolean(KEY_BIG_STASH, on).apply();
     }
 
 
     static boolean plugyExtra(Context context, String iniKey, boolean byDefault) {
         return prefs(context).getBoolean("plugy" + iniKey, byDefault);
+    }
+
+
+    static boolean plugyExtraEffective(Context context, String iniKey, boolean byDefault) {
+        D2Spielweise.Regulator r = D2Spielweise.byPlugyKey(iniKey);
+
+        if (r != null && D2Mods.active(context) != null) return false;
+        return r != null ? spielweise(context, r) == 1 : plugyExtra(context, iniKey, byDefault);
+    }
+
+
+
+
+    public static String spielweisePreset(Context context) {
+        return D2Spielweise.preset(prefs(context).getString(D2Spielweise.KEY_PRESET, null));
+    }
+
+
+    public static int spielweise(Context context, D2Spielweise.Regulator r) {
+        return D2Spielweise.value(r, prefs(context).getAll().get(D2Spielweise.storeKey(r)), spielweisePreset(context));
+    }
+
+
+    public static boolean spielweiseOwn(Context context) {
+        return D2Spielweise.own(prefs(context).getAll());
+    }
+
+
+    static void setSpielweisePreset(Context context, String preset) {
+        SharedPreferences.Editor edit = prefs(context).edit().putString(D2Spielweise.KEY_PRESET, D2Spielweise.preset(preset))
+            .putBoolean(D2PlaystyleChoice.KEY_CHOSEN, true);
+        for (D2Spielweise.Regulator r : D2Spielweise.ALL) if (r.inPresets) edit.remove(D2Spielweise.storeKey(r));
+        edit.apply();
+    }
+
+
+
+
+
+    static void choosePlaystyle(Context context, String preset) {
+        setSpielweisePreset(context, preset);
+    }
+
+
+    static void setSpielweise(Context context, D2Spielweise.Regulator r, int stage) {
+        String key = D2Spielweise.storeKey(r);
+        SharedPreferences.Editor edit = prefs(context).edit();
+        if (stage == r.preset(spielweisePreset(context))) edit.remove(key);
+        else if (D2Spielweise.storedAsBoolean(r)) edit.putBoolean(key, stage == 1);
+        else edit.putInt(key, stage);
+        edit.apply();
+    }
+
+
+    static String spielweiseFile(Context context) {
+        return D2Spielweise.file(prefs(context).getAll());
+    }
+
+    static final String KEY_LADDER_STARTED = "ladderStarted";
+
+
+
+
+
+    public static boolean ladderStarted(Context context) {
+        return prefs(context).getBoolean(KEY_LADDER_STARTED, false);
+    }
+
+    static void setLadderStarted(Context context, boolean on) {
+        prefs(context).edit().putBoolean(KEY_LADDER_STARTED, on).apply();
     }
 
 
@@ -130,16 +303,18 @@ public final class D2Settings {
         KEY_SKILL_NAMES = "skillNames", KEY_STAMINA = "staminaMode", KEY_AUTO_LIFE = "autoLife", KEY_AUTO_MANA = "autoMana", KEY_AUTO_REJUV = "autoRejuv", KEY_MERC_POTIONS = "mercPotions",
         KEY_JOYSTICK_VISIBLE = "joystickVisible", KEY_PLAYERS = "players", KEY_AUTOSAVE = "autosave", KEY_RESPEC = "respec",
         KEY_MAP_HACK = "mapHack", KEY_LARGE_STACKS = "largeStacks", KEY_INFO_GRID = "infoGrid", KEY_CLOCK_TOP = "clockTop", KEY_GRID_SLOT = "gridSlot",
-        KEY_COMPARE_EQUIPPED = "compareEquipped", KEY_COMPARE_CAPABLE = "compareCapable", KEY_LOOT_CAPABLE = "lootCapable",
+        KEY_COMPARE_EQUIPPED = "compareEquipped", KEY_WINDOW_INFO = "windowInfo", KEY_COMPARE_CAPABLE = "compareCapable", KEY_LOOT_CAPABLE = "lootCapable",
         KEY_TRIGGER_LEFT = "triggerLeft", KEY_TRIGGER_RIGHT = "triggerRight",
         KEY_PAD_ENABLED = "padEnabled", KEY_PAD_MAP = "padMap", KEY_PAD_DEADZONE = "padDeadzone", KEY_PAD_CURSOR_SPEED = "padCursorSpeed",
         KEY_VALUE_LINE = "valueLine", KEY_VALUE_CAPABLE = "valueCapable",
         KEY_DIFF_LINES = "diffLines", KEY_DIFF_CAPABLE = "diffCapable",
-        KEY_DAMAGE_NUMBERS = "damageNumbers", KEY_DAMAGE_STYLE = "damageStyle", KEY_DAMAGE_DPS = "damageDps",
+        KEY_DAMAGE_NUMBERS = "damageNumbers", KEY_DAMAGE_STYLE = "damageStyle",
         KEY_DAMAGE_CAPABLE = "damageCapable",
         KEY_MATERIALS = "materials", KEY_MATERIALS_CAPABLE = "materialsCapable", KEY_MATERIALS_BACKED_UP = "materialsBackedUpDirs";
 
-    static final String[] MENU_PINNED_DEFAULT = {"pause", "inv", "portal"};
+    static final String[] MENU_PINNED_DEFAULT = {"pause", "inv", "portal", D2RezeptOeffnen.MENU_ID};
+
+    static final String KEY_MENU_PINNED_RECIPES = "menuPinnedRecipes";
 
     public static final int HUD_ORIGINAL = 0, HUD_COMPACT = 1;
 
@@ -267,48 +442,19 @@ public final class D2Settings {
         return value == HUD_ORIGINAL ? HUD_ORIGINAL : HUD_COMPACT;
     }
 
-    static final String KEY_INTRO_SEEN = "introSeen";
+    static final String KEY_HINTS_SEEN = "hintsSeen";
 
 
 
 
 
-
-    public static boolean introSeen(Context context) {
-        SharedPreferences p = prefs(context);
-        if (!p.contains(KEY_INTRO_SEEN)) {
-            boolean seen = D2Intro.seenByDefault(p.contains(KEY_GAME_LANGUAGE));
-            p.edit().putBoolean(KEY_INTRO_SEEN, seen).apply();
-            return seen;
-        }
-        return p.getBoolean(KEY_INTRO_SEEN, false);
+    public static String hintsSeen(Context context) {
+        return prefs(context).getString(KEY_HINTS_SEEN, "");
     }
 
 
-    public static void setIntroSeen(Context context, boolean seen) {
-        prefs(context).edit().putBoolean(KEY_INTRO_SEEN, seen).apply();
-    }
-
-    static final String KEY_INTRO_INTERRUPTIONS = "introInterruptions";
-
-
-
-
-
-    public static int introInterruptions(Context context) {
-        return prefs(context).getInt(KEY_INTRO_INTERRUPTIONS, 0);
-    }
-
-    public static void setIntroInterruptions(Context context, int count) {
-        prefs(context).edit().putInt(KEY_INTRO_INTERRUPTIONS, count).apply();
-    }
-
-
-
-
-
-    public static void requestIntro(Context context) {
-        prefs(context).edit().putBoolean(KEY_INTRO_SEEN, false).putInt(KEY_INTRO_INTERRUPTIONS, 0).apply();
+    public static void setHintsSeen(Context context, String seen) {
+        prefs(context).edit().putString(KEY_HINTS_SEEN, seen).apply();
     }
 
 
@@ -324,6 +470,11 @@ public final class D2Settings {
 
     public static boolean mapHack(Context context) {
         return prefs(context).getBoolean(KEY_MAP_HACK, true);
+    }
+
+
+    public static boolean windowInfo(Context context) {
+        return prefs(context).getBoolean(KEY_WINDOW_INFO, true);
     }
 
 
@@ -418,10 +569,6 @@ public final class D2Settings {
     }
 
 
-    public static boolean damageDps(Context context) {
-        return prefs(context).getBoolean(KEY_DAMAGE_DPS, true);
-    }
-
 
 
     public static boolean damageCapable(Context context) {
@@ -497,7 +644,7 @@ public final class D2Settings {
 
 
     public static boolean respec(Context context) {
-        return prefs(context).getBoolean(KEY_RESPEC, true);
+        return spielweise(context, D2Spielweise.RESPEC) == 1;
     }
 
     static final String KEY_RESPEC_STARTED = "respecStarted";
@@ -521,8 +668,24 @@ public final class D2Settings {
 
 
 
+
     public static boolean resume(Context context) {
-        return D2PlugY.resumeAllowed(prefs(context).getBoolean(KEY_RESUME, false), plugy(context), regenMap(context));
+        boolean regen = regenMap(context);
+        return D2PlugY.resumeAllowed(D2PlugY.resumeSwitch(storedResume(context, regen)), plugy(context), regen);
+    }
+
+
+
+
+
+
+
+    private static Boolean storedResume(Context context, boolean regenMapOn) {
+        SharedPreferences p = prefs(context);
+        Boolean stored = p.contains(KEY_RESUME) ? p.getBoolean(KEY_RESUME, D2PlugY.RESUME_DEFAULT) : null;
+        Boolean kept = D2PlugY.storedResume(stored, regenMapOn);
+        if (stored == null && kept != null) p.edit().putBoolean(KEY_RESUME, kept).apply();
+        return kept;
     }
 
 
@@ -536,8 +699,12 @@ public final class D2Settings {
     }
 
 
+
+
+
     static boolean plugyExtraChanged(Context context, String iniKey, boolean on) {
-        if (!D2PlugY.switchesResumeOff(iniKey, on) || !prefs(context).getBoolean(KEY_RESUME, false)) return false;
+        boolean regenBefore = D2PlugY.REGEN_MAP.equals(iniKey) ? !on : regenMap(context);
+        if (!D2PlugY.mustStoreResumeOff(iniKey, on, storedResume(context, regenBefore))) return false;
         prefs(context).edit().putBoolean(KEY_RESUME, false).apply();
         return true;
     }
@@ -634,9 +801,13 @@ public final class D2Settings {
         return prefs(context).getBoolean(KEY_POTION_SHOP, true);
     }
 
+
+
+
+
     public static int shopReserve(Context context, boolean mana) {
         return clamp(prefs(context).getInt(mana ? KEY_SHOP_RESERVE_MANA : KEY_SHOP_RESERVE_HEAL, D2PotionShop.RESERVE_DEFAULT),
-            0, D2PotionShop.RESERVE_MAX);
+            0, D2PotionShop.reserveMax(bigInventory(context)));
     }
 
 
@@ -655,7 +826,14 @@ public final class D2Settings {
 
 
     public static java.util.Set<String> pinnedMenu(Context context) {
-        java.util.Set<String> saved = prefs(context).getStringSet(KEY_MENU_PINNED, null);
+        android.content.SharedPreferences p = prefs(context);
+        java.util.Set<String> saved = p.getStringSet(KEY_MENU_PINNED, null);
+        if (saved != null && !p.getBoolean(KEY_MENU_PINNED_RECIPES, false)) {
+
+            saved = new java.util.HashSet<>(saved);
+            saved.add(D2RezeptOeffnen.MENU_ID);
+            p.edit().putStringSet(KEY_MENU_PINNED, saved).putBoolean(KEY_MENU_PINNED_RECIPES, true).apply();
+        }
         return saved != null ? new java.util.HashSet<>(saved) : new java.util.HashSet<>(java.util.Arrays.asList(MENU_PINNED_DEFAULT));
     }
 
@@ -663,7 +841,8 @@ public final class D2Settings {
         java.util.Set<String> set = pinnedMenu(context);
         if (pinned) set.add(key);
         else set.remove(key);
-        prefs(context).edit().putStringSet(KEY_MENU_PINNED, set).apply();
+
+        prefs(context).edit().putStringSet(KEY_MENU_PINNED, set).putBoolean(KEY_MENU_PINNED_RECIPES, true).apply();
     }
 
 
@@ -674,6 +853,11 @@ public final class D2Settings {
 
     public static boolean updateCheck(Context context) {
         return prefs(context).getBoolean(KEY_UPDATE_CHECK, true);
+    }
+
+
+    public static boolean telemetry(Context context) {
+        return prefs(context).getBoolean(KEY_TELEMETRY, false);
     }
 
     static void putBoolean(Context context, String key, boolean value) {

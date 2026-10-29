@@ -78,6 +78,12 @@ final class D2UsedObjects {
     }
 
 
+    long until(int kind, long id) {
+        Long u = until.get(key(kind, id));
+        return u != null ? u : NONE;
+    }
+
+
     boolean leftOut(int kind, long id, long now) {
         Long u = until.get(key(kind, id));
         return u != null && now < u;

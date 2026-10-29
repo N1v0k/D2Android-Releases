@@ -44,7 +44,7 @@ import java.util.concurrent.Executors;
 public class D2GameActivity extends D2Activity {
 
     private static final int MENU_HELPERS = 0, MENU_KEYBOARD = 1, MENU_IDLE = 2, MENU_QUIT = 3, MENU_BUILD = 4, MENU_INTRO = 5,
-        MENU_SWITCH = 6;
+        MENU_SWITCH = 6, MENU_RECIPES = 7;
 
     public static final String EXTRA_DIR = "d2_dir";
     public static final String EXTRA_PROGRAM = "d2_program";
@@ -222,10 +222,13 @@ public class D2GameActivity extends D2Activity {
             return v.onApplyWindowInsets(insets);
         });
         String gameDir = getIntent().getStringExtra(D2LaunchActivity.EXTRA_GAME_DIR);
-        if (gameDir != null) overlay.setGameDir(new File(gameDir));
-        if (gameDir != null) saveDir = D2Saves.saveDir(new File(gameDir));
 
-        if (gameDir != null && D2SpieltestPort.active()) D2SpieltestPort.saves(D2Saves.saveDir(new File(gameDir)));
+        String saves = getIntent().getStringExtra(D2LaunchActivity.EXTRA_SAVE_DIR);
+        boolean originalGrid = getIntent().getBooleanExtra(D2LaunchActivity.EXTRA_MOD_GRID, true);
+        if (gameDir != null) saveDir = saves != null ? new File(saves) : D2Saves.saveDir(new File(gameDir));
+        if (gameDir != null) overlay.setGameDir(new File(gameDir), saveDir, originalGrid);
+
+        if (gameDir != null && D2SpieltestPort.active()) D2SpieltestPort.saves(saveDir);
 
         showDirectLoading(root);
 
@@ -284,9 +287,14 @@ public class D2GameActivity extends D2Activity {
             if (log) output = null;
         }
 
+
+        boolean counted = getIntent().getBooleanExtra(D2LaunchActivity.EXTRA_D2_LAUNCH, false);
+        long startedAt = SystemClock.elapsedRealtime();
+        if (counted) D2Telemetry.gameStarted(this);
         screen.start(command, env, null, (status) -> {
 
             D2ExitLog.gameEnded(status, backgroundMs(), D2GuestComponent.endReason(), D2GuestComponent.endSinceResumeMs());
+            if (counted) D2Telemetry.gameEnded(this, status, D2GuestComponent.endReason() != null, SystemClock.elapsedRealtime() - startedAt);
             writeGuestLog("[d2] guest ended with status " + status);
 
 
@@ -463,6 +471,8 @@ public class D2GameActivity extends D2Activity {
         items.add(D2Text.get(this, R.string.menu_helpers));
         ids.add(MENU_BUILD);
         items.add(D2Text.get(this, R.string.menu_build));
+        ids.add(MENU_RECIPES);
+        items.add(D2Text.get(this, R.string.menu_recipes));
         ids.add(MENU_INTRO);
         items.add(D2Text.get(this, R.string.menu_intro));
         ids.add(MENU_KEYBOARD);
@@ -496,7 +506,8 @@ public class D2GameActivity extends D2Activity {
                 dialog.dismiss();
                 if (which == MENU_HELPERS) D2HelpersDialog.show(this, overlay);
                 else if (which == MENU_BUILD) overlay.showBuildPage(this);
-                else if (which == MENU_INTRO) overlay.showIntroAgain(pausedAtMenu);
+                else if (which == MENU_RECIPES) overlay.openRecipeBook(pausedAtMenu);
+                else if (which == MENU_INTRO) overlay.showHintsAgain();
                 else if (which == MENU_KEYBOARD) AppUtils.showKeyboard(this);
 
                 else if (com.winlator.BuildConfig.D2_INTERNAL && which == MENU_IDLE) D2IdleDialog.show(this, overlay.idleQuest(), (minutes, retreat) -> overlay.requestIdle(pausedAtMenu, minutes, retreat));
@@ -506,6 +517,18 @@ public class D2GameActivity extends D2Activity {
                 }
             });
             list.addView(item);
+        }
+
+        String version = D2AppVersion.label(D2Updates.installedVersion(this));
+        if (version != null) {
+            TextView versionLine = new TextView(this);
+            versionLine.setText(version);
+            versionLine.setTextSize(12);
+            D2Style.hint(versionLine);
+            versionLine.setFocusable(false);
+            versionLine.setClickable(false);
+            versionLine.setPadding(0, Math.round(8 * density), 0, 0);
+            list.addView(versionLine);
         }
         dialog.setOnShowListener((d) -> AppUtils.hideSystemUI(this));
         immersiveDialog(dialog);
@@ -1251,7 +1274,9 @@ public class D2GameActivity extends D2Activity {
     @Override
     public void onBackPressed() {
         if (afterRelaunch) return;
-        if (overlay != null && overlay.skipIntro()) return;
+        if (overlay != null && overlay.inputBoxBack()) return;
+        if (overlay != null && overlay.recipesBack()) return;
+        if (overlay != null && overlay.gameBack()) return;
         openMenu();
     }
 
@@ -1271,6 +1296,10 @@ public class D2GameActivity extends D2Activity {
         if (overlay != null) overlay.onRealKey(event);
         if (overlay != null && overlay.onPadKey(event)) return true;
         if (overlay != null && overlay.onKeyEvent(event)) return true;
+        if (event.getKeyCode() == KeyEvent.KEYCODE_ESCAPE && overlay != null) {
+            if (event.getAction() == KeyEvent.ACTION_UP) overlay.escapeKey();
+            return true;
+        }
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(event);
         return screen.onKeyEvent(event) || super.dispatchKeyEvent(event);
     }

@@ -89,6 +89,7 @@ final class D2FolderPickDialog {
         else builder.setPositiveButton(android.R.string.ok, null);
         AlertDialog dialog = builder.create();
         dialog.show();
+        D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(D2Style.windowBackground(density));
@@ -100,5 +101,6 @@ final class D2FolderPickDialog {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(D2Style.GOLD);
         }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
     }
 }

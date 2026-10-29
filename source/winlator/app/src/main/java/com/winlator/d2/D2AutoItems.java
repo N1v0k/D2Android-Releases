@@ -18,9 +18,10 @@ import android.content.SharedPreferences;
 
 
 
+
 public final class D2AutoItems {
 
-    public static final int POTION_RESERVE = 5;
+    public static final int POTION_RESERVE = D2PotionShop.RESERVE_DEFAULT;
     public static final int SCROLLS_WITHOUT_TOME = 3;
 
     static final String KEY_PICK_POTIONS = "pickPotions", KEY_PICK_SCROLLS = "pickScrolls", KEY_PICK_RUNES = "pickRunes",
@@ -28,6 +29,8 @@ public final class D2AutoItems {
 
 
     public boolean gold, potions, scrolls, runes, gems, jewelry, beltRefill;
+
+    public int[] reserve = {POTION_RESERVE, POTION_RESERVE};
 
     public void load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE);
@@ -38,6 +41,7 @@ public final class D2AutoItems {
         gems = prefs.getBoolean(KEY_PICK_GEMS, true);
         jewelry = prefs.getBoolean(KEY_PICK_JEWELRY, true);
         beltRefill = prefs.getBoolean(KEY_BELT_REFILL, true);
+        reserve = new int[]{D2Settings.shopReserve(context, false), D2Settings.shopReserve(context, true)};
     }
 
     public static boolean get(Context context, String key) {
@@ -65,7 +69,7 @@ public final class D2AutoItems {
                 if (!potions) return false;
                 int kind = D2ModItems.potionKind(item.category);
                 boolean beltRoom = beltRoom(s, items, kind);
-                return beltRoom || (items.inventory[kind] < POTION_RESERVE && cell);
+                return beltRoom || (items.inventory[kind] < reserve[kind] && cell);
             }
             case D2ModItems.CAT_REJUV:
                 return potions && (beltRoom(s, items, D2ModItems.KIND_REJUV) || cell);

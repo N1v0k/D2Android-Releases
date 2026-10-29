@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -45,6 +46,8 @@ public class D2LaunchActivity extends D2Activity {
 
     public static final String EXTRA_GAME_DIR = "d2_game_dir";
 
+    public static final String EXTRA_SAVE_DIR = "d2_save_dir", EXTRA_MOD_GRID = "d2_mod_grid";
+
     public static final String EXTRA_CHARACTERS = "d2_characters";
     private static final String DEFAULT_GAME_FOLDER = GameLocator.DEFAULT_GAME_FOLDER;
     private static final String REG_KEY = "Software\\Blizzard Entertainment\\Diablo II";
@@ -66,12 +69,12 @@ public class D2LaunchActivity extends D2Activity {
     };
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private TextView statusView;
-    private Button playButton;
+    private D2LaunchButton playButton;
     private TextView folderView;
-    private Button chooseButton;
+    private D2LaunchButton chooseButton;
     private LinearLayout installBlock;
 
-    private Button installButton;
+    private D2LaunchButton installButton;
 
     private boolean openInstall;
 
@@ -95,6 +98,7 @@ public class D2LaunchActivity extends D2Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         D2SettingsLook.load(this, null);
+        D2Settings.bigStash(this);
 
         D2ExitLog.systemExits(this);
 
@@ -116,26 +120,25 @@ public class D2LaunchActivity extends D2Activity {
         }
         D2KeepAliveService.createChannel(this);
 
-        if (com.winlator.BuildConfig.D2_INTERNAL && getIntent().hasExtra(D2Intro.EXTRA_ADB)) {
-            if (getIntent().getBooleanExtra(D2Intro.EXTRA_ADB, true)) D2Settings.requestIntro(this);
-            else D2Settings.setIntroSeen(this, true);
+        if (com.winlator.BuildConfig.D2_INTERNAL && getIntent().hasExtra(D2Hints.EXTRA_ADB)) {
+            D2Settings.setHintsSeen(this, getIntent().getBooleanExtra(D2Hints.EXTRA_ADB, true) ? "" : D2Hints.allSeen());
         }
         D2Updates.start(this);
+        D2Telemetry.start(this, spieltest);
         boolean news = D2Updates.newsAfterUpdate(this);
 
         openInstall = D2LaunchStart.installAfterQuit(getIntent().getBooleanExtra(D2KeepAliveService.EXTRA_THEN_INSTALL, false),
             savedInstanceState != null, (getIntent().getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0);
         getIntent().removeExtra(D2KeepAliveService.EXTRA_THEN_INSTALL);
         buildUI();
+        D2SettingsLook.load(this, this::lookCame);
 
 
-        if (getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getBoolean(KEY_START_PAGE, false)
-            && !updateShown && !openInstall) {
+        if (getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getBoolean(KEY_START_PAGE, false) && !openInstall) {
             startPageExpected = true;
             android.widget.FrameLayout black = new android.widget.FrameLayout(this);
             black.setBackgroundColor(android.graphics.Color.BLACK);
             setContentView(black);
-            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
 
             handler.postDelayed(() -> {
                 if (startPageExpected && startPage == null) noStartPage();
@@ -149,7 +152,6 @@ public class D2LaunchActivity extends D2Activity {
             switch (step) {
                 case ASK_STORAGE:
 
-                    setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
                     status(getString(R.string.launch_asking_storage));
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
                     break;
@@ -161,6 +163,8 @@ public class D2LaunchActivity extends D2Activity {
                     break;
                 case UPDATE_WAITING:
                     status(getString(R.string.update_waiting));
+
+                    loadCharacters(false);
                     break;
                 case LAUNCH:
 
@@ -288,6 +292,7 @@ public class D2LaunchActivity extends D2Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode != PERMISSION_REQUEST_CODE) return;
         if (hasStoragePermission()) {
+            D2SettingsLook.load(this, this::lookCame);
 
             if (pickAfterPermission) {
                 pickAfterPermission = false;
@@ -331,9 +336,7 @@ public class D2LaunchActivity extends D2Activity {
         characterBlock.setVisibility(android.view.View.GONE);
         root.addView(characterBlock, matchWidth());
 
-        playButton = new Button(this);
-        playButton.setText(R.string.launch_play);
-        playButton.setOnClickListener((v) -> {
+        playButton = button(getString(R.string.launch_play), () -> {
             pendingDirect = null;
             prepareAndLaunch();
         });
@@ -341,10 +344,8 @@ public class D2LaunchActivity extends D2Activity {
         addUpdateBlock(root);
 
 
-        Button settings = new Button(this);
-        settings.setText(R.string.settings_title);
-        settings.setOnClickListener((v) -> startActivity(new Intent(this, D2SettingsActivity.class)));
-        root.addView(settings, matchWidth());
+        root.addView(button(D2ButtonTiers.PLAIN, getString(R.string.settings_title), () -> startActivity(new Intent(this, D2SettingsActivity.class))),
+            matchWidth());
 
 
         TextView notice = new TextView(this);
@@ -372,15 +373,33 @@ public class D2LaunchActivity extends D2Activity {
 
     private boolean updateShown;
 
+    private D2UpdateCheck.Release updateRelease;
+    private LinearLayout updateBlock;
+
+
+
+
+
 
     private void addUpdateBlock(LinearLayout root) {
         D2UpdateCheck.Release release = D2Updates.pending(this);
         updateShown = release != null;
+        updateRelease = release;
         if (release == null) return;
-        LinearLayout block = new LinearLayout(this);
-        block.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout block = updateContent(release, true);
         block.setPadding(dp(12), dp(10), dp(12), dp(10));
         block.setBackground(D2Style.windowBackground(getResources().getDisplayMetrics().density));
+        updateBlock = block;
+        LinearLayout.LayoutParams lp = matchWidth();
+        lp.topMargin = dp(10);
+        lp.bottomMargin = dp(10);
+        root.addView(block, lp);
+    }
+
+
+    private LinearLayout updateContent(D2UpdateCheck.Release release, boolean withNews) {
+        LinearLayout block = new LinearLayout(this);
+        block.setOrientation(LinearLayout.VERTICAL);
         TextView head = new TextView(this);
         head.setText(getString(R.string.update_available, release.version));
         head.setTextSize(17);
@@ -397,38 +416,56 @@ public class D2LaunchActivity extends D2Activity {
         TextView obtainium = new TextView(this);
         obtainium.setText(R.string.update_obtainium);
         obtainium.setTextSize(12);
+        obtainium.setPadding(0, 0, 0, dp(6));
         D2Style.hint(obtainium);
         block.addView(obtainium);
-        LinearLayout row = new LinearLayout(this);
-        Button download = new Button(this);
-        download.setText(R.string.update_download);
-        download.setOnClickListener((v) -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(release.url)));
-            }
-            catch (Exception e) {
-                status(getString(R.string.update_no_browser));
-            }
-        });
-        Button later = new Button(this);
-        later.setText(R.string.update_later);
-        later.setOnClickListener((v) -> {
-            D2Updates.later(this, release);
-            root.removeView(block);
-            updateShown = false;
-            status("");
-        });
-        Button news = new Button(this);
-        news.setText(R.string.news_title);
-        news.setOnClickListener((v) -> startActivity(new Intent(this, D2NewsActivity.class)));
-        row.addView(download, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        row.addView(news, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        row.addView(later, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        block.addView(row);
-        LinearLayout.LayoutParams lp = matchWidth();
-        lp.topMargin = dp(10);
-        lp.bottomMargin = dp(10);
-        root.addView(block, lp);
+        block.addView(button(getString(R.string.update_download), () -> openUpdatePage(release)), matchWidth());
+
+        if (withNews) block.addView(button(D2ButtonTiers.TEXT, getString(R.string.news_title), () -> startActivity(new Intent(this, D2NewsActivity.class))),
+            matchWidth());
+        block.addView(button(D2ButtonTiers.TEXT, getString(R.string.update_later), () -> updateLater(release)), matchWidth());
+        return block;
+    }
+
+    private void openUpdatePage(D2UpdateCheck.Release release) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(release.url)));
+        }
+        catch (Exception e) {
+            status(getString(R.string.update_no_browser));
+        }
+    }
+
+
+    private void updateLater(D2UpdateCheck.Release release) {
+        D2Updates.later(this, release);
+        if (updateWindow != null) updateWindow.dismiss();
+        updateWindow = null;
+        if (updateBlock != null && updateBlock.getParent() instanceof ViewGroup) ((ViewGroup) updateBlock.getParent()).removeView(updateBlock);
+        updateBlock = null;
+        updateShown = false;
+        updateRelease = null;
+        if (startPage != null) startPage.setUpdate(null, null, null);
+        status("");
+    }
+
+    private androidx.appcompat.app.AlertDialog updateWindow;
+
+
+    private void showUpdateWindow() {
+        D2UpdateCheck.Release release = updateRelease;
+        if (release == null || isFinishing() || updateWindow != null) return;
+        LinearLayout content = updateContent(release, false);
+        content.setPadding(dp(16), dp(16), dp(16), dp(8));
+        lookCame();
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(content);
+        updateWindow = new androidx.appcompat.app.AlertDialog.Builder(this).setView(scroll).create();
+        updateWindow.setOnDismissListener((d) -> updateWindow = null);
+        updateWindow.show();
+        D2Sound.attach(updateWindow);
+        android.view.Window window = updateWindow.getWindow();
+        if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
     }
 
 
@@ -446,8 +483,6 @@ public class D2LaunchActivity extends D2Activity {
         showFirstStep(false);
         showInstall(true);
         statusView.setText(getString(R.string.folder_gone, chosen));
-
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
     }
 
 
@@ -487,7 +522,6 @@ public class D2LaunchActivity extends D2Activity {
         File dir = GameLocator.gameDir(this);
         status(getString(dir == null || D2InstallPlan.chosenReusable(dir) ? R.string.launch_install_interrupted
             : R.string.launch_install_interrupted_saves));
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         if (open && !isFinishing() && !isDestroyed()) startActivity(new Intent(this, D2InstallActivity.class));
     }
 
@@ -498,8 +532,6 @@ public class D2LaunchActivity extends D2Activity {
         if (firstStepBlock != null) firstStepBlock.setVisibility(first);
         if (show) {
             showInstall(false);
-
-            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         }
         if (folderView != null) folderView.setVisibility(rest);
         if (chooseButton != null) chooseButton.setVisibility(rest);
@@ -522,16 +554,10 @@ public class D2LaunchActivity extends D2Activity {
         text.setPadding(0, dp(6), 0, dp(10));
         text.setTextColor(D2Style.TEXT);
         firstStepBlock.addView(text, matchWidth());
-        Button install = new Button(this);
-        install.setText(R.string.launch_install);
-        install.setOnClickListener((v) -> {
+        firstStepBlock.addView(button(getString(R.string.launch_install), () -> {
             if (!busy) startActivity(new Intent(this, D2InstallActivity.class));
-        });
-        firstStepBlock.addView(install, matchWidth());
-        Button choose = new Button(this);
-        choose.setText(R.string.folder_choose);
-        choose.setOnClickListener((v) -> chooseFolder());
-        firstStepBlock.addView(choose, matchWidth());
+        }), matchWidth());
+        firstStepBlock.addView(button(getString(R.string.folder_choose), this::chooseFolder), matchWidth());
         root.addView(firstStepBlock, matchWidth());
     }
 
@@ -557,15 +583,86 @@ public class D2LaunchActivity extends D2Activity {
         heading.setPadding(0, dp(8), 0, dp(4));
         installBlock.addView(heading, matchWidth());
 
-        Button install = new Button(this);
-        install.setText(R.string.launch_install);
-        install.setOnClickListener((v) -> {
+        installButton = button(getString(R.string.launch_install), () -> {
             if (!busy) startActivity(new Intent(this, D2InstallActivity.class));
         });
-        installButton = install;
-        installBlock.addView(install, matchWidth());
+        installBlock.addView(installButton, matchWidth());
         root.addView(installBlock, matchWidth());
     }
+
+
+
+
+
+
+
+    @Override
+    D2PadPages.Page padPage() {
+        if (choicePage != null && choicePage.getParent() != null) return choicePad;
+        if (telemetryPage != null && telemetryPage.getParent() != null) return telemetryPad;
+        D2StartPage page = startPage;
+        if (page == null || page.getParent() == null || startPending || busy) return null;
+        return startPad;
+    }
+
+
+    private D2PlaystyleChoicePage choicePage;
+
+
+    private final D2PadPages.Page choicePad = new D2PadPages.Page() {
+        @Override
+        public View padFirstFocus() {
+            return choicePage != null ? choicePage.padFirstFocus() : null;
+        }
+
+        @Override
+        public boolean onPad(int action, View focused) {
+            if (choicePage == null || action == D2PadKeys.B) return false;
+            if (action == D2PadKeys.LB || action == D2PadKeys.RB || action == D2PadKeys.X || action == D2PadKeys.Y) choicePage.toggle();
+            return true;
+        }
+
+        @Override
+        public void padActive(boolean active) {
+        }
+    };
+
+
+    private D2TelemetryChoicePage telemetryPage;
+
+
+    private final D2PadPages.Page telemetryPad = new D2PadPages.Page() {
+        @Override
+        public View padFirstFocus() {
+            return telemetryPage != null ? telemetryPage.padFirstFocus() : null;
+        }
+
+        @Override
+        public boolean onPad(int action, View focused) {
+            return false;
+        }
+
+        @Override
+        public void padActive(boolean active) {
+        }
+    };
+
+    private final D2PadPages.Page startPad = new D2PadPages.Page() {
+        @Override
+        public View padFirstFocus() {
+            return startPage != null ? startPage.padFirstFocus() : null;
+        }
+
+        @Override
+        public boolean onPad(int action, View focused) {
+            return startPage != null && startPage.padButton(action, focused);
+        }
+
+        @Override
+        public void padActive(boolean active) {
+            if (startPage != null) startPage.setPadActive(active);
+        }
+    };
 
 
 
@@ -592,6 +689,7 @@ public class D2LaunchActivity extends D2Activity {
 
     @Override
     public void onBackPressed() {
+        if (startPage != null && startPage.getParent() != null && startPage.closeMenu()) return;
         boolean preparingGame = busy;
         if (startPending || preparingGame) {
             startCancelled = true;
@@ -609,6 +707,14 @@ public class D2LaunchActivity extends D2Activity {
     protected void onDestroy() {
         handler.removeCallbacks(autoStart);
         startPending = false;
+
+
+        if (keptOnDialog != null) {
+            AlertDialog waiting = keptOnDialog;
+            keptOnDialog = null;
+            waiting.dismiss();
+            launchCancelled();
+        }
         super.onDestroy();
     }
 
@@ -625,7 +731,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
     private void autoStartOrList() {
-        if (pendingDirect != null || spieltest || !D2Settings.modEnabled(this)) {
+        if (pendingDirect != null || spieltest) {
             noStartPage();
             scheduleAutoStart();
             return;
@@ -634,10 +740,28 @@ public class D2LaunchActivity extends D2Activity {
     }
 
 
+
+
+
+    private void helpersOffPage() {
+        noStartPage();
+        if (busy) return;
+
+        if (GameLocator.chosenPath(this) == null) {
+            scheduleAutoStart();
+            return;
+        }
+        statusView.setText(R.string.launch_helpers_off);
+        helpersOffShown = true;
+    }
+
+
+    private boolean helpersOffShown;
+
+
     private void loadCharacters(boolean startIfNone) {
         if (!D2Settings.modEnabled(this)) {
-            noStartPage();
-            if (startIfNone) scheduleAutoStart();
+            helpersOffPage();
             return;
         }
         new Thread(() -> {
@@ -651,14 +775,14 @@ public class D2LaunchActivity extends D2Activity {
                 });
                 return;
             }
-            java.util.List<D2SaveHeader.Info> characters = dir != null ? D2SaveHeader.list(D2Saves.saveDir(dir)) : new java.util.ArrayList<>();
+            java.util.List<D2SaveHeader.Info> characters = dir != null ? D2SaveHeader.list(D2Mods.saveDir(D2LaunchActivity.this, dir)) : new java.util.ArrayList<>();
             handler.post(() -> {
                 if (isFinishing() || isDestroyed() || startCancelled) return;
                 boolean offer = D2CharacterList.anyStartable(characters);
                 showCharacters(offer ? characters : null);
                 if (offer) return;
 
-                if (dir != null && !updateShown && !startPageGaveUp) {
+                if (dir != null && !startPageGaveUp) {
 
 
                     startIfNoPage = startIfNone;
@@ -691,8 +815,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
         if (android.text.TextUtils.equals(statusView.getText(), getText(R.string.launch_preparing))) statusView.setText("");
-        if (!updateShown) loadStartPage(characters);
-        else noStartPage();
+        loadStartPage(characters);
     }
 
 
@@ -727,10 +850,37 @@ public class D2LaunchActivity extends D2Activity {
                     D2Trace.log("no level names on the cards: " + e);
                 }
                 for (D2SaveHeader.Info c : characters) art.classFigure(c.characterClass);
+
+                File saveDir = D2Mods.saveDir(D2LaunchActivity.this, dir);
+                long now = System.currentTimeMillis();
+                for (File due : D2CharDelete.due(saveDir, now)) {
+                    try {
+                        purge(saveDir, due, D2CharDelete.header(due));
+                    }
+                    catch (IOException | RuntimeException e) {
+                        D2Trace.log("deleted character not moved: " + due.getName() + " " + e);
+                    }
+                }
+                java.util.List<D2CharDelete.Deleted> deleted = D2CharDelete.pending(saveDir, now);
+                for (D2CharDelete.Deleted d : deleted) art.classFigure(d.info.characterClass);
+
+
+                D2PlaystyleChoice.Art choiceArt = null;
+                java.util.Map<String, ?> stored = getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getAll();
+                if (D2PlaystyleChoice.needed(stored) || telemetryQuestion(stored)) {
+                    try {
+                        choiceArt = new D2PlaystyleChoice.Art(art, sprites);
+                    }
+                    catch (IOException | RuntimeException e) {
+                        D2Trace.log("playstyle choice not loaded: " + e);
+                    }
+                }
+                D2PlaystyleChoice.Art choice = choiceArt;
                 handler.post(() -> {
                     if (gen != startPageGeneration) return;
                     startPageFolder = dir.getAbsolutePath();
-                    showStartPage(art, characters);
+                    showStartPage(art, characters, choice);
+                    if (startPage != null) startPage.setDeleted(deleted);
                 });
                 java.util.Map<String, D2CharPortrait.Item> items = D2CharPortrait.items(sprites);
                 D2CharPortrait.Files files = D2CharPortrait.of(sprites);
@@ -738,7 +888,7 @@ public class D2LaunchActivity extends D2Activity {
                     D2Sprites.Frame[] still = art.classFigure(c.characterClass);
                     if (still != null) post(gen, c.file, new D2StartPage.Figure(new android.graphics.Bitmap[]{bitmap(still[0])}, 0));
                 }
-                File saves = D2Saves.saveDir(dir);
+                File saves = D2Mods.saveDir(D2LaunchActivity.this, dir);
                 for (D2SaveHeader.Info c : characters) {
                     if (isFinishing() || isDestroyed() || startPageGaveUp || gen != startPageGeneration) break;
                     try {
@@ -776,7 +926,6 @@ public class D2LaunchActivity extends D2Activity {
         startPageExpected = false;
         startPageGaveUp = true;
         setContentView(appPage);
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
 
@@ -795,7 +944,6 @@ public class D2LaunchActivity extends D2Activity {
         startPage = null;
         startPageGaveUp = true;
         setContentView(appPage);
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     private static android.graphics.Bitmap bitmap(D2Sprites.Frame f) {
@@ -809,6 +957,13 @@ public class D2LaunchActivity extends D2Activity {
     }
 
 
+    private String startPageMod = "";
+
+    private static String modId(D2ModInfo.Mod mod) {
+        return mod == null ? "" : mod.id;
+    }
+
+
     private String startPageFolder;
     private volatile int startPageGeneration;
 
@@ -819,7 +974,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
     private void reloadStartPage() {
-        D2Trace.log("start page: the game folder changed, " + D2FolderPick.traceName(startPageFolder) + " -> "
+        D2Trace.log("start page: the game folder or the mod changed, " + D2FolderPick.traceName(startPageFolder) + " -> "
             + D2FolderPick.traceName(GameLocator.chosenPath(this)) + ", built again");
         startPageGeneration++;
         if (startPage != null) startPage.setRunning(false);
@@ -840,7 +995,7 @@ public class D2LaunchActivity extends D2Activity {
         showCheckedFolder();
     }
 
-    private void showStartPage(D2StartArt art, java.util.List<D2SaveHeader.Info> characters) {
+    private void showStartPage(D2StartArt art, java.util.List<D2SaveHeader.Info> characters, D2PlaystyleChoice.Art choice) {
         if (isFinishing() || isDestroyed() || startPage != null || startPageGaveUp) return;
         startIfNoPage = false;
         startPage = new D2StartPage(this, art, characters, new D2StartPage.Host() {
@@ -849,8 +1004,14 @@ public class D2LaunchActivity extends D2Activity {
                 pendingDirect = new D2DirectStart.Request(character.file, difficulty);
                 prepareAndLaunch();
             }
-            @Override public void longPress(D2SaveHeader.Info character) {
-                if (!busy) chooseDifficulty(character);
+            @Override public void delete(D2SaveHeader.Info character) {
+                deleteCharacter(character);
+            }
+            @Override public void restore(D2CharDelete.Deleted deleted) {
+                restoreCharacter(deleted);
+            }
+            @Override public void purge(D2CharDelete.Deleted deleted) {
+                purgeCharacter(deleted);
             }
             @Override public void refused(D2SaveHeader.Info character) {
                 Toast.makeText(D2LaunchActivity.this, character.refusal() == D2SaveHeader.Refusal.DEAD_HARDCORE
@@ -860,13 +1021,68 @@ public class D2LaunchActivity extends D2Activity {
                 startPageButton(which);
             }
         });
-        startPage.setStatus(statusView.getText().toString());
-        setContentView(startPage);
-        startPageExpected = false;
-        getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).edit().putBoolean(KEY_START_PAGE, true).apply();
 
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        D2UpdateCheck.Release release = updateRelease;
+        if (release != null) startPage.setUpdate(getString(R.string.update_available, release.version),
+            getString(R.string.update_card_tap), this::showUpdateWindow);
+        String status = statusView.getText().toString();
+        startPage.setStatus(release != null && status.equals(getString(R.string.update_waiting)) ? "" : status);
+        if (deleteLine != null) {
+            startPage.setStatus(deleteLine);
+            deleteLine = null;
+        }
+
+        D2ModInfo.Mod mod = D2Mods.active(this);
+        startPageMod = modId(mod);
+        if (mod == null) startPage.setMod(getString(R.string.start_mod_original), getString(R.string.start_mod_original_sub), D2StartArt.GEM_ORIGINAL);
+        else startPage.setMod(getString(R.string.start_mod_title, mod.name), getString(R.string.start_mod_sub), D2StartArt.GEM_UNCHECKED);
+
+
+        android.content.SharedPreferences prefs = getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE);
+        if (choice != null && D2PlaystyleChoice.needed(prefs.getAll())) {
+            D2StartPage page = startPage;
+            choicePage = new D2PlaystyleChoicePage(this, choice, D2PlaystyleChoice.preselected(prefs.getAll()), (preset) -> {
+                D2Settings.choosePlaystyle(this, preset);
+                choicePage = null;
+                if (startPage == page && !isFinishing() && !isDestroyed()) showAfterChoice(page, choice);
+            });
+            setContentView(choicePage);
+        }
+        else showAfterChoice(startPage, choice);
+        startPageExpected = false;
+        prefs.edit().putBoolean(KEY_START_PAGE, true).apply();
+
         startPage.setRunning(resumed);
+    }
+
+
+
+
+
+
+    private void showAfterChoice(D2StartPage page, D2PlaystyleChoice.Art art) {
+        if (art != null && !spieltest && telemetryQuestion(getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getAll())) {
+            telemetryPage = new D2TelemetryChoicePage(this, art, (yes) -> {
+                if (telemetryPage == null) return;
+                D2Settings.putBoolean(this, D2Settings.KEY_TELEMETRY, yes);
+                telemetryPage = null;
+                if (yes) D2Telemetry.start(this, false);
+                if (startPage == page && !isFinishing() && !isDestroyed()) showAfterChoice(page, art);
+            });
+            setContentView(telemetryPage);
+            return;
+        }
+        setContentView(page);
+
+        if (!getWindow().getDecorView().isInTouchMode()) page.post(() -> {
+            View first = startPage != null ? startPage.padFirstFocus() : null;
+            if (first != null) first.requestFocus();
+        });
+    }
+
+
+    private static boolean telemetryQuestion(java.util.Map<String, ?> stored) {
+        return D2TelemetryChoice.needed(D2Telemetry.sends(), stored);
     }
 
     private void startPageButton(int which) {
@@ -885,8 +1101,8 @@ public class D2LaunchActivity extends D2Activity {
             case 3:
                 startActivity(new Intent(this, D2NewsActivity.class));
                 break;
-            case 4:
-                startActivity(new Intent(this, D2BackgroundActivity.class));
+            case 7:
+                startActivity(new Intent(this, D2SettingsActivity.class).putExtra(D2SettingsActivity.EXTRA_MODS, true));
                 break;
             case 6:
                 if (busy) return;
@@ -899,43 +1115,134 @@ public class D2LaunchActivity extends D2Activity {
     }
 
 
-    private void chooseDifficulty(D2SaveHeader.Info character) {
-        int open = character.openDifficulty();
-        if (open == 0) {
-            pendingDirect = new D2DirectStart.Request(character.file, 0);
-            prepareAndLaunch();
+
+
+
+
+
+
+    private void deleteCharacter(D2SaveHeader.Info character) {
+        File saves = currentSaveDir();
+        if (busy || saves == null) {
+            status(getString(R.string.char_delete_busy));
             return;
         }
-        String[] names = new String[open + 1];
-        for (int d = 0; d <= open; d++) names[d] = D2StartPage.difficultyName(this, d);
+        String name = character.name.isEmpty() ? character.file : character.name;
+        underSaveLock(saves, () -> {
+            recoverOrRefuse(saves);
+            File zip = D2CharDelete.delete(saves, character.file, System.currentTimeMillis());
+            D2Trace.log("character deleted: " + character.file + " -> " + zip.getName());
+            return getString(R.string.char_deleted_status, name);
+        });
+    }
 
-        float density = getResources().getDisplayMetrics().density;
-        int pad = Math.round(16 * density);
-        TextView title = new TextView(this);
-        title.setText(getString(R.string.start_choose_difficulty, character.name));
-        title.setTextSize(18);
-        D2Style.heading(title);
-        title.setPadding(pad, pad, pad, Math.round(4 * density));
-        android.widget.ArrayAdapter<String> rows = new android.widget.ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, names) {
-            @Override
-            public android.view.View getView(int position, android.view.View convertView, android.view.ViewGroup parent) {
-                TextView row = (TextView) super.getView(position, convertView, parent);
-                row.setTextColor(D2Style.TEXT);
-                return row;
+
+    private void restoreCharacter(D2CharDelete.Deleted deleted) {
+        File saves = currentSaveDir();
+        if (busy || saves == null) {
+            status(getString(R.string.char_delete_busy));
+            return;
+        }
+        String name = deleted.info.name.isEmpty() ? deleted.info.file : deleted.info.name;
+        underSaveLock(saves, () -> {
+            recoverOrRefuse(saves);
+            try {
+                D2CharDelete.restore(saves, deleted.zip);
             }
-        };
-        AlertDialog dialog = new AlertDialog.Builder(this)
-            .setCustomTitle(title)
-            .setAdapter(rows, (d, which) -> {
-                if (busy) return;
-                pendingDirect = new D2DirectStart.Request(character.file, which);
-                prepareAndLaunch();
-            })
-            .create();
-        dialog.show();
-        android.view.Window window = dialog.getWindow();
-        if (window != null) window.setBackgroundDrawable(D2Style.windowBackground(density));
+            catch (D2CharDelete.Failure e) {
+                if (e.reason == D2CharDelete.Failure.Reason.COLLISION) return getString(R.string.char_restore_collision, name);
+                throw e;
+            }
+            D2Trace.log("character restored: " + deleted.zip.getName());
+            return getString(R.string.char_restored, name);
+        });
+    }
+
+
+    private void purgeCharacter(D2CharDelete.Deleted deleted) {
+        File saves = currentSaveDir();
+        if (busy || saves == null) {
+            status(getString(R.string.char_delete_busy));
+            return;
+        }
+        String name = deleted.info.name.isEmpty() ? deleted.info.file : deleted.info.name;
+        underSaveLock(saves, () -> {
+            purge(saves, deleted.zip, deleted.info);
+            return getString(R.string.char_purged, name);
+        });
+    }
+
+
+    private void purge(File saves, File zip, D2SaveHeader.Info info) throws IOException {
+        File moved = D2CharDelete.purge(zip, new File(android.os.Environment.getExternalStoragePublicDirectory(
+            android.os.Environment.DIRECTORY_DOWNLOADS), D2Saves.BACKUP_FOLDER));
+        D2Trace.log("character purged: " + zip.getName() + " -> " + moved.getName());
+        if (info == null) return;
+
+        if (D2SaveHeader.characterFile(saves, info.file) != null) return;
+        String name = info.name.isEmpty() ? info.file : info.name;
+        clearSettings(getSharedPreferences("d2overlay", MODE_PRIVATE), info.characterClass, name);
+        clearSettings(getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE), info.characterClass, name);
+    }
+
+    private static void clearSettings(android.content.SharedPreferences prefs, int characterClass, String name) {
+        android.content.SharedPreferences.Editor edit = prefs.edit();
+        for (String key : prefs.getAll().keySet()) if (D2CharDelete.settingKey(key, characterClass, name)) edit.remove(key);
+        edit.apply();
+    }
+
+
+    private String deleteLine;
+
+
+    private static void recoverOrRefuse(File saves) throws IOException {
+        if (!D2Saves.recover(saves)) throw new IOException("import unfinished");
+        D2SaveRepair.run(saves);
+    }
+
+    private interface SaveWork {
+
+        String run() throws IOException;
+    }
+
+
+    private File currentSaveDir() {
+        File dir = GameLocator.gameDir(this);
+        return dir != null ? D2Mods.saveDir(this, dir) : null;
+    }
+
+
+    private void underSaveLock(File saves, SaveWork work) {
+        busy = true;
+        worker.execute(() -> {
+            String line;
+            File lockDir = saves.getParentFile();
+            if (!D2Saves.beginImport()) line = getString(R.string.char_delete_busy);
+            else {
+                D2FolderLock.Decision lock = lockDir != null ? D2FolderLock.acquire(getPackageName(), D2SettingsActivity.appLabel(this),
+                    lockDir, "delete") : D2FolderLock.UNUSABLE;
+                try {
+
+                    line = lock.foreign || lock.unusable ? getString(R.string.char_delete_busy) : work.run();
+                }
+                catch (IOException | RuntimeException e) {
+                    D2Trace.log("delete character: " + e);
+                    line = getString(R.string.char_delete_failed);
+                }
+                finally {
+                    if (!lock.foreign && !lock.unusable && lockDir != null) D2FolderLock.release(lockDir);
+                    D2Saves.endImport();
+                }
+            }
+            String shown = line;
+            handler.post(() -> {
+                busy = false;
+                if (isFinishing() || isDestroyed()) return;
+                statusView.setText(shown);
+                deleteLine = shown;
+                reloadStartPage();
+            });
+        });
     }
 
     @Override
@@ -949,7 +1256,15 @@ public class D2LaunchActivity extends D2Activity {
         }
 
         if (!busy && D2FolderPick.reloadStartPage(startPageFolder, GameLocator.chosenPath(this), startPage != null)) reloadStartPage();
+
+        else if (!busy && startPage != null && !modId(D2Mods.active(this)).equals(startPageMod)) reloadStartPage();
         else if (startPage != null) startPage.setRunning(true);
+
+        else if (helpersOffShown && !busy && D2Settings.modEnabled(this)) {
+            helpersOffShown = false;
+            if (android.text.TextUtils.equals(statusView.getText(), getText(R.string.launch_helpers_off))) statusView.setText("");
+            reloadStartPage();
+        }
     }
 
     @Override
@@ -1047,13 +1362,32 @@ public class D2LaunchActivity extends D2Activity {
                 status(getString(R.string.launch_starting));
 
 
-                if (D2Saves.recover(D2Saves.saveDir(gameDir))) D2SaveRepair.run(D2Saves.saveDir(gameDir));
+
+                final D2ModInfo.Mod playedMod = D2Mods.active(this);
+                File saveDir = playedMod != null ? playedMod.saves() : D2Saves.saveDir(gameDir);
+                if (playedMod != null) {
+
+
+                    D2FolderLock.Decision modLock = D2FolderLock.acquire(getPackageName(), D2SettingsActivity.appLabel(this), playedMod.dir, "mod " + playedMod.id);
+                    if (modLock.foreign) throw new IOException(D2SettingsActivity.folderLockText(this, modLock, true));
+                }
+                if (D2Saves.recover(saveDir)) D2SaveRepair.run(saveDir);
                 backupOnce(gameDir);
                 D2Strings.rememberGameLanguage(this, gameDir);
+
+
+
+
+                final java.util.List<String> keptOn = new java.util.ArrayList<>();
+                String keptInv = D2BigInventoryGuard.keepOnForStart(this, gameDir, playedMod);
+                if (keptInv != null) keptOn.add(keptInv);
+
+                String keptBig = D2BigStash.keepOnForStart(this, gameDir, playedMod);
+                if (keptBig != null) keptOn.add(keptBig);
                 String d2dxCfg = GameShadow.buildD2DXConfig(D2Settings.gameSize(screenSize, D2Settings.gameLines(this)), 0);
-                File startDir = GameShadow.prepare(this, D2Runtime.driveC(this), gameDir, d2dxCfg);
+                File startDir = GameShadow.prepare(this, D2Runtime.driveC(this), gameDir, d2dxCfg, playedMod);
                 tellRepairs(D2SaveRepair.takeLast());
-                writeRegistry(startDir, gameDir);
+                writeRegistry(startDir, gameDir, playedMod);
 
                 boolean useMod = D2Settings.modEnabled(this) && new File(startDir, GameShadow.LOADER_EXE).isFile();
 
@@ -1065,6 +1399,21 @@ public class D2LaunchActivity extends D2Activity {
                     D2Trace.log("direct start marker: " + e.getMessage());
                     directStart = null;
                 }
+
+
+
+
+
+                File spielweise = new File(startDir, D2Spielweise.FILE);
+                if (playedMod != null) {
+                    if (spielweise.exists() && !spielweise.delete()) throw new IOException("cannot delete " + spielweise);
+                    D2Trace.log("mod " + playedMod.id + ": spielweise off");
+                }
+                else if (!com.winlator.core.FileUtils.writeString(spielweise, D2Settings.spielweiseFile(this)))
+                    D2Trace.log("spielweise file not written");
+
+
+                D2BigInventory.apply(startDir, D2Settings.bigInventory(this));
                 try {
 
                     D2IntroMovies.apply(startDir, directStart != null || D2Settings.skipIntro(this));
@@ -1079,9 +1428,15 @@ public class D2LaunchActivity extends D2Activity {
                 Intent intent = new Intent(this, D2GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 intent.putExtra(D2GameActivity.EXTRA_DIR, D2Runtime.dosPath(this, startDir));
                 intent.putExtra(D2GameActivity.EXTRA_PROGRAM, useMod ? GameShadow.LOADER_EXE : "Game.exe");
-                intent.putExtra(D2GameActivity.EXTRA_ARGS, "-3dfx");
+
+                String gameArgs = D2Settings.gameArgs(this, playedMod);
+                if (!D2StartArgs.D2DX.equals(gameArgs)) D2Trace.log("start parameters: " + gameArgs);
+                intent.putExtra(D2GameActivity.EXTRA_ARGS, gameArgs);
                 intent.putExtra(EXTRA_D2_LAUNCH, true);
                 intent.putExtra(EXTRA_GAME_DIR, gameDir.getPath());
+
+                intent.putExtra(EXTRA_SAVE_DIR, saveDir.getPath());
+                intent.putExtra(EXTRA_MOD_GRID, playedMod == null || playedMod.originalGrid());
                 if (directStart != null) intent.putExtra(D2DirectStart.EXTRA, directStart.toExtra());
 
 
@@ -1097,18 +1452,21 @@ public class D2LaunchActivity extends D2Activity {
                 handler.post(() -> {
                     if (startCancelled || isFinishing()) {
                         D2LaunchGate.gameFailed();
-                        D2FolderLock.release(gameDir);
+                        D2FolderLock.releaseAll();
                         android.util.Log.i("D2Launch", "launcher closed during the preparation: game not started");
                         return;
                     }
-                    D2LaunchGate.gameStarted();
-                    startActivity(intent);
-                    finish();
+                    if (keptOn.isEmpty() || spieltest) {
+
+                        for (String note : keptOn) Toast.makeText(getApplicationContext(), note, Toast.LENGTH_LONG).show();
+                        launchPrepared(intent);
+                    }
+                    else keptOnWindow(String.join("\n\n", keptOn), intent);
                 });
             }
             catch (Exception e) {
                 D2LaunchGate.gameFailed();
-                D2FolderLock.release(gameDir);
+                D2FolderLock.releaseAll();
                 android.util.Log.e("D2Launch", "preparation failed", e);
                 status(getString(R.string.launch_failed, e.getMessage()));
                 handler.post(() -> {
@@ -1117,6 +1475,53 @@ public class D2LaunchActivity extends D2Activity {
                 });
             }
         });
+    }
+
+
+    private void launchPrepared(Intent intent) {
+        D2LaunchGate.gameStarted();
+        startActivity(intent);
+        finish();
+    }
+
+
+
+
+
+
+    private void keptOnWindow(String text, Intent intent) {
+        if (startCancelled || isFinishing() || isDestroyed()) {
+            launchCancelled();
+            return;
+        }
+        D2Trace.log("kept on before the start, window shown");
+        AlertDialog[] shown = {null};
+        shown[0] = styledDialog(getString(R.string.launch_kept_on_title), text, getString(R.string.launch_play), () -> {
+            if (keptOnDialog != shown[0]) return;
+            keptOnDialog = null;
+            if (startCancelled || isFinishing()) launchCancelled();
+            else launchPrepared(intent);
+        });
+        keptOnDialog = shown[0];
+        shown[0].setCancelable(false);
+        shown[0].setOnDismissListener((d) -> {
+            if (keptOnDialog != shown[0]) return;
+            keptOnDialog = null;
+            launchCancelled();
+        });
+    }
+
+
+    private AlertDialog keptOnDialog;
+
+
+    private void launchCancelled() {
+        D2LaunchGate.gameFailed();
+        D2FolderLock.releaseAll();
+        android.util.Log.i("D2Launch", "start cancelled after the kept-on note: game not started");
+        busy = false;
+        if (playButton != null) playButton.setEnabled(true);
+        status("");
     }
 
 
@@ -1186,7 +1591,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
 
-    private void writeRegistry(File startDir, File gameDir) {
+    private void writeRegistry(File startDir, File gameDir, D2ModInfo.Mod mod) {
         String dosDir = D2Runtime.dosPath(this, startDir);
         String dosGameDir = D2Runtime.dosPath(this, gameDir);
         File prefix = D2Runtime.prefixDir(this);
@@ -1194,7 +1599,13 @@ public class D2LaunchActivity extends D2Activity {
             user.setCreateKeyIfNotExist(true);
             user.setStringValue(REG_KEY, "InstallPath", dosDir + "\\");
 
-            user.setStringValue(REG_KEY, "Save Path", dosGameDir + (dosGameDir.endsWith("\\") ? "" : "\\") + "save\\");
+
+
+            if (mod != null) {
+                if (!mod.saves().isDirectory()) mod.saves().mkdirs();
+                user.setStringValue(REG_KEY, "Save Path", D2Runtime.dosPath(this, mod.saves()) + "\\");
+            }
+            else user.setStringValue(REG_KEY, "Save Path", dosGameDir + (dosGameDir.endsWith("\\") ? "" : "\\") + "save\\");
             if (user.getDwordValue(REG_KEY + "\\VideoConfig", "Render") == null) {
                 user.setDwordValue(REG_KEY + "\\VideoConfig", "Render", 0);
             }
@@ -1219,9 +1630,7 @@ public class D2LaunchActivity extends D2Activity {
         folderView = new TextView(this);
         D2Style.hint(folderView);
         root.addView(folderView, matchWidth());
-        chooseButton = new Button(this);
-        chooseButton.setText(R.string.folder_choose);
-        chooseButton.setOnClickListener((v) -> chooseFolder());
+        chooseButton = button(D2ButtonTiers.PLAIN, getString(R.string.folder_choose), this::chooseFolder);
         root.addView(chooseButton, matchWidth());
     }
 
@@ -1257,7 +1666,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
 
-    private void styledDialog(String titleText, CharSequence messageText, String positive, Runnable onPositive) {
+    private AlertDialog styledDialog(String titleText, CharSequence messageText, String positive, Runnable onPositive) {
         int pad = dp(16);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -1273,12 +1682,16 @@ public class D2LaunchActivity extends D2Activity {
         message.setPadding(0, dp(8), 0, 0);
         D2Style.text(message);
         content.addView(message);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(content);
         AlertDialog dialog = new AlertDialog.Builder(this)
-            .setView(content)
+            .setView(scroll)
             .setPositiveButton(positive, (d, which) -> onPositive.run())
             .setNegativeButton(R.string.cancel, null)
             .create();
         dialog.show();
+        D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
@@ -1288,6 +1701,8 @@ public class D2LaunchActivity extends D2Activity {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(D2Style.GOLD);
         }
+        D2ButtonTiers.dialog(dialog, dialog.getButton(AlertDialog.BUTTON_POSITIVE), dialog.getButton(AlertDialog.BUTTON_NEGATIVE));
+        return dialog;
     }
 
     private void showFolder(File dir, GameVersion.Result check) {
@@ -1333,6 +1748,7 @@ public class D2LaunchActivity extends D2Activity {
         showInstall(!usable);
         showFolder(check.dir, check);
         status(GameLocator.message(this, check));
+        D2SettingsLook.load(this, this::lookCame);
     }
 
     private static String shortPath(String path) {
@@ -1426,6 +1842,28 @@ public class D2LaunchActivity extends D2Activity {
 
     private boolean hasStoragePermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+
+    private final java.util.List<D2LaunchButton> appButtons = new java.util.ArrayList<>();
+
+
+    private D2LaunchButton button(String text, Runnable action) {
+        return button(D2ButtonTiers.MAIN, text, action);
+    }
+
+
+    private D2LaunchButton button(int kind, String text, Runnable action) {
+        D2LaunchButton b = new D2LaunchButton(this, kind, text, action);
+        appButtons.add(b);
+        return b;
+    }
+
+
+    private void lookCame() {
+        D2SettingsLook look = D2SettingsLook.get();
+        if (look == null || isDestroyed()) return;
+        for (D2LaunchButton b : appButtons) b.useLook(look);
     }
 
     private LinearLayout.LayoutParams matchWidth() {

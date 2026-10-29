@@ -50,9 +50,28 @@ public final class Zustand {
     public int[] menue = new int[0];
     public long[] reparatur;
 
+
+
+
+
+    public long[] ladenAuftrag;
+    public int[] guertel = new int[0];
+    public int guertelReihen = -1, heilInventar = -1, manaInventar = -1;
+
+    public int foliant = -1, rollen = -1;
+
+    public int portale = -1;
+
     public static final int UI_NPC_MENUE = 8, UI_LADEN = 0x0C;
 
     public static final int MENUE_HANDELN_REPARIEREN = 0xD06;
+
+    public static final int MENUE_HANDELN = 0xD44;
+
+
+    public int freieZellen() {
+        return zellen < 0 ? -1 : 40 - Long.bitCount(zellen & ((1L << 40) - 1));
+    }
 
 
 
@@ -102,6 +121,14 @@ public final class Zustand {
     public int[] schreine = new int[0];
 
     public long zellen = -1;
+
+
+
+
+    public boolean zellenBekannt;
+
+    public long zellen2;
+    public int rasterHoehe = Beuteliste.HOEHE;
 
 
 
@@ -174,6 +201,22 @@ public final class Zustand {
             z.reparatur = new long[5];
             for (int i = 0; i < 5; i++) z.reparatur[i] = rp.optLong(i);
         }
+        JSONArray la = o.optJSONArray("ladenAuftrag");
+        if (la != null && la.length() >= 6) {
+            z.ladenAuftrag = new long[6];
+            for (int i = 0; i < 6; i++) z.ladenAuftrag[i] = la.optLong(i);
+        }
+        JSONArray gt = o.optJSONArray("guertel");
+        if (gt != null) {
+            z.guertel = new int[gt.length()];
+            for (int i = 0; i < gt.length(); i++) z.guertel[i] = gt.optInt(i);
+        }
+        z.guertelReihen = o.optInt("guertelReihen", -1);
+        z.heilInventar = o.optInt("heilInventar", -1);
+        z.manaInventar = o.optInt("manaInventar", -1);
+        z.portale = o.optInt("portale", -1);
+        z.foliant = o.optInt("foliant", -1);
+        z.rollen = o.optInt("rollen", -1);
         z.fenster = o.optString("fenster", "0");
         z.hover = o.optInt("hover", -1);
         z.waffen = o.optInt("waffen", -1);
@@ -260,6 +303,9 @@ public final class Zustand {
             z.beute.put(b.id, b);
         }
         z.zellen = o.optLong("zellen", -1);
+        z.zellen2 = o.optLong("zellen2", 0);
+        z.rasterHoehe = Math.max(1, Math.min(8, o.optInt("rasterHoehe", Beuteliste.HOEHE)));
+        z.zellenBekannt = o.has("zellen") && (z.zellen != -1 || z.rasterHoehe > Beuteliste.HOEHE);
         things(o.optJSONArray("objekte"), z.objekte);
         JSONArray od = o.optJSONArray("objektDetails");
         for (int i = 0; od != null && i < od.length(); i++) {

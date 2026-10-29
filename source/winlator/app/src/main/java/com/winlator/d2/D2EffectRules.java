@@ -22,7 +22,11 @@ final class D2EffectRules {
 
     static final int PER_COLUMN = 6, MAX = 2 * PER_COLUMN;
 
-    static final int ICON = 32, BOX = ICON + 6, STEP = 56, TOP = 70, LEFT = 6, COLUMN = 44;
+
+
+
+
+    static final int ICON = 41, BOX = ICON + 6, STEP = 66, TOP = 82, LEFT = 15, COLUMN = 55;
 
     static final int[] POTIONS = {100, 106, 180, 178, 179};
 
@@ -114,6 +118,43 @@ final class D2EffectRules {
         int[] out = new int[n];
         for (int i = 0; i < n; i++) out[i] = states[shown.get(i)];
         return out;
+    }
+
+
+    static final int[] LAYER_PICTURES = {71, 72, 73, 74, 75, 76, 77, 78, 79, 85, 86, 87};
+
+
+
+
+
+
+
+    static final class LayerPictures {
+        private final String[] paths = new String[LAYER_PICTURES.length];
+        private final long[] usedIn = new long[LAYER_PICTURES.length];
+        private long frame;
+
+
+        void begin() {
+            frame++;
+        }
+
+
+        int number(String path) {
+            if (path == null) return -1;
+            int pick = -1;
+            for (int i = 0; i < paths.length; i++) {
+                if (path.equals(paths[i])) {
+                    usedIn[i] = frame;
+                    return LAYER_PICTURES[i];
+                }
+                if (usedIn[i] < frame && (pick < 0 || usedIn[i] < usedIn[pick])) pick = i;
+            }
+            if (pick < 0) return -1;
+            paths[pick] = path;
+            usedIn[pick] = frame;
+            return LAYER_PICTURES[pick];
+        }
     }
 
 

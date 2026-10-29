@@ -153,6 +153,8 @@ public final class Gehirn {
     private final Map<Long, Integer> nehmenVersuche = new HashMap<>();
 
     private long nehmenId = -1, nehmenSeit, nehmenTippAm;
+
+    private Beuteliste.Antwort nehmenAntwort;
     private int nehmenGebiet;
 
     private Absicht nehmenTipp;
@@ -184,6 +186,8 @@ public final class Gehirn {
     private int neuplanungen;
 
     public int wegePlanungen, wegeNeuplanungen, wegeOhne;
+
+    public int wegeAbgebrochen;
     public long wegeLaengsteMs;
     public static final double WEG_ABWEICHUNG = 4, KNOTEN_ERREICHT = 2;
     public static final long WEG_KEIN_FORTSCHRITT_MS = 1500;
@@ -294,6 +298,16 @@ public final class Gehirn {
     private Zustand.Ziele zieleJetzt;
 
     private long letzterFeindAm;
+
+    private final java.util.Map<Integer, Abdeckung> abdeckungen = new java.util.HashMap<>();
+
+    private long abdeckungFortschrittAm;
+    private int abdeckungFortschritte = -1;
+    private Abdeckung abdeckungGemessen;
+
+    public static final long LEER_STILLSTAND_MS = 180_000;
+
+    public boolean leerWegenStillstand;
 
     private boolean zielBlock;
 
@@ -527,6 +541,8 @@ public final class Gehirn {
             if (now - letztesNehmen <= NEHMEN_PAUSE_MS) return false;
             Zustand.Ding best = null;
             for (Zustand.Ding d : z.items) {
+
+                if (z.bodenAbstand(d) <= NEHMEN_SUBTILES * SUBTILE_BODEN && keinPlatz(z, d, beute)) passtNichtAm = now;
                 if (!gewollt(z, d) || z.bodenAbstand(d) > NEHMEN_SUBTILES * SUBTILE_BODEN) continue;
 
                 if (gebietLeeren && jenseits(z, zieleJetzt, d)) continue;
@@ -538,6 +554,9 @@ public final class Gehirn {
             Integer tries = nehmenVersuche.get(best.id);
             nehmenVersuche.put(best.id, tries == null ? 1 : tries + 1);
             nehmenId = best.id;
+            Zustand.Beute bb = z.beute.get(best.id);
+            nehmenAntwort = bb == null || best.art == Zustand.ITEM_GOLD || best.art == Zustand.ITEM_POTION ? null
+                : beute.antwort(bb.kategorie, bb.qualitaet, bb.sockel, bb.wertklasse);
             nehmenSeit = now;
             nehmenTippAm = 0;
             nehmenTipp = null;
@@ -561,6 +580,7 @@ public final class Gehirn {
             if (nehmenTippAm > 0) {
                 aufgehoben++;
                 eigeneBeute.add(nehmenId);
+                if (nehmenAntwort != null) beuteAntwort.put(nehmenId, nehmenAntwort);
                 navigation = "Nehmen: aufgehoben (" + aufgehoben + ", " + (now - nehmenTippAm) + " ms nach dem Tipp)";
             }
             nehmenId = -1;
@@ -609,11 +629,26 @@ public final class Gehirn {
 
     static boolean gewollt(Zustand z, Zustand.Ding d, Beuteliste liste) {
         if (d.art == Zustand.ITEM_GOLD) return !z.goldVoll();
-        if (d.art == Zustand.ITEM_POTION) return true;
+
+
+        if (d.art == Zustand.ITEM_POTION) return z.heilInventar < 0 || z.manaInventar < 0 || z.heilInventar + z.manaInventar < TRAENKE_INVENTAR_MAX;
         Zustand.Beute b = z.beute.get(d.id);
         Beuteliste.Antwort a = b != null ? liste.antwort(b.kategorie, b.qualitaet, b.sockel, b.wertklasse) : null;
         if (a == null) return d.art == Zustand.ITEM_RUNE || d.art == Zustand.ITEM_GEM;
-        return a != Beuteliste.Antwort.LIEGEN && (z.zellen < 0 || Beuteliste.passt(z.zellen, b.breite, b.hoehe));
+        return a != Beuteliste.Antwort.LIEGEN && (!z.zellenBekannt || Beuteliste.passt(z.zellen, z.zellen2, z.rasterHoehe, b.breite, b.hoehe));
+    }
+
+
+    public static final int TRAENKE_INVENTAR_MAX = 10;
+
+
+    static boolean keinPlatz(Zustand z, Zustand.Ding d, Beuteliste liste) {
+        if (d.art == Zustand.ITEM_GOLD || d.art == Zustand.ITEM_POTION || z.zellen < 0) return false;
+        Zustand.Beute b = z.beute.get(d.id);
+        if (b == null) return false;
+        Beuteliste.Antwort a = liste.antwort(b.kategorie, b.qualitaet, b.sockel, b.wertklasse);
+
+        return a != null && a != Beuteliste.Antwort.LIEGEN && !Beuteliste.passt(z.zellen, b.breite, b.hoehe);
     }
 
 
@@ -627,6 +662,13 @@ public final class Gehirn {
     public final Beuteliste beute = new Beuteliste();
 
     public final java.util.Set<Long> eigeneBeute = new java.util.HashSet<>();
+
+
+
+
+    public final java.util.Map<Long, Beuteliste.Antwort> beuteAntwort = new java.util.HashMap<>();
+
+    public long passtNichtAm;
 
 
     private static final int OBJEKT_PORTAL = 5, OBJEKT_EINGANG = 6, OBJEKT_LEICHE = 7;
@@ -857,7 +899,15 @@ public final class Gehirn {
 
     private void abdeckungPflegen(Zustand z, Zustand.Ziele ziele) {
         if (karte == null || ziele == null || karte.level != z.gebiet || ziele.gebiet != z.gebiet) return;
-        if (abdeckung == null || abdeckung.karte != karte || !abdeckung.passt(ziele)) abdeckung = new Abdeckung(karte, ziele);
+        if (abdeckung == null || abdeckung.karte != karte || !abdeckung.passt(ziele)) {
+
+
+
+            Abdeckung alt = abdeckung != null && abdeckung.gebiet == ziele.gebiet ? abdeckung : abdeckungen.get(ziele.gebiet);
+            if (alt != null && alt.passt(ziele) && (alt.karte == karte || alt.karteTauschen(karte))) abdeckung = alt;
+            else abdeckung = new Abdeckung(karte, ziele);
+            abdeckungen.put(ziele.gebiet, abdeckung);
+        }
         if (z.weltlage()) abdeckung.sehen(z.wx, z.wy, sichtRadius(z));
     }
 
@@ -917,8 +967,23 @@ public final class Gehirn {
 
 
     public boolean gebietLeer(long now) {
-        return gebietLeeren && abdeckung != null && abdeckung.gebiet == letztesGebiet && abdeckung.vollstaendig()
-            && abdeckung.offen(now) == 0 && now - letzterFeindAm >= LEER_NACH_MS;
+        Abdeckung ab = abdeckung;
+        if (ab != abdeckungGemessen || ab != null && ab.fortschritte != abdeckungFortschritte) {
+            abdeckungGemessen = ab;
+            abdeckungFortschritte = ab != null ? ab.fortschritte : -1;
+            abdeckungFortschrittAm = now;
+        }
+        leerWegenStillstand = false;
+        if (!gebietLeeren || ab == null || ab.gebiet != letztesGebiet || !ab.vollstaendig() || now - letzterFeindAm < LEER_NACH_MS) return false;
+        int offen = ab.offen(now);
+        if (offen == 0) return true;
+
+
+        if (offen > 0 && now - abdeckungFortschrittAm >= LEER_STILLSTAND_MS) {
+            leerWegenStillstand = true;
+            return true;
+        }
+        return false;
     }
 
 
@@ -1296,6 +1361,14 @@ public final class Gehirn {
                 wegePlanungen++;
                 wegZielX = zielX; wegZielY = zielY; wegStartX = z.wx; wegStartY = z.wy;
                 wegGeplantAm = now; wegFortschrittAm = now; wegBesterRest = Double.MAX_VALUE;
+                String abbruch = "";
+                if (w != null && w.abgebrochen && (zielBlock || w.knoten.isEmpty())) {
+
+
+                    abbruch = " (abgebrochen nach " + w.untersucht + " Knoten in " + sucheMs + " ms" + (w.zeitAus ? ", Zeitgrenze" : "") + ")";
+                    wegeAbgebrochen++;
+                    w = null;
+                }
                 if (w != null && w.knoten.isEmpty() && zielEingang) {
                     ersatzErreicht(z);
                     a.richtung = Double.NaN;
@@ -1315,7 +1388,7 @@ public final class Gehirn {
 
                     weg = null;
                     wegeOhne++;
-                    navigation = "Wegsuche: kein Weg zu " + zielName + " – nächstes Ziel";
+                    navigation = "Wegsuche: kein Weg zu " + zielName + abbruch + " – nächstes Ziel";
                     zielAufgegeben(now);
                     waehleZiel(z, ziele, now);
                     keinZiel(a);
@@ -1324,7 +1397,7 @@ public final class Gehirn {
                 if (w == null) {
                     weg = null;
                     wegeOhne++;
-                    navigation = "Wegsuche: kein Weg zu " + zielName + " – Wandfolgen";
+                    navigation = "Wegsuche: kein Weg zu " + zielName + abbruch + " – Wandfolgen";
                 }
                 else {
                     weg = w.knoten;

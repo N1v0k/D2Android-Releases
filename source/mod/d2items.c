@@ -31,6 +31,12 @@
 
 #define INV_W 10
 #define INV_H 4
+#define INV_MAX_W 16
+#define INV_MAX_H 8
+#define INV_MAX_CELLS (INV_MAX_W * INV_MAX_H)
+#define PKT_GRID 17
+
+static int invGridW = INV_W, invGridH = INV_H;
 
 
 #include "d2cats.h"
@@ -161,7 +167,7 @@ typedef struct {
     BYTE rows;
     BYTE belt[3], inventory[3];
     BYTE tpTome, tpScrolls, idTome, idScrolls;
-    BYTE used[5];
+    BYTE used[INV_MAX_CELLS / 8];
 } Carried;
 
 static void readCarried(void* player, Carried* c) {
@@ -191,9 +197,9 @@ static void readCarried(void* player, Carried* c) {
             BYTE* txt = (BYTE*) fGetItemText(RD32(item, U_TXTNO));
             if (readable(path, 0x14) && readable(txt, 0x120)) {
                 int x0 = (int) RD32(path, IPATH_X), y0 = (int) RD32(path, IPATH_Y);
-                for (int y = y0; y < y0 + txt[ITXT_HEIGHT] && y < INV_H; y++) {
-                    for (int x = x0; x < x0 + txt[ITXT_WIDTH] && x < INV_W; x++) {
-                        if (x >= 0 && y >= 0) c->used[(y * INV_W + x) / 8] |= (BYTE) (1 << ((y * INV_W + x) % 8));
+                for (int y = y0; y < y0 + txt[ITXT_HEIGHT] && y < invGridH; y++) {
+                    for (int x = x0; x < x0 + txt[ITXT_WIDTH] && x < invGridW; x++) {
+                        if (x >= 0 && y >= 0) c->used[(y * invGridW + x) / 8] |= (BYTE) (1 << ((y * invGridW + x) % 8));
                     }
                 }
             }
@@ -232,6 +238,17 @@ static void sendItems(void* player, void** units, int count) {
     lastAt = now;
 
     Packet p;
+
+
+    if (invGridH > INV_H || invGridW != INV_W) {
+        int bytes = (invGridW * invGridH + 7) / 8;
+        putHeader(&p, PKT_GRID);
+        putU8(&p, (unsigned) invGridW);
+        putU8(&p, (unsigned) invGridH);
+        putU8(&p, (unsigned) bytes);
+        for (int i = 0; i < bytes; i++) putU8(&p, c.used[i]);
+        sendPacket(&p);
+    }
     putHeader(&p, PKT_ITEMS);
     putU8(&p, (itemNameAvailable ? 1 : 0) | (beltMoveAvailable ? 2 : 0) | (labelFilterAvailable ? 4 : 0)
         | (newLootVisible(now) ? 8 : 0) | (takeAvailable ? 16 : 0) | (shopAvailable ? 32 : 0) | (sellAvailable ? 64 : 0) | (stackMax(0) ? 128 : 0));

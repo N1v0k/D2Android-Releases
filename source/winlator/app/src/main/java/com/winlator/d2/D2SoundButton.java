@@ -42,6 +42,7 @@ final class D2SoundButton extends View {
         int pad = Math.round(6 * density);
         setPadding(pad, pad, pad, pad);
         setClickable(true);
+        D2PadFocus.frame(this);
         setOnClickListener((v) -> {
             D2Settings.setSound(context, !D2Settings.sound(context));
             D2Music.soundChanged(context);

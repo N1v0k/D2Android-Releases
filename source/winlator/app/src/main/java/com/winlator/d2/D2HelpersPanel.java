@@ -99,6 +99,9 @@ public final class D2HelpersPanel {
         boolean[] twoPanes = {host != null && twoPanes(context)};
         String[] page = {twoPanes[0] ? D2HelperEntries.SETTINGS_GROUPS.get(0) : null};
         Runnable[] show = new Runnable[1];
+
+
+        Runnable refresh = () -> D2PadFocus.keep(content, show[0]);
         Runnable build = () -> {
             root.removeAllViews();
             D2SettingsLook look = D2SettingsLook.get();
@@ -106,8 +109,9 @@ public final class D2HelpersPanel {
 
                 back[0] = inGame ? framedText(context, look, D2Text.get(context, com.winlator.R.string.settings_overview_stone),
                     () -> backLink.performClick())
-                    : new D2GameText.Stone(context, look, true, D2Text.get(context, com.winlator.R.string.settings_overview_stone),
-                    () -> backLink.performClick());
+                    : D2ButtonTiers.make(context, look, D2ButtonTiers.TEXT,
+
+                    "< " + D2Text.get(context, com.winlator.R.string.settings_overview_stone), () -> backLink.performClick());
             }
             if (look != null && searchHint[0] == null) {
 
@@ -165,6 +169,7 @@ public final class D2HelpersPanel {
             if (twoPanes[0]) search.setText("");
             show[0].run();
             if (holder != null) holder.scrollTo(0, 0);
+            padFocusFirst(content);
         };
         show[0] = () -> {
             String query = search.getText().toString().trim();
@@ -179,16 +184,17 @@ public final class D2HelpersPanel {
                 overview(context, groups, entries, query.isEmpty() ? page[0] : "", open);
             }
             if (!query.isEmpty() && (overview || twoPanes[0])) {
-                hits(context, content, query, entries, onChange, onAimChange, show[0], lootScope, onEditButtons, host);
+                hits(context, content, query, entries, onChange, onAimChange, refresh, lootScope, onEditButtons, host);
             }
             else if (overview) overview(context, content, entries, null, open);
-            else group(context, content, page[0], entries, onChange, onAimChange, show[0], lootScope, onEditButtons, host);
+            else group(context, content, page[0], entries, onChange, onAimChange, refresh, lootScope, onEditButtons, host);
         };
         Runnable toOverview = () -> {
             if (!twoPanes[0]) page[0] = null;
             search.setText("");
             show[0].run();
             if (holder != null) holder.scrollTo(0, 0);
+            padFocusFirst(content);
         };
         backLink.setOnClickListener((v) -> toOverview.run());
         search.addTextChangedListener(new android.text.TextWatcher() {
@@ -199,18 +205,29 @@ public final class D2HelpersPanel {
             }
         });
 
+
+        float[] scrolled = {0};
+        if (host != null && holder != null) holder.setOnScrollChangeListener((sv, x, y, ox, oy) -> {
+            if (!sv.isInLayout()) scrolled[0] = D2Orientation.scrollShare(y, scrollRange(holder));
+        });
         if (host != null) root.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             boolean now = twoPanes(context);
             if (now == twoPanes[0]) return;
             twoPanes[0] = now;
+            boolean searching = !search.getText().toString().trim().isEmpty();
+
+
+            float at = page[0] != null || searching ? scrolled[0] : 0;
             if (now && page[0] == null) page[0] = D2HelperEntries.SETTINGS_GROUPS.get(0);
+            if (!now && searching) page[0] = null;
             v.post(() -> {
                 build.run();
                 show[0].run();
+                if (holder != null) scrollToShare(holder, at);
             });
         });
         root.setTag(new Nav(() -> (!twoPanes[0] && page[0] != null) || !search.getText().toString().trim().isEmpty(), toOverview,
-            open, () -> page[0]));
+            open, () -> page[0], () -> shownGroups(visible(context, inGame, host != null)), content));
         build.run();
         show[0].run();
 
@@ -219,6 +236,23 @@ public final class D2HelpersPanel {
             show[0].run();
         });
         return root;
+    }
+
+
+    private static int scrollRange(android.widget.ScrollView view) {
+        return view.getChildCount() == 0 ? 0 : Math.max(0, view.getChildAt(0).getHeight() - view.getHeight());
+    }
+
+
+    private static void scrollToShare(android.widget.ScrollView holder, float share) {
+        holder.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
+                v.removeOnLayoutChangeListener(this);
+                v.post(() -> holder.scrollTo(0, Math.round(share * scrollRange(holder))));
+            }
+        });
+        holder.requestLayout();
     }
 
     private static void detach(View view) {
@@ -238,13 +272,104 @@ public final class D2HelpersPanel {
         final java.util.function.Consumer<String> open;
         final java.util.function.Supplier<String> current;
 
+        final java.util.function.Supplier<java.util.List<String>> groups;
+        final View content;
+
         Nav(java.util.function.BooleanSupplier away, Runnable toOverview, java.util.function.Consumer<String> open,
-            java.util.function.Supplier<String> current) {
+            java.util.function.Supplier<String> current, java.util.function.Supplier<java.util.List<String>> groups, View content) {
             this.away = away;
             this.toOverview = toOverview;
             this.open = open;
             this.current = current;
+            this.groups = groups;
+            this.content = content;
         }
+    }
+
+
+    private static java.util.List<String> shownGroups(java.util.List<D2HelperEntries.Entry> entries) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String group : D2HelperEntries.SETTINGS_GROUPS) {
+            for (D2HelperEntries.Entry e : entries) {
+                if (group.equals(D2HelperEntries.settingsGroup(D2HelperEntries.id(e)))) {
+                    out.add(group);
+                    break;
+                }
+            }
+        }
+        return out;
+    }
+
+
+
+
+
+    public static boolean step(View panel, int direction) {
+        Object tag = panel != null ? panel.getTag() : null;
+        if (!(tag instanceof Nav)) return false;
+        Nav nav = (Nav) tag;
+        String to = D2PadNav.nextGroup(nav.groups.get(), nav.current.get(), direction);
+        if (to == null) return false;
+        nav.open.accept(to);
+        nav.content.post(() -> {
+            View first = firstFocus(panel);
+
+            if (first != null) first.requestFocusFromTouch();
+        });
+        return true;
+    }
+
+
+
+
+
+    public static boolean padBack(View panel) {
+        Object tag = panel != null ? panel.getTag() : null;
+        if (!(tag instanceof Nav)) return false;
+        Nav nav = (Nav) tag;
+        String was = nav.current.get();
+        if (!back(panel)) return false;
+        nav.content.post(() -> {
+            java.util.List<String> groups = nav.groups.get();
+            int at = was != null ? groups.indexOf(was) : -1;
+            View row = nav.content instanceof android.view.ViewGroup && at >= 0 && at < ((android.view.ViewGroup) nav.content).getChildCount()
+                ? ((android.view.ViewGroup) nav.content).getChildAt(at) : firstFocus(panel);
+            if (row != null && row.isFocusable()) row.requestFocus();
+            else if (firstFocus(panel) != null) firstFocus(panel).requestFocus();
+        });
+        return true;
+    }
+
+
+    public static View firstFocus(View panel) {
+        Object tag = panel != null ? panel.getTag() : null;
+        if (!(tag instanceof Nav)) return null;
+        D2PadFocus.walk(((Nav) tag).content);
+        return firstFocusable(((Nav) tag).content);
+    }
+
+
+    private static void padFocusFirst(View content) {
+        if (content.isInTouchMode()) return;
+        content.post(() -> {
+            D2PadFocus.walk(content);
+            View first = firstFocusable(content);
+            if (first != null) first.requestFocus();
+        });
+    }
+
+
+    private static View firstFocusable(View v) {
+        if (v.getVisibility() != View.VISIBLE) return null;
+        if (v.isFocusable() && v.isEnabled()) return v;
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                View f = firstFocusable(g.getChildAt(i));
+                if (f != null) return f;
+            }
+        }
+        return null;
     }
 
 
@@ -409,7 +534,7 @@ public final class D2HelpersPanel {
 
         if ("diffLines".equals(e.key)) return !D2Settings.diffCapable(context);
 
-        if ("damageStyle".equals(e.key) || "damageDps".equals(e.key)) return !D2Settings.damageCapable(context);
+        if ("damageStyle".equals(e.key)) return !D2Settings.damageCapable(context);
         return false;
     }
 
@@ -467,7 +592,7 @@ public final class D2HelpersPanel {
                 main = button(context, e.label, () -> {
                     if (intro) {
 
-                        D2Settings.requestIntro(context);
+                        D2Settings.setHintsSeen(context, "");
                         if (onChange != null) onChange.run();
                         android.widget.Toast.makeText(context, D2Text.get(context, com.winlator.R.string.helper_intro_toast), android.widget.Toast.LENGTH_SHORT).show();
                         return;
@@ -595,8 +720,10 @@ public final class D2HelpersPanel {
         }
         LinearLayout box = new LinearLayout(context);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(context, 8), dp(context, 6), 0, dp(context, 6));
-        box.addView(framedText(context, look, text, action), lp);
+
+        boolean page = context instanceof D2SettingsActivity;
+        lp.setMargins(page ? 0 : dp(context, 8), page ? 0 : dp(context, 6), 0, page ? 0 : dp(context, 6));
+        box.addView(page ? D2ButtonTiers.make(context, look, D2ButtonTiers.TEXT, text, action) : framedText(context, look, text, action), lp);
         return box;
     }
 
@@ -678,6 +805,11 @@ public final class D2HelpersPanel {
             show.run();
             set.accept(on[0]);
         });
+        view.step = (dir) -> {
+            if (on[0] == dir > 0) return false;
+            view.performClick();
+            return true;
+        };
         return view;
     }
 
@@ -694,14 +826,23 @@ public final class D2HelpersPanel {
         boolean loot = "lootFilter".equals(e.key);
         view.setClickable(true);
         D2PadFocus.frame(view);
-        view.setOnClickListener((v) -> {
-            if (!v.isEnabled()) return;
-            at[0] = (at[0] + 1) % values.length;
+        java.util.function.IntConsumer take = (i) -> {
+            at[0] = i;
             if (loot) D2LabelFilter.putPreset(context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE), lootScope, values[at[0]]);
             else D2Settings.putInt(context, e.key, values[at[0]]);
             view.setValue(e.options[at[0]], GOLD);
             if (onChange != null) onChange.run();
+        };
+        view.setOnClickListener((v) -> {
+            if (!v.isEnabled()) return;
+            take.accept((at[0] + 1) % values.length);
         });
+        view.step = (dir) -> {
+            int to = at[0] + dir;
+            if (to < 0 || to >= values.length) return false;
+            take.accept(to);
+            return true;
+        };
         return view;
     }
 
@@ -725,7 +866,6 @@ public final class D2HelpersPanel {
 
     static String text(String raw) {
         return raw.replace("{SECONDS}", String.valueOf(D2LabelFilter.SECONDS))
-            .replace("{RESERVE}", String.valueOf(D2AutoItems.POTION_RESERVE))
             .replace("{LIFE}", String.valueOf(D2Settings.AUTO_LIFE_DEFAULT))
             .replace("{MANA}", String.valueOf(D2Settings.AUTO_MANA_DEFAULT));
     }
@@ -752,9 +892,9 @@ public final class D2HelpersPanel {
             case "mapFightHide": return D2Settings.mapFightHide(c);
             case "itemLabels": return D2Settings.itemLabels(c);
             case "compareEquipped": return D2Settings.compareEquipped(c);
+            case "windowInfo": return D2Settings.windowInfo(c);
             case "valueLine": return D2Settings.valueLine(c);
             case "diffLines": return D2Settings.diffLines(c);
-            case "damageDps": return D2Settings.damageDps(c);
             case "dropLabels": case "labelsNearOnly": return D2LabelFilter.get(c, key);
             case "autoGold": return D2Settings.autoGold(c);
             case "pickPotions": case "pickScrolls": case "pickRunes": case "pickGems": case "pickJewelry": case "beltRefill":
@@ -1136,7 +1276,8 @@ public final class D2HelpersPanel {
             case "shopReserveHeal":
             case "shopReserveMana":
                 return slider(context, e.label, v -> v == 0 ? D2Text.get(context, com.winlator.R.string.helper_shopReserve_none) : String.valueOf(v),
-                    0, D2PotionShop.RESERVE_MAX, 1, D2Settings.shopReserve(context, e.key.equals("shopReserveMana")), e.key, onChange, null);
+                    0, D2PotionShop.reserveMax(D2Settings.bigInventory(context)), 1, D2Settings.shopReserve(context, e.key.equals("shopReserveMana")),
+                    e.key, onChange, null);
             case "minGold":
                 return slider(context, e.label, v -> v == 0 ? D2Text.get(context, com.winlator.R.string.helper_value_off)
                         : String.format(java.util.Locale.getDefault(), "%,d", D2PotionShop.minGold(v)),

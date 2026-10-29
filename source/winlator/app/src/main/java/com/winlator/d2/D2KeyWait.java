@@ -83,6 +83,12 @@ final class D2KeyWait {
     }
 
 
+    boolean allTaken(long now) {
+        expire(now);
+        return unseen.isEmpty();
+    }
+
+
     private void expire(long now) {
         for (Iterator<Key> it = unseen.iterator(); it.hasNext(); ) {
             Key k = it.next();

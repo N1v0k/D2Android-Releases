@@ -17,6 +17,8 @@ public final class D2ModState {
     public static final int UNIT_PLAYER = 0, UNIT_MONSTER = 1, UNIT_OBJECT = 2, UNIT_ITEM = 4, UNIT_TILE = 5;
     public static final int PKT_STATUS = 1, PKT_STATE = 2, PKT_GOALS = 3, PKT_ITEMS = 4, PKT_MENU = 5, PKT_EFFECTS = 6, PKT_PLAYTEST = 7;
 
+    public static final int PKT_GRID = 17;
+
 
     public static final int UI_INVENTORY = 0x01, UI_CHARACTER = 0x02, UI_MINISKILL = 0x03, UI_SKILLTREE = 0x04,
         UI_CHAT = 0x05, UI_NPCMENU = 0x08, UI_ESCMENU = 0x09, UI_AUTOMAP = 0x0A, UI_HOTKEYS = 0x0B, UI_NPCSHOP = 0x0C,

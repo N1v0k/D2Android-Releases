@@ -43,6 +43,40 @@ final class WineFinger implements Finger {
 
     boolean modAuftrag(String was) {
         String[] w = was.split(" ");
+        try {
+
+
+            if (w[0].equals("traenke") && w.length == 7 && Long.parseLong(w[1]) > 0) {
+                send(cmd(16, 0, 0).put(new byte[]{bis40(w[2]), bis40(w[3]), bis40(w[4]), bis40(w[5])})
+                    .putInt((int) Long.parseLong(w[6])).putInt((int) Long.parseLong(w[1])));
+                return true;
+            }
+
+
+            boolean truhe = w[0].equals("truhe") && w.length == 4;
+            if ((w[0].equals("verkaufen") && w.length == 3 || truhe) && Long.parseLong(w[1]) > 0) {
+                String liste = w[w.length - 1];
+                String[] ids = liste.equals("-") ? new String[0] : liste.split(",");
+                java.nio.ByteBuffer b = cmd(truhe ? 18 : 17, 0, 0).put(new byte[]{(byte) ids.length, 0, 0, 0})
+                    .putInt(truhe ? (int) Long.parseLong(w[2]) : 0).putInt((int) Long.parseLong(w[1]));
+                for (String id : ids) b.putInt((int) Long.parseLong(id));
+                send(b);
+                return true;
+            }
+            if (w[0].equals("foliant") && w.length == 3 && Long.parseLong(w[1]) > 0) {
+                send(cmd(16, 0, 0).put(new byte[]{1, 0, 0, 0}).putInt((int) Long.parseLong(w[2]))
+                    .putInt((int) Long.parseLong(w[1])).put((byte) 2));
+                return true;
+            }
+            if (w[0].equals("rollen") && w.length == 4 && Long.parseLong(w[1]) > 0) {
+                send(cmd(16, 0, 0).put(new byte[]{bis40(w[2]), 0, 0, 0}).putInt((int) Long.parseLong(w[3]))
+                    .putInt((int) Long.parseLong(w[1])).put((byte) 1));
+                return true;
+            }
+        }
+        catch (NumberFormatException ignored) {
+            return false;
+        }
         if (w.length != 2) return false;
         try {
             long n = Long.parseLong(w[1]);
@@ -505,8 +539,13 @@ final class WineFinger implements Finger {
         }
     }
 
+
+    private static byte bis40(String n) {
+        return (byte) Math.max(0, Math.min(40, Integer.parseInt(n)));
+    }
+
     private static ByteBuffer cmd(int command, int a, int b) {
-        ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buf = ByteBuffer.allocate(256).order(ByteOrder.LITTLE_ENDIAN);
         buf.put((byte) 'D').put((byte) '2').put((byte) 'A').put((byte) 'C').put((byte) 1).put((byte) command).put((byte) a).put((byte) b);
         return buf;
     }

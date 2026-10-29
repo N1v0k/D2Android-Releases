@@ -268,9 +268,26 @@ final class D2PointHighlight {
     };
 
 
+
+
+
+
+    D2Layer into;
+    D2Frame intoFrame;
+
+
+    static void layerFrame(D2Layer l, D2Frame f, int[] spot) {
+        D2MaterialsLayer.scaledFrame(l, f, spot[0], spot[1], spot[2], spot[3], (int) FRAME_SCALE);
+    }
+
+
     private void frame(Canvas canvas, D2Hud hud, int[] spot, float[] m, int alpha) {
         float k = m[0];
         D2PointSpots.frame(spot, frameSpot);
+        if (into != null) {
+            layerFrame(into, intoFrame, frameSpot);
+            return;
+        }
         where.set(m[1] + frameSpot[0] * k, m[2] + frameSpot[1] * k,
             m[1] + (frameSpot[0] + frameSpot[2]) * k, m[2] + (frameSpot[1] + frameSpot[3]) * k);
         hud.drawFrame(canvas, where, FRAME_SCALE * k, 0, alpha);

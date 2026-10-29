@@ -218,23 +218,36 @@ final class D2Sound {
     }
 
 
+
+
+
     static void attach(Dialog dialog) {
         Window window = dialog.getWindow();
         if (window == null) return;
         final Window.Callback inner = window.getCallback();
         if (inner == null) return;
         final Context context = dialog.getContext();
+        final D2PadPages pad = D2PadDialogs.attach(dialog, window);
 
         window.setCallback((Window.Callback) java.lang.reflect.Proxy.newProxyInstance(Window.Callback.class.getClassLoader(),
             new Class<?>[]{Window.Callback.class}, (proxy, method, args) -> {
-                if ("dispatchTouchEvent".equals(method.getName()) && args != null && args[0] instanceof MotionEvent)
+                if ("dispatchTouchEvent".equals(method.getName()) && args != null && args[0] instanceof MotionEvent) {
                     touch(context, (MotionEvent) args[0]);
+                    if (((MotionEvent) args[0]).getActionMasked() == MotionEvent.ACTION_DOWN) pad.touched();
+                }
+                if ("dispatchKeyEvent".equals(method.getName()) && args != null && args[0] instanceof android.view.KeyEvent
+                    && pad.key((android.view.KeyEvent) args[0])) return true;
                 try {
-                    return method.invoke(inner, args);
+                    Object result = method.invoke(inner, args);
+                    if ("onAttachedToWindow".equals(method.getName())) D2PadDialogs.shown(window, pad);
+                    return result;
                 }
                 catch (java.lang.reflect.InvocationTargetException e) {
                     throw e.getCause();
                 }
             }));
+
+        android.view.View decor = window.peekDecorView();
+        if (decor != null && decor.isAttachedToWindow()) D2PadDialogs.shown(window, pad);
     }
 }

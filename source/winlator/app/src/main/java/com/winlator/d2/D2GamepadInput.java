@@ -173,6 +173,17 @@ final class D2GamepadInput {
             swallowed[button] = false;
             return;
         }
+        if (overlay.padInputBox(button, pressed)) {
+            if (!pressed) {
+                deferredBox[button] = deferred[button] = false;
+                if (longPress[button] != null) handler.removeCallbacks(longPress[button]);
+            }
+            return;
+        }
+        if (pressed ? overlay.padHoldsForBox(button) : deferredBox[button]) {
+            heldOpensBox(button, pressed);
+            return;
+        }
         if (button == D2Gamepad.LT) {
             overlay.padLayer(pressed);
             return;
@@ -192,6 +203,32 @@ final class D2GamepadInput {
             return;
         }
         overlay.padButton(button, overlay.padAction(button, pressedInLayer2[button]), pressed);
+    }
+
+
+    private final boolean[] deferredBox = new boolean[D2Gamepad.COUNT];
+
+
+    private void heldOpensBox(int button, boolean pressed) {
+        if (pressed) {
+            deferredBox[button] = true;
+            longDone[button] = false;
+            pressedInLayer2[button] = down[D2Gamepad.LT];
+            Runnable r = () -> {
+                if (!down[button] || !deferredBox[button]) return;
+                longDone[button] = true;
+                overlay.padOpenBox();
+            };
+            longPress[button] = r;
+            handler.postDelayed(r, D2Gamepad.LONG_MS);
+            return;
+        }
+        deferredBox[button] = false;
+        if (longPress[button] != null) handler.removeCallbacks(longPress[button]);
+        if (longDone[button]) return;
+        int act = overlay.padAction(button, pressedInLayer2[button]);
+        overlay.padButton(button, act, true);
+        overlay.padButton(button, act, false);
     }
 
 

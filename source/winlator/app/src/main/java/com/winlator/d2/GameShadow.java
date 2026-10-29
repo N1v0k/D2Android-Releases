@@ -78,14 +78,20 @@ public final class GameShadow {
 
 
     public static File prepare(Context context, File driveC, File gameDir, String d2dxCfg) throws IOException {
+        return prepare(context, driveC, gameDir, d2dxCfg, D2Mods.active(context));
+    }
 
 
-        if (!D2Saves.recover(D2Saves.saveDir(gameDir))) {
+    public static File prepare(Context context, File driveC, File gameDir, String d2dxCfg, D2ModInfo.Mod mod) throws IOException {
+
+
+        File saveDir = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
+        if (!D2Saves.recover(saveDir)) {
             throw new IOException(D2Text.get(context, R.string.saves_error_import_unfinished, D2Saves.BACKUP_FOLDER));
         }
 
 
-        D2SaveRepair.run(D2Saves.saveDir(gameDir));
+        D2SaveRepair.run(saveDir);
         File shadowDir = new File(driveC, DIR_NAME);
         if (!shadowDir.isDirectory() && !shadowDir.mkdirs()) throw new IOException("Cannot create " + shadowDir);
 
@@ -94,6 +100,9 @@ public final class GameShadow {
         if (existing != null) {
             for (File file : existing) if (FileUtils.isSymlink(file)) file.delete();
         }
+
+        D2ModOverlay.clear(shadowDir, (id) -> D2ModInfo.validId(id) && new File(D2Mods.root(), id).isDirectory()
+            ? new File(new File(D2Mods.root(), id), D2ModInfo.CACHE) : null);
 
         File glide = new File(shadowDir, "glide3x.dll");
         FileUtils.copy(context, D2DX_ASSET, glide);
@@ -111,11 +120,16 @@ public final class GameShadow {
 
         FileUtils.writeString(new File(shadowDir, "d2dx.cfg"), d2dxCfg != null ? d2dxCfg : defaultD2DXConfig());
 
+
+        java.util.List<String> laid = mod == null ? java.util.Collections.emptyList()
+            : D2ModOverlay.lay(shadowDir, mod.files(), gameDir, mod.cache(), mod.id, GameShadow::isProvided);
+        if (mod != null) D2Trace.log("mod " + mod.id + " laid over the game folder: " + laid);
         File[] entries = gameDir.listFiles();
         if (entries == null) throw new IOException("Spielordner nicht lesbar: " + gameDir);
         for (File entry : entries) {
             String name = entry.getName();
             if (isProvided(name)) continue;
+            if (D2ModOverlay.nameIn(laid, name.toLowerCase(Locale.ROOT)) != null) continue;
             File link = new File(shadowDir, name);
             if (link.exists() || FileUtils.isSymlink(link)) continue;
             FileUtils.symlink(entry, link);

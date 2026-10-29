@@ -15,6 +15,22 @@ final class D2SkillAim {
     }
 
 
+
+
+
+
+
+    static final long LEFT_HOLD_MS = 120;
+
+
+
+
+
+    static boolean leftReleaseMayGo(long pressAt, long now) {
+        return pressAt < 0 || now - pressAt >= LEFT_HOLD_MS;
+    }
+
+
     static final long GROUND_REST_MS = 40;
 
     static final long GROUND_MAX_MS = 600;

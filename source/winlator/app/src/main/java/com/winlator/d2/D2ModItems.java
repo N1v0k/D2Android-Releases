@@ -98,6 +98,12 @@ public final class D2ModItems {
     public final int tpTomeMax, idTomeMax, keyMax;
 
     public final long usedCells;
+
+
+
+
+    private int gridWidth = INVENTORY_WIDTH, gridHeight = INVENTORY_HEIGHT;
+    private long usedLow, usedHigh;
     public final List<Item> items;
 
     private D2ModItems(ByteBuffer b) {
@@ -123,6 +129,7 @@ public final class D2ModItems {
         long used = 0;
         for (int i = 0; i < 5; i++) used |= (long) u8(b) << (8 * i);
         usedCells = used;
+        usedLow = used;
         int count = u8(b);
         List<Item> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
@@ -172,14 +179,53 @@ public final class D2ModItems {
         return null;
     }
 
+
+
+
+
+    public void attachGrid(int width, int height, byte[] mask) {
+        if (width < 1 || width > 16 || height < 1 || height > 8 || mask == null || mask.length * 8 < width * height) return;
+        long low = 0, high = 0;
+        for (int i = 0; i < width * height; i++) {
+            if ((mask[i / 8] >> (i % 8) & 1) == 0) continue;
+            if (i < 64) low |= 1L << i;
+            else high |= 1L << (i - 64);
+        }
+        gridWidth = width;
+        gridHeight = height;
+        usedLow = low;
+        usedHigh = high;
+    }
+
+
+    public int gridWidth() {
+        return gridWidth;
+    }
+
+    public int gridHeight() {
+        return gridHeight;
+    }
+
+
+    public long usedCellsLow() {
+        return usedLow;
+    }
+
+
+    public long usedCellsHigh() {
+        return usedHigh;
+    }
+
     public boolean cellUsed(int x, int y) {
-        return (usedCells >> (y * INVENTORY_WIDTH + x) & 1) != 0;
+        int i = y * gridWidth + x;
+        if (x < 0 || y < 0 || x >= gridWidth || y >= gridHeight) return true;
+        return ((i < 64 ? usedLow >> i : usedHigh >> (i - 64)) & 1) != 0;
     }
 
 
     public boolean fits(int width, int height) {
-        for (int y = 0; y + height <= INVENTORY_HEIGHT; y++) {
-            for (int x = 0; x + width <= INVENTORY_WIDTH; x++) {
+        for (int y = 0; y + height <= gridHeight; y++) {
+            for (int x = 0; x + width <= gridWidth; x++) {
                 boolean free = true;
                 for (int dy = 0; dy < height && free; dy++) for (int dx = 0; dx < width && free; dx++) free = !cellUsed(x + dx, y + dy);
                 if (free) return true;
@@ -189,7 +235,9 @@ public final class D2ModItems {
     }
 
     public int freeCells() {
-        return INVENTORY_WIDTH * INVENTORY_HEIGHT - Long.bitCount(usedCells & ((1L << (INVENTORY_WIDTH * INVENTORY_HEIGHT)) - 1));
+        int cells = gridWidth * gridHeight;
+        long lowMask = cells >= 64 ? -1L : (1L << cells) - 1, highMask = cells <= 64 ? 0 : cells >= 128 ? -1L : (1L << (cells - 64)) - 1;
+        return cells - Long.bitCount(usedLow & lowMask) - Long.bitCount(usedHigh & highMask);
     }
 
 

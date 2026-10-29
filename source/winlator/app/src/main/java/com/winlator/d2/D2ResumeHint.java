@@ -111,7 +111,7 @@ final class D2ResumeHint {
         this.exit = new D2ResumeExit(new D2ResumeExit.Host() {
             @Override public void send(int kind) { link.resumeExit(kind); }
             @Override public String text(int which) {
-                return host.text(which == D2ResumeExit.TEXT_TOWN ? R.string.resume_exit_town : R.string.resume_exit_continue);
+                return host.text(R.string.resume_exit_town);
             }
         });
     }
@@ -129,6 +129,15 @@ final class D2ResumeHint {
             folder = dir.getAbsolutePath();
         }
         saveDir = D2Saves.saveDir(dir);
+    }
+
+
+
+
+
+    void setSaveDir(File saves) {
+        saveDir = saves;
+        folder = D2ResumeArea.key(saves);
     }
 
     private File heroFile(String name) {

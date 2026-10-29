@@ -54,8 +54,8 @@ public final class D2HelperEntries {
             "boxSlot2", "boxSlot3", "xpBar", "xpLevel");
         group(TAB_DISPLAY, "Hervorgehoben (weiß)", "hiClock", "hiFps", "hiBattery", "hiPlayers", "hiLevel", "hiDps", "hiGold");
         group(TAB_DISPLAY, "Namen am Boden", "itemLabels", "dropLabels", "labelsNearOnly", "lootFilter", "lootHide");
-        group(TAB_DISPLAY, "Gegenstände", "compareEquipped", "valueLine", "diffLines");
-        group(TAB_DISPLAY, "Schaden", "damageStyle", "damageDps");
+        group(TAB_DISPLAY, "Gegenstände", "compareEquipped", "valueLine", "diffLines", "windowInfo");
+        group(TAB_DISPLAY, "Schaden", "damageStyle");
         group(TAB_DISPLAY, "Karte", "mapHack", "mapFightHide", "mapFightDelay");
         group(TAB_DISPLAY, "Sonst", "hidePointer", "joystickVisible");
         group(TAB_CONTROL, "Zielhilfe", "aimAssist", "aimRangeMelee", "aimRange", "aimCone", "aimBlind", "highlight");
@@ -75,8 +75,6 @@ public final class D2HelperEntries {
         DEPENDS.put("aimCone", "aimAssist");
         DEPENDS.put("aimBlind", "aimAssist");
         DEPENDS.put("mapFightDelay", "mapFightHide");
-        DEPENDS.put("shopReserveHeal", "potionShop");
-        DEPENDS.put("shopReserveMana", "potionShop");
     }
 
     private static void group(String tab, String name, String... keys) {
@@ -220,7 +218,7 @@ public final class D2HelperEntries {
             l.add(new Entry(Kind.CHECK, key, "helper_" + key + "_label", s, TAB_DISPLAY, false, null, null));
 
         s = "Menü oben rechts";
-        l.add(new Entry(Kind.PINS, "menuPinned", "helper_menuPinned_label", s, TAB_CONTROL, false, "helper_menuPinned_lead", null, "pause", "helper_pin_pause", "portal", "helper_pin_portal", "inv", "helper_pin_inv", "char", "helper_pin_char", "skills", "helper_pin_skills", "map", "helper_pin_map", D2MenuRow.QUESTS, "helper_pin_quests", "esc", "helper_pin_esc", "names", "helper_pin_names", "run", "helper_pin_run", "keys", "helper_pin_keys", "drawer", "helper_pin_drawer"));
+        l.add(new Entry(Kind.PINS, "menuPinned", "helper_menuPinned_label", s, TAB_CONTROL, false, "helper_menuPinned_lead", null, "pause", "helper_pin_pause", "portal", "helper_pin_portal", "inv", "helper_pin_inv", D2RezeptOeffnen.MENU_ID, "helper_pin_recipes", "char", "helper_pin_char", "skills", "helper_pin_skills", "map", "helper_pin_map", D2MenuRow.QUESTS, "helper_pin_quests", "esc", "helper_pin_esc", "names", "helper_pin_names", "run", "helper_pin_run", "keys", "helper_pin_keys", "drawer", "helper_pin_drawer"));
 
 
         s = "Schultertasten";
@@ -270,11 +268,11 @@ public final class D2HelperEntries {
         l.add(new Entry(Kind.CHECK, "compareEquipped", "helper_compareEquipped_label", s, TAB_DISPLAY, false, null, "helper_compareEquipped_info"));
         l.add(new Entry(Kind.CHECK, "valueLine", "helper_valueLine_label", s, TAB_DISPLAY, false, null, "helper_valueLine_info"));
         l.add(new Entry(Kind.CHECK, "diffLines", "helper_diffLines_label", s, TAB_DISPLAY, false, null, "helper_diffLines_info"));
+        l.add(new Entry(Kind.CHECK, "windowInfo", "helper_windowInfo_label", s, TAB_DISPLAY, false, null, "helper_windowInfo_info"));
 
         s = "Schaden";
         l.add(new Entry(Kind.CHOICE, "damageStyle", "helper_damageStyle_label", s, TAB_DISPLAY, false, null, "helper_damageStyle_info",
             "helper_damageStyle_opt0", "helper_damageStyle_opt1", "helper_damageStyle_opt2"));
-        l.add(new Entry(Kind.CHECK, "damageDps", "helper_damageDps_label", s, TAB_DISPLAY, false, null, "helper_damageDps_info"));
         s = "Gegenstände";
         l.add(new Entry(Kind.CHECK, "autoGold", "helper_autoGold_label", s, TAB_AUTO, false, null, null));
         l.add(new Entry(Kind.CHECK, "pickPotions", "helper_pickPotions_label", s, TAB_AUTO, false, null, "helper_pickPotions_info"));
@@ -355,9 +353,10 @@ public final class D2HelperEntries {
 
 
     public static final String SET_CONTROL = "steuerung", SET_DISPLAY = "anzeige", SET_LOOT = "beute", SET_POTIONS = "traenke",
-        SET_GAME = "spiel", SET_SAVES = "spielstaende", SET_HELP = "hilfe";
+        SET_GAME = "spiel", SET_SPIELWEISE = "spielweise", SET_MODS = "mods", SET_SAVES = "spielstaende", SET_HELP = "hilfe";
+
     public static final List<String> SETTINGS_GROUPS = Collections.unmodifiableList(java.util.Arrays.asList(
-        SET_CONTROL, SET_DISPLAY, SET_LOOT, SET_POTIONS, SET_GAME, SET_SAVES, SET_HELP));
+        SET_CONTROL, SET_DISPLAY, SET_LOOT, SET_POTIONS, SET_GAME, SET_SPIELWEISE, SET_MODS, SET_SAVES, SET_HELP));
 
     public static final Map<String, List<String>> SECTIONS = new LinkedHashMap<>();
     private static final Map<String, String[]> PLACE = new HashMap<>();
@@ -379,33 +378,56 @@ public final class D2HelperEntries {
             "boxSlot2", "boxSlot3", "xpBar", "xpLevel");
         section(SET_DISPLAY, "hervorgehoben", "hiClock", "hiFps", "hiBattery", "hiPlayers", "hiLevel", "hiDps", "hiGold");
         section(SET_DISPLAY, "karte", "mapHack", "mapFightHide", "mapFightDelay");
-        section(SET_DISPLAY, "schaden", "damageStyle", "damageDps");
+        section(SET_DISPLAY, "schaden", "damageStyle");
+        section(SET_DISPLAY, "app", "appLanguage", "shortcut");
         section(SET_LOOT, "namen", "itemLabels", "dropLabels", "labelsNearOnly");
         section(SET_LOOT, "lootfilter", "lootFilter", "lootHide");
         section(SET_LOOT, "aufheben", "autoGold", "pickPotions", "pickScrolls", "pickRunes", "pickGems", "pickJewelry");
         section(SET_LOOT, "nehmen", "itemsNeedLabels", "ringSort");
-        section(SET_LOOT, "ansehen", "compareEquipped", "valueLine", "diffLines");
+        section(SET_LOOT, "ansehen", "compareEquipped", "valueLine", "diffLines", "windowInfo");
         section(SET_LOOT, "materialien", "materials");
         section(SET_POTIONS, "traenke", "potions", "autoLife", "autoRejuv", "autoMana", "mercPotions", "beltRefill");
-        section(SET_POTIONS, "haendler", "autoTrade", "potionShop", "shopReserveHeal", "shopReserveMana", "minGold");
+
+        section(SET_POTIONS, "vorrat", "shopReserveHeal", "shopReserveMana");
+        section(SET_POTIONS, "haendler", "autoTrade", "potionShop", "minGold");
         section(SET_GAME, "ton", "sound");
         section(SET_GAME, "im_spiel", "players", "autoPause", "largeStacks", "resume");
-        section(SET_GAME, "start", "gameLines", "frameRate", "skipIntro", "mod", "appLanguage");
-        section(SET_GAME, "plugy", "plugy", "bigStash", "autosave", "respec", "statsPages", "plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue");
+        section(SET_GAME, "start", "gameLines", "frameRate", "skipIntro", "mod");
+        section(SET_GAME, "plugy", "plugy", "autosave", "statsPages", "plugyActiveSharedGold", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue");
 
-        section(SET_GAME, "plugy_extras", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP");
-        section(SET_SAVES, "ordner", "gameFolder", "install", "shortcut");
+
+        section(SET_GAME, "plugy_extras", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP");
+
+        section(SET_SPIELWEISE, "spielweise", "swPreset");
+        section(SET_SPIELWEISE, "spielweise_beute", "swQuality", "swNoDrop", "swRunes", "swBoss", "swUniques", "swGamble");
+        section(SET_SPIELWEISE, "spielweise_fortschritt", "swExp", "swDensity");
+        section(SET_SPIELWEISE, "spielweise_inhalte", "swLadder", "swCow", "swUber", "swWorld");
+
+
+
+        section(SET_SPIELWEISE, "spielweise_truhe", "bigStash", "bigInventory", "swShared", "swSort", "respec");
+
+
+        section(SET_MODS, "mods_play", "modsList");
+        section(SET_MODS, "mods_add", "modsImport");
+        section(SET_MODS, "mods_start", "argDirect", "argTxt", "argNs", "argsFree");
+        section(SET_SAVES, "ordner", "gameFolder", "install");
         section(SET_SAVES, "spielstaende", "savesShare", "savesLoad");
         section(SET_HELP, "hilfe", "intro", "background");
         section(SET_HELP, "fehlersuche", "diagnose", "report");
-        section(SET_HELP, "ueber", "news", "updateCheck", "licenses", "about");
+        section(SET_HELP, "ueber", "news", "updateCheck", "telemetry", "licenses", "about");
         for (String k : new String[]{"gameFolder", "install", "savesShare", "savesLoad"}) SCOPE.put(k, BEFORE_START);
-        for (String k : new String[]{"gameLines", "frameRate", "skipIntro", "mod", "appLanguage", "plugy", "bigStash", "autosave",
+        for (String k : new String[]{"gameLines", "frameRate", "skipIntro", "mod", "appLanguage", "plugy", "bigStash", "bigInventory", "autosave",
             "respec", "statsPages"}) SCOPE.put(k, NEXT_START);
-        for (String k : new String[]{"plugyActiveSharedGold", "plugyActiveLadderRunewords", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue", "plugyActiveWorldEvent", "plugyActiveUberQuest", "plugyActiveCowPortalWhenCowKingWasKilled", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP"}) SCOPE.put(k, NEXT_START);
+        for (String k : new String[]{"plugyActiveSharedGold", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP"}) SCOPE.put(k, NEXT_START);
+
+        for (String k : new String[]{"swPreset", "swQuality", "swNoDrop", "swRunes", "swBoss", "swUniques", "swGamble", "swExp", "swDensity", "swLadder", "swCow", "swUber", "swWorld", "swShared", "swSort"}) SCOPE.put(k, NEXT_START);
+
+        for (String k : new String[]{"argDirect", "argTxt", "argNs", "argsFree"}) SCOPE.put(k, NEXT_START);
+
+        for (String k : new String[]{"modsList", "modsImport"}) SCOPE.put(k, BEFORE_START);
         keywords("aimBlind", "toter winkel blind spot hinter ruecken behind auto aim");
         keywords("damageStyle", "schaden zahlen schadenszahlen damage numbers dmg");
-        keywords("damageDps", "dps schaden pro sekunde damage per second");
         keywords("mapHack", "map karte aufdecken minimap reveal automap");
         keywords("lootFilter", "loot filter lootfilter beute ausblenden hide");
         keywords("lootHide", "loot filter lootfilter eigene own");
@@ -422,6 +444,9 @@ public final class D2HelperEntries {
         keywords("padMap", "gamepad controller pad tasten buttons belegung zuweisung");
         keywords("padCursorSpeed", "gamepad controller pad zeiger cursor maus mouse pointer tempo speed geschwindigkeit");
         keywords("bigStash", "truhe stash gross big kiste");
+        keywords("bigInventory", "inventar inventory gross big platz rucksack taschen");
+        keywords("swShared", "truhe stash geteilt shared plugy seiten gold");
+        keywords("swSort", "ordnen sortieren sort inventar inventory");
         keywords("plugy", "plugy truhe stash shared geteilt runenwoerter ladder");
         keywords("players", "spieler players schwierigkeit drops");
         keywords("triggers", "schultertasten trigger tasten l r redmagic");
@@ -444,21 +469,39 @@ public final class D2HelperEntries {
         keywords("gameFolder", "ordner folder spielordner pfad");
         keywords("install", "installieren install download");
         keywords("shortcut", "verknuepfung shortcut symbol icon startbildschirm home screen launcher desktop");
-        keywords("intro", "einfuehrung tour hilfe help");
+        keywords("intro", "einfuehrung tour hilfe help hinweise hints tipps tips");
         keywords("diagnose", "diagnose fehler log logs");
         keywords("report", "fehler melden bug report");
         keywords("licenses", "lizenzen licenses open source");
         keywords("news", "neuigkeiten news aenderungen changelog version");
         keywords("updateCheck", "update neue version");
+        keywords("telemetry", "statistik statistics nutzung usage anonym anonymous datenschutz privacy aptabase daten data");
         keywords("respec", "respec zuruecksetzen punkte reset");
         keywords("statsPages", "werte seiten stats pages widerstaende");
         keywords("plugyActiveSharedGold", "plugy gold geteilt shared");
-        keywords("plugyActiveLadderRunewords", "plugy runenwoerter runewords ladder");
         keywords("plugyActiveDisplayItemLevel", "plugy gegenstandsstufe ilvl item level stufe");
         keywords("plugyActiveDisplayBaseStatsValue", "plugy grundwerte base stats werte");
-        keywords("plugyActiveWorldEvent", "plugy weltereignis world event diablo klon clone");
-        keywords("plugyActiveUberQuest", "plugy uber quest torch fackel");
-        keywords("plugyActiveCowPortalWhenCowKingWasKilled", "plugy kuh cow level portal");
+
+        keywords("swPreset", "spielregeln spielweise classic enhanced original voreinstellung preset modus mode drops beute loot");
+        keywords("swQuality", "beute qualitaet quality unique set rare selten magic find mf drops");
+        keywords("swDensity", "monster dichte density mehr more gegner enemies menge");
+        keywords("swNoDrop", "leere drops nodrop nichts fallen spieler players beute loot");
+        keywords("swRunes", "runen runes hohe high ber jah zod ist vex");
+        keywords("swBoss", "boss bosse beute loot andariel duriel mephisto diablo baal");
+        keywords("swUniques", "unique mehrfach doppelt twice once einmal spiel game");
+        keywords("swGamble", "gluecksspiel gamble gambling gheed anya jamella unique set rare");
+        keywords("swExp", "erfahrung experience xp exp stufe level grind 70 80 90");
+        keywords("swLadder", "ladder runenwoerter runewords spirit insight uniques offline plugy");
+        keywords("swCow", "kuh kuhlevel cow level portal plugy");
+        keywords("swUber", "uber quest tristram pandemonium schluessel keys fackel torch plugy");
+        keywords("swWorld", "weltereignis world event diablo klon clone plugy");
+
+        keywords("argDirect", "mod mods startparameter parameter befehlszeile command line direct data ordner folder");
+        keywords("argTxt", "mod mods startparameter parameter befehlszeile command line txt tabellen tables excel");
+        keywords("argNs", "mod mods startparameter parameter ns ton sound stumm mute");
+        keywords("argsFree", "mod mods startparameter parameter befehlszeile command line frei free eigene custom");
+        keywords("modsList", "mod mods original spielen play aktiv active wechseln switch enjoy median");
+        keywords("modsImport", "mod mods installieren install hinzufuegen add zip 7z datei file import");
         keywords("plugyActiveDoNotCloseNihlathakPortal", "plugy nihlathak portal");
         keywords("plugyMoveCainNearHarrogathWaypoint", "plugy cain harrogath wegpunkt waypoint");
         keywords("plugyAlwaysRegenMapInSP", "plugy karte map neu new regen laden load fortsetzen weiterspielen");
@@ -466,6 +509,7 @@ public final class D2HelperEntries {
         keywords("hud", "leiste hud kugeln orbs kompakt");
         keywords("valueLine", "wert bewertung value");
         keywords("compareEquipped", "vergleich vergleichen compare angelegt");
+        keywords("windowInfo", "bedienung hilfe info fenster window controls gesten gestures fragezeichen");
         keywords("materials", "materialien runen edelsteine edelsteinen lager stash");
         keywords("autoTrade", "handel haendler trade shop verkaufen");
         keywords("potionShop", "traenke auffuellen laden shop kaufen");
@@ -535,12 +579,21 @@ public final class D2HelperEntries {
         String[][] items = {
             {"sound", "settings_sound"}, {"appLanguage", "settings_language"}, {"gameLines", "settings_size"}, {"frameRate", "settings_frame_rate"},
             {"skipIntro", "settings_skip_intro"}, {"mod", "settings_mod"}, {"plugy", "settings_plugy_use"},
-            {"bigStash", "settings_plugy_big_stash"}, {"autosave", "settings_plugy_autosave"}, {"respec", "settings_plugy_respec"},
-            {"statsPages", "settings_plugy_stats"}, {"plugyActiveSharedGold", "settings_plugy_ActiveSharedGold"}, {"plugyActiveLadderRunewords", "settings_plugy_ActiveLadderRunewords"}, {"plugyActiveDisplayItemLevel", "settings_plugy_ActiveDisplayItemLevel"}, {"plugyActiveDisplayBaseStatsValue", "settings_plugy_ActiveDisplayBaseStatsValue"}, {"plugyActiveWorldEvent", "settings_plugy_ActiveWorldEvent"}, {"plugyActiveUberQuest", "settings_plugy_ActiveUberQuest"}, {"plugyActiveCowPortalWhenCowKingWasKilled", "settings_plugy_ActiveCowPortalWhenCowKingWasKilled"}, {"plugyActiveDoNotCloseNihlathakPortal", "settings_plugy_ActiveDoNotCloseNihlathakPortal"}, {"plugyMoveCainNearHarrogathWaypoint", "settings_plugy_MoveCainNearHarrogathWaypoint"}, {"plugyAlwaysRegenMapInSP", "settings_plugy_AlwaysRegenMapInSP"}, {"background", "settings_background"}, {"gameFolder", "settings_game_folder"},
+            {"bigStash", "settings_plugy_big_stash"}, {"bigInventory", "settings_big_inventory"}, {"autosave", "settings_plugy_autosave"}, {"respec", "settings_plugy_respec"},
+            {"statsPages", "settings_plugy_stats"}, {"plugyActiveSharedGold", "settings_plugy_ActiveSharedGold"}, {"plugyActiveDisplayItemLevel", "settings_plugy_ActiveDisplayItemLevel"}, {"plugyActiveDisplayBaseStatsValue", "settings_plugy_ActiveDisplayBaseStatsValue"}, {"plugyActiveDoNotCloseNihlathakPortal", "settings_plugy_ActiveDoNotCloseNihlathakPortal"}, {"plugyMoveCainNearHarrogathWaypoint", "settings_plugy_MoveCainNearHarrogathWaypoint"}, {"plugyAlwaysRegenMapInSP", "settings_plugy_AlwaysRegenMapInSP"}, {"background", "settings_background"}, {"gameFolder", "settings_game_folder"},
             {"install", "settings_install"}, {"shortcut", "settings_shortcut"}, {"savesShare", "settings_saves_share"},
             {"savesLoad", "settings_saves_load"},
-            {"news", "news_title"}, {"updateCheck", "settings_update_check"}, {"licenses", "licenses_title"},
-            {"about", "settings_about"}, {"editButtons", "settings_edit_buttons"}};
+            {"news", "news_title"}, {"updateCheck", "settings_update_check"}, {"telemetry", "settings_telemetry"}, {"licenses", "licenses_title"},
+            {"about", "settings_about"}, {"editButtons", "settings_edit_buttons"},
+
+            {"swPreset", "settings_sw_preset"}, {"swQuality", "settings_sw_quality"}, {"swNoDrop", "settings_sw_nodrop"},
+            {"swRunes", "settings_sw_runes"}, {"swBoss", "settings_sw_boss"}, {"swUniques", "settings_sw_uniques"},
+            {"swGamble", "settings_sw_gamble"}, {"swExp", "settings_sw_exp"}, {"swDensity", "settings_sw_density"}, {"swLadder", "settings_sw_ladder"},
+            {"swCow", "settings_sw_cow"}, {"swUber", "settings_sw_uber"}, {"swWorld", "settings_sw_world"},
+            {"swShared", "settings_sw_shared"}, {"swSort", "settings_sw_sort"},
+
+            {"argDirect", "settings_arg_direct"}, {"argTxt", "settings_arg_txt"}, {"argNs", "settings_arg_ns"},
+            {"argsFree", "settings_args_free"}, {"modsList", "settings_mods_list"}, {"modsImport", "settings_mods_import"}};
         for (String[] item : items) l.add(new Entry(Kind.HOST, item[0], item[1], null, null, false, null, null));
         return l;
     }
@@ -553,9 +606,12 @@ public final class D2HelperEntries {
     }
 
 
+
+
+
     public static boolean shownIn(Entry e, boolean internal) {
         if (!shown(e, internal)) return false;
-        return !(internal && "updateCheck".equals(e.key));
+        return !(internal && ("updateCheck".equals(e.key) || "telemetry".equals(e.key)));
     }
 
 

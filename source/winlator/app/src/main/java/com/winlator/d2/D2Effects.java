@@ -290,6 +290,86 @@ public final class D2Effects {
     }
 
 
+
+
+
+
+
+    boolean layer(D2Layer l, D2Hud hud, D2LayerArt art, int gameWidth, int gameHeight, float scale, float x0, float y0, long now) {
+        hitCount = 0;
+        drawnAt = now;
+        if (hud == null || art == null) return false;
+        l.stage(D2Layer.STAGE_TOOLTIP);
+        layerPictures.begin();
+        int inner = D2EffectRules.BOX - 6;
+        for (int state : shown) {
+            if (hitCount >= MAX) break;
+            Effect e = find(state);
+            if (e == null) continue;
+            int[] at = D2EffectRules.place(hitCount);
+            box.set(x0 + at[0] * scale, y0 + at[1] * scale, x0 + (at[0] + D2EffectRules.BOX) * scale, y0 + (at[1] + D2EffectRules.BOX) * scale);
+            hits[hitCount].set(box);
+            hitState[hitCount++] = e.state;
+            Info info = info(state);
+            if (info != null && info.shrine() && hud.shrinePicture(state) != null) return false;
+            D2MaterialsLayer.box(l, art, at[0], at[1], D2EffectRules.BOX, D2EffectRules.BOX, FILL & 0xFFFFFF);
+
+            String path;
+            int frame;
+            int[] crop;
+            String picture = info != null && info.skill < 0 ? info.picture : null;
+            int h = D2EffectRules.harm(state);
+            if (picture == null && info == null && h >= 0) picture = D2EffectRules.HARM_PICTURES[h];
+            if (picture != null) {
+                path = art.effectPath(picture);
+                frame = 0;
+                crop = art.effectCrop(picture);
+            }
+            else {
+                int skill = info != null ? info.skill : D2EffectRules.skillOf(state, hud.stateSkills());
+                Bitmap b = skill >= 0 ? hud.skillIcon(skill) : null;
+                path = b != null ? hud.skillIconPath(skill) : null;
+                frame = b != null ? hud.skillIconFrame(skill) : -1;
+                crop = b != null ? new int[]{b.getWidth(), b.getHeight(), 0, 0, b.getWidth(), b.getHeight()} : null;
+            }
+            int ix = at[0] + 3, iy = at[1] + 3;
+            int no = path != null && crop != null && frame >= 0 ? layerPictures.number(path) : -1;
+            if (no >= 0) {
+                float k = Math.min(inner / (float) crop[4], inner / (float) crop[5]);
+                int w = Math.max(1, Math.round(crop[4] * k)), hh = Math.max(1, Math.round(crop[5] * k));
+                int px = ix + (inner - w) / 2, py = iy + (inner - hh) / 2;
+                l.picture(no, path, frame, crop[2], crop[3], crop[4], crop[5], px, py, w, hh);
+                boolean blink = !e.points && e.full > 0 && e.left <= 100 && (now / 400) % 2 == 0;
+                if (blink) l.rect(px, py, w, hh, art.colour(0x000000), D2Layer.ALPHA_50);
+            }
+            if (e.full > 0) {
+
+                int gone = Math.round(inner * D2EffectRules.gone(e.left, e.full));
+                if (gone > 0) l.rect(ix, iy, inner, gone, art.colour(0x000000), D2Layer.ALPHA_50);
+                String under = e.points ? D2EffectRules.percent(e.left, e.full) + "%" : time(e.left);
+                l.text(at[0] + D2EffectRules.BOX / 2, at[1] + D2EffectRules.BOX + 7 + D2MaterialsLayer.DOWN_FONT8, D2Layer.FONT8,
+                    D2Layer.GOLD, D2Layer.CENTRE, under);
+            }
+        }
+        if (message != null && now < messageUntil) {
+            int w = art.width(D2Layer.FONT16, message) + 28, hh = 26, cy = Math.round(gameHeight * 0.28f), cx = gameWidth / 2;
+            D2MaterialsLayer.box(l, art, cx - w / 2, cy - hh / 2, w, hh, FILL & 0xFFFFFF);
+
+
+            int x = cx - art.width(D2Layer.FONT16, message) / 2;
+            for (int at = 0; at < message.length(); at += D2Layer.MAX_TEXT) {
+                String piece = message.substring(at, Math.min(message.length(), at + D2Layer.MAX_TEXT));
+                l.text(x, cy + D2MaterialsLayer.DOWN_FONT16, D2Layer.FONT16, D2Layer.GOLD, D2Layer.LEFT, piece);
+                x += art.width(D2Layer.FONT16, piece);
+            }
+        }
+        return true;
+    }
+
+
+    private final D2EffectRules.LayerPictures layerPictures = new D2EffectRules.LayerPictures();
+
+
     static String time(int tenths) {
         int s = (tenths + 9) / 10;
         return s >= 60 ? s / 60 + ":" + (s % 60 < 10 ? "0" : "") + s % 60 : Integer.toString(s);

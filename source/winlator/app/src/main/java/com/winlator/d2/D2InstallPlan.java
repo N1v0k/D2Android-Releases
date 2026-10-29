@@ -79,16 +79,22 @@ public final class D2InstallPlan {
 
 
 
+
+
     public static String helperState(java.util.List<String> lines) {
         String state = null;
         for (String line : lines) {
             String[] parts = line.trim().split(" ");
             if (parts.length < 3) continue;
             if (parts[1].equals("progress")) return "progress";
-            if (parts[1].equals("no-progress") || parts[1].equals("start-menu")) state = parts[1];
+            if (DIALOG_UNKNOWN.equals(state)) continue;
+            if (parts[1].equals("no-progress") || parts[1].equals("start-menu") || parts[1].equals(DIALOG_UNKNOWN)) state = parts[1];
         }
         return state;
     }
+
+
+    public static final String DIALOG_UNKNOWN = "dialog-unknown";
 
 
 

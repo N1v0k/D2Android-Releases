@@ -28,10 +28,6 @@ public final class D2InfoStrip {
 
     private static final int COVER = 0xFF000000;
 
-    private static final int XP_FULL = 0xFFFFFFFF, XP_TENTH_FULL = 0xFF505050, XP_TENTH_EMPTY = 0xFF7A7A7A;
-
-    private static final float XP_TEXT = 1.25f;
-
     private static final int NORMAL = 0xC8B074, HIGHLIGHTED = 0xFFFFFF;
 
     private static final int BOX_GAP = 8, BOX_PAD = 5;
@@ -50,6 +46,7 @@ public final class D2InfoStrip {
     private long xpHeldSince;
     static final long XP_HOLD_MS = 1500;
     private int batteryPercent = -1, framesPerSecond = -1, lastFrames, players, level;
+
 
     private int[] facts;
     private final Paint fill = new Paint();
@@ -131,8 +128,9 @@ public final class D2InfoStrip {
     }
 
 
+
     public boolean showsDps() {
-        return (grid && D2InfoGrid.showsDps(slots)) || (box && boxOpen && D2InfoGrid.showsDps(boxSlots));
+        return (grid && D2InfoGrid.showsDps(slots)) || (box && D2InfoGrid.showsDps(boxSlots));
     }
 
 
@@ -199,8 +197,17 @@ public final class D2InfoStrip {
 
 
     public boolean active() {
-        return grid || box || xpBar;
+        return grid || box;
     }
+
+
+
+
+
+    public int xpBarBits(boolean compact) {
+        return xpBar ? 1 | (xpLevel ? 2 : 0) | (compact ? 4 : 0) : 0;
+    }
+
 
 
 
@@ -233,7 +240,7 @@ public final class D2InfoStrip {
             }
             float in = 4 * scale, halfW = (plate.width() - 2 * in) / 2, rowH = (plate.height() - 2 * in) / 2;
             for (int i = 0; i < D2InfoGrid.SLOTS; i++) {
-                String t = entry(slots[i], wall, mono);
+                String t = gridEntry(slots[i], wall, mono);
                 if (t.isEmpty()) continue;
                 float cx = plate.left + in + halfW * (i % 2) + halfW / 2;
                 float cy = plate.top + in + rowH * (i / 2) + rowH / 2;
@@ -242,29 +249,6 @@ public final class D2InfoStrip {
                 float k = wide > room ? scale * Math.max(0.6f, room / wide) : scale;
                 hud.drawSmallText(canvas, t, cx, cy, k, 255, highlighted[slots[i]] ? HIGHLIGHTED : NORMAL);
             }
-        }
-        if (bar) {
-
-
-            set(area, D2InfoGrid.xpBar(gameWidth, gameHeight, compact), scale, x0, y0);
-            if (pieces) hud.drawXpBar(canvas, area, scale);
-            else {
-                fill.setColor(COVER);
-                canvas.drawRect(area, fill);
-            }
-            float left = area.left + scale, right = area.right - scale, filled = left + (right - left) * done;
-            fill.setColor(XP_FULL);
-            canvas.drawRect(left, area.top + 2 * scale, filled, area.top + 4 * scale, fill);
-            for (int i = 1; i < D2InfoGrid.XP_SECTIONS; i++) {
-                float x = left + (right - left) * i / D2InfoGrid.XP_SECTIONS;
-                fill.setColor(x <= filled ? XP_TENTH_FULL : XP_TENTH_EMPTY);
-
-                canvas.drawRect(x, area.top + scale, x + Math.max(2, 2 * scale), area.top + 5 * scale, fill);
-            }
-            hud.drawTinyTextRight(canvas, Math.round(done * 100) + "%", area.right, area.top - 2 * scale, XP_TEXT * scale, NORMAL);
-
-            if (xpLevel && level > 0) hud.drawTinyTextLeft(canvas, D2Text.get(context, R.string.xp_level, level), area.left,
-                area.top - 2 * scale, XP_TEXT * scale, NORMAL);
         }
 
         if (box && boxOpen && staminaKnown && !boxBlocked) {
@@ -293,6 +277,38 @@ public final class D2InfoStrip {
             set(area, D2InfoGrid.arrow(gameWidth, gameHeight), scale, x0, y0);
             hud.drawArrow(canvas, boxOpen, false, area);
         }
+    }
+
+    private final D2InfoLayer.State layerState = new D2InfoLayer.State();
+
+
+
+
+
+    D2Layer layer(D2InfoLayer.Art art, int gameWidth, int gameHeight, boolean staminaKnown, boolean boxBlocked) {
+        D2Layer l = new D2Layer();
+        if (art == null || gameWidth <= 0 || gameHeight <= 0) return l;
+        long wall = System.currentTimeMillis(), mono = monotonicMs();
+        D2InfoLayer.State st = layerState;
+        st.grid = grid && staminaKnown;
+        st.box = box && staminaKnown && !boxBlocked;
+        st.boxOpen = boxOpen;
+        st.arrow = box && staminaKnown;
+        st.onBar = xpBar && xp != null && D2InfoGrid.xpFilled(xp[0], xp[1], xp[2]) >= 0;
+        for (int i = 0; i < D2InfoGrid.SLOTS; i++) {
+            st.gridText[i] = st.grid ? gridEntry(slots[i], wall, mono) : null;
+            st.gridWhite[i] = highlighted[slots[i]];
+        }
+        if (st.boxText.length != boxSlots.length) {
+            st.boxText = new String[boxSlots.length];
+            st.boxWhite = new boolean[boxSlots.length];
+        }
+        for (int i = 0; i < boxSlots.length; i++) {
+            st.boxText[i] = st.box && boxOpen ? entry(boxSlots[i], wall, mono) : null;
+            st.boxWhite[i] = highlighted[boxSlots[i]];
+        }
+        D2InfoLayer.build(l, art, gameWidth, gameHeight, st);
+        return l;
     }
 
 
@@ -350,12 +366,24 @@ public final class D2InfoStrip {
             case D2InfoGrid.LEVEL:
                 return level > 0 ? D2Text.get(context, R.string.grid_level, level) : "-";
             case D2InfoGrid.DPS:
-                return facts != null && facts[0] >= 0 ? facts[0] + " DPS" : "- DPS";
+                return facts != null && facts[0] >= 0 ? D2InfoGrid.dps(facts[0], facts.length > 3 ? facts[3] : -1, decimalComma()) : "- DPS";
             case D2InfoGrid.GOLD:
-                return facts != null ? D2Text.get(context, R.string.grid_gold, D2InfoGrid.gold(facts[1])) : "-";
+                return facts != null ? D2Text.get(context, R.string.grid_gold, D2InfoGrid.shortNumber(facts[1], decimalComma())) : "-";
             default:
                 return "";
         }
+    }
+
+
+
+    String gridEntry(int kind, long wallMs, long monoMs) {
+        if (kind != D2InfoGrid.DPS || facts == null || facts[0] < 0) return entry(kind, wallMs, monoMs);
+        return D2InfoGrid.dpsShort(facts[0], facts.length > 3 ? facts[3] : -1, decimalComma());
+    }
+
+
+    private boolean decimalComma() {
+        return !D2Text.ENGLISH.equals(D2Text.language(context));
     }
 
 

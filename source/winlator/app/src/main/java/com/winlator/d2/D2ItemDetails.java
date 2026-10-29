@@ -49,7 +49,8 @@ public final class D2ItemDetails {
             b.position(b.position() + shop * 16);
             if (!b.hasRemaining()) return null;
             b.get();
-            if (b.remaining() != 1 + 4 * carried || (b.get() & 0xFF) != MARKER) return null;
+
+            if (b.remaining() < 1 + 4 * carried || (b.get() & 0xFF) != MARKER) return null;
             Item[] items = new Item[carried];
             for (int i = 0; i < carried; i++) items[i] = new Item(b.get() & 0xFF, b.get() & 0xFF, b.get() & 0xFF, b.get() & 0xFF);
             return items;

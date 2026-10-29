@@ -62,7 +62,13 @@ public class D2InstallActivity extends D2Activity {
     private boolean stopped;
 
     private boolean askedMenu, askedNoProgress, noStartChosen;
+
+    private boolean askedUnknown, unknownChosen;
+
+    private D2InstallPlan.Product installing;
     private android.app.AlertDialog noStartDialog;
+
+    private Button wayOutButton;
 
     private boolean installed;
 
@@ -323,6 +329,7 @@ public class D2InstallActivity extends D2Activity {
 
     private void styleDialog(android.app.AlertDialog dialog) {
         dialog.show();
+        D2Sound.attach(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(D2Style.windowBackground(getResources().getDisplayMetrics().density));
@@ -436,18 +443,36 @@ public class D2InstallActivity extends D2Activity {
         Button install = new Button(this);
         keysButton = install;
         install.setText(R.string.install_start);
+
+        Button anyway = new Button(this);
+        anyway.setText(R.string.install_anyway);
+        anyway.setVisibility(android.view.View.GONE);
+
+        android.text.TextWatcher changed = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void onTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void afterTextChanged(android.text.Editable e) {
+                if (!restoring) anyway.setVisibility(android.view.View.GONE);
+            }
+        };
+        classic.addTextChangedListener(changed);
+        lod.addTextChangedListener(changed);
+        anyway.setOnClickListener((v) -> {
+            if (!roomForKeys()) return;
+            char[] c = takeKey(classic), l = takeKey(lod);
+            if (D2InstallKeys.check(c) != D2InstallKeys.Check.OK || D2InstallKeys.check(l) != D2InstallKeys.Check.OK) {
+                D2InstallKeys.wipe(c);
+                D2InstallKeys.wipe(l);
+                anyway.setVisibility(android.view.View.GONE);
+                return;
+            }
+            D2Trace.log("install: the player installs the keys despite the warning");
+            anyway.setVisibility(android.view.View.GONE);
+            useKeys(c, l, null, status, install);
+        });
         install.setOnClickListener((v) -> {
-
-            if (!hasStorage()) {
-                failInstall(D2InstallFailure.Kind.NO_ACCESS);
-                return;
-            }
-
-            if (!D2InstallFlow.enough(download().getUsableSpace(), neededBeforeKeys())) {
-                retryKeys = true;
-                failInstall(D2InstallFailure.Kind.NO_SPACE);
-                return;
-            }
+            if (!roomForKeys()) return;
+            anyway.setVisibility(android.view.View.GONE);
             char[] c = takeKey(classic), l = takeKey(lod);
             D2InstallKeys.Check cc = D2InstallKeys.check(c), lc = D2InstallKeys.check(l);
             if (cc != D2InstallKeys.Check.OK || lc != D2InstallKeys.Check.OK) {
@@ -457,19 +482,82 @@ public class D2InstallActivity extends D2Activity {
                 status.setText(getString(R.string.install_keys_bad, keyProblem(cc), keyProblem(lc)));
                 return;
             }
-            wipeKeys();
-            keyClassic = c;
-            keyLod = l;
-            status.setTextColor(D2Style.TEXT);
-            status.setText(getString(R.string.install_keys_ok, D2InstallKeys.masked(c), D2InstallKeys.masked(l)));
-            install.setEnabled(false);
-            handler.postDelayed(this::installAll, 1500);
+
+            D2CdKey.Result rc = D2CdKey.check(c), rl = D2CdKey.check(l);
+            D2InstallKeys.Verdict verdict = D2InstallKeys.verdict(rc.kind, rl.kind);
+            D2Trace.log("install: key check " + verdict);
+            if (verdict == D2InstallKeys.Verdict.SWAPPED) {
+                useKeys(l, c, getString(R.string.install_keys_swapped), status, install);
+                return;
+            }
+            if (verdict == D2InstallKeys.Verdict.WARN) {
+
+                restoring = true;
+                classic.getText().append(java.nio.CharBuffer.wrap(c));
+                lod.getText().append(java.nio.CharBuffer.wrap(l));
+                restoring = false;
+                D2InstallKeys.wipe(c);
+                D2InstallKeys.wipe(l);
+                status.setTextColor(D2Style.RED);
+                status.setText(getString(R.string.install_keys_warn, keyWarning(rc, true), keyWarning(rl, false)));
+                anyway.setVisibility(android.view.View.VISIBLE);
+                return;
+            }
+            useKeys(c, l, null, status, install);
         });
         page.addView(install, matchWidth());
+        LinearLayout.LayoutParams ap = matchWidth();
+        ap.topMargin = dp(8);
+        page.addView(anyway, ap);
         ScrollView scroll = new ScrollView(this);
         scroll.setBackgroundColor(D2Style.BACKGROUND);
         scroll.addView(page, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         setContentView(scroll);
+    }
+
+
+    private boolean restoring;
+
+
+    private boolean roomForKeys() {
+        if (!hasStorage()) {
+            failInstall(D2InstallFailure.Kind.NO_ACCESS);
+            return false;
+        }
+
+        if (!D2InstallFlow.enough(download().getUsableSpace(), neededBeforeKeys())) {
+            retryKeys = true;
+            failInstall(D2InstallFailure.Kind.NO_SPACE);
+            return false;
+        }
+        return true;
+    }
+
+
+    private void useKeys(char[] c, char[] l, String note, TextView status, Button install) {
+        wipeKeys();
+        keyClassic = c;
+        keyLod = l;
+        status.setTextColor(D2Style.TEXT);
+        String ok = getString(R.string.install_keys_ok, D2InstallKeys.masked(c), D2InstallKeys.masked(l));
+        status.setText(note != null ? note + "\n" + ok : ok);
+        install.setEnabled(false);
+
+        handler.postDelayed(this::installAll, note != null ? 4000 : 1500);
+    }
+
+
+    private String keyWarning(D2CdKey.Result result, boolean classicField) {
+        switch (D2InstallKeys.problem(result.kind, classicField)) {
+            case NONE: return getString(R.string.install_key_ok);
+            case CHARACTER: return getString(R.string.install_key_never_char, String.valueOf(result.character));
+            case CHECKSUM: return getString(R.string.install_key_typo);
+            case IS_CLASSIC: return getString(R.string.install_key_is_classic);
+            case IS_LOD: return getString(R.string.install_key_is_lod);
+            case EMPTY: return getString(R.string.install_key_empty);
+            case LENGTH: return getString(R.string.install_key_bad_length);
+            default: return getString(R.string.install_key_other_product);
+        }
     }
 
 
@@ -671,6 +759,9 @@ public class D2InstallActivity extends D2Activity {
         askedMenu = false;
         askedNoProgress = false;
         noStartChosen = false;
+        askedUnknown = false;
+        unknownChosen = false;
+        installing = product;
         runGuest(getString(R.string.install_installing, product.folder), dir, "C:\\D2Install\\d2install.exe", args, null, () -> {
             pipe.close();
             dismissNoStart();
@@ -681,8 +772,8 @@ public class D2InstallActivity extends D2Activity {
             File game = target();
             String expected = product == D2InstallPlan.Product.CLASSIC ? "d2data.mpq" : "d2exp.mpq";
 
-            D2InstallFlow.AfterInstaller next = D2InstallFlow.afterInstaller(helper, noStartChosen, new File(game, expected).isFile(),
-                download().getUsableSpace());
+            D2InstallFlow.AfterInstaller next = D2InstallFlow.afterInstaller(helper, noStartChosen, unknownChosen,
+                new File(game, expected).isFile(), download().getUsableSpace());
             D2Trace.log("install: " + product.code + " ended: " + next + (helper != null ? " (" + helper + ")" : ""));
             if (next == D2InstallFlow.AfterInstaller.WRONG_KEY || next == D2InstallFlow.AfterInstaller.NO_START) {
                 wipeKeys();
@@ -696,6 +787,11 @@ public class D2InstallActivity extends D2Activity {
                 wipeKeys();
                 retryKeys = false;
                 failInstall(D2InstallFailure.Kind.INSTALLER_NO_SPACE, product.folder);
+                return;
+            }
+            if (next == D2InstallFlow.AfterInstaller.UNKNOWN_DIALOG) {
+                wipeKeys();
+                failInstall(D2InstallFailure.Kind.INSTALLER_DIALOG, product.folder);
                 return;
             }
             if (next == D2InstallFlow.AfterInstaller.INSTALLER) {
@@ -736,43 +832,124 @@ public class D2InstallActivity extends D2Activity {
 
 
 
+
+
     private void watchStart(D2GuestScreen current) {
         if (current == null || current != screen || stopped) return;
         String state = D2InstallPlan.helperState(helperLog());
         if ("progress".equals(state)) {
             dismissNoStart();
+            if (wayOutButton != null) wayOutButton.setVisibility(android.view.View.GONE);
             return;
         }
+        boolean free = noStartDialog == null || !noStartDialog.isShowing();
+        if (D2InstallPlan.DIALOG_UNKNOWN.equals(state)) {
+            if (!askedUnknown) {
 
-        boolean menu = "start-menu".equals(state), none = "no-progress".equals(state);
-        if ((menu && !askedMenu || none && !askedNoProgress) && (noStartDialog == null || !noStartDialog.isShowing())) {
-            if (menu) askedMenu = true;
-            else askedNoProgress = askedMenu = true;
-            D2Trace.log("install: " + state + " after the dialogs, asking");
-            askNoStart(menu ? R.string.install_start_menu_question : R.string.install_no_start_question);
+
+                dismissNoStart();
+                if (wayOutButton != null && wayOutButton.getVisibility() == android.view.View.VISIBLE) showWayOut();
+                askedUnknown = true;
+                D2Trace.log("install: a dialog the helper does not know, asking");
+                askUnknown();
+            }
+        }
+        else {
+
+            boolean menu = "start-menu".equals(state), none = "no-progress".equals(state);
+            if ((menu && !askedMenu || none && !askedNoProgress) && free) {
+                if (menu) askedMenu = true;
+                else askedNoProgress = askedMenu = true;
+                D2Trace.log("install: " + state + " after the dialogs, asking");
+                if (menu) askRefused();
+                else askNoStart(getString(R.string.install_no_start_question), R.string.install_check_keys);
+            }
         }
         handler.postDelayed(() -> watchStart(current), 5000);
     }
 
-    private void askNoStart(int question) {
-        TextView message = text(getString(question), D2Style.TEXT);
+
+    private void askRefused() {
+        boolean lod = installing == D2InstallPlan.Product.LOD;
+        String title = getString(lod ? R.string.install_key_refused_title_lod : R.string.install_key_refused_title_d2);
+        String text = getString(lod ? R.string.install_key_refused_text_lod : R.string.install_key_refused_text_d2);
+        askNoStart(title + "\n\n" + text, R.string.install_action_keys);
+    }
+
+    private void askNoStart(String question, int checkLabel) {
+        TextView message = text(question, D2Style.TEXT);
         message.setPadding(dp(20), dp(16), dp(20), dp(4));
         noStartDialog = new android.app.AlertDialog.Builder(this)
             .setView(message)
-            .setPositiveButton(R.string.install_check_keys, (d, w) -> {
-
-
-                List<String> log = helperLog();
-                if ("progress".equals(D2InstallPlan.helperState(log)) || D2InstallPlan.helperResult(log) == null) {
-                    D2Trace.log("install: the installer started after all, nothing ended");
-                    if (progressView != null) progressView.setText(getString(R.string.install_started_after_all));
-                    return;
-                }
-                noStartChosen = true;
-                D2Trace.log("install: the player checks the keys, ending the installer");
-                work(this::killGuests);
+            .setPositiveButton(checkLabel, (d, w) -> endForKeys())
+            .setNegativeButton(R.string.install_keep_waiting, (d, w) -> {
+                D2Trace.log("install: the player waits on");
+                showWayOut();
             })
-            .setNegativeButton(R.string.install_keep_waiting, (d, w) -> D2Trace.log("install: the player waits on"))
+            .setCancelable(false)
+            .create();
+        styleDialog(noStartDialog);
+    }
+
+
+
+
+
+    private void endForKeys() {
+
+
+        if (startedAfterAll()) return;
+        if (D2InstallPlan.DIALOG_UNKNOWN.equals(D2InstallPlan.helperState(helperLog()))) {
+            endAtUnknown();
+            return;
+        }
+        noStartChosen = true;
+        D2Trace.log("install: the player checks the keys, ending the installer");
+        work(this::killGuests);
+    }
+
+
+    private void endAtUnknown() {
+        if (startedAfterAll()) return;
+        unknownChosen = true;
+        D2Trace.log("install: the player ends the installer at an unknown dialog");
+        work(this::killGuests);
+    }
+
+
+    private boolean startedAfterAll() {
+        List<String> log = helperLog();
+        if (!"progress".equals(D2InstallPlan.helperState(log)) && D2InstallPlan.helperResult(log) != null) return false;
+        D2Trace.log("install: the installer started after all, nothing ended");
+        if (progressView != null) progressView.setText(getString(R.string.install_started_after_all));
+        if (wayOutButton != null) wayOutButton.setVisibility(android.view.View.GONE);
+        return true;
+    }
+
+
+
+
+
+    private void showWayOut() {
+        if (wayOutButton == null) return;
+        boolean unknown = D2InstallPlan.DIALOG_UNKNOWN.equals(D2InstallPlan.helperState(helperLog()));
+        wayOutButton.setText(unknown ? R.string.install_abort : R.string.install_action_keys);
+        wayOutButton.setVisibility(android.view.View.VISIBLE);
+    }
+
+
+    private void askUnknown() {
+        TextView message = text(getString(R.string.install_dialog_unknown_title) + "\n\n" + getString(R.string.install_dialog_unknown_text),
+            D2Style.TEXT);
+        message.setPadding(dp(20), dp(16), dp(20), dp(4));
+        noStartDialog = new android.app.AlertDialog.Builder(this)
+            .setView(message)
+            .setPositiveButton(R.string.install_abort, (d, w) -> endAtUnknown())
+            .setNegativeButton(R.string.install_keep_waiting, (d, w) -> {
+                D2Trace.log("install: the player waits on");
+                showWayOut();
+            })
+            .setCancelable(false)
             .create();
         styleDialog(noStartDialog);
     }
@@ -1538,6 +1715,7 @@ public class D2InstallActivity extends D2Activity {
         cover = null;
         programCancel = null;
         coverSteps = null;
+        wayOutButton = null;
         if (screen == null) return;
         D2GuestScreen old = screen;
         screen = null;
@@ -1614,7 +1792,7 @@ public class D2InstallActivity extends D2Activity {
 
 
     private void portrait() {
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        D2Orientation.install(this);
     }
 
 
@@ -1659,6 +1837,17 @@ public class D2InstallActivity extends D2Activity {
             lp.topMargin = dp(24);
             page.addView(cancel, lp);
         }
+        if (!cancellable) {
+
+            wayOutButton = new Button(this);
+            wayOutButton.setText(R.string.install_action_keys);
+            wayOutButton.setOnClickListener((v) -> endForKeys());
+            wayOutButton.setVisibility(android.view.View.GONE);
+            LinearLayout.LayoutParams lp = matchWidth();
+            lp.topMargin = dp(24);
+            page.addView(wayOutButton, lp);
+        }
+        else wayOutButton = null;
         TextView show = text(getString(R.string.install_show_program), D2Style.GOLD);
         show.setPaintFlags(show.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
         show.setPadding(0, dp(24), 0, dp(12));
@@ -1713,7 +1902,7 @@ public class D2InstallActivity extends D2Activity {
         D2Trace.log("install: the player shows the program");
         cover.setVisibility(android.view.View.GONE);
         if (programCancel != null) programCancel.setVisibility(android.view.View.VISIBLE);
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        D2Orientation.installer(this);
         Button back = new Button(this);
         back.setText(R.string.install_back_to_page);
         back.setOnClickListener((v) -> {

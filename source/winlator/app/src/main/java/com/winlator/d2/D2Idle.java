@@ -41,9 +41,11 @@ final class D2Idle {
 
     static final int DURATION_MIN = 15, RETREAT_PERCENT = 25;
 
+    static final long UNLIMITED_MS = Long.MAX_VALUE / 4;
+
     static final long TELL_LATER_MS = 10 * 60_000;
 
-    enum Phase { OFF, WANTED, PREPARING, ACTIVE, RETREAT, RETURNING }
+    enum Phase { OFF, WANTED, PREPARING, ACTIVE, RETREAT, RETURNING, TRAVEL }
 
 
     static final long LOAD_MS = 20_000, FLAGS_AFTER_LOAD_MS = 5000;
@@ -80,6 +82,14 @@ final class D2Idle {
         boolean buildChosen(int characterClass, String name);
 
         java.io.File saveDir();
+
+
+
+
+
+        default com.winlator.d2.test.Stadtgang.Einkauf einkauf(Zustand z) {
+            return null;
+        }
     }
 
     private final Host host;
@@ -109,7 +119,10 @@ final class D2Idle {
     private String reason = "";
     private Rueckzug rueckzug;
 
-    private long repairNotedAt;
+    private com.winlator.d2.test.Weiterziehen weiter;
+    private int clearedLevels;
+
+    private long repairNotedAt, shopNotedAt;
 
     private boolean pauseLater;
     private long pauseLaterUntil, levelChangedAt;
@@ -220,7 +233,7 @@ final class D2Idle {
 
     private static boolean otherWindowOpen(D2ModState s) {
         long own = (1L << D2ModState.UI_ESCMENU) | (1L << D2ModState.UI_NPCMENU) | (1L << D2ModState.UI_NPCSHOP)
-            | (1L << D2ModState.UI_INVENTORY);
+            | (1L << D2ModState.UI_INVENTORY) | (1L << D2ModState.UI_STASH);
         return (s.panelFlags() & ~own) != 0;
     }
 
@@ -239,7 +252,8 @@ final class D2Idle {
 
     void request(boolean pausedBefore, int minutes, int retreat) {
         if (running()) return;
-        durationMs = Math.max(1, minutes) * 60_000L;
+
+        durationMs = minutes <= 0 ? UNLIMITED_MS : minutes * 60_000L;
         retreatPercent = Math.max(5, Math.min(90, retreat));
         String why = blocked();
         if (why != null) {
@@ -312,10 +326,11 @@ final class D2Idle {
         D2ModState s = host.state();
         D2ModLink link = host.link();
         boolean retreat = phase == Phase.RETREAT;
+        boolean travel = phase == Phase.TRAVEL;
         if (s == null) {
 
 
-            boolean loading = questZeile != null || (retreat && rueckzug.portalGenommen());
+            boolean loading = questZeile != null || (retreat && rueckzug.portalGenommen()) || travel;
             long grace = loading ? LOAD_MS : NO_STATE_MS;
             if (fahrer != null) fahrer.allesLoslassen();
             if (now - Math.max(since, link.lastStateAt()) > grace) {
@@ -338,7 +353,7 @@ final class D2Idle {
         }
 
 
-        boolean afterLoad = (retreat || phase == Phase.RETURNING || (questZeile != null && phase == Phase.ACTIVE))
+        boolean afterLoad = (retreat || travel || phase == Phase.RETURNING || (questZeile != null && phase == Phase.ACTIVE))
             && link.gameFlagsAt() < levelChangedAt;
         if (afterLoad) {
             if (now - levelChangedAt > FLAGS_AFTER_LOAD_MS) {
@@ -358,6 +373,10 @@ final class D2Idle {
         }
         if (retreat) {
             retreatStep(s, link, now);
+            return;
+        }
+        if (travel) {
+            travelStep(s, link, now);
             return;
         }
         if (s.inTown) {
@@ -405,11 +424,15 @@ final class D2Idle {
                 gehirn.zielGebiet = s.levelNo;
                 gehirn.kampfwahl.tabelle(host.skills());
                 gehirn.zielwahlUebergehtIgnorierte = true;
-                fahrer = new Fahrer(finger, (art, text) -> D2Trace.log("idle " + art + ": " + text));
+                fahrer = new Fahrer(finger, this::fahrerSpur);
                 fahrer.verhalten.todWeiter = false;
                 fahrer.verhalten.pauseBeenden = false;
                 fahrer.verhalten.fensterSchliessen = false;
                 rueckzug = new Rueckzug();
+                rueckzug.stadtgang.laden = (zs, fs) -> host.einkauf(zs);
+                rueckzug.stadtgang.beute = gehirn.beuteAntwort;
+                weiter = new com.winlator.d2.test.Weiterziehen();
+                clearedLevels = 0;
                 right.remember(s.rightSkill, s.characterClass, link.characterName(), s.hotkeySkill, s.hotkeyLeft);
                 trace("active in level " + level + ", seq " + s.sequence + ", right skill " + s.rightSkill);
                 rolesBuild = null;
@@ -466,6 +489,37 @@ final class D2Idle {
                 return;
             }
 
+            D2ModItems shopItems = link.items();
+            if (Rueckzug.traenkeFaellig(z, shopItems != null && shopItems.shopPossible)) {
+                Rueckzug.Grund why = rueckzug.warumNicht(z, s.portals, now);
+                if (why == null) {
+                    fahrer.loslassen("Rückzug");
+                    rueckzug.startenZumEinkauf(z, now);
+                    phase = Phase.RETREAT;
+                    since = now;
+                    trace("retreat " + rueckzug.anzahl() + " to buy (healing potions " + z.heilGuertel + " + " + z.heilInventar
+                        + ") from level " + s.levelNo + ", portals " + s.portals);
+                    host.redraw();
+                    return;
+                }
+                if (now - shopNotedAt > 60_000) {
+                    shopNotedAt = now;
+                    trace("few healing potions, no retreat: " + Rueckzug.text(why));
+                }
+            }
+
+            if (!gehirn.beuteAntwort.isEmpty() && rueckzug.vollFaellig(z, Stadtgang.abgabeDa(gehirn.beuteAntwort, figurJetzt(link, now)),
+                gehirn.passtNichtAm, now) && rueckzug.warumNicht(z, s.portals, now) == null) {
+                fahrer.loslassen("Rückzug");
+                rueckzug.startenWegenVoll(z, now);
+                phase = Phase.RETREAT;
+                since = now;
+                trace("retreat " + rueckzug.anzahl() + " for the full inventory (" + z.freieZellen() + " cells free) from level "
+                    + s.levelNo + ", portals " + s.portals);
+                host.redraw();
+                return;
+            }
+
             if (Rueckzug.reparaturFaellig(z)) {
                 Rueckzug.Grund why = rueckzug.warumNicht(z, s.portals, now);
                 if (why == null) {
@@ -501,7 +555,22 @@ final class D2Idle {
             traceNavigation();
 
             if (gehirn.gebietLeer(now)) {
+                traceLevelClear();
                 trace("level clear: " + gehirn.abdeckungText(now) + ", kills " + kills);
+                clearedLevels++;
+
+
+                Rueckzug.Grund why = rueckzug.warumNicht(z, s.portals, now);
+                if (why == null || why == Rueckzug.Grund.ZU_OFT) {
+                    fahrer.loslassen("weiter");
+                    rueckzug.startenZumWegpunkt(z, now);
+                    phase = Phase.RETREAT;
+                    since = now;
+                    trace("level " + level + " clear (" + clearedLevels + "): town round, then on by waypoint, portals " + s.portals);
+                    host.redraw();
+                    return;
+                }
+                trace("level clear, not on: " + Rueckzug.text(why));
                 stop(host.text(R.string.idle_area_clear, kills));
                 host.setPaused(true);
                 return;
@@ -518,10 +587,33 @@ final class D2Idle {
 
     private String lastNavigation = "";
 
+    private final D2IdleTraceGate navigationGate = new D2IdleTraceGate();
+    private final java.util.Map<String, D2IdleTraceGate> fahrerGates = new java.util.HashMap<>();
+
+    private long coverageTracedAt;
+
     private void traceNavigation() {
+        long now = SystemClock.uptimeMillis();
+        if (gehirn.gebietLeeren && now - coverageTracedAt >= 60_000) {
+            coverageTracedAt = now;
+            trace("coverage: " + gehirn.abdeckungText(now) + ", kills " + kills);
+        }
         if (gehirn.navigation.equals(lastNavigation)) return;
         lastNavigation = gehirn.navigation;
-        trace("navigation: " + lastNavigation);
+        for (String line : navigationGate.pass(lastNavigation, now)) trace("navigation: " + line);
+    }
+
+
+    private static Zustand.Figur figurJetzt(D2ModLink link, long now) {
+        byte[] data = link.figur();
+        if (data == null) return null;
+        try {
+            String fl = D2SpieltestPort.figurJson(data, data.length, now);
+            return fl != null ? Zustand.Figur.parse(new JSONObject(fl)) : null;
+        }
+        catch (org.json.JSONException e) {
+            return null;
+        }
     }
 
 
@@ -638,6 +730,18 @@ final class D2Idle {
                 host.setPaused(true);
                 return;
             }
+            if (e == Rueckzug.Ergebnis.IN_STADT) {
+
+                fahrer.verhalten.fensterDurchlassen = false;
+                fahrer.allesLoslassen();
+                gehirn.gebietLeeren = false;
+                weiter.starten(level);
+                phase = Phase.TRAVEL;
+                since = now;
+                trace("town round done, on by waypoint from level " + level);
+                host.redraw();
+                return;
+            }
             if (e == Rueckzug.Ergebnis.ZURUECK) {
                 fahrer.verhalten.fensterDurchlassen = false;
                 phase = Phase.RETURNING;
@@ -666,6 +770,89 @@ final class D2Idle {
             if (!fahrer.vorbereiten(z, l, now, now)) return;
             Gehirn.Absicht a = rueckzug.denken(z, f, now);
             if (a.modAuftrag != null) a.getippt = modOrder(link, a.modAuftrag);
+
+            if (a.tippen == null && z.stadt && fahrer.leisteAufgeklappt && l.sichtbar("menu_toggle")) {
+                a.tippen = "menu_toggle";
+                a.grund = "fold the menu row back";
+                fahrer.leisteAufgeklappt = false;
+            }
+            fahrer.anwenden(a, l, now);
+        }
+        catch (Exception ex) {
+            stop(host.text(R.string.idle_error, ex.getMessage()));
+        }
+    }
+
+
+
+
+
+
+    private void travelStep(D2ModState s, D2ModLink link, long now) {
+        if (s.life <= 0) {
+            stop(host.text(R.string.idle_death));
+            return;
+        }
+        if (host.pauseWanted() || s.paused()) {
+            stop(host.text(R.string.idle_pause));
+            return;
+        }
+
+        long waypointWindow = 1L << D2ModState.UI_WAYPOINT;
+        boolean window = (s.panelFlags() & ~((1L << D2ModState.UI_ESCMENU) | waypointWindow)) != 0 || s.npcTalking;
+        if (window) {
+            stop(host.text(R.string.idle_window));
+            return;
+        }
+        try {
+            String line = D2SpieltestPort.toJson(s, now, link, host.leftOutObjects());
+            Zustand z = Zustand.parse(new JSONObject(line), line);
+            if (now - startedAt > durationMs && z.stadt) {
+                stop(host.text(R.string.idle_time_up, durationMs / 60_000, kills));
+                return;
+            }
+
+            if (z.stadt && link.figurAt() < levelChangedAt) {
+                fahrer.allesLoslassen();
+                if (now - levelChangedAt > FLAGS_AFTER_LOAD_MS) stop(host.text(R.string.idle_on_ended, host.text(R.string.idle_rz_no_town_data)));
+                return;
+            }
+            Zustand.Figur f = null;
+            byte[] data = link.figur();
+            if (data != null) {
+                String fl = D2SpieltestPort.figurJson(data, data.length, now);
+                if (fl != null) f = Zustand.Figur.parse(new JSONObject(fl));
+            }
+            Zustand.Ziele ziele = validGoals(link, s, now);
+            com.winlator.d2.test.Karte karte = host.link().mapFetch().karte();
+            if (karte != null && gehirn.karte() != karte) gehirn.setKarte(karte);
+            Zustand.Layout l = Zustand.Layout.parse(new JSONObject(host.layout()));
+            gehirn.layout = l;
+            fahrer.takt(now);
+            fahrer.verhalten.fensterDurchlassen = weiter.fensterErlaubt();
+            if (!fahrer.vorbereiten(z, l, now, now)) return;
+            String before = weiter.meldung;
+            Gehirn.Absicht a = weiter.schritt(z, ziele, f, gehirn, now);
+            if (!weiter.meldung.equals(before)) trace("on: " + weiter.meldung);
+            if (weiter.ergebnis == com.winlator.d2.test.Weiterziehen.Ergebnis.ANGEKOMMEN) {
+                fahrer.verhalten.fensterDurchlassen = false;
+                fahrer.allesLoslassen();
+                gehirn.gebietLeeren = true;
+                level = s.levelNo;
+                gehirn.zielGebiet = level;
+                phase = Phase.RETURNING;
+                since = now;
+                trace("on in level " + level + " (trip " + weiter.reisen + ")");
+                host.redraw();
+                return;
+            }
+            if (weiter.ergebnis == com.winlator.d2.test.Weiterziehen.Ergebnis.ENDE) {
+                trace("on ended: " + weiter.grund);
+                stop(host.text(R.string.idle_on_ended, host.text(weiter.endeArt == com.winlator.d2.test.Weiterziehen.EndeArt.KEIN_GEBIET
+                    ? R.string.idle_on_no_level : R.string.idle_on_no_way)));
+                return;
+            }
+            if (a == null) a = gehirn.denken(z, ziele, now);
 
             if (a.tippen == null && z.stadt && fahrer.leisteAufgeklappt && l.sichtbar("menu_toggle")) {
                 a.tippen = "menu_toggle";
@@ -776,7 +963,7 @@ final class D2Idle {
 
         gehirn.zwischenziele.add(new com.winlator.d2.test.Jagd(gehirn));
 
-        fahrer = new Fahrer(finger, (art, text) -> D2Trace.log("idle " + art + ": " + text));
+        fahrer = new Fahrer(finger, this::fahrerSpur);
         Stadtgang stadtgang = new Stadtgang();
         stadtgang.alleMs = 0;
         stadtgang.minHeil = 0;
@@ -792,6 +979,7 @@ final class D2Idle {
             @Override public void ohneDurchgaenge(boolean ohne) { questOhneDurchgaenge = ohne; }
             @Override public boolean leerenBeenden(String grund, boolean pause, Zustand.Layout l) { return quest.questLeerenEnde(grund); }
             @Override public boolean modAuftrag(String was) { return modOrder(link, was); }
+            @Override public Stadtgang.Laden laden() { return (zs, fs) -> host.einkauf(zs); }
         });
         questLeeren.rueckzugPct = retreatPercent;
         quest = new QuestLauf(questZeile, QUEST_MAX_TODE, gehirn, fahrer, stadtgang, questLeeren, new QuestLauf.Umgebung() {
@@ -874,7 +1062,43 @@ final class D2Idle {
 
     private static boolean modOrder(D2ModLink link, String order) {
         String[] w = order.split(" ");
-        if (link == null || w.length != 2) return false;
+        if (link == null) return false;
+        try {
+
+
+            if (w[0].equals("traenke") && w.length == 7 && Long.parseLong(w[1]) > 0) {
+                trace("order " + order);
+                link.refillPotions(Long.parseLong(w[1]), new D2PotionShop.Need(Integer.parseInt(w[2]), Integer.parseInt(w[3]),
+                    Integer.parseInt(w[4]), Integer.parseInt(w[5])), (int) Math.min(Integer.MAX_VALUE, Long.parseLong(w[6])));
+                return true;
+            }
+            if (w[0].equals("rollen") && w.length == 4 && Long.parseLong(w[1]) > 0) {
+                trace("order " + order);
+                link.buyPortals(Long.parseLong(w[1]), Integer.parseInt(w[2]), (int) Math.min(Integer.MAX_VALUE, Long.parseLong(w[3])), false);
+                return true;
+            }
+
+
+            boolean truhe = w[0].equals("truhe") && w.length == 4;
+            if ((w[0].equals("verkaufen") && w.length == 3 || truhe) && Long.parseLong(w[1]) > 0) {
+                trace("order " + order);
+                String liste = w[w.length - 1];
+                String[] parts = liste.equals("-") ? new String[0] : liste.split(",");
+                long[] ids = new long[parts.length];
+                for (int i = 0; i < ids.length; i++) ids[i] = Long.parseLong(parts[i]);
+                link.lootJob(!truhe, Long.parseLong(w[1]), ids, truhe ? Long.parseLong(w[2]) : 0);
+                return true;
+            }
+            if (w[0].equals("foliant") && w.length == 3 && Long.parseLong(w[1]) > 0) {
+                trace("order " + order);
+                link.buyPortals(Long.parseLong(w[1]), 1, (int) Math.min(Integer.MAX_VALUE, Long.parseLong(w[2])), true);
+                return true;
+            }
+        }
+        catch (NumberFormatException e) {
+            return false;
+        }
+        if (w.length != 2) return false;
         try {
             long n = Long.parseLong(w[1]);
             trace("order " + order);
@@ -902,6 +1126,10 @@ final class D2Idle {
             case NICHT_GEHEILT: return host.text(R.string.idle_rz_not_healed);
             case NICHT_AM_PORTAL: return host.text(R.string.idle_rz_not_at_portal);
             case KAPUTT: return host.text(R.string.idle_rz_broken);
+            case TRAENKE: return host.text(R.string.idle_rz_no_potions);
+            case ROLLEN: return host.text(R.string.idle_rz_no_scrolls);
+            case TRUHE_VOLL: return host.text(R.string.idle_rz_stash_full);
+            case INVENTAR_VOLL: return host.text(R.string.idle_rz_inventory_full);
             case STADT_OHNE_PORTAL: case STADT_VERLASSEN_OHNE_PORTAL: case FALSCHE_STADT: return host.text(R.string.idle_rz_wrong_way);
             default: return host.text(R.string.idle_rz_round_failed);
         }
@@ -1050,6 +1278,7 @@ final class D2Idle {
         quest = null;
         questLeeren = null;
         reason = text;
+        flushGates();
         trace("end in " + was + (unseen ? " (background)" : "") + ": " + text);
         host.message(text);
 
@@ -1069,6 +1298,31 @@ final class D2Idle {
     }
 
 
+    private void fahrerSpur(String art, String text) {
+        D2IdleTraceGate gate = fahrerGates.get(art);
+        if (gate == null) fahrerGates.put(art, gate = new D2IdleTraceGate());
+        for (String line : gate.pass(text, SystemClock.uptimeMillis())) D2Trace.log("idle " + art + ": " + line);
+    }
+
+
+    private void traceLevelClear() {
+        flushGates();
+        if (gehirn.leerWegenStillstand) trace("level clear by standstill: no coverage progress for " + Gehirn.LEER_STILLSTAND_MS / 1000 + " s");
+    }
+
+
+    private void flushGates() {
+        long now = SystemClock.uptimeMillis();
+        String z = navigationGate.flush(now);
+        if (z != null) trace("navigation: " + z);
+        for (java.util.Map.Entry<String, D2IdleTraceGate> e : fahrerGates.entrySet()) {
+            String f = e.getValue().flush(now);
+            if (f != null) D2Trace.log("idle " + e.getKey() + ": " + f);
+        }
+        lastNavigation = "";
+    }
+
+
     private static void trace(String text) {
         D2Trace.log("idle: " + text);
         android.util.Log.i("D2Idle", text);
@@ -1079,8 +1333,11 @@ final class D2Idle {
 
         if (phase == Phase.PREPARING) return host.text(R.string.idle_board_preparing);
         if (phase == Phase.RETREAT || phase == Phase.RETURNING) return host.text(R.string.idle_board_retreat, rueckzug.anzahl());
+        if (phase == Phase.TRAVEL) return host.text(R.string.idle_board_travel, Math.max(0, weiter.ziel()));
         if (phase != Phase.ACTIVE) return null;
         long min = (SystemClock.uptimeMillis() - startedAt) / 60_000;
+
+        if (durationMs >= UNLIMITED_MS) return host.text(R.string.idle_board_unlimited, min, kills);
         return host.text(R.string.idle_board, min, durationMs / 60_000, kills);
     }
 }

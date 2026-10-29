@@ -1,4 +1,4 @@
-// Modified by D2Android (changes 2026-10-09 to 2026-10-24).
+// Modified by D2Android (changes 2026-10-09 to 2026-10-29).
 apply plugin: 'com.android.application'
 
 android {
@@ -21,6 +21,9 @@ android {
 
 
     def d2ReleaseKeystore = project.findProperty('d2ReleaseKeystore')
+
+    def d2AptabaseKey = (project.findProperty('d2AptabaseKey') ?: System.getenv('D2_APTABASE_KEY') ?: '').toString().trim()
+    if (!(d2AptabaseKey ==~ /A-(EU|US)-[0-9]{6,20}/)) d2AptabaseKey = ''
     signingConfigs {
         if (d2ReleaseKeystore) {
             pub {
@@ -56,6 +59,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             buildConfigField 'boolean', 'D2_INTERNAL', 'true'
 
+            buildConfigField 'String', 'D2_APTABASE_KEY', '""'
+
             resValue 'string', 'app_name', 'D2Android Dev'
             resValue 'string', 'd2launch_label', 'D2Android Dev'
 
@@ -79,6 +84,9 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             buildConfigField 'boolean', 'D2_INTERNAL', 'false'
+
+
+            buildConfigField 'String', 'D2_APTABASE_KEY', "\"${d2AptabaseKey}\""
 
             ndk {
                 abiFilters 'arm64-v8a'
@@ -128,8 +136,8 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.github.luben:zstd-jni:1.5.2-3@aar'
-    implementation 'org.tukaani:xz:1.7'
-    implementation 'org.apache.commons:commons-compress:1.20'
+    implementation 'org.tukaani:xz:1.9'
+    implementation 'org.apache.commons:commons-compress:1.25.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
 }
 

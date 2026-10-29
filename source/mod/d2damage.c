@@ -39,6 +39,7 @@
 
 
 
+
 #define RVA_DrawUnitInfoCall 0x1D457
 #define RVA_DrawUnitInfo     0x1A730
 #define RVA_GameDamage       0x8BCB0
@@ -64,10 +65,8 @@
 #define DMG_RING 128
 #define DMG_FLOATERS 48
 #define DMG_RISE_MS 1100
-#define DMG_WINDOW_MS 5000
 #define DMG_HITS 256
 #define DMG_COLOR_SHADOW 6
-#define DMG_COLOR_DPS 7
 #define DMG_FONT 1
 
 
@@ -92,13 +91,13 @@ static LONG dmgShieldedSeen;
 static int damagePatched;
 static int damageDrawApplied;
 static DWORD damageNumbersUntil, damageDpsUntil, damageElementUntil, damageAppDpsUntil;
-static int damageNumbersOn, damageDpsOn, damageStyle, damageAppDps;
+static int damageNumbersOn, damageDpsOn, damageStyle;
 static DWORD dmgGame;
 static LONG dmgRequest;
 static DWORD dmgRequestResets;
 static volatile LONG dmgRecord;
 
-static volatile struct { DWORD defType, defId, attType, attId, attTxt, attAlign, amount, result; LONG attNpc; LONG phys, fire, cold, light, magic, poison, burn; DWORD total; } dmgRing[DMG_RING];
+static volatile struct { DWORD defType, defId, attType, attId, attTxt, attAlign, amount, result; LONG attNpc; LONG phys, fire, cold, light, magic, poison, burn; DWORD total, taken; } dmgRing[DMG_RING];
 static volatile LONG dmgWritten;
 static LONG dmgRead;
 DWORD dmgSetUnitStat;
@@ -117,8 +116,12 @@ static unsigned long dmgDotOwnerNext;
 static DmgStream dmgStreams[DMG_DOT_SLOTS];
 static struct { DWORD id, value, at, color, large, dx; } dmgFloat[DMG_FLOATERS];
 static DWORD dmgFloatNext;
-static struct { DWORD at, value; } dmgHits[DMG_HITS];
+static DmgHit dmgHits[DMG_HITS];
 static DWORD dmgHitNext;
+
+
+static DmgFight dmgFight;
+static DWORD dmgDpsNow = DMG_DPS_NONE, dmgDpsMax = DMG_DPS_NONE, dmgDpsGame;
 
 
 
@@ -167,6 +170,7 @@ static void noteDamageHit(void* defender, DWORD newLife, void* attacker, BYTE* d
     dmgRing[k].poison = *(LONG*) (damage + 0x28);
     dmgRing[k].burn = *(LONG*) (damage + 0x14);
     dmgRing[k].total = *(DWORD*) (damage + 0x4C);
+    dmgRing[k].taken = old - newLife;
     InterlockedIncrement(&dmgWritten);
 }
 
@@ -380,6 +384,7 @@ static int damageCapable(void) {
 
 
 
+
 static void damageCommand(int numbers, int dps, int element, int appDps, DWORD now) {
     DWORD off = now - 60000;
     damageNumbersUntil = numbers ? now + 2000 : off;
@@ -391,11 +396,20 @@ static void damageCommand(int numbers, int dps, int element, int appDps, DWORD n
 
 static DWORD damageDps(void) {
 
-    if (!damageDpsOn || !damagePatched || !singlePlayerGame()) return 0xFFFF;
-    DWORD now = GetTickCount(), sum = 0;
-    for (int h = 0; h < DMG_HITS; h++) if (dmgHits[h].value && now - dmgHits[h].at < DMG_WINDOW_MS) sum += dmgHits[h].value;
-    DWORD dps = sum * 1000 / DMG_WINDOW_MS;
-    return dps > 0xFFFE ? 0xFFFE : dps;
+    if (!damageDpsOn || !damagePatched || !singlePlayerGame()) return DMG_DPS_NONE;
+    return dmgDpsNow;
+}
+
+
+static DWORD damageDpsMax(void) {
+    return damageDps() == DMG_DPS_NONE ? DMG_DPS_NONE : dmgDpsMax;
+}
+
+
+
+static void putDpsFields(Packet* p) {
+    putU32(p, damageDps());
+    putU32(p, damageDpsMax());
 }
 
 
@@ -425,16 +439,6 @@ static void drawDamage(void) {
             for (int b = 0; b <= bold; b++) fDrawText(text, sx - w / 2 + 1 + b, sy + 1, DMG_COLOR_SHADOW, 0);
             for (int b = 0; b <= bold; b++) fDrawText(text, sx - w / 2 + b, sy, (int) dmgFloat[k].color, 0);
             if (large) fSetTextSize(DMG_FONT);
-        }
-    }
-    if (damageDpsOn && !damageAppDps) {
-
-        DWORD dps = damageDps();
-        if (dps && dps != 0xFFFF) {
-            wchar_t text[32];
-            wsprintfW(text, L"%lu DPS", (unsigned long) dps);
-            fDrawText(text, 11, 81, DMG_COLOR_SHADOW, 0);
-            fDrawText(text, 10, 80, DMG_COLOR_DPS, 0);
         }
     }
     fSetTextSize(oldFont);
@@ -499,15 +503,30 @@ static void damageShieldStep(void* player) {
 }
 
 
+static void damageDpsHit(DWORD now, DWORD value) {
+    if (!value) return;
+    DWORD h = dmgHitNext++ % DMG_HITS;
+    dmgHits[h].at = now;
+    dmgHits[h].value = value;
+    damageFightNote(&dmgFight, now);
+}
+
+
 static void updateDamage(void* player, DWORD now) {
     damageShieldStep(player);
+
+    if (dmgDpsGame != srvResets) {
+        dmgDpsGame = srvResets;
+        memset(dmgHits, 0, sizeof(dmgHits));
+        memset(&dmgFight, 0, sizeof(dmgFight));
+        dmgDpsMax = DMG_DPS_NONE;
+    }
     if (!damageSites) return;
 
     if (player && singlePlayerGame() && (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))))
         srvCheck();
     damageNumbersOn = (int) (now - damageNumbersUntil) < 0;
     damageDpsOn = (int) (now - damageDpsUntil) < 0;
-    damageAppDps = (int) (now - damageAppDpsUntil) < 0;
     damageStyle = (int) (now - damageElementUntil) < 0 ? DMG_STYLE_ELEMENT : DMG_STYLE_SIMPLE;
     int wanted = (damageNumbersOn || damageDpsOn) && player && singlePlayerGame();
 
@@ -541,11 +560,12 @@ static void updateDamage(void* player, DWORD now) {
         if (dmgRing[k].result & DMG_RESULT_KILL) damageDotKill(dmgDot, DMG_DOT_SLOTS, dmgRing[k].defId);
 #ifdef D2MOD_TESTCMDS
         static const char* const elementName[] = {"physical", "fire", "cold", "lightning", "magic"};
-        trace("damage: monster %lu %lu by type %lu row %lu (alignment %ld, npc %ld): %s, %s (1/256: phys %ld fire %ld cold %ld light %ld magic %ld poison %ld burn %ld, result 0x%lx)%s",
+        trace("damage: monster %lu %lu by type %lu row %lu (alignment %ld, npc %ld): %s, %s (1/256: phys %ld fire %ld cold %ld light %ld magic %ld poison %ld burn %ld, result 0x%lx, took %lu of the life)%s",
             (unsigned long) dmgRing[k].defId, (unsigned long) dmgRing[k].amount, (unsigned long) dmgRing[k].attType,
             (unsigned long) dmgRing[k].attTxt, (long) dmgRing[k].attAlign, (long) dmgRing[k].attNpc, kind == DMG_CRIT ? "own critical" : kind == DMG_OWN ? "own" : kind == DMG_ALLY ? "ally" : "left out",
             elementName[element], (long) dmgRing[k].phys, (long) dmgRing[k].fire, (long) dmgRing[k].cold, (long) dmgRing[k].light,
-            (long) dmgRing[k].magic, (long) dmgRing[k].poison, (long) dmgRing[k].burn, (unsigned long) dmgRing[k].result, stream ? ", stream" : "");
+            (long) dmgRing[k].magic, (long) dmgRing[k].poison, (long) dmgRing[k].burn, (unsigned long) dmgRing[k].result,
+            (unsigned long) ((dmgRing[k].taken + 128) >> 8), stream ? ", stream" : "");
 #endif
 
 
@@ -557,7 +577,8 @@ static void updateDamage(void* player, DWORD now) {
         }
         if (stream) {
             sumStream++;
-            damageDotAdd(dmgDot, DMG_DOT_SLOTS, dmgRing[k].defId, (long) dmgRing[k].total, kind == DMG_CRIT ? DMG_OWN : kind,
+
+            damageDotAdd(dmgDot, DMG_DOT_SLOTS, dmgRing[k].defId, (long) dmgRing[k].taken, kind == DMG_CRIT ? DMG_OWN : kind,
                 element, (dmgRing[k].result & DMG_RESULT_KILL) != 0, now);
             continue;
         }
@@ -573,11 +594,7 @@ static void updateDamage(void* player, DWORD now) {
         dmgFloat[f].color = damageColor(kind, element, damageStyle);
         dmgFloat[f].large = damageLarge(kind, damageStyle);
         dmgFloat[f].dx = 0;
-        if (kind != DMG_ALLY) {
-            DWORD h = dmgHitNext++ % DMG_HITS;
-            dmgHits[h].at = now;
-            dmgHits[h].value = dmgRing[k].amount;
-        }
+        if (kind != DMG_ALLY) damageDpsHit(now, (dmgRing[k].taken + 128) >> 8);
     }
 
     static DWORD sumDot, sumDotPoison, sumDotFire, sumDotCold, sumDotOther, sumDotDealt, sumDotAlly, sumDotDead, sumDotHidden, sumDotUnknown;
@@ -634,12 +651,14 @@ static void updateDamage(void* player, DWORD now) {
         dmgFloat[f].color = damageDotColor(kind, element, damageStyle);
         dmgFloat[f].large = 0;
         dmgFloat[f].dx = DMG_DOT_DX;
-        if (kind != DMG_ALLY) {
-            DWORD h = dmgHitNext++ % DMG_HITS;
-            dmgHits[h].at = now;
-            dmgHits[h].value = value;
-        }
+        if (kind != DMG_ALLY) damageDpsHit(now, value);
     }
+
+    if (damageDpsOn && damagePatched && singlePlayerGame()) {
+        dmgDpsNow = damageDpsOf(dmgHits, DMG_HITS, &dmgFight, now);
+        if (dmgDpsMax == DMG_DPS_NONE || dmgDpsNow > dmgDpsMax) dmgDpsMax = dmgDpsNow;
+    }
+    else dmgDpsNow = DMG_DPS_NONE;
     if (now - summaryAt >= 1000) {
         if (sumHits || sumHidden || sumStream)
             trace("damage: %lu hits, %lu dealt, %lu critical, %lu by mercenary or minions, %lu left out, %lu summed over time; %s, largest part phys %lu fire %lu cold %lu light %lu magic %lu",
@@ -653,6 +672,8 @@ static void updateDamage(void* player, DWORD now) {
                 (unsigned long) sumDot, (unsigned long) sumDotPoison, (unsigned long) sumDotFire, (unsigned long) sumDotCold,
                 (unsigned long) sumDotOther, (unsigned long) sumDotDealt,
                 (unsigned long) sumDotAlly, (unsigned long) sumDotDead, (unsigned long) sumDotHidden, (unsigned long) sumDotUnknown);
+        if (dmgDpsNow != DMG_DPS_NONE && (sumHits || sumStream || sumDot))
+            trace("damage: DPS %lu, highest of this game %lu", (unsigned long) dmgDpsNow, (unsigned long) dmgDpsMax);
         summaryAt = now;
         sumHits = sumDealt = sumCrit = sumAlly = sumHidden = sumStream = 0;
         sumDot = sumDotPoison = sumDotFire = sumDotCold = sumDotOther = sumDotDealt = sumDotAlly = sumDotDead = sumDotHidden = sumDotUnknown = 0;

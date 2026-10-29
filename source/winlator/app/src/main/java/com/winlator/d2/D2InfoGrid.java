@@ -162,10 +162,31 @@ final class D2InfoGrid {
     }
 
 
-    static String gold(int gold) {
-        if (gold < 100_000) return Integer.toString(Math.max(0, gold));
-        if (gold < 10_000_000) return gold / 1000 + "k";
-        return gold / 1_000_000 + "M";
+
+
+
+
+
+    static String shortNumber(long n, boolean comma) {
+        if (n < 1000) return Long.toString(Math.max(0, n));
+        if (n < 1_000_000) return scaled(n, 1000, comma) + "k";
+        return scaled(n, 1_000_000, comma) + "M";
+    }
+
+    private static String scaled(long n, long unit, boolean comma) {
+        long whole = n / unit, tenth = n % unit / (unit / 10);
+        return whole >= 10 || tenth == 0 ? Long.toString(whole) : whole + (comma ? "," : ".") + tenth;
+    }
+
+
+
+    static String dps(int now, int max, boolean comma) {
+        return shortNumber(now, comma) + (max >= 0 ? " / " + shortNumber(Math.max(now, max), comma) : "") + " DPS";
+    }
+
+
+    static String dpsShort(int now, int max, boolean comma) {
+        return max >= 0 ? shortNumber(now, comma) + "/" + shortNumber(Math.max(now, max), comma) : shortNumber(now, comma) + " DPS";
     }
 
 

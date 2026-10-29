@@ -92,6 +92,11 @@ public final class Spieltester {
 
     private final WineFinger wine;
 
+    static final int RESERVE_WINE = 5;
+    static final long MIN_GOLD_WINE = Long.getLong("d2t.mingold", 0);
+
+    static boolean weiterNachLeer;
+
     private final Fahrer fahrer;
     private final Gehirn gehirn;
     private final Waechter waechter = new Waechter();
@@ -189,6 +194,12 @@ public final class Spieltester {
             }
 
             @Override public boolean modAuftrag(String was) { return wine != null && wine.modAuftrag(was); }
+
+
+            @Override public Weiterziehen weiterziehen() { return weiterNachLeer && wine != null ? new Weiterziehen() : null; }
+            @Override public Stadtgang.Laden laden() {
+                return wine == null ? null : (z, f) -> Stadtgang.bedarf(z, null, RESERVE_WINE, RESERVE_WINE, MIN_GOLD_WINE);
+            }
         });
         if (wine != null) gehirn.kampfwahl.tabelle(wineFertigkeiten(System.getProperty("d2t.spiel")));
         if (wine != null) wine.fertigkeiten = gehirn.kampfwahl.tabelle();
@@ -261,6 +272,7 @@ public final class Spieltester {
             else if (args[i].equals("--leeren")) leeren = true;
             else if (args[i].equals("--jagd")) Jagd.an = true;
             else if (args[i].equals("--ohne-jagd")) Jagd.an = false;
+            else if (args[i].equals("--weiter")) weiterNachLeer = true;
             else if (args[i].equals("--wegpunkt") && i + 1 < args.length) wegpunkt = Integer.parseInt(args[++i]);
             else if (args[i].equals("--rueckzug") && i + 1 < args.length) rueckzug = Integer.parseInt(args[++i]);
             else if (args[i].equals("--quest") && i + 1 < args.length) quest = Integer.parseInt(args[++i]);
@@ -693,7 +705,7 @@ public final class Spieltester {
             if (letzteWegpunktMeldung.startsWith("Kurs abgebrochen")) befund("wegpunkt", wegpunkte.kursEnde);
         }
 
-        if (ll.gebietLeerEnde(stadtgang.aktiv(), l, now)) return;
+        if (ll.gebietLeerEnde(z, stadtgang.aktiv(), l, now)) return;
         fahrer.anwenden(a, l, now);
         if (wine != null) wine.ignorieren(gehirn.ignorierte(now));
         Puffer puffer = gehirn.kampfwahl.puffer;
@@ -826,6 +838,12 @@ public final class Spieltester {
         event("ende", "Gebiet leeren beendet: " + grund);
         beenden = true;
         return false;
+    }
+
+
+    private String gespieltText() {
+        Zustand.Figur f = figur;
+        return f == null || f.name == null || f.name.equals(testfigur) ? "" : " · gespielt " + f.name;
     }
 
 
@@ -998,7 +1016,17 @@ public final class Spieltester {
 
         Stadtgang sg = ll.rueckzug.stadtgang;
         if (ll.leeren && ll.rueckzug.anzahl() > 0) b.append("- Rückzüge ").append(ll.rueckzug.anzahl()).append(", Reparaturen ")
-            .append(sg.reparaturen).append(sg.reparatur.isEmpty() ? "" : " (zuletzt: " + sg.reparatur + ")").append("\n");
+            .append(sg.reparaturen).append(sg.reparatur.isEmpty() ? "" : " (zuletzt: " + sg.reparatur + ")")
+
+            .append(", Einkäufe ").append(sg.einkaeufe).append(" (Heil ").append(sg.summeHeil).append(", Mana ").append(sg.summeMana)
+            .append(", Rollen ").append(sg.summeRollen).append(sg.einkauf.isEmpty() ? "" : "; zuletzt: " + sg.einkauf).append(")").append("\n");
+
+        if (sg.beute != null) b.append("- Abgabe: verkauft ").append(sg.verkauft).append(", eingelagert ").append(sg.eingelagert)
+            .append(", Gold in die Truhe ").append(sg.goldEingelagert)
+            .append(", eigene Beute ").append(gehirn.beuteAntwort.size()).append(sg.abgabe.isEmpty() ? "" : " (zuletzt: " + sg.abgabe + ")").append("\n");
+
+        if (ll.weiter != null) b.append("- Weiterziehen: Gebiete leer ").append(ll.gebieteLeer).append(", Reisen ").append(ll.weiter.reisen)
+            .append(", Fehlversuche ").append(ll.weiter.fehlversuche).append(ll.weiter.grund.isEmpty() ? "" : " · Ende: " + ll.weiter.grund).append("\n");
         b.append("- Wächter: Joystick ohne Wirkung ").append(waechter.joystickOhneWirkung).append(", Angriff ohne Wirkung ")
             .append(waechter.angriffOhneWirkung).append("\n");
         b.append("- Leben zuletzt: ").append(z == null ? "–" : z.leben + "/" + z.lebenMax).append(" · Heiltränke im Gürtel ")
@@ -1036,7 +1064,9 @@ public final class Spieltester {
         }
         b.append("- Stadtgänge: ").append(stadtgang.gaenge).append(" (abgebrochen ").append(stadtgang.abbrueche)
             .append(") · Leben beim Heiler zuletzt ").append(stadtgang.lebenVorher).append(" → ").append(stadtgang.lebenNachher)
-            .append(" · Testfigur ").append(testfigur).append("\n");
+            .append(" · Testfigur ").append(testfigur)
+
+            .append(gespieltText()).append("\n");
         b.append("- Tipps: ").append(fahrer.tipps).append(" (davon Nehmen ").append(fahrer.nehmenTipps).append(", aufgehoben ")
             .append(gehirn.aufgehoben).append(", aufgegeben ").append(gehirn.nehmenAufgegeben).append(") · Richtungswechsel: ")
             .append(gehirn.richtungswechsel).append("\n");

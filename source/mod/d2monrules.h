@@ -83,4 +83,36 @@ static int monsterReport(int town, int ally, unsigned long cls, unsigned long mo
     return monsterRowVerdict(monFlags, nameStr, 0) ? MON_TARGET : MON_OUT;
 }
 
+
+
+
+
+
+
+
+
+
+static int monsterReportSelectable(int town, int ally, int companion, unsigned long cls, unsigned long monFlags,
+                                   unsigned nameStr) {
+    if (companion || isAncientStatue(cls)) return MON_OUT;
+    if (town || ally || isPersonOutsideTownRow(monFlags, nameStr)) return MON_PERSON;
+    return MON_TARGET;
+}
+
+
+
+
+
+
+#define MONSTER_TYRAEL_LAIR  251
+#define MONSTER_DURIEL       211
+#define LEVEL_DURIELS_LAIR   73
+#define QUEST_WORD_SEVEN_TOMBS 14
+
+static int tyraelWaits(unsigned long cls, unsigned long level, int questWordKnown, unsigned questWord, int durielAlive) {
+    if (cls != MONSTER_TYRAEL_LAIR || level != LEVEL_DURIELS_LAIR) return 0;
+    if (durielAlive) return 1;
+    return questWordKnown && questWord == 0;
+}
+
 #endif

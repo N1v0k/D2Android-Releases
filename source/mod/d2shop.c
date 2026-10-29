@@ -17,7 +17,25 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define CMD_SHOP_POTIONS 16
+#define SHOP_MAX_BUY     80
+#define CMD_SELL_LOOT    17
+#define CMD_STASH_LOOT   18
+#define SHOP_MAX_WARE    99
 #define CMD_REPAIR       29
 
 
@@ -28,6 +46,16 @@
 #define RVA_RepairCall       0x7A396
 #define REPAIR_MAX           16
 #define RVA_BuySite          0x7A333
+
+
+
+
+
+
+
+
+#define RVA_BuySoundSite     0x7A33A
+#define RVA_ItemSound        0xB9B00
 #define RVA_Send17           0xB6990
 #define RVA_PriceCall        0x7D2BC
 #define RVA_PriceThunk       0xC6AA
@@ -51,14 +79,19 @@ typedef int (__stdcall *GetItemPrice_t)(void* player, void* item, DWORD difficul
 static GetItemPrice_t fGetItemPrice;
 static int shopAvailable;
 static int repairAvailable;
+static int buySoundAvailable;
 
 static struct {
     DWORD id;
     BYTE cmd, state, a, b, reason;
 
     BYTE want[2], toBelt[2], noWare[2];
+    BYTE scrolls;
+    DWORD ware;
+    char wareCode[4];
     DWORD goldLimit, npc, started, nextAt, sentAt, goldBefore;
     int waiting, kind, countBefore, misses;
+    int sound;
     void* player;
 
     DWORD tried[REPAIR_MAX], itemId;
@@ -95,11 +128,36 @@ static void checkShopSites(void) {
         && **(DWORD**) (thunk + 2) == (DWORD) fGetItemPrice;
 
     shopAvailable = buyOk && priceOk && npcMenuAvailable && beltMoveAvailable && fSendPacket;
+
+    BYTE* snd = (BYTE*) (client + RVA_BuySoundSite);
+    buySoundAvailable = buyOk && soundAvailable && readable(snd, 8) && snd[0] == 0x33 && snd[1] == 0xFF && snd[2] == 0xE8
+        && (DWORD) (snd + 7) + *(DWORD*) (snd + 3) == client + RVA_ItemSound && snd[7] == 0xA3;
+    logLine("shop sites: buy sound %s", buySoundAvailable ? "verified" : "NOT as expected, buys stay silent");
     repairAvailable = repairOk && npcMenuAvailable && fSendPacket;
     logLine("shop sites: buy %s, price %s: refill potions %s", buyOk ? "verified" : "NOT as expected",
         priceOk ? "verified" : "NOT as expected", shopAvailable ? "available" : "not offered");
     logLine("shop sites: repair %s", repairAvailable ? "verified, available" : "NOT as expected, not offered");
     checkSellSite(priceOk);
+}
+
+
+static int shopItemSound(void* item) {
+    if (!buySoundAvailable || !item) return 0;
+    DWORD fn = client + RVA_ItemSound;
+    int sound;
+    void* it = item;
+    __asm__ volatile ("xorl %%edi, %%edi\n\tcall *%%eax" : "=a"(sound), "+S"(it) : "0"(fn) : "ebx", "ecx", "edx", "edi", "memory", "cc");
+    return sound > 0 ? sound : 0;
+}
+
+
+static void shopPlayBuySound(void) {
+    if (!buySoundAvailable || shopJob.sound <= 0) return;
+    DWORD play = client + RVA_PlaySound;
+    int id = shopJob.sound;
+    __asm__ volatile ("pushl $0\n\tpushl $0\n\tpushl $0\n\tpushl $0\n\tcall *%%eax"
+        : "+a"(play), "+b"(id) : : "ecx", "edx", "esi", "edi", "memory", "cc");
+    trace("shop: buy sound %d played", shopJob.sound);
 }
 
 static void shopFinish(int reason) {
@@ -118,6 +176,11 @@ static void* shopNpc(void) {
 
 
 static int sellPending(void);
+static void abgabeStart(void* player, const BYTE* buf, int n);
+static void abgabeSellTick(void* player, void* npc, DWORD now);
+static void abgabeStashTick(void* player, DWORD now);
+
+static void* shopWareById(void* npc, DWORD id);
 
 static void shopCommand(void* player, const BYTE* buf, int n) {
     if (shopJob.state == JOB_RUNNING) {
@@ -130,18 +193,54 @@ static void shopCommand(void* player, const BYTE* buf, int n) {
         return;
     }
     if (n < 20) return;
+
+
+    if (shopJob.state == JOB_DONE && shopJob.id && *(DWORD*) (buf + 16) == shopJob.id) {
+        logLine("shop: command %d, job %lu already done, not again", buf[5], (unsigned long) shopJob.id);
+        return;
+    }
     memset(&shopJob, 0, sizeof(shopJob));
     shopJob.id = *(DWORD*) (buf + 16);
     shopJob.cmd = buf[5];
     shopJob.state = JOB_RUNNING;
     shopJob.player = player;
     shopJob.started = GetTickCount();
-    shopJob.want[0] = buf[8] > 40 ? 40 : buf[8];
-    shopJob.want[1] = buf[9] > 40 ? 40 : buf[9];
+    shopJob.want[0] = buf[8] > SHOP_MAX_BUY ? SHOP_MAX_BUY : buf[8];
+    shopJob.want[1] = buf[9] > SHOP_MAX_BUY ? SHOP_MAX_BUY : buf[9];
     shopJob.toBelt[0] = buf[10] > 16 ? 16 : buf[10];
     shopJob.toBelt[1] = buf[11] > 16 ? 16 : buf[11];
     shopJob.goldLimit = *(DWORD*) (buf + 12);
+    if (shopJob.cmd == CMD_SELL_LOOT || shopJob.cmd == CMD_STASH_LOOT) {
+        abgabeStart(player, buf, n);
+        return;
+    }
     void* npc = shopNpc();
+    if (shopJob.cmd == CMD_SHOP_POTIONS && n >= 25 && buf[20] == 3) {
+        shopJob.scrolls = 3;
+        shopJob.ware = *(DWORD*) (buf + 21);
+        shopJob.want[0] = buf[8] > SHOP_MAX_WARE ? SHOP_MAX_WARE : buf[8];
+        shopJob.want[1] = shopJob.toBelt[0] = shopJob.toBelt[1] = 0;
+        void* item = npc ? shopWareById(npc, shopJob.ware) : NULL;
+        if (item) memcpy(shopJob.wareCode, itemCode(item), 3);
+        logLine("shop job %lu: buy %d of ware %lu (%.3s), gold limit %lu", (unsigned long) shopJob.id, shopJob.want[0],
+            (unsigned long) shopJob.ware, item ? shopJob.wareCode : "---", (unsigned long) shopJob.goldLimit);
+        if (!shopAvailable) shopFinish(SHOP_END_UNAVAILABLE);
+        else if (!npc) shopFinish(SHOP_END_CLOSED);
+        else if (!item) shopFinish(SHOP_END_NO_WARE);
+        else shopJob.npc = RD32(npc, U_ID);
+        return;
+    }
+    if (shopJob.cmd == CMD_SHOP_POTIONS && n >= 21 && (buf[20] == 1 || buf[20] == 2)) {
+        shopJob.scrolls = buf[20];
+        if (shopJob.scrolls == 2) shopJob.want[0] = 1;
+        shopJob.want[1] = shopJob.toBelt[0] = shopJob.toBelt[1] = 0;
+        logLine("shop job %lu: buy %d %s, gold limit %lu", (unsigned long) shopJob.id, shopJob.want[0],
+            shopJob.scrolls == 2 ? "town portal tome" : "town portal scrolls", (unsigned long) shopJob.goldLimit);
+        if (!shopAvailable) shopFinish(SHOP_END_UNAVAILABLE);
+        else if (!npc) shopFinish(SHOP_END_CLOSED);
+        else shopJob.npc = RD32(npc, U_ID);
+        return;
+    }
     if (shopJob.cmd == CMD_REPAIR) {
         shopJob.want[0] = shopJob.want[1] = shopJob.toBelt[0] = shopJob.toBelt[1] = 0;
         logLine("shop job %lu: repair", (unsigned long) shopJob.id);
@@ -175,10 +274,131 @@ static void* shopPotion(void* npc, int kind) {
     return best;
 }
 
+
+static void* shopWare(void* npc, const char* what) {
+    void* inventory = RDP(npc, U_INVENTORY);
+    int guard = 0;
+    for (void* item = readable(inventory, 0x24) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
+        void* data = RDP(item, U_DATA);
+        if (!readable(data, 0x70)) break;
+        if (codeIs(itemCode(item), what)) return item;
+        item = RDP(data, IDATA_NEXTINV);
+    }
+    return NULL;
+}
+
+
+static void* shopWareById(void* npc, DWORD id) {
+    void* inventory = RDP(npc, U_INVENTORY);
+    int guard = 0;
+    for (void* item = readable(inventory, 0x24) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
+        void* data = RDP(item, U_DATA);
+        if (!readable(data, 0x70)) break;
+        if (RD32(item, U_ID) == id) return item;
+        item = RDP(data, IDATA_NEXTINV);
+    }
+    return NULL;
+}
+
+
+
+
+
+
+static int shopWareCount(void* player, const char* code) {
+    const char* tome = codeIs(code, "tsc") ? "tbk" : codeIs(code, "isc") ? "ibk" : NULL;
+    void* inventory = RDP(player, U_INVENTORY);
+    int n = 0, guard = 0;
+    for (void* item = readable(inventory, 0x10) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
+        void* data = RDP(item, U_DATA);
+        if (!readable(data, 0x70)) break;
+        BYTE location = RD8(data, IDATA_LOCATION), page = RD8(data, IDATA_NODEPAGE);
+        if ((location == 0xFF && page == 2) || (location == 0x00 && page == 1)) {
+            const char* c = itemCode(item);
+            if (codeIs(c, code)) n += 1 + (int) fGetUnitStat(item, STAT_QUANTITY, 0);
+            else if (tome && codeIs(c, tome)) n += (int) fGetUnitStat(item, STAT_QUANTITY, 0);
+        }
+        item = RDP(data, IDATA_NEXTINV);
+    }
+    return n;
+}
+
+static int shopFreeCells(const Carried* c);
+
+
+
+
+
+
+
+static void updateWare(void* player, void* npc, const Carried* c, DWORD now, DWORD gold) {
+    int count = shopWareCount(player, shopJob.wareCode);
+    if (shopJob.waiting == 1) {
+        if (count > shopJob.countBefore) {
+            shopJob.a++;
+            shopJob.misses = 0;
+            shopPlayBuySound();
+            trace("shop: bought %.3s %d, gold %lu -> %lu, count %d", shopJob.wareCode, shopJob.a,
+                (unsigned long) shopJob.goldBefore, (unsigned long) gold, count);
+            shopJob.waiting = 0;
+            shopJob.nextAt = now + SHOP_GAP_MS;
+        }
+        else if ((int) (now - shopJob.sentAt) > SHOP_WAIT_MS) {
+            shopJob.waiting = 0;
+            shopJob.nextAt = now + SHOP_GAP_MS;
+            logLine("shop: no %.3s after the buy packet (gold %lu)", shopJob.wareCode, (unsigned long) gold);
+            if (++shopJob.misses >= 2) {
+                shopFinish(shopJob.a > 0 || shopFreeCells(c) == 0 ? SHOP_END_INVENTORY_FULL : SHOP_END_REFUSED);
+            }
+        }
+        return;
+    }
+    if ((int) (now - shopJob.nextAt) < 0) return;
+    if (shopJob.a >= shopJob.want[0]) {
+        shopFinish(SHOP_END_DONE);
+        return;
+    }
+    void* item = shopWareById(npc, shopJob.ware);
+    if (!item) {
+        logLine("shop: ware %lu gone from the shop", (unsigned long) shopJob.ware);
+        shopFinish(shopJob.a > 0 ? SHOP_END_DONE : SHOP_END_NO_WARE);
+        return;
+    }
+    int price = fGetItemPrice(player, item, RD8((void*) client, RVA_ShopDifficulty), *(void**) (client + RVA_ShopQuestFlags),
+        RD32(npc, U_TXTNO), 0);
+    if (price <= 0) {
+        logLine("shop: price of %.3s is %d", shopJob.wareCode, price);
+        shopFinish(SHOP_END_REFUSED);
+        return;
+    }
+    if (gold < (DWORD) price || gold - (DWORD) price < shopJob.goldLimit) {
+        shopFinish(SHOP_END_GOLD);
+        return;
+    }
+    BYTE packet[17] = {0x32};
+    *(DWORD*) (packet + 1) = shopJob.npc;
+    *(DWORD*) (packet + 5) = shopJob.ware;
+    *(DWORD*) (packet + 9) = 0;
+    *(DWORD*) (packet + 13) = (DWORD) price;
+    fSendPacket(17, 1, packet);
+    shopJob.sound = shopItemSound(item);
+    trace("shop: buy %.3s (item %lu) from npc %lu for %d, gold %lu, count %d", shopJob.wareCode, (unsigned long) shopJob.ware,
+        (unsigned long) shopJob.npc, price, (unsigned long) gold, count);
+    shopJob.waiting = 1;
+    shopJob.countBefore = count;
+    shopJob.goldBefore = gold;
+    shopJob.sentAt = now;
+}
+
+
+static int shopPortals(const Carried* c) {
+    return (c->tpTome == 0xFF ? 0 : c->tpTome) + c->tpScrolls;
+}
+
 static int shopFreeCells(const Carried* c) {
     int used = 0;
-    for (int i = 0; i < INV_W * INV_H; i++) used += (c->used[i / 8] >> (i % 8)) & 1;
-    return INV_W * INV_H - used;
+    for (int i = 0; i < invGridW * invGridH; i++) used += (c->used[i / 8] >> (i % 8)) & 1;
+    return invGridW * invGridH - used;
 }
 
 
@@ -357,11 +577,84 @@ static void sellTick(void* player, DWORD now);
 static void sellReset(void);
 
 
+
+
+
+static void updateScrolls(void* player, void* npc, const Carried* c, DWORD now, DWORD gold) {
+    int tome = shopJob.scrolls == 2;
+    const char* code = tome ? "tbk" : "tsc";
+    int portals = tome ? (c->tpTome != 0xFF) : shopPortals(c);
+    if (shopJob.waiting == 1) {
+        if (portals > shopJob.countBefore) {
+            shopJob.a++;
+            shopPlayBuySound();
+            shopJob.misses = 0;
+            trace("shop: bought %s %d, gold %lu -> %lu, tome %d scrolls %d", code, shopJob.a,
+                (unsigned long) shopJob.goldBefore, (unsigned long) gold, c->tpTome == 0xFF ? -1 : c->tpTome, c->tpScrolls);
+            shopJob.waiting = 0;
+            shopJob.nextAt = now + SHOP_GAP_MS;
+        }
+        else if ((int) (now - shopJob.sentAt) > SHOP_WAIT_MS) {
+            shopJob.waiting = 0;
+            shopJob.nextAt = now + SHOP_GAP_MS;
+            logLine("shop: no %s after the buy packet (gold %lu)", code, (unsigned long) gold);
+            if (++shopJob.misses >= 2) shopFinish(SHOP_END_REFUSED);
+        }
+        return;
+    }
+    if ((int) (now - shopJob.nextAt) < 0) return;
+
+    if (shopJob.a >= shopJob.want[0] || (tome && c->tpTome != 0xFF) || (!tome && c->tpTome != 0xFF && c->tpTome >= 20)) {
+        shopFinish(SHOP_END_DONE);
+        return;
+    }
+    void* item = shopWare(npc, code);
+    if (!item) {
+        logLine("shop: no %s for sale", code);
+        shopFinish(SHOP_END_NO_WARE);
+        return;
+    }
+    int price = fGetItemPrice(player, item, RD8((void*) client, RVA_ShopDifficulty), *(void**) (client + RVA_ShopQuestFlags),
+        RD32(npc, U_TXTNO), 0);
+    if (price <= 0) {
+        logLine("shop: price of %s is %d", code, price);
+        shopFinish(SHOP_END_REFUSED);
+        return;
+    }
+    if (gold < (DWORD) price || gold - (DWORD) price < shopJob.goldLimit) {
+        shopFinish(SHOP_END_GOLD);
+        return;
+    }
+
+    if (tome ? shopFreeCells(c) < 2 : !(c->tpTome != 0xFF && c->tpTome < 20) && shopFreeCells(c) == 0) {
+        shopFinish(SHOP_END_INVENTORY_FULL);
+        return;
+    }
+    BYTE packet[17] = {0x32};
+    *(DWORD*) (packet + 1) = shopJob.npc;
+    *(DWORD*) (packet + 5) = RD32(item, U_ID);
+    *(DWORD*) (packet + 9) = 0;
+    *(DWORD*) (packet + 13) = (DWORD) price;
+    fSendPacket(17, 1, packet);
+    shopJob.sound = shopItemSound(item);
+    trace("shop: buy %s (item %lu) from npc %lu for %d, gold %lu, portals %d", code, (unsigned long) RD32(item, U_ID),
+        (unsigned long) shopJob.npc, price, (unsigned long) gold, portals);
+    shopJob.waiting = 1;
+    shopJob.countBefore = portals;
+    shopJob.goldBefore = gold;
+    shopJob.sentAt = now;
+}
+
+
 static void updateShop(void* player, DWORD now) {
     sellTick(player, now);
     if (shopJob.state != JOB_RUNNING) return;
     if (player != shopJob.player) {
         shopFinish(SHOP_END_CLOSED);
+        return;
+    }
+    if (shopJob.cmd == CMD_STASH_LOOT) {
+        abgabeStashTick(player, now);
         return;
     }
     void* npc = shopNpc();
@@ -380,12 +673,25 @@ static void updateShop(void* player, DWORD now) {
         updateRepair(player, now, gold);
         return;
     }
+    if (shopJob.cmd == CMD_SELL_LOOT) {
+        abgabeSellTick(player, npc, now);
+        return;
+    }
     Carried c;
     readCarried(player, &c);
+    if (shopJob.scrolls == 3) {
+        updateWare(player, npc, &c, now, gold);
+        return;
+    }
+    if (shopJob.scrolls) {
+        updateScrolls(player, npc, &c, now, gold);
+        return;
+    }
     int count[2] = {c.belt[0] + c.inventory[0], c.belt[1] + c.inventory[1]};
     if (shopJob.waiting == 1) {
         int k = shopJob.kind;
         if (count[k] > shopJob.countBefore) {
+            shopPlayBuySound();
             if (k == 0) shopJob.a++;
             else shopJob.b++;
             shopJob.misses = 0;
@@ -461,6 +767,7 @@ static void updateShop(void* player, DWORD now) {
     *(DWORD*) (packet + 9) = 0;
     *(DWORD*) (packet + 13) = (DWORD) price;
     fSendPacket(17, 1, packet);
+    shopJob.sound = shopItemSound(item);
     trace("shop: buy %.3s (item %lu) from npc %lu (txt %lu) for %d, gold %lu", itemCode(item), (unsigned long) RD32(item, U_ID),
         (unsigned long) shopJob.npc, (unsigned long) npcTxt, price, (unsigned long) gold);
     shopJob.waiting = 1;

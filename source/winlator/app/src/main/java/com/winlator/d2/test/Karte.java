@@ -1,7 +1,6 @@
 package com.winlator.d2.test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,8 +31,12 @@ public final class Karte {
     }
 
     public final int level;
-    private final Map<Integer, Raum> raeume = new HashMap<>();
-    private int gesamt = -1;
+
+
+
+
+    private final Map<Integer, Raum> raeume = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile int gesamt = -1;
 
     public Karte(int level) { this.level = level; }
 
@@ -156,11 +159,48 @@ public final class Karte {
 
     public java.util.Collection<Raum> alleRaeume() { return raeume.values(); }
 
+
+
+
+
+    private volatile Raum letzterRaum;
+
     public Raum raum(int x, int y) {
+        Raum c = letzterRaum;
+        if (c != null && x >= c.x && y >= c.y && x < c.x + c.w && y < c.y + c.h && raeume.get(c.nr) == c) return c;
         for (Raum r : raeume.values()) {
-            if (x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h) return r;
+            if (x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h) {
+                letzterRaum = r;
+                return r;
+            }
         }
         return null;
+    }
+
+
+    private volatile int[] huelle;
+
+
+
+
+
+
+    public boolean ausserhalb(int x, int y, int rand) {
+        int n = raeume.size();
+        if (gesamt < 0 || n < gesamt || n == 0) return false;
+        int[] h = huelle;
+        if (h == null || h[4] != n) {
+            int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE;
+            for (Raum r : raeume.values()) {
+                x0 = Math.min(x0, r.x);
+                y0 = Math.min(y0, r.y);
+                x1 = Math.max(x1, r.x + r.w);
+                y1 = Math.max(y1, r.y + r.h);
+            }
+            h = new int[]{x0, y0, x1, y1, n};
+            huelle = h;
+        }
+        return x < h[0] - rand || y < h[1] - rand || x >= h[2] + rand || y >= h[3] + rand;
     }
 
     public Raum raum(int nr) { return raeume.get(nr); }

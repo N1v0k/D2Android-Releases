@@ -87,6 +87,26 @@ static void putHoverItem(Packet* p, void* player) {
         }
         item = RDP(data, IDATA_NEXTINV);
     }
+
+    void* npc = category == 0xFF && inventory ? shopNpc() : NULL;
+    void* wares = npc ? RDP(npc, U_INVENTORY) : NULL;
+    guard = 0;
+    for (void* item = readable(wares, 0x24) ? RDP(wares, INV_FIRST) : NULL; item && guard < 512; guard++) {
+        void* data = RDP(item, U_DATA);
+        if (!readable(data, 0x70)) break;
+        if (item == hovered) {
+            int tier;
+            category = itemCategory(item, itemCode(item), &tier);
+            place = 5;
+            void* path = RDP(item, U_PATH);
+            if (readable(path, IPATH_Y + 4) && RD32(path, IPATH_X) < 0xFF && RD32(path, IPATH_Y) < 0xFF) {
+                x = (int) RD32(path, IPATH_X);
+                y = (int) RD32(path, IPATH_Y);
+            }
+            break;
+        }
+        item = RDP(data, IDATA_NEXTINV);
+    }
     putU8(p, (BYTE) category);
     putU8(p, (BYTE) place);
     putU8(p, (BYTE) x);
@@ -148,21 +168,26 @@ static void putItemDetails(Packet* p, void* item) {
 
 
 static int putInventoryItems(Packet* p, void* inventory, int shop, int limit, int* full, void** items) {
-    int count = 0, guard = 0;
-    for (void* item = readable(inventory, 0x24) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
-        void* data = RDP(item, U_DATA);
-        if (!readable(data, 0x70)) break;
-        int place = shop ? 5 : itemPlace(data);
-        if (place != 0xFF) {
-            if (count >= limit) {
-                *full = 1;
-                break;
+    int count = 0;
+
+
+    for (int pass = shop ? 1 : 0; pass < 2; pass++) {
+        int guard = 0;
+        for (void* item = readable(inventory, 0x24) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
+            void* data = RDP(item, U_DATA);
+            if (!readable(data, 0x70)) break;
+            int place = shop ? 5 : itemPlace(data);
+            if (place != 0xFF && (shop || (pass == 0) == (place == 0))) {
+                if (count >= limit) {
+                    *full = 1;
+                    return count;
+                }
+                putItemEntry(p, item, place);
+                if (items) items[count] = item;
+                count++;
             }
-            putItemEntry(p, item, place);
-            if (items) items[count] = item;
-            count++;
+            item = RDP(data, IDATA_NEXTINV);
         }
-        item = RDP(data, IDATA_NEXTINV);
     }
     return count;
 }
@@ -302,6 +327,7 @@ static void sendPlaytest(void* player, void* act, DWORD levelNo) {
         for (int i = 0; i < carriedCount; i++) putItemDetails(&p, carried[i]);
     }
     else putU8(&p, 0);
+    putStashPages(&p, player);
 
 
 

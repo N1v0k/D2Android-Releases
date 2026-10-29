@@ -3,6 +3,31 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.5.0 (2026-10-29)
+
+- First start: choose how you want to play, Classic (like the original game) or Enhanced, with a table of all differences. Players updating from 1.4 are asked once too, unless they already set their own rules. You can change it later under Settings › Play style.
+- Enhanced: better loot (fewer empty drops, high runes, guaranteed boss drops), a large inventory of 10 × 8 and 110 % monster density. Monster density can also be set to 125, 150 or 200 %.
+- Classic plays without the shared stash, RESPEC and "Sort". Each can be switched back on under Play style; items and gold in the shared stash are kept.
+- Anonymous usage statistics: the app asks once whether it may send them, with a list of what is included. Nothing is sent before you tap "Yes". The switch is under Settings › Help and info.
+- Recipe book: Horadric Cube recipes and runewords read from your game files, with what you can make right now, search and preview. It puts the ingredients into the cube for you, also from the materials and other stash pages. Open it from the menu bar or at the cube.
+- Stash: shared gold is shown above the gold field, and the anvil opens the materials window.
+- Shops: double tap buys, hold asks for the amount. In the inventory, double tap sells an item at a vendor, or moves it between inventory and stash.
+- Short how-to lines at the vendor and mercenary windows, and a "?" at stash, cube and inventory. Hints appear at the right moment instead of a tour at the start.
+- Hold a character on the start page for a menu with difficulty and "Delete character". A deleted character stays greyed out for 3 days.
+- The app turns with the device: its pages work in portrait and landscape, the game in both landscape directions and respects the rotation lock. In landscape the start page shows the menu on the left and the characters on the right.
+- Gamepad: the start page, settings and dialogs can be used with the gamepad. B closes windows, wheels and conversations. A picks its target like Diablo II: Resurrected, first in weapon reach, then in the stick's direction, and marks it beforehand.
+- Skill buttons can also hold a left skill (e.g. keep a Paladin aura on the right).
+- Mods: Settings › Mods installs data mods from a zip or 7z file; each mod keeps its own characters.
+- The experience bar is drawn in the game picture. DPS shows "current / best in this game".
+- "Go on where I was" is now on by default; if you chose on or off yourself, that stays.
+- Idle: buys potions, a tome and portal scrolls on the way back, stores and sells its own loot when the inventory is full, moves on by waypoint when an area is cleared, and can run without time limit.
+- Installation: the keys page checks the CD keys itself and swaps them if they were entered the wrong way round. A rejected key gets a clear message.
+- Fixed: the app could close after 1.5 to 2 hours of play (out of memory).
+- "Take" can be used while the inventory is open, in its usual place.
+- Back closes game windows first, and Esc goes to the game. Life and mana numbers make room for open windows.
+- The app version is shown on the start page and at the bottom of the app menu in the game.
+- Known issue: rarely, a character started straight into the game stays on "Loading…". Close the app and start again.
+
 ## 1.4.1 (2026-10-24)
 
 - After the fight with Duriel, Tyrael can be talked to with "Take" and A, so he opens the portal to Lut Gholein. Anya in the ice in act 5 can be talked to the same way.

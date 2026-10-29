@@ -55,6 +55,11 @@ final class D2GameFont {
 
 
 
+    static final int STONE_RGB = 0x696969;
+
+
+
+
 
     Img render(String text, int rgb) {
         return render(text, rgb, 100);
@@ -80,8 +85,7 @@ final class D2GameFont {
                     int lum = Math.max(p >> 16 & 0xFF, Math.max(p >> 8 & 0xFF, p & 0xFF));
                     int lit = Math.min(255, lum * gainPercent / 100);
                     int r = cr * lit / 255, gg = cg * lit / 255, b = cb * lit / 255;
-                    int v = Math.max(0, lum * 39 / 100 - 8);
-                    out[(gy) * w + x + gx] = rgb == 0 ? 0xFF000000 | v << 16 | v << 8 | v : 0xFF000000 | r << 16 | gg << 8 | b;
+                    out[(gy) * w + x + gx] = 0xFF000000 | r << 16 | gg << 8 | b;
                 }
             }
             x += widths[c];

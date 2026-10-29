@@ -54,6 +54,7 @@ rootfs/expat.txt|46336ab2fec900803e2f1a4253e325ac01d998efb09bc6906651f7259e636f7
 text/BSD-2-Clause.txt|f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df|$SPDX/BSD-2-Clause.txt
 xbr/xbr-lv2.glsl|9cf5b08c7378305b558204354e898f6837c481fd5b4371dfbe6b5092cffe5062|https://raw.githubusercontent.com/libretro/glsl-shaders/ce9a41242e27f41e16bc35c28943466cee3e8ff8/xbr/shaders/xbr-lv2.glsl
 stormlib/LICENSE|50b128e6750ed9d887e7a5748a6021238bb2f3bf34a5dd2768c410d932069e35|https://raw.githubusercontent.com/ladislav-zezula/StormLib/116135c27e8c0dcf8ea0a0c549a6d737ce10fc73/LICENSE
+bncs-py/LICENSE|dc76edc16e51df21634d459c316a9fd155b041ad6e459d6cc21c760f74c588bf|https://raw.githubusercontent.com/Davnit/bncs.py/c0dde7ba752638fafcbc786cbab47716aebe7005/LICENSE
 LIST
 
 

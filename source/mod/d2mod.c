@@ -890,15 +890,21 @@ static void* findMercenary(void* player) {
 }
 
 
-static int monsterLeftOut(void* unit) {
+static int isFixedListMonster(DWORD txt) {
     static const DWORD bad[] = {227, 283, 326, 327, 328, 329, 330, 410, 411, 412, 413, 414, 415, 416, 366, 406,
         351, 352, 353, 266, 408, 516, 517, 518, 519, 522, 523, 543, 545};
+    for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) if (txt == bad[i]) return 1;
+    return 0;
+}
+
+
+static int monsterLeftOut(void* unit) {
     DWORD mode = RD32(unit, U_MODE), txt = RD32(unit, U_TXTNO);
     if (mode == 0 || mode == 12) return 1;
     if (txt == 608 && mode == 8) return 1;
     if (txt == 68 && mode == 14) return 1;
     if ((txt == 258 || txt == 261) && mode == 14) return 1;
-    for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) if (txt == bad[i]) return 1;
+    if (isFixedListMonster(txt)) return 1;
     if (isMercenary(txt)) return 1;
 
 
@@ -1327,7 +1333,15 @@ static int heldClickType(DWORD now) {
 }
 
 
+
+
+
+
 static void updateHeld(DWORD now) {
+    static DWORD prevMode;
+    DWORD curMode = playerMode();
+    int blockEnded = prevMode == 9 && curMode != 9;
+    prevMode = curMode;
     if (pendingPress.active) {
         if ((int) (now - pendingPress.expireAt) > 0) {
             pendingPress.active = 0;
@@ -1337,6 +1351,10 @@ static void updateHeld(DWORD now) {
         }
 
         if (pendingPress.waitSwing && playerBusy() && (int) (now - pendingPress.since) <= 1500) return;
+        if (blockEnded) {
+            trace("press on %lu waits a tick (block just ended)", (unsigned long) pendingPress.id);
+            return;
+        }
         if (!clickFree(&pendingPress.clickWait, now)) return;
         pendingPress.active = 0;
         void* unit = findUnit(pendingPress.id, pendingPress.type);
@@ -1351,6 +1369,10 @@ static void updateHeld(DWORD now) {
     int dead = !unit || (RD32(unit, U_TYPE) == UNIT_MONSTER && (mode == 0 || mode == 12));
     if (dead || (int) (now - held.expireAt) > 0) {
         releaseHeld(dead ? "unit dead or gone" : "no hold from the app for 600 ms");
+        return;
+    }
+    if (blockEnded) {
+        trace("held %lu: hold waits a tick (block just ended)", (unsigned long) held.id);
         return;
     }
     int clickType = heldClickType(now);
@@ -2949,6 +2971,8 @@ static void drinkPotion(void* player, int kind, int allowInventory, int toMerc, 
 
 static int readable(const void* p, UINT_PTR size);
 
+#include "d2npcdialog.c"
+
 static void checkNpcMenuSites(void) {
     BYTE* search = (BYTE*) (client + RVA_NpcMenuSearch);
     BYTE* thunk = (BYTE*) (client + RVA_GetLocaleText);
@@ -2957,6 +2981,7 @@ static void checkNpcMenuSites(void) {
         && search[12] == 0xB9 && *(DWORD*) (search + 13) == client + RVA_NpcMenuTable
         && thunk[0] == 0xFF && thunk[1] == 0x25 && RD32(client, RVA_NpcMenuCount) < 128;
     logLine(npcMenuAvailable ? "NPC menu sites verified" : "NPC menu sites not as expected: no NPC menu help");
+    checkNpcDialogSites();
     if (npcMenuAvailable) {
         const wchar_t* t = localeText(5382);
         logLine("helper unit name (string 5382): %d chars, first U+%04X", t ? lstrlenW(t) : -1, t && t[0] ? (unsigned) t[0] : 0u);
@@ -2985,6 +3010,7 @@ static const wchar_t* localeText(WORD id) {
 
 
 static void chooseNpcEntry(int index) {
+    if (chooseNpcSubEntry(index)) return;
     BYTE* e = npcMenuEntry();
     if (!e || index < 0 || index >= (int) *(DWORD*) (e + 4) - 1 || index >= 5) return;
     DWORD handler = *(DWORD*) (e + 0x12 + index * 4);
@@ -3110,9 +3136,11 @@ static WORD skillId(void* skill);
 
 
 
+
+
 static int classSkill(DWORD cls, WORD skill) {
     static const WORD first[7] = {6, 36, 66, 96, 126, 221, 251};
-    return skill == 0 || (cls < 7 && skill >= first[cls] && skill < first[cls] + 30);
+    return skill == 0 || skill == 2 || skill == 4 || skill == 5 || (cls < 7 && skill >= first[cls] && skill < first[cls] + 30);
 }
 
 static void selectSkill(void* player, int left, WORD skill) {
@@ -3189,10 +3217,16 @@ static void putShopJob(Packet* p);
 #include "d2loot.c"
 #include "d2shop.c"
 #include "d2compare.c"
+#include "d2layers.c"
+#include "d2biginv.c"
 #include "d2sell.c"
 #include "d2buffs.c"
 #include "d2equip.c"
 #include "d2sort.c"
+#include "d2abgabe.c"
+#include "d2move.c"
+#include "d2cube.c"
+#include "d2cubeopen.c"
 
 
 #define CMD_STASH 21
@@ -3201,6 +3235,8 @@ static void stashBusyDrop(void);
 #ifdef D2MOD_TESTCMDS
 static void stashTest(BYTE op, BYTE value);
 #endif
+#include "d2sharedgold.c"
+#include "d2stashpages.c"
 #include "d2points.c"
 #include "d2playtest.c"
 #include "d2map.c"
@@ -3210,6 +3246,7 @@ static void stashTest(BYTE op, BYTE value);
 #include "d2value.c"
 #include "d2diff.c"
 #include "d2statprobe.c"
+#include "d2sound.c"
 
 #ifdef D2MOD_TESTCMDS
 static void fakeEffect(DWORD state, DWORD seconds);
@@ -3222,6 +3259,8 @@ static volatile LONG srvProbeX, srvProbeY;
 #endif
 
 static void damageCommand(int numbers, int dps, int element, int appDps, DWORD now);
+static void selfCheckCommand(const BYTE* buf, int n);
+static void xpBarCommand(const BYTE* buf, int n, DWORD now);
 
 static void handleCommands(void* player, int stale) {
     if (cmdSock == INVALID_SOCKET) return;
@@ -3239,12 +3278,13 @@ static void handleCommands(void* player, int stale) {
         noteCommand(cmd);
 
         if (pauseApplied && (cmd == CMD_DRINK || cmd == CMD_WALK || cmd == CMD_UNIT || cmd == CMD_PORTAL || cmd == CMD_BELT || cmd == CMD_TAKE
-            || cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR || cmd == CMD_SELL)) continue;
+            || cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR || cmd == CMD_SELL || cmd == CMD_SELL_LOOT || cmd == CMD_STASH_LOOT)) continue;
 
 
 
         if (sortBusy() && (cmd == CMD_TAKE || cmd == CMD_BELT || cmd == CMD_EQUIP || cmd == CMD_PORTAL || cmd == CMD_UNIT
-            || cmd == CMD_SHOP_POTIONS || cmd == CMD_STASH || cmd == CMD_SELL)) {
+            || cmd == CMD_SHOP_POTIONS || cmd == CMD_STASH || cmd == CMD_SELL || cmd == CMD_SELL_LOOT || cmd == CMD_STASH_LOOT
+            || cmd == CMD_CUBE)) {
             if (cmd == CMD_STASH) stashBusyDrop();
             continue;
         }
@@ -3256,13 +3296,19 @@ static void handleCommands(void* player, int stale) {
         if (cmd == CMD_BELT && n >= 9 && player && buf[8] <= 2) moveToBelt(player, buf[8] + 1);
         if (cmd == CMD_STACKS && n >= 9 && player && buf[8] <= 1) setLargeStacks(buf[8] && singlePlayerGame());
         if (cmd == CMD_POINTS && n >= 11 && player) pointsCommand(player, buf, n);
-        if ((cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR) && player) shopCommand(player, buf, n);
+        if ((cmd == CMD_SHOP_POTIONS || cmd == CMD_REPAIR || cmd == CMD_SELL_LOOT || cmd == CMD_STASH_LOOT) && player) shopCommand(player, buf, n);
         if (cmd == CMD_SELL && player) sellCommand(player, buf, n);
+        if (cmd == CMD_MOVE && player) moveCommand(player, buf, n);
+        if (cmd == CMD_CUBE && player) cubeCommand(player, buf, n);
+        if (cmd == CMD_CUBE_OPEN && player) cubeOpenCommand(player);
         if (cmd == CMD_LABELS && n >= 9) labelFilterCommand(buf, n);
         if (cmd == CMD_VALUE) valueCommand(buf, n);
         if (cmd == CMD_FRAMES) framesCommand(buf, n);
         if (cmd == CMD_MAP) mapCommand(buf, n);
         if (cmd == CMD_TELEPORT) teleportCommand(buf, n);
+        if (cmd == 32) selfCheckCommand(buf, n);
+        if (cmd == CMD_LAYER) layerCommand(buf, n);
+        if (cmd == CMD_SOUND && player) soundCommand(buf, n);
         if (cmd == CMD_DRINK && n >= 9 && player) {
             int kind = buf[8] == 1 ? 2 : (buf[8] == 2 ? 3 : (buf[8] == 3 ? 5 : 1));
 
@@ -3426,6 +3472,7 @@ static void handleCommands(void* player, int stale) {
             compareUntil = n >= 10 && (buf[9] & 1) ? t + 2000 : off;
             diffUntil = n >= 10 && (buf[9] & 16) ? t + 2000 : off;
             damageCommand(n >= 10 && (buf[9] & 2), n >= 10 && (buf[9] & 4), n >= 10 && (buf[9] & 8), n >= 10 && (buf[9] & 32), t);
+            xpBarCommand(buf, n, t);
         }
         else if (cmd == CMD_WALK && n >= 14 && player) {
             walkAction(player, buf[8], *(short*) (buf + 10), *(short*) (buf + 12), GetTickCount());
@@ -3543,6 +3590,19 @@ static int isOpenQuestEntrance(const BYTE* txt, DWORD mode) {
 
 static int isQuestObjectInUse(const BYTE* txt, DWORD mode) {
     return mode != 0 && txt[OTXT_SUBCLASS] == 0 && txt[OTXT_OPERATEFN] == 49;
+}
+
+
+
+
+
+
+
+static int objectReported(const BYTE* txt, DWORD mode) {
+    if (!txt[OTXT_SELECTABLE0 + (mode < 8 ? mode : 0)]) return 0;
+    int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0 || isOpenQuestEntrance(txt, mode)
+        || isQuestObjectInUse(txt, mode);
+    return mode == 0 || alwaysUsable;
 }
 
 
@@ -3889,6 +3949,9 @@ static void sendGoals(void* player, DWORD levelNo) {
     sendPacket(&p);
 }
 
+#include "d2selfcheck.c"
+#include "d2selectable.c"
+
 
 static DWORD seenId[32], seenMode[32], seenNext;
 
@@ -3991,7 +4054,7 @@ static void collectAndSend(void* player) {
             }
             if (type == UNIT_MONSTER && nMonsters < MAX_CANDIDATES) {
                 rawMonsters++;
-                if (monsterReportOf(unit, isTown(levelNo)) == MON_OUT) continue;
+                if (monsterVerdict(unit, isTown(levelNo), levelNo) == MON_OUT) continue;
                 addCandidate(monsterList, &nMonsters, unit, ux, uy, psx, psy);
             }
             else if (type == UNIT_ITEM && nItems < MAX_CANDIDATES) {
@@ -4027,13 +4090,7 @@ static void collectAndSend(void* player) {
                     gates[nGates][1] = (int) y;
                     nGates++;
                 }
-                if (!txt || !txt[OTXT_SELECTABLE0 + (omode < 8 ? omode : 0)]) continue;
-
-
-
-                int alwaysUsable = (txt[OTXT_SUBCLASS] & (4 | 16 | 32 | 64)) != 0 || isOpenQuestEntrance(txt, omode)
-                    || isQuestObjectInUse(txt, omode);
-                if (RD32(unit, U_MODE) != 0 && !alwaysUsable) continue;
+                if (!txt || !objectVerdict(unit, txt, omode, levelNo)) continue;
                 addCandidate(objectList, &nObjects, unit, ux, uy, psx, psy);
             }
             else if (type == UNIT_TILE && nObjects < MAX_CANDIDATES) {
@@ -4083,7 +4140,7 @@ static void collectAndSend(void* player) {
         if (bits & 0x10) flags |= 4;
         if (bits & 0x02) flags |= 8;
 
-        if (monsterReportOf(unit, isTown(levelNo)) == MON_PERSON) {
+        if (monsterVerdict(unit, isTown(levelNo), levelNo) == MON_PERSON) {
             flags |= 16;
 
             static DWORD personLogged[16], personLevel, personNext;
@@ -4219,9 +4276,12 @@ static void collectAndSend(void* player) {
     findPortal(player, NULL, &charges);
     putU8(&p, charges > 255 ? 255 : charges);
 
-    BYTE* npcMenu = npcMenuEntry();
-    int npcLines = npcMenu ? (int) *(DWORD*) (npcMenu + 4) - 1 : 0;
-    if (npcLines > 5) npcLines = 5;
+
+    const wchar_t* npcSubText[NPC_SUB_MAX];
+    int npcSub = npcSubTexts(npcSubText);
+    BYTE* npcMenu = npcSub < 0 ? npcMenuEntry() : NULL;
+    int npcLines = npcSub >= 0 ? npcSub : npcMenu ? (int) *(DWORD*) (npcMenu + 4) - 1 : 0;
+    if (npcLines > 5 && npcSub < 0) npcLines = 5;
 
 
     putU8(&p, nCorpses);
@@ -4258,9 +4318,9 @@ static void collectAndSend(void* player) {
     }
     putU8(&p, npcLines < 0 ? 0 : npcLines);
     for (int i = 0; i < npcLines; i++) {
-        WORD id = *(WORD*) (npcMenu + 8 + i * 2);
+        WORD id = npcSub >= 0 ? 0 : *(WORD*) (npcMenu + 8 + i * 2);
         putU16(&p, id);
-        const wchar_t* text = localeText(id);
+        const wchar_t* text = npcSub >= 0 ? npcSubText[i] : localeText(id);
         char utf8[64];
         int len = 0, k = 0;
         if (text) {
@@ -4332,6 +4392,8 @@ static void collectAndSend(void* player) {
     void* objectUnits[MAX_OBJECTS];
     for (int i = 0; i < nObjects; i++) objectUnits[i] = objectList[i].unit;
     sendObjectDetails(objectUnits, nObjects);
+    selfCheck(player, &view, width, height, levelNo, monsterList, nMonsters, itemList, nItems, objectList, nObjects,
+        gates, nGates);
     sendGoals(player, levelNo);
     sendPlaytest(player, act, levelNo);
     sendEffects(player);
@@ -4341,8 +4403,10 @@ static void collectAndSend(void* player) {
 #include "d2server.c"
 #include "d2resume.c"
 #include "d2damage.c"
+#include "d2xpbar.c"
 #include "d2stash.c"
 #include "d2gold.c"
+#include "d2spielweise.c"
 
 static void installClickHook(void);
 static void installHighlightHook(void);
@@ -4376,6 +4440,9 @@ static void keepSettingsOverPause(DWORD now) {
     damageDpsUntil = hudKept(damageDpsUntil, ended, now, &kept);
     damageElementUntil = hudKept(damageElementUntil, ended, now, &kept);
     damageAppDpsUntil = hudKept(damageAppDpsUntil, ended, now, &kept);
+    xpBarUntil = hudKept(xpBarUntil, ended, now, &kept);
+    xpLevelUntil = hudKept(xpLevelUntil, ended, now, &kept);
+    xpCompactUntil = hudKept(xpCompactUntil, ended, now, &kept);
     labelFilterUntil = hudKept(labelFilterUntil, ended, now, &kept);
 
     for (int f = 0; f < 3; f++)
@@ -4393,6 +4460,7 @@ static void noteGame(void* player, DWORD now) {
     gameSeed = seed;
     keepSettingsOverPause(now);
     forgetItems();
+    selfCheckNewGame();
     memset(seenId, 0, sizeof(seenId));
     memset(seenMode, 0, sizeof(seenMode));
     seenNext = 0;
@@ -4522,6 +4590,9 @@ static void swingTrace(void* player) {
     void* target = path ? RDP(path, PATH_TARGET) : NULL;
     double tdist = -1;
     if (target) {
+
+        ttype = RD32(target, U_TYPE);
+        tid = RD32(target, U_ID);
         unitPosition(target, &x, &y);
         tdist = __builtin_sqrt((x - px) * (x - px) + (y - py) * (y - py));
     }
@@ -4572,6 +4643,7 @@ static void gameTick(void) {
         installClickMapEntryHook();
         keepLabelTips();
         checkSoundSites();
+        checkGameSoundSite();
         checkNpcMenuSites();
         checkMapSites();
         checkItemSites();
@@ -4581,9 +4653,11 @@ static void gameTick(void) {
         checkShopSites();
         checkLabelFilterSite();
         checkCompareSites();
+        checkLayerSites();
         checkValueSites();
         checkDiffSites();
         checkDamageSites();
+        checkXpBarSites();
         checkGoldSites();
         if (!unitActions) setStatus(STATUS_HOOKED, "connected (without direct clicks)");
     }
@@ -4592,6 +4666,7 @@ static void gameTick(void) {
     STEP(noteGame(player, now));
     STEP(noteWorldFrames(now));
     if (!player || !singlePlayerGame()) STEP(setLargeStacks(0));
+    STEP(spielweiseTick(player, now));
     STEP(shopNewPlayer(player));
     STEP(handleCommands(player, !player || now - lastTick > 1000));
     lastTick = now;
@@ -4652,6 +4727,8 @@ static void gameTick(void) {
     STEP(updateMap(player, now));
     STEP(equipTick(player, now));
     STEP(sortTick(player, now));
+    STEP(moveTick(player, now));
+    STEP(cubeTick(player, now));
     if (player && !pauseApplied) {
         STEP(repressLost(now));
         STEP(updateHeld(now));
@@ -5061,6 +5138,7 @@ static DWORD WINAPI setupThread(LPVOID arg) {
     }
     lockMultiplayerMenu();
     unbindMainMenuEsc();
+    biInstallPanel(client);
 
     if (!menuLockChecked || !exitEscChecked)
         logLine(gameLoadLibraryA ? "setup: D2Launch not loaded yet, the menu patches follow when Game.exe loads it"
@@ -5231,6 +5309,7 @@ static HMODULE WINAPI loadModuleHook(LPCSTR name) {
     HMODULE module = gameLoadLibraryA(name);
     if (module && name) {
         const char* base = strrchr(name, '\\');
+        if (lstrcmpiA(base ? base + 1 : name, "D2Client.dll") == 0) biInstallPanel((DWORD) module);
         if (lstrcmpiA(base ? base + 1 : name, "D2Launch.dll") == 0) {
             if (skipIntroWanted) skipIntroMovies(module);
             lockMultiplayerMenu();
@@ -5374,6 +5453,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
         logLine("D2Android mod loaded");
         installPlugYHook();
         installIntroSkip();
+        biInstall();
         HANDLE thread = CreateThread(NULL, 0, setupThread, NULL, 0, NULL);
         if (thread) CloseHandle(thread);
     }

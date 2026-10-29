@@ -86,7 +86,9 @@ final class D2CharacterList {
                 final int difficulty = d;
                 Button b = new Button(context);
                 b.setText(DIFFICULTIES[d]);
-                if (d == c.defaultDifficulty()) b.setTextColor(D2Style.GOLD);
+
+                D2Style.button(b, context.getResources().getDisplayMetrics().density);
+                D2Style.buttonText(b, d == c.defaultDifficulty() ? D2Style.GOLD : D2Style.TEXT);
                 b.setOnClickListener((v) -> listener.start(c, difficulty));
                 buttons.addView(b, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
             }

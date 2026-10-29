@@ -25,7 +25,8 @@ import com.winlator.core.AppUtils;
 
 final class D2IdleDialog {
     static final String KEY_DURATION = "idleDurationMin", KEY_RETREAT = "idleRetreat";
-    static final int[] DURATIONS = {15, 30, 60};
+
+    static final int[] DURATIONS = {15, 30, 60, 0};
     static final int RETREAT_MIN = 10, RETREAT_MAX = 60, RETREAT_DEFAULT = D2Idle.RETREAT_PERCENT;
 
 
@@ -67,7 +68,7 @@ final class D2IdleDialog {
         for (int minutes : DURATIONS) {
             RadioButton button = new RadioButton(activity);
             button.setId(1000 + minutes);
-            button.setText(minutes + " min");
+            button.setText(minutes == 0 ? D2Text.get(activity, R.string.idle_duration_unlimited) : minutes + " min");
             D2Style.control(button);
             duration.addView(button);
         }

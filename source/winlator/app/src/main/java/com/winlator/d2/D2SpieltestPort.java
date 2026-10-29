@@ -188,7 +188,7 @@ public final class D2SpieltestPort {
                 lastLayout = 0;
 
                 D2ModLink link = mapLink;
-                if (link != null) link.mapFetch().reset();
+                if (link != null) link.mapFetch().neuLaden();
                 c.start();
             }
         }
@@ -579,7 +579,9 @@ public final class D2SpieltestPort {
                         .put((it.ethereal ? 1 : 0) | (it.socketed ? 2 : 0) | (it.identified ? 4 : 0) | (it.runeword ? 8 : 0))
                         .put(it.sockets).put(it.tier).put(it.width).put(it.height).put(-1));
                 }
-                o.put("beute", beute).put("zellen", details.usedCells);
+
+                o.put("beute", beute).put("zellen", details.usedCellsLow()).put("zellen2", details.usedCellsHigh())
+                    .put("rasterHoehe", details.gridHeight());
             }
             o.put("objekte", things(s.objects));
 
@@ -610,6 +612,19 @@ public final class D2SpieltestPort {
             D2PotionShop.Job job = details != null ? details.shopJob : null;
             if (job != null && job.command == D2PotionShop.REPAIR_COMMAND) {
                 o.put("reparatur", new JSONArray().put(job.id).put(job.state).put(job.reason).put(job.a).put(job.b));
+            }
+
+
+            if (job != null) {
+                o.put("ladenAuftrag", new JSONArray().put(job.id).put(job.command).put(job.state).put(job.reason).put(job.a).put(job.b));
+            }
+            JSONArray gt = new JSONArray();
+            for (int slot : s.belt) gt.put(slot);
+            o.put("guertel", gt);
+            if (details != null) {
+                o.put("guertelReihen", details.beltRows).put("heilInventar", details.inventory[D2ModItems.KIND_HEAL])
+                    .put("manaInventar", details.inventory[D2ModItems.KIND_MANA])
+                    .put("foliant", details.tpTome).put("rollen", details.tpScrolls);
             }
             o.put("leichen", things(s.corpses));
             if (ausgelassen != null && !ausgelassen.isEmpty()) {

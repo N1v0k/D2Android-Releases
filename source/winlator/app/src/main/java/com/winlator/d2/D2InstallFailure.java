@@ -49,6 +49,8 @@ final class D2InstallFailure {
         DOWNLOAD_DAMAGED("install_fail_download_damaged", false, Action.AGAIN, Action.LEAVE),
         RUNTIME("install_fail_runtime", true, Action.AGAIN, Action.LEAVE),
         INSTALLER("install_fail_installer", true, Action.KEYS, Action.LEAVE),
+
+        INSTALLER_DIALOG("install_fail_dialog", true, Action.AGAIN, Action.LEAVE),
         PATCH("install_fail_patch", false, Action.PATCH, Action.ANEW, Action.LEAVE),
 
         CHECK("install_fail_check", false, Action.ANEW, Action.LEAVE);

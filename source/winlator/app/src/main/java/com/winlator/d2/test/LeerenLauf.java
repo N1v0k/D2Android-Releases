@@ -27,6 +27,22 @@ public final class LeerenLauf {
         default boolean modAuftrag(String was) {
             return false;
         }
+
+
+
+
+
+        default Stadtgang.Laden laden() {
+            return null;
+        }
+
+
+
+
+
+        default Weiterziehen weiterziehen() {
+            return null;
+        }
     }
 
     private final Gehirn gehirn;
@@ -41,7 +57,7 @@ public final class LeerenLauf {
 
     int leerenGebiet = -1, leerenKillsStart;
     long leerenSeit;
-    private long leerenVorbereitet, zieleOkAm, rueckzugGemeldet, reparaturGemeldet;
+    private long leerenVorbereitet, zieleOkAm, rueckzugGemeldet, reparaturGemeldet, einkaufGemeldet;
 
     final Rueckzug rueckzug = new Rueckzug();
 
@@ -54,7 +70,17 @@ public final class LeerenLauf {
         this.gehirn = gehirn;
         this.fahrer = fahrer;
         this.u = u;
+        rueckzug.stadtgang.laden = u.laden();
+
+        if (rueckzug.stadtgang.laden != null) rueckzug.stadtgang.beute = gehirn.beuteAntwort;
+        weiter = u.weiterziehen();
     }
+
+
+    final Weiterziehen weiter;
+    private boolean imWeiterziehen;
+
+    public int gebieteLeer;
 
     public boolean imRueckzug() {
         return imRueckzug;
@@ -70,11 +96,65 @@ public final class LeerenLauf {
 
 
     public boolean gebietLeerEnde(boolean stadtgangAktiv, Zustand.Layout l, long now) throws InterruptedException {
-        if (leeren && !stadtgangAktiv && gehirn.gebietLeer(now)) {
+        return gebietLeerEnde(null, stadtgangAktiv, l, now);
+    }
+
+
+
+
+
+    public boolean gebietLeerEnde(Zustand z, boolean stadtgangAktiv, Zustand.Layout l, long now) throws InterruptedException {
+        if (leeren && !stadtgangAktiv && !imRueckzug && !imWeiterziehen && gehirn.gebietLeer(now)) {
             event("leeren", "Gebiet leer: " + gehirn.abdeckungText(now));
+            gebieteLeer++;
+            Rueckzug.Grund warum = weiter != null && z != null ? rueckzug.warumNicht(z, u.portale(), now) : null;
+            if (weiter != null && z != null && (warum == null || warum == Rueckzug.Grund.ZU_OFT)) {
+                fahrer.allesLoslassen();
+                rueckzug.startenZumWegpunkt(z, now);
+                imRueckzug = true;
+                event("weiter", "Gebiet " + z.gebiet + " leer: Stadtgang, dann per Wegpunkt weiter, Portale " + u.portale());
+                return true;
+            }
+            if (weiter != null && warum != null) event("weiter", "kein Weiterziehen: " + Rueckzug.text(warum));
             u.leerenBeenden("Gebiet leer", true, l);
             return true;
         }
+        return false;
+    }
+
+
+
+
+
+    private boolean weiterziehenSchritt(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
+        if (z.tot()) return u.leerenBeenden("tot (Weiterziehen)", false, l);
+        if (l.pauseGewollt || z.pause) return u.leerenBeenden("Pause (Weiterziehen)", false, l);
+
+        if (z.npc || (z.panel && !(weiter.fensterErlaubt() && Wegpunkte.fensterOffen(z)))) {
+            return u.leerenBeenden("Fenster offen (Weiterziehen)", false, l);
+        }
+        fahrer.verhalten.fensterDurchlassen = weiter.fensterErlaubt();
+        if (!fahrer.vorbereiten(z, l, now, u.totSeit())) return false;
+        String vorher = weiter.meldung;
+        Gehirn.Absicht a = weiter.schritt(z, u.ziele(), u.figur(), gehirn, now);
+        if (!weiter.meldung.equals(vorher)) event("weiter", weiter.meldung + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
+        switch (weiter.ergebnis) {
+            case ANGEKOMMEN:
+                imWeiterziehen = false;
+                fahrer.verhalten.fensterDurchlassen = false;
+                fahrer.allesLoslassen();
+                gehirn.gebietLeeren = true;
+                leerenGebiet = -1;
+                leerenVorbereitet = 0;
+                return false;
+            case ENDE:
+                gehirn.gebietLeeren = true;
+                return u.leerenBeenden("Weiterziehen: " + weiter.grund, false, l);
+            default:
+                break;
+        }
+        if (a == null) a = gehirn.denken(z, u.ziele(), now);
+        fahrer.anwenden(a, l, now);
         return false;
     }
 
@@ -94,7 +174,8 @@ public final class LeerenLauf {
 
     boolean leerenSchritt(Zustand z, Zustand.Layout l, long now) throws InterruptedException {
 
-        u.ohneDurchgaenge(!imRueckzug);
+        u.ohneDurchgaenge(!imRueckzug && !imWeiterziehen);
+        if (imWeiterziehen) return weiterziehenSchritt(z, l, now);
         Zustand.Ziele zl = u.ziele();
         boolean gueltig = zl != null && zl.gebiet == z.gebiet && zl.bereit == 2 && now - u.zieleAm() <= LEEREN_OHNE_ZIELE_MS;
         if (leerenGebiet < 0) {
@@ -136,6 +217,34 @@ public final class LeerenLauf {
             event("rueckzug", "Rückzug " + rueckzug.anzahl() + " bei Leben " + z.lebenPct + " %, Portale " + u.portale()
                 + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
             return false;
+        }
+
+        if (Rueckzug.traenkeFaellig(z, rueckzug.stadtgang.laden != null)) {
+            Rueckzug.Grund warum = rueckzug.warumNicht(z, u.portale(), now);
+            if (warum == null) {
+                fahrer.allesLoslassen();
+                rueckzug.startenZumEinkauf(z, now);
+                imRueckzug = true;
+                event("rueckzug", "Rückzug " + rueckzug.anzahl() + " zum Einkaufen (Heiltränke " + z.heilGuertel + " + " + z.heilInventar
+                    + "), Portale " + u.portale() + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
+                return false;
+            }
+            if (now - einkaufGemeldet > 60_000) {
+                einkaufGemeldet = now;
+                event("rueckzug", "wenig Heiltränke, kein Rückzug: " + Rueckzug.text(warum));
+            }
+        }
+
+        if (rueckzug.stadtgang.beute != null && rueckzug.vollFaellig(z, Stadtgang.abgabeDa(gehirn.beuteAntwort, u.figur()), gehirn.passtNichtAm, now)) {
+            Rueckzug.Grund warum = rueckzug.warumNicht(z, u.portale(), now);
+            if (warum == null) {
+                fahrer.allesLoslassen();
+                rueckzug.startenWegenVoll(z, now);
+                imRueckzug = true;
+                event("rueckzug", "Rückzug " + rueckzug.anzahl() + " wegen vollem Inventar (" + z.freieZellen() + " Zellen frei), Portale "
+                    + u.portale() + (z.weltlage() ? " · Lage " + z.wx + "," + z.wy : ""));
+                return false;
+            }
         }
 
         if (Rueckzug.reparaturFaellig(z)) {
@@ -186,6 +295,14 @@ public final class LeerenLauf {
                 return u.leerenBeenden("Rückzug: " + rueckzug.grund(), false, l);
             case ENDE_DRAUSSEN:
                 return u.leerenBeenden("Rückzug: " + rueckzug.grund(), true, l);
+            case IN_STADT:
+
+                imRueckzug = false;
+                imWeiterziehen = true;
+                gehirn.gebietLeeren = false;
+                weiter.starten(leerenGebiet);
+                event("weiter", "Stadtgang fertig, per Wegpunkt weiter von Gebiet " + leerenGebiet);
+                return false;
             case ZURUECK:
                 imRueckzug = false;
                 fahrer.verhalten.fensterDurchlassen = false;

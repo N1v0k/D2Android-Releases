@@ -140,12 +140,23 @@ public final class Beuteliste {
 
 
     public static boolean passt(long belegt, int breite, int hoehe) {
+        return passt(belegt, 0, HOEHE, breite, hoehe);
+    }
+
+
+
+
+
+    public static boolean passt(long belegt, long belegt2, int rasterHoehe, int breite, int hoehe) {
         if (breite <= 0 || hoehe <= 0) return true;
-        for (int y = 0; y + hoehe <= HOEHE; y++) {
+        for (int y = 0; y + hoehe <= rasterHoehe; y++) {
             for (int x = 0; x + breite <= BREITE; x++) {
                 boolean frei = true;
                 for (int dy = 0; dy < hoehe && frei; dy++) {
-                    for (int dx = 0; dx < breite && frei; dx++) frei = (belegt >> ((y + dy) * BREITE + x + dx) & 1) == 0;
+                    for (int dx = 0; dx < breite && frei; dx++) {
+                        int i = (y + dy) * BREITE + x + dx;
+                        frei = ((i < 64 ? belegt >> i : belegt2 >> (i - 64)) & 1) == 0;
+                    }
                 }
                 if (frei) return true;
             }

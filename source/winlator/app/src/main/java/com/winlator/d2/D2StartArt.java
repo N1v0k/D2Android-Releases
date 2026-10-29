@@ -54,6 +54,30 @@ final class D2StartArt {
         exocet10 = needFont(D2GameFont.load(sprites, "fontexocet10"));
         D2Sprites.Frame[] box = sprites.dc6(CHAR_SELECT_BOX, "Sky");
         cardFrame = box != null && box.length >= 2 ? joined(box[0], box[1]) : null;
+        gems = gems(sprites);
+    }
+
+
+    final D2Sprites.Frame[] gems;
+    static final int GEM_ORIGINAL = 0, GEM_CHECKED = 1, GEM_UNCHECKED = 2, GEM_RISK = 3;
+    private static final String[] GEM_CODES = {"gpw", "gpg", "gpy", "gpr"};
+
+
+    static D2Sprites.Frame[] gems(D2Sprites sprites) {
+        D2Sprites.Frame[] out = new D2Sprites.Frame[GEM_CODES.length];
+        try {
+            String[] inv = D2Materials.invFiles(sprites.read("data\\global\\excel\\misc.bin"));
+            for (int i = 0; inv != null && i < GEM_CODES.length; i++) {
+                int kind = D2Materials.kindOf(GEM_CODES[i]);
+                String file = kind >= 0 ? inv[kind] : null;
+                D2Sprites.Frame[] f = file != null ? sprites.dc6("data\\global\\items\\" + file + ".dc6") : null;
+                if (f != null && f.length > 0) out[i] = f[0];
+            }
+        }
+        catch (IOException | RuntimeException e) {
+
+        }
+        return out;
     }
 
 
@@ -199,6 +223,23 @@ final class D2StartArt {
             int dim = 100 - 35 * (15 - Math.abs(i - 15)) / 15;
             int y = SCREEN_H - 15 + i;
             if (y >= 0 && y < h) for (int x = 0; x < w; x++) out[y * w + x] = dim(out[y * w + x], dim);
+        }
+        return out;
+    }
+
+
+    static final int EXTENSION_STRIP = 240;
+
+
+
+
+
+    static int[] extension(int[] backdrop, int height, int width) {
+        int[] out = new int[Math.max(0, width) * height];
+        for (int x = 0; x < width; x++) {
+            int k = x / EXTENSION_STRIP, r = x % EXTENSION_STRIP;
+            int src = k % 2 == 0 ? SCREEN_W - 1 - r : SCREEN_W - EXTENSION_STRIP + r;
+            for (int y = 0; y < height; y++) out[y * width + x] = dim(backdrop[y * SCREEN_W + src], 90);
         }
         return out;
     }

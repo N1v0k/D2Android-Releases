@@ -69,8 +69,10 @@
 #define CAP2_TELE_HOVER     0x02
 static BYTE diffCapabilities2(void);
 static DWORD damageDps(void);
+static void putDpsFields(Packet* p);
 static int teleHoverCapable(void);
 static BYTE effectsCapabilities2(void);
+static BYTE xpBarCapabilities2(void);
 
 
 static const DWORD XP_LEVEL[99] = {
@@ -114,7 +116,9 @@ static BYTE capabilities2(void) {
         | (teleHoverCapable() ? CAP2_TELE_HOVER : 0)
         | effectsCapabilities2()
         | 8
-        | 16;
+        | 16
+        | xpBarCapabilities2()
+        | layersCapabilities2();
 }
 
 
@@ -495,10 +499,15 @@ static void putPointsBlock(Packet* p) {
 
 
     void* hero = fGetPlayerUnit();
-    putU16(p, (WORD) damageDps());
+    DWORD dps = damageDps();
+    putU16(p, (WORD) (dps == 0xFFFFFFFFu ? 0xFFFF : dps > 0xFFFE ? 0xFFFE : dps));
     putU32(p, hero ? fGetUnitStat(hero, 14, 0) : 0);
     putU32(p, hero ? fGetUnitStat(hero, 15, 0) : 0);
     putExperience(p, hero);
     putResumeExitFields(p);
+    putU8(p, layersDrawnMask());
+    putBigInvFields(p, hero);
+    putDpsFields(p);
+    putU32(p, sharedGoldNow(hero));
     p->data[lengthAt] = (BYTE) (p->len - lengthAt - 1);
 }

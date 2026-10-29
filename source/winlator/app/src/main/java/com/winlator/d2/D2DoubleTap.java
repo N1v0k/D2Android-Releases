@@ -16,6 +16,19 @@ final class D2DoubleTap {
 
     static final int CLICK = 0, WAIT = 1, SHIFT_CLICK = 2;
 
+    static final int BUY = 3;
+
+    static final int SELL = 4, MOVE = 5;
+
+
+
+
+
+    static int decideWare(boolean second, float distanceDp, long firstWare, long ware) {
+        if (ware < 0) return CLICK;
+        return second && distanceDp <= SAME_DP && firstWare == ware ? BUY : WAIT;
+    }
+
     private D2DoubleTap() {}
 
 

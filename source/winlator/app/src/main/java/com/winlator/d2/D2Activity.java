@@ -80,6 +80,11 @@ public abstract class D2Activity extends AppCompatActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus && !padShown && padPages()) {
+            padShown = true;
+            pad.shownInPadMode();
+        }
         if (!immersive()) return;
         barsHandler.removeCallbacks(hideBars);
         if (!hasFocus) return;
@@ -110,6 +115,7 @@ public abstract class D2Activity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        pad.cancel();
         if (clicks()) D2Music.pageHidden();
         barsHandler.removeCallbacks(hideBars);
     }
@@ -118,7 +124,40 @@ public abstract class D2Activity extends AppCompatActivity {
     @Override
     public boolean dispatchTouchEvent(android.view.MotionEvent event) {
         if (clicks()) D2Sound.touch(this, event);
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) pad.touched();
         return super.dispatchTouchEvent(event);
+    }
+
+
+
+
+    private boolean padShown;
+    private final D2PadPages pad = new D2PadPages(this, this::getWindow, this::padPage, this::onBackPressed);
+
+
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        if (padPages() && pad.key(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+
+    protected boolean padPages() {
+        return clicks();
+    }
+
+    @Override
+    protected void onPostCreate(android.os.Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        if (!padPages()) return;
+        getWindow().getDecorView().getViewTreeObserver().addOnTouchModeChangeListener(pad::touchModeChanged);
+        D2PadFocus.all(getWindow().getDecorView());
+    }
+
+
+    D2PadPages.Page padPage() {
+        return null;
     }
 
 

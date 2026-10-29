@@ -203,7 +203,7 @@ public final class D2Gamepad {
 
 
     public static final int WHEEL_INVENTORY = 0, WHEEL_CHARACTER = 1, WHEEL_SKILLS = 2, WHEEL_MAP = 3, WHEEL_QUESTS = 4,
-        WHEEL_MERC = 5, WHEEL_PAUSE = 6, WHEEL_COUNT = 7;
+        WHEEL_MERC = 5, WHEEL_PAUSE = 6, WHEEL_RECIPES = 7, WHEEL_COUNT = 8;
 
 
     public static int wheelEntry(float x, float y, int deadzonePct) {
@@ -231,6 +231,8 @@ public final class D2Gamepad {
 
 
     public static final int A_SKIP_TALK = 0, A_TAKE_LINE = 1, A_ATTACK = 2, A_TAKE = 3;
+
+
 
 
 
@@ -364,11 +366,15 @@ public final class D2Gamepad {
     }
 
 
-    public static final int CLICK_NONE = 0, CLICK_LEFT = 1, CLICK_RIGHT = 2, CLICK_ESC = 3;
+
+
+
+    public static final int CLICK_NONE = 0, CLICK_LEFT = 1, CLICK_RIGHT = 2;
 
     public static final int CLICK_SELL = 4;
 
     static final int PLACE_INVENTORY = 0;
+
 
 
 
@@ -429,8 +435,7 @@ public final class D2Gamepad {
     public static int pointerClick(int button) {
         switch (button) {
             case A: return CLICK_LEFT;
-            case B: case X: return CLICK_RIGHT;
-            case Y: return CLICK_ESC;
+            case X: return CLICK_RIGHT;
             default: return CLICK_NONE;
         }
     }

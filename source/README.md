@@ -1,10 +1,10 @@
-# D2Android 1.4.1 – source code
+# D2Android 1.5.0 – source code
 
 D2Android runs the original Diablo II: Lord of Destruction 1.13d on Android phones (ARM64) with touch controls.
 It is an unofficial fan project, **not affiliated with, endorsed or supported by Blizzard Entertainment**. You need
 your own copy of the game; no game files are part of this archive.
 
-This archive is the source of the public app (package `at.d2andrpub`) of release 1.4.1: the Android app
+This archive is the source of the public app (package `at.d2andrpub`) of release 1.5.0: the Android app
 (`winlator/`, Java and a small native part), the scripts that put together the runtime (Box64, Wine, Turnip, DXVK),
 and the mod (`mod/`, C for MinGW) that runs inside `Game.exe`. It holds only what the build needs. Comments are
 removed; every line keeps its number, so the code is line for line the code of the APK.
@@ -29,7 +29,7 @@ bash tools/build-runtime.sh --public           # runtime archive for at.d2andrpu
 bash tools/build-mod.sh                        # mod DLL, loader and installer helpers
 cd winlator
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew assembleRelease -Pd2VersionName=1.4.1 -Pd2VersionCode=<number> \
+./gradlew assembleRelease -Pd2VersionName=1.5.0 -Pd2VersionCode=<number> \
     -Pd2ReleaseKeystore=/path/to/your-key.p12 -Pd2ReleaseKeystorePassword=...
 ```
 

@@ -13,6 +13,7 @@ public final class D2WorldTap {
 
 
 
+
     public static final int UI_MINIPANEL = 0x15, UI_BELT = 0x1F;
 
     static final int MINI_HALF = 80, MINI_HIGH = 26, BELT_WIDE = 180, BELT_HIGH = 100;
@@ -99,6 +100,8 @@ public final class D2WorldTap {
 
         public boolean panelOpen;
 
+        public boolean inventoryOnly;
+
         public boolean singlePlayer;
 
         public int mercLife = -1;
@@ -111,6 +114,7 @@ public final class D2WorldTap {
 
         public boolean ownFinger, playtester;
     }
+
 
 
 
@@ -138,7 +142,7 @@ public final class D2WorldTap {
 
 
     public static int mercPortrait(float x, float y, Portrait c) {
-        if (!c.stateFresh || c.panelOpen || !c.singlePlayer || c.mercLife < 0 || c.ownFinger || c.playtester) return PORTRAIT_NONE;
+        if (!c.stateFresh || (c.panelOpen && !c.inventoryOnly) || !c.singlePlayer || c.mercLife < 0 || c.ownFinger || c.playtester) return PORTRAIT_NONE;
         if (x < MERC_LEFT || x > MERC_RIGHT || y < MERC_TOP || y > MERC_BOTTOM) return PORTRAIT_NONE;
         if (!c.cursorKnown) return PORTRAIT_NONE;
         if (c.cursorTaken) return PORTRAIT_GAME;
@@ -147,6 +151,16 @@ public final class D2WorldTap {
 
 
     public static final long MERC_KEY_PAUSE_MS = 400;
+
+
+
+
+
+
+
+    public static boolean mercWithInventory(boolean stateKnown, boolean inventoryOpen, boolean mercOpen) {
+        return stateKnown && !inventoryOpen && !mercOpen;
+    }
 
 
     public static boolean mercKeyAllowed(long now, long lastAt) {

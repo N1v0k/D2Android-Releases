@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-24). -->
+<?xml version="1.0" encoding="utf-8" standalone="no"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-29). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.winlator">
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -30,13 +30,15 @@
 
 
 
+
+
         <activity android:name="com.winlator.d2.D2LaunchActivity"
             android:theme="@style/AppThemeDark"
             android:exported="true"
             android:label="@string/d2launch_label"
             android:icon="@mipmap/d2_launcher"
             android:roundIcon="@mipmap/d2_launcher"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="user"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -54,7 +56,7 @@
             android:theme="@style/AppThemeFullscreenDark"
             android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation|uiMode|fontScale|locale|layoutDirection|colorMode|touchscreen|mcc|mnc|fontWeightAdjustment|grammaticalGender"
-            android:screenOrientation="sensorLandscape" />
+            android:screenOrientation="userLandscape" />
 
 
 
@@ -70,6 +72,7 @@
             android:theme="@style/AppThemeDark"
             android:exported="true"
             android:label="@string/d2_shortcut_game_settings"
+            android:screenOrientation="user"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
 
@@ -77,6 +80,7 @@
         <activity android:name="com.winlator.d2.D2LicensesActivity"
             android:theme="@style/AppThemeDark"
             android:exported="false"
+            android:screenOrientation="user"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
 
@@ -89,12 +93,14 @@
         <activity android:name="com.winlator.d2.D2NewsActivity"
             android:theme="@style/AppThemeDark"
             android:exported="false"
+            android:screenOrientation="user"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
         <activity android:name="com.winlator.d2.D2BackgroundActivity"
             android:theme="@style/AppThemeDark"
             android:exported="false"
             android:label="Hintergrund-Schutz"
+            android:screenOrientation="user"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
 

@@ -47,6 +47,8 @@ public final class D2Points {
 
     static final int PLACE_DPS = 99, PLACE_GOLD = 101, PLACE_GOLD_STASH = 105, LENGTH_GRID = 108;
 
+    static final int PLACE_DPS32 = 134, PLACE_DPS_MAX = 138, LENGTH_DPS32 = 141;
+
 
     public final int capabilities;
 
@@ -213,12 +215,24 @@ public final class D2Points {
 
 
 
+
     public static int[] parseGrid(byte[] d, int length, int at) {
         if (at < 0 || length <= at) return null;
         int n = d[at] & 0xFF;
         if (n < LENGTH_GRID || length < at + 1 + n) return null;
         int dps = (d[at + PLACE_DPS] & 0xFF) | (d[at + PLACE_DPS + 1] & 0xFF) << 8;
-        return new int[]{dps == 0xFFFF ? -1 : dps, s32(d, at + PLACE_GOLD), s32(d, at + PLACE_GOLD_STASH)};
+        int[] facts = {dps == 0xFFFF ? -1 : dps, s32(d, at + PLACE_GOLD), s32(d, at + PLACE_GOLD_STASH), -1};
+        if (n >= LENGTH_DPS32) {
+            facts[0] = dpsU32(d, at + PLACE_DPS32);
+            facts[3] = facts[0] < 0 ? -1 : dpsU32(d, at + PLACE_DPS_MAX);
+        }
+        return facts;
+    }
+
+
+    private static int dpsU32(byte[] d, int at) {
+        long v = s32(d, at) & 0xFFFFFFFFL;
+        return v == 0xFFFFFFFFL ? -1 : (int) Math.min(v, Integer.MAX_VALUE);
     }
 
 
@@ -234,6 +248,50 @@ public final class D2Points {
         if (n < LENGTH_XP || length < at + 1 + n) return null;
         return new long[]{s32(d, at + PLACE_XP) & 0xFFFFFFFFL, s32(d, at + PLACE_XP_FROM) & 0xFFFFFFFFL,
             s32(d, at + PLACE_XP_TO) & 0xFFFFFFFFL};
+    }
+
+
+    static final int PLACE_DRAWN_LAYERS = 125;
+
+
+    public static int parseDrawnLayers(byte[] d, int length, int at) {
+        if (at < 0 || length <= at) return -1;
+        int n = d[at] & 0xFF;
+        return n >= PLACE_DRAWN_LAYERS && length >= at + 1 + n ? d[at + PLACE_DRAWN_LAYERS] & 0xFF : -1;
+    }
+
+
+
+
+
+    static final int PLACE_CAPS3 = 126, LENGTH_GRIDS = 133;
+
+    public static final int CAP3_BIG_INVENTORY = 0x01;
+
+    public static final int GRIDS_CAPS3 = 0, GRIDS_INV_W = 1, GRIDS_INV_H = 2, GRIDS_CUBE_W = 3, GRIDS_CUBE_H = 4,
+        GRIDS_STASH_W = 5, GRIDS_STASH_H = 6, GRIDS_EXTRA_ITEMS = 7;
+
+
+    public static int[] parseGrids(byte[] d, int length, int at) {
+        if (at < 0 || length <= at) return null;
+        int n = d[at] & 0xFF;
+        if (n < LENGTH_GRIDS || length < at + 1 + n) return null;
+        int[] g = new int[LENGTH_GRIDS - PLACE_CAPS3 + 1];
+        for (int i = 0; i < g.length; i++) g[i] = d[at + PLACE_CAPS3 + i] & 0xFF;
+        return g;
+    }
+
+
+
+    static final int PLACE_SHARED_GOLD = 142, LENGTH_SHARED_GOLD = 145;
+
+
+    public static long parseSharedGold(byte[] d, int length, int at) {
+        if (at < 0 || length <= at) return -1;
+        int n = d[at] & 0xFF;
+        if (n < LENGTH_SHARED_GOLD || length < at + 1 + n) return -1;
+        long gold = s32(d, at + PLACE_SHARED_GOLD) & 0xFFFFFFFFL;
+        return gold == 0xFFFFFFFFL ? -1 : gold;
     }
 
     private static int s32(byte[] d, int at) {

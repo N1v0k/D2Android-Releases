@@ -19,10 +19,21 @@ public final class D2Strings {
     private final String language;
 
     public D2Strings(D2Sprites sprites) throws IOException {
+        this(sprites, null);
+    }
 
-        byte[] use = sprites.read("data\\local\\use");
-        int index = use != null && use.length > 0 ? use[0] & 0xFF : 0;
-        String wanted = index < LANGUAGES.length ? LANGUAGES[index] : "eng";
+
+
+
+
+    public D2Strings(D2Sprites sprites, String fixedLanguage) throws IOException {
+
+        String wanted = fixedLanguage;
+        if (wanted == null) {
+            byte[] use = sprites.read("data\\local\\use");
+            int index = use != null && use.length > 0 ? use[0] & 0xFF : 0;
+            wanted = index < LANGUAGES.length ? LANGUAGES[index] : "eng";
+        }
         String found = null;
         for (String lng : new String[]{wanted, "eng"}) {
             byte[] base = sprites.read("data\\local\\lng\\" + lng + "\\string.tbl");

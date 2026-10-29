@@ -67,6 +67,8 @@ final class D2InstallFlow {
 
         NO_SPACE,
 
+        UNKNOWN_DIALOG,
+
         INSTALLER
     }
 
@@ -77,7 +79,13 @@ final class D2InstallFlow {
 
 
     static AfterInstaller afterInstaller(String helperResult, boolean noStartChosen, boolean archive, long usableBytes) {
+        return afterInstaller(helperResult, noStartChosen, false, archive, usableBytes);
+    }
+
+
+    static AfterInstaller afterInstaller(String helperResult, boolean noStartChosen, boolean unknownChosen, boolean archive, long usableBytes) {
         if (helperResult != null && noStartChosen) return AfterInstaller.NO_START;
+        if (helperResult != null && unknownChosen) return AfterInstaller.UNKNOWN_DIALOG;
         if ("wrong-key".equals(helperResult)) return AfterInstaller.WRONG_KEY;
         if (helperResult == null && archive) return AfterInstaller.OK;
 

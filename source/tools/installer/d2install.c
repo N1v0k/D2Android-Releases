@@ -15,18 +15,27 @@
 
 
 
+
+
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
 static int found, wrongKey;
 
-static void note(const char *what, long value) {
+static void noteWith(const char *what, long value, const char *text) {
     char path[MAX_PATH]; DWORD n = GetModuleFileNameA(NULL, path, MAX_PATH);
     if (!n || n >= MAX_PATH) return;
     char *slash = strrchr(path, '\\'); if (!slash) return;
     strcpy(slash + 1, "d2install.log");
     FILE *f = fopen(path, "a"); if (!f) return;
-    fprintf(f, "%lu %s %ld\n", (unsigned long)GetTickCount(), what, value); fclose(f);
+    fprintf(f, "%lu %s %ld%s%s\n", (unsigned long)GetTickCount(), what, value, text ? " " : "", text ? text : ""); fclose(f);
+}
+static void note(const char *what, long value) {
+    noteWith(what, value, NULL);
+}
+
+static void noteText(const char *what, const char *text) {
+    noteWith(what, 0, text);
 }
 
 
@@ -34,12 +43,40 @@ static void note(const char *what, long value) {
 
 static const char *GO[] = {"Agree", "I Agree", "OK", "Install", "Ja", "Zustimmen", "Installieren",
                            "J'accepte", "Installer", "Aceptar", "Instalar", "S\xec", "Installa", NULL};
-static int isGoButton(const char *txt) {
+
+
+
+
+
+static const char *YES[] = {"Yes", "Ja", "Oui", "S\xed", "S\xec", NULL};
+static int inList(const char *txt, const char **list) {
     char plain[256]; int n = 0;
     for (const char *p = txt; *p && n < 255; p++) if (*p != '&') plain[n++] = *p;
     plain[n] = 0;
-    for (int i = 0; GO[i]; i++) if (!_stricmp(plain, GO[i])) return 1;
+    for (int i = 0; list[i]; i++) if (!_stricmp(plain, list[i])) return 1;
     return 0;
+}
+static int isGoButton(const char *txt) {
+    return inList(txt, GO);
+}
+
+static char destName[MAX_PATH];
+
+static int namesDest, unknownButtons;
+static char unknownTexts[200];
+static int isPushButton(HWND w) {
+    LONG type = GetWindowLongA(w, GWL_STYLE) & BS_TYPEMASK;
+    return type == BS_PUSHBUTTON || type == BS_DEFPUSHBUTTON;
+}
+
+static void appendPlain(char *to, size_t size, const char *txt) {
+    size_t n = strlen(to);
+    if (n && n + 1 < size) to[n++] = '|';
+    for (const unsigned char *p = (const unsigned char *)txt; *p && n + 1 < size && p - (const unsigned char *)txt < 40; p++) {
+        if (*p == '&') continue;
+        to[n++] = *p > ' ' && *p < 127 ? (char)*p : '_';
+    }
+    to[n] = 0;
 }
 
 
@@ -51,15 +88,32 @@ static int wrongKeyText(const char *txt) {
         || strstr(txt, "no es correcta") || (strstr(txt, "clave") && strstr(txt, "no es v\xe1lida"))
         || strstr(txt, "non sono corrette") || (strstr(txt, "chiave") && strstr(txt, "non \xe8 valida"));
 }
+static void click(HWND w, const char *txt) {
+    EnableWindow(w, TRUE);
+    SendMessageA(w, BM_CLICK, 0, 0);
+    printf("clicked '%s'\n", txt); fflush(stdout); note(txt, 0);
+    found = 1;
+}
+
+static BOOL CALLBACK names(HWND w, LPARAM l) {
+    char cls[64], txt[256];
+    GetClassNameA(w, cls, sizeof cls);
+    if (!_stricmp(cls, "Edit")) return TRUE;
+    GetWindowTextA(w, txt, sizeof txt);
+    if (destName[0] && strstr(txt, destName)) { namesDest = 1; return FALSE; }
+    return TRUE;
+}
 static BOOL CALLBACK child(HWND w, LPARAM l) {
     char cls[64], txt[256];
     GetClassNameA(w, cls, sizeof cls); GetWindowTextA(w, txt, sizeof txt);
     if (wrongKeyText(txt)) wrongKey = 1;
-    if (!_stricmp(cls, "Button") && isGoButton(txt)) {
-        EnableWindow(w, TRUE);
-        SendMessageA(w, BM_CLICK, 0, 0);
-        printf("clicked '%s'\n", txt); fflush(stdout); note(txt, 0);
-        found = 1; return FALSE;
+    if (!_stricmp(cls, "Button") && (isGoButton(txt) || (namesDest && inList(txt, YES)))) {
+        click(w, txt);
+        return FALSE;
+    }
+    if (!_stricmp(cls, "Button") && IsWindowVisible(w) && isPushButton(w)) {
+        unknownButtons++;
+        appendPlain(unknownTexts, sizeof unknownTexts, txt);
     }
     return TRUE;
 }
@@ -85,6 +139,9 @@ static unsigned long long folderBytes(const char *dir, int depth) {
 
 static int menuVisible;
 
+static int unknownVisible;
+static char unknownLine[256];
+
 static int others;
 static BOOL CALLBACK count(HWND w, LPARAM l) {
     char cls[64], txt[256]; DWORD wp = 0;
@@ -107,7 +164,18 @@ static BOOL CALLBACK top(HWND w, LPARAM l) {
     if (wrongKeyText(txt)) wrongKey = 1;
     char cls[64]; GetClassNameA(w, cls, sizeof cls);
     if (!strncmp(cls, "(Blizzard Entertainment)", 24) && strstr(cls, "Installer")) menuVisible = 1;
+    namesDest = destName[0] && strstr(txt, destName);
+    if (!namesDest) EnumChildWindows(w, names, 0);
+    unknownButtons = 0; unknownTexts[0] = 0;
     EnumChildWindows(w, child, 0);
+    if (!found && unknownButtons && pid) {
+        unknownVisible = 1;
+        unknownLine[0] = 0;
+        appendPlain(unknownLine, sizeof unknownLine, cls);
+        size_t n = strlen(unknownLine);
+        if (n + 2 < sizeof unknownLine) { unknownLine[n] = ':'; unknownLine[n + 1] = 0; }
+        strncat(unknownLine, unknownTexts, sizeof unknownLine - strlen(unknownLine) - 1);
+    }
     return !found;
 }
 int main(int argc, char **argv) {
@@ -116,6 +184,7 @@ int main(int argc, char **argv) {
     HANDLE child = NULL;
     int next = 2, fromStdin = 0, linger = 0, lingering = 0, quiet = 0, lingered = 0, lingerClicks = 0;
     int noStart = 0, lastClick = 0, progressed = 0, reported = 0, menuReported = 0, menuSince = -1;
+    int unknownReported = 0, unknownSince = -1;
     char key[64] = "", dest[MAX_PATH] = "";
     unsigned long long destStart = 0;
     if (argc > next + 1 && !strcmp(argv[next], "--no-start")) { noStart = atoi(argv[next + 1]); next += 2; }
@@ -146,7 +215,11 @@ int main(int argc, char **argv) {
     if (argc > next + 1 && !strcmp(argv[next], "--run")) {
         char cmd[4096] = "";
         for (int i = next + 1; i < argc; i++) {
-            if (!strncmp(argv[i], "--destination=", 14) && strlen(argv[i] + 14) < sizeof dest) strcpy(dest, argv[i] + 14);
+            if (!strncmp(argv[i], "--destination=", 14) && strlen(argv[i] + 14) < sizeof dest) {
+                strcpy(dest, argv[i] + 14);
+                const char *last = strrchr(dest, '\\');
+                strcpy(destName, last && last[1] ? last + 1 : last ? "" : dest);
+            }
             if (i > next + 1) strcat(cmd, " ");
             if (strchr(argv[i], ' ')) { strcat(cmd, "\""); strcat(cmd, argv[i]); strcat(cmd, "\""); }
             else strcat(cmd, argv[i]);
@@ -172,7 +245,7 @@ int main(int argc, char **argv) {
     }
     else if (argc > next) pid = (DWORD)atoi(argv[next]);
     for (int i = 0; i < secs; i++) {
-        found = 0; menuVisible = 0;
+        found = 0; menuVisible = 0; unknownVisible = 0;
         EnumWindows(top, (LPARAM)pid);
         if (wrongKey) {
 
@@ -191,6 +264,13 @@ int main(int argc, char **argv) {
                 }
                 if (!reported && i - lastClick >= noStart) {
                     reported = 1; note("no-progress", i - lastClick); printf("no progress in the destination yet\n"); fflush(stdout);
+                }
+
+                unknownSince = unknownVisible ? (unknownSince < 0 ? i : unknownSince) : -1;
+                if (!unknownReported && unknownSince >= 0 && i - unknownSince >= 20) {
+                    unknownReported = 1;
+                    noteText("dialog-buttons", unknownLine);
+                    note("dialog-unknown", i - unknownSince); printf("a dialog with unknown buttons\n"); fflush(stdout);
                 }
             }
         }

@@ -36,7 +36,10 @@ public final class D2Frame {
         final int width, height;
         final int[] argb;
 
-        Piece(D2Sprites.Frame f) {
+        final int frame, x0, y0;
+
+        Piece(D2Sprites.Frame f, int frame) {
+            this.frame = frame;
             int minX = f.width, minY = f.height, maxX = -1, maxY = -1;
             for (int y = 0; y < f.height; y++) {
                 for (int x = 0; x < f.width; x++) {
@@ -48,6 +51,8 @@ public final class D2Frame {
                 }
             }
             if (maxX < 0) minX = minY = maxX = maxY = 0;
+            x0 = minX;
+            y0 = minY;
             width = maxX - minX + 1;
             height = maxY - minY + 1;
             argb = new int[width * height];
@@ -59,23 +64,27 @@ public final class D2Frame {
     private final Piece[] top = new Piece[6], bottom = new Piece[6], left = new Piece[3], right = new Piece[3];
 
     private D2Frame(D2Sprites.Frame[] f) {
-        topLeft = new Piece(f[TOP_LEFT]);
-        topRight = new Piece(f[TOP_RIGHT]);
-        bottomLeft = new Piece(f[BOTTOM_LEFT]);
-        bottomRight = new Piece(f[BOTTOM_RIGHT]);
+        topLeft = new Piece(f[TOP_LEFT], TOP_LEFT);
+        topRight = new Piece(f[TOP_RIGHT], TOP_RIGHT);
+        bottomLeft = new Piece(f[BOTTOM_LEFT], BOTTOM_LEFT);
+        bottomRight = new Piece(f[BOTTOM_RIGHT], BOTTOM_RIGHT);
         for (int i = 0; i < 6; i++) {
-            top[i] = new Piece(f[TOP + i]);
-            bottom[i] = new Piece(f[BOTTOM + i]);
+            top[i] = new Piece(f[TOP + i], TOP + i);
+            bottom[i] = new Piece(f[BOTTOM + i], BOTTOM + i);
         }
         for (int i = 0; i < 3; i++) {
-            left[i] = new Piece(f[LEFT + i]);
-            right[i] = new Piece(f[RIGHT + i]);
+            left[i] = new Piece(f[LEFT + i], LEFT + i);
+            right[i] = new Piece(f[RIGHT + i], RIGHT + i);
         }
     }
 
 
     public static D2Frame load(D2Sprites sprites) throws IOException {
-        D2Sprites.Frame[] f = sprites.dc6(FILE);
+        return of(sprites.dc6(FILE));
+    }
+
+
+    static D2Frame of(D2Sprites.Frame[] f) {
         return f != null && f.length >= 22 ? new D2Frame(f) : null;
     }
 
@@ -90,24 +99,52 @@ public final class D2Frame {
         if (fill != 0) {
             for (int y = 1; y < h - 1; y++) for (int x = 1; x < w - 1; x++) out[y * w + x] = fill;
         }
+        walk(w, h, (p, sx, sy, n, m, dx, dy) -> put(out, w, h, p, sx, sy, n, m, dx, dy));
+        return out;
+    }
+
+
+    public interface PieceSink {
+
+        void piece(int frame, int sx, int sy, int w, int h, int dx, int dy);
+    }
+
+
+
+
+
+    public void pieces(int width, int height, PieceSink sink) {
+        int w = Math.max(2 * LINE, width), h = Math.max(2 * LINE, height);
+        walk(w, h, (p, sx, sy, n, m, dx, dy) -> {
+            int x0 = Math.max(0, Math.max(-sx, -dx)), y0 = Math.max(0, Math.max(-sy, -dy));
+            int x1 = Math.min(n, Math.min(p.width - sx, w - dx)), y1 = Math.min(m, Math.min(p.height - sy, h - dy));
+            if (x1 > x0 && y1 > y0) sink.piece(p.frame, p.x0 + sx + x0, p.y0 + sy + y0, x1 - x0, y1 - y0, dx + x0, dy + y0);
+        });
+    }
+
+    private interface Put {
+        void put(Piece p, int sx, int sy, int n, int m, int dx, int dy);
+    }
+
+
+    private void walk(int w, int h, Put put) {
         int corner = Math.max(LINE, Math.min(TILE, Math.min(w / 2, h / 2)));
 
         for (int x = corner, i = 0; x < w - corner; x += TILE, i++) {
             int n = Math.min(TILE, w - corner - x);
-            put(out, w, h, pick(top, i, 1), 0, 0, n, LINE, x, 0);
-            put(out, w, h, pick(bottom, i, 2), 0, 0, n, LINE, x, h - LINE);
+            put.put(pick(top, i, 1), 0, 0, n, LINE, x, 0);
+            put.put(pick(bottom, i, 2), 0, 0, n, LINE, x, h - LINE);
         }
         for (int y = corner, i = 0; y < h - corner; y += TILE, i++) {
             int n = Math.min(TILE, h - corner - y);
-            put(out, w, h, pick(left, i, 3), 0, 0, LINE, n, 0, y);
-            put(out, w, h, pick(right, i, 4), 0, 0, LINE, n, w - LINE, y);
+            put.put(pick(left, i, 3), 0, 0, LINE, n, 0, y);
+            put.put(pick(right, i, 4), 0, 0, LINE, n, w - LINE, y);
         }
 
-        put(out, w, h, topLeft, 0, 0, corner, corner, 0, 0);
-        put(out, w, h, topRight, TILE - corner, 0, corner, corner, w - corner, 0);
-        put(out, w, h, bottomLeft, 0, TILE - corner, corner, corner, 0, h - corner);
-        put(out, w, h, bottomRight, TILE - corner, TILE - corner, corner, corner, w - corner, h - corner);
-        return out;
+        put.put(topLeft, 0, 0, corner, corner, 0, 0);
+        put.put(topRight, TILE - corner, 0, corner, corner, w - corner, 0);
+        put.put(bottomLeft, 0, TILE - corner, corner, corner, 0, h - corner);
+        put.put(bottomRight, TILE - corner, TILE - corner, corner, corner, w - corner, h - corner);
     }
 
 

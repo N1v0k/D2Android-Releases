@@ -15,9 +15,14 @@
 
 
 
-#define SORT_W 10
-#define SORT_H 4
-#define SORT_MAX 40
+#define SORT_MAX_W 10
+#define SORT_MAX_H 8
+#define SORT_MAX 80
+
+
+static int sortW = 10, sortH = 4;
+#define SORT_W sortW
+#define SORT_H sortH
 
 
 enum { SG_BIG = 0, SG_TOMES, SG_SCROLLS, SG_KEYS, SG_POTIONS, SG_RUNES, SG_GEMS, SG_JEWELS, SG_RINGS, SG_AMULETS,
@@ -125,10 +130,16 @@ typedef struct {
 static int sortFreeColumns(const BYTE* grid, int h) {
     int count = 0;
     for (int x = 0; x + 2 <= SORT_W;) {
-        int ok = 0;
-        for (int y = 0; y + h <= SORT_H && !ok; y++) ok = sortFits(grid, x, y, 2, h);
-        if (ok) {
-            count++;
+        int found = 0;
+        for (int y = 0; y + h <= SORT_H;) {
+            if (sortFits(grid, x, y, 2, h)) {
+                found++;
+                y += h;
+            }
+            else y++;
+        }
+        if (found) {
+            count += found;
             x += 2;
         }
         else x++;
@@ -136,13 +147,20 @@ static int sortFreeColumns(const BYTE* grid, int h) {
     return count;
 }
 
+
+
 static int sortLargestRect(const BYTE* grid) {
-    int best = 0;
-    for (int x0 = 0; x0 < SORT_W; x0++)
-        for (int y0 = 0; y0 < SORT_H; y0++)
-            for (int x1 = x0 + 1; x1 <= SORT_W; x1++)
-                for (int y1 = y0 + 1; y1 <= SORT_H; y1++)
-                    if ((x1 - x0) * (y1 - y0) > best && sortFits(grid, x0, y0, x1 - x0, y1 - y0)) best = (x1 - x0) * (y1 - y0);
+    int best = 0, up[SORT_MAX_W] = {0};
+    for (int y = 0; y < SORT_H; y++) {
+        for (int x = 0; x < SORT_W; x++) up[x] = grid[y * SORT_W + x] ? 0 : up[x] + 1;
+        for (int x0 = 0; x0 < SORT_W; x0++) {
+            int h = up[x0];
+            for (int x1 = x0; x1 < SORT_W && h > 0; x1++) {
+                if (up[x1] < h) h = up[x1];
+                if (h * (x1 - x0 + 1) > best) best = h * (x1 - x0 + 1);
+            }
+        }
+    }
     return best;
 }
 

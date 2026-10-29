@@ -43,11 +43,55 @@ final class D2ShopButton {
         D2PotionShop.Need need = D2PotionShop.need(s.belt, items.beltRows, autoItems.columnKinds(),
             items.inventory[D2ModItems.KIND_HEAL], items.inventory[D2ModItems.KIND_MANA], D2Settings.shopReserve(context, false),
             D2Settings.shopReserve(context, true), items.freeCells());
-        if (need.nothing()) return D2Text.get(context, R.string.shop_potions_full);
+        noColumn = noColumnText(need);
+        if (need.nothing()) return withNoColumn(D2Text.get(context, R.string.shop_potions_full));
+        wareName = null;
         long job = shop.start(SystemClock.uptimeMillis());
         lostReported = false;
         link.refillPotions(job, need, D2Settings.minGold(context));
         return null;
+    }
+
+
+
+
+
+
+    com.winlator.d2.test.Stadtgang.Einkauf einkauf(com.winlator.d2.test.Zustand z) {
+        D2ModItems items = link.items();
+        if (items == null || !items.shopPossible) return null;
+        return com.winlator.d2.test.Stadtgang.bedarf(z, autoItems.columnKinds(), D2Settings.shopReserve(context, false),
+            D2Settings.shopReserve(context, true), D2Settings.minGold(context));
+    }
+
+
+    private String wareName;
+
+
+    boolean idle() {
+        D2ModItems items = link.items();
+        return items != null && items.shopPossible && !shop.busy(items.shopJob, SystemClock.uptimeMillis());
+    }
+
+
+
+
+
+    boolean buyWare(long wareId, String name, int count) {
+        if (!idle() || count <= 0) return false;
+        long job = shop.start(SystemClock.uptimeMillis());
+        lostReported = false;
+        wareName = name != null ? name : "";
+        noColumn = 0;
+        link.buyWare(job, wareId, count, 0);
+        return true;
+    }
+
+
+    int wareBought() {
+        D2ModItems items = link.items();
+        return items != null && items.shopJob != null && wareName != null && shop.sentId() != 0
+            && items.shopJob.id == shop.sentId() ? items.shopJob.a : -1;
     }
 
 
@@ -56,9 +100,12 @@ final class D2ShopButton {
         D2PotionShop.Job job = shop.finished(items != null ? items.shopJob : null);
         if (job != null) {
             lostReported = true;
-            String bought = D2Text.get(context, R.string.shop_potions_bought, job.a, job.b);
+            String ware = wareName;
+            wareName = null;
+            String bought = ware != null ? D2Text.get(context, R.string.shop_ware_bought, job.a, ware)
+                : D2Text.get(context, R.string.shop_potions_bought, job.a, job.b);
             int reason = reasonText(job.reason);
-            return reason == 0 ? bought : bought + " – " + D2Text.get(context, reason);
+            return withNoColumn(reason == 0 ? bought : bought + " – " + D2Text.get(context, reason));
         }
         if (!lostReported && items != null && !shop.busy(items.shopJob, SystemClock.uptimeMillis())
             && (items.shopJob == null || items.shopJob.id != shop.sentId())) {
@@ -66,6 +113,20 @@ final class D2ShopButton {
             return D2Text.get(context, R.string.shop_end_lost);
         }
         return null;
+    }
+
+
+    private int noColumn;
+
+
+    static int noColumnText(D2PotionShop.Need need) {
+        if (need.manaNoColumn) return R.string.shop_potions_no_mana_column;
+        if (need.healNoColumn) return R.string.shop_potions_no_heal_column;
+        return 0;
+    }
+
+    private String withNoColumn(String note) {
+        return noColumn == 0 ? note : note + " – " + D2Text.get(context, noColumn);
     }
 
     private static int reasonText(int reason) {

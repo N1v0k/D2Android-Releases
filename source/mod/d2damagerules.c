@@ -226,3 +226,38 @@ static int damageStream(DmgStream* t, int n, unsigned long id, int kind, int ele
 static void damageDotKill(DmgDot* acc, int n, unsigned long id) {
     for (int k = 0; k < n; k++) if (acc[k].used && acc[k].id == id) acc[k].dead = 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+#define DMG_DPS_WINDOW_MS 5000u
+#define DMG_DPS_LEAD_MS 2000u
+#define DMG_DPS_NONE 0xFFFFFFFFu
+
+typedef struct { unsigned int at, value; } DmgHit;
+typedef struct { unsigned int start, last; int any; } DmgFight;
+
+
+static void damageFightNote(DmgFight* f, unsigned int now) {
+    if (!f->any || now - f->last >= DMG_DPS_WINDOW_MS) f->start = now;
+    f->last = now;
+    f->any = 1;
+}
+
+
+static unsigned int damageDpsOf(const DmgHit* hits, int n, const DmgFight* f, unsigned int now) {
+    unsigned long long sum = 0;
+    for (int k = 0; k < n; k++) if (hits[k].value && now - hits[k].at < DMG_DPS_WINDOW_MS) sum += hits[k].value;
+    if (!sum || !f->any) return 0;
+    unsigned int elapsed = now - f->start;
+    unsigned int span = elapsed >= DMG_DPS_WINDOW_MS - DMG_DPS_LEAD_MS ? DMG_DPS_WINDOW_MS : elapsed + DMG_DPS_LEAD_MS;
+    unsigned long long dps = sum * 1000u / span;
+    return dps >= DMG_DPS_NONE ? DMG_DPS_NONE - 1 : (unsigned int) dps;
+}

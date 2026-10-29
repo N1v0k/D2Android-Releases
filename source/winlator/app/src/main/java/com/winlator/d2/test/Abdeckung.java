@@ -45,7 +45,9 @@ public final class Abdeckung {
     }
 
     public final int gebiet;
-    final Karte karte;
+    Karte karte;
+
+    public int fortschritte;
     private final Zustand.Ziele ziele;
     private final Map<Long, Zelle> zellen = new HashMap<>();
     private final int cx0, cy0, cx1, cy1;
@@ -74,6 +76,21 @@ public final class Abdeckung {
 
     public boolean passt(Zustand.Ziele z) {
         return z.gebiet == gebiet && java.util.Arrays.equals(z.box, ziele.box) && z.ausgaenge.size() == ziele.ausgaenge.size();
+    }
+
+
+
+
+
+
+    public Karte karte() { return karte; }
+
+    public boolean karteTauschen(Karte neu) {
+        if (neu == null || neu.level != gebiet) return false;
+        karte = neu;
+        for (Zelle c : zellen.values()) c.sicher = false;
+        alleGerechnet = false;
+        return true;
     }
 
 
@@ -112,6 +129,7 @@ public final class Abdeckung {
         }
         zielZelle = null;
         zielBlock = -1;
+        if (n > 0) fortschritte++;
         return n;
     }
 
@@ -221,7 +239,10 @@ public final class Abdeckung {
                 if (c == null) continue;
                 for (int b = 0; b < BLOECKE; b++) {
                     if (c.stand[b] != OFFEN) continue;
-                    if (Math.hypot(c.vx[b] + 0.5 - wx, c.vy[b] + 0.5 - wy) <= r) c.stand[b] = GESEHEN;
+                    if (Math.hypot(c.vx[b] + 0.5 - wx, c.vy[b] + 0.5 - wy) <= r) {
+                        c.stand[b] = GESEHEN;
+                        fortschritte++;
+                    }
                 }
             }
         }
@@ -274,7 +295,10 @@ public final class Abdeckung {
 
     public void fehlschlag() {
         if (zielZelle == null || zielZelle.stand[zielBlock] != OFFEN) return;
-        if (++zielZelle.fehl[zielBlock] >= FEHLSCHLAEGE) zielZelle.stand[zielBlock] = AUFGEGEBEN;
+        if (++zielZelle.fehl[zielBlock] >= FEHLSCHLAEGE) {
+            zielZelle.stand[zielBlock] = AUFGEGEBEN;
+            fortschritte++;
+        }
         zielZelle = null;
         zielBlock = -1;
     }

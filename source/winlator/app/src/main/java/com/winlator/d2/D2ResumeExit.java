@@ -23,6 +23,7 @@ import android.graphics.RectF;
 
 
 
+
 final class D2ResumeExit {
     interface Host {
 
@@ -32,13 +33,15 @@ final class D2ResumeExit {
         String text(int which);
     }
 
-    static final int TEXT_TOWN = 0, TEXT_CONTINUE = 1;
+    static final int TEXT_TOWN = 0;
     static final int KIND_TOWN = 2;
 
     static final int NOTHING = 0, PLAY_ON = 1, TOWN = 2;
     static final long LOCK_MS = 600;
 
-    static final float BUTTON_W = 128, BUTTON_H = 35;
+    static final float LINE_H = 16;
+
+    static final int PRESSED_RGB = 0x8C7A4E;
 
     static final float MIN_DP = 48;
 
@@ -49,8 +52,8 @@ final class D2ResumeExit {
     private int offer, pressed = NOTHING, chosenAction = NOTHING;
     private long shownAt, drawnAt;
 
-    final RectF town = new RectF(), play = new RectF();
-    private final Paint fill = new Paint(), line = new Paint(), label = new Paint();
+    final RectF town = new RectF();
+    private final Paint label = new Paint();
 
     D2ResumeExit(Host host) {
         this.host = host;
@@ -66,8 +69,7 @@ final class D2ResumeExit {
         drawnAt = 0;
         pressed = NOTHING;
         town.set(0, 0, 0, 0);
-        play.set(0, 0, 0, 0);
-        D2Trace.log("resume: arrival pause, " + (this.offer == 0 ? "plain" : "buttons continue and town"));
+        D2Trace.log("resume: arrival pause, " + (this.offer == 0 ? "plain" : "tap plays on, line back to town"));
     }
 
 
@@ -94,16 +96,14 @@ final class D2ResumeExit {
     int tapAction(float x, float y, long downTime) {
         if (!active()) return PLAY_ON;
         if (locked(downTime)) return NOTHING;
-        if (play.contains(x, y)) return PLAY_ON;
-        if (town.contains(x, y)) return TOWN;
-        return NOTHING;
+        return town.contains(x, y) ? TOWN : PLAY_ON;
     }
 
 
     int padAction(int button, long time) {
         if (!active()) return button == PAD_A || button == PAD_START ? PLAY_ON : NOTHING;
         if (locked(time)) return NOTHING;
-        if (button == PAD_A) return PLAY_ON;
+        if (button == PAD_A || button == PAD_START) return PLAY_ON;
         if (button == PAD_B) return TOWN;
         return NOTHING;
     }
@@ -154,53 +154,35 @@ final class D2ResumeExit {
     }
 
 
-    String tapText(String normal) {
-        return active() ? null : normal;
-    }
-
-
-    static float scale(float k, float dp) {
-        return Math.max(k, MIN_DP * dp / BUTTON_H);
-    }
-
-
     float height(float k, float dp) {
-        return active() ? BUTTON_H * scale(k, dp) + 8 * dp : 0;
+        return active() ? Math.max(LINE_H * k, MIN_DP * dp) + 4 * dp : 0;
     }
 
 
-    void layout(float cx, float top, float k, float dp) {
-        float s = scale(k, dp), w = BUTTON_W * s, h = BUTTON_H * s, gap = 16 * dp;
-        play.set(cx - w - gap / 2, top, cx - gap / 2, top + h);
-        town.set(cx + gap / 2, top, cx + gap / 2 + w, top + h);
+    void layout(float cx, float top, float textW, float k, float dp) {
+        float w = Math.max(textW + 24 * dp, MIN_DP * dp), h = Math.max(LINE_H * k, MIN_DP * dp);
+        town.set(cx - w / 2, top, cx + w / 2, top + h);
     }
+
+
+
 
 
     void draw(Canvas canvas, D2Hud hud, float cx, float top, float k, float dp, boolean pad, long now) {
         if (!active()) return;
         if (drawnAt == 0) drawnAt = now;
-        layout(cx, top, k, dp);
-        button(canvas, hud, play, host.text(TEXT_CONTINUE) + (pad ? " (A)" : ""), pressed == PLAY_ON, k, dp);
-        button(canvas, hud, town, host.text(TEXT_TOWN) + (pad ? " (B)" : ""), pressed == TOWN, k, dp);
-    }
-
-
-    private void button(Canvas canvas, D2Hud hud, RectF where, String text, boolean down, float k, float dp) {
-        if (hud != null && hud.drawMediumButton(canvas, text, down, where)) return;
-        fill.setStyle(Paint.Style.FILL);
-        fill.setColor(down ? D2Style.FRAME : D2Style.BUTTON);
-        canvas.drawRect(where, fill);
-        line.setStyle(Paint.Style.STROKE);
-        line.setStrokeWidth(Math.max(1, dp));
-        line.setColor(D2Style.FRAME);
-        canvas.drawRect(where, line);
+        String text = host.text(TEXT_TOWN) + (pad ? " (B)" : "");
+        boolean down = pressed == TOWN;
         if (hud != null) {
-            hud.drawText(canvas, text, where.centerX(), where.centerY(), k, 0xD2CEC6);
+            layout(cx, top, hud.textWidth(text) * k, k, dp);
+            if (down) hud.drawText(canvas, text, cx, town.centerY(), k, PRESSED_RGB);
+            else hud.drawText(canvas, text, cx, town.centerY(), k);
             return;
         }
-        label.setColor(D2Style.TEXT);
         label.setTextSize(14 * dp);
         label.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(text, where.centerX(), where.centerY() + 5 * dp, label);
+        label.setColor(down ? D2Style.FRAME : D2Style.GOLD);
+        layout(cx, top, label.measureText(text), k, dp);
+        canvas.drawText(text, cx, town.centerY() + 5 * dp, label);
     }
 }

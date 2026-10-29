@@ -17,6 +17,9 @@ public final class D2LaunchStart {
 
         NEWS,
 
+
+
+
         UPDATE_WAITING,
 
         LAUNCH

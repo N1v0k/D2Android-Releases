@@ -40,8 +40,15 @@ public final class D2Hud {
 
     private final Bitmap levelCross;
 
+    private final Bitmap mercIcon;
+
+    private final Bitmap cubeIcon;
+
     private final Bitmap[] duro;
     private final Bitmap[] font, smallFont;
+
+    private final Bitmap[] stoneFont;
+    private final int[] stoneFontWidth;
 
     private final Bitmap[] healPotions = new Bitmap[6], manaPotions = new Bitmap[6];
 
@@ -49,8 +56,12 @@ public final class D2Hud {
 
     private final Bitmap[] materialPictures = new Bitmap[D2Materials.KINDS];
 
+    private final D2LayerArt layerArt;
+
 
     private final Bitmap[] blankButton, mediumButton;
+
+    private final Bitmap[] anvilButton;
 
     private final String language;
     private final D2Strings strings;
@@ -58,6 +69,11 @@ public final class D2Hud {
 
     public String gameText(String key) {
         return strings.get(key);
+    }
+
+
+    D2LayerArt layerArt() {
+        return layerArt;
     }
 
     public String language() {
@@ -114,13 +130,17 @@ public final class D2Hud {
 
     private volatile java.lang.ref.WeakReference<android.view.View> sharpView;
 
-    private static final int SHARP_RUN = 100, SHARP_ARROW = 200, SHARP_CROSS = 300, SHARP_SKILL = 1000;
+    private static final int SHARP_RUN = 100, SHARP_ARROW = 200, SHARP_CROSS = 300, SHARP_MERC = 400, SHARP_CUBE = 500, SHARP_SKILL = 1000;
     private final Paint goldText = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Paint shadowText = new Paint(Paint.FILTER_BITMAP_FLAG);
 
     private final android.util.SparseArray<Paint> colourTexts = new android.util.SparseArray<>();
 
     private final Paint redPixelText = new Paint();
+
+    private final Paint stonePixelText = new Paint();
+
+    private static final int STONE_CELL = 18, STONE_BASE = 9;
 
     private static final int SMALL_CELL = 14;
     private final Rect src = new Rect();
@@ -160,6 +180,10 @@ public final class D2Hud {
         pointerHandY = pointerHand != null ? hands[0].offsetY - hands[0].height : 0;
         D2Sprites.Frame[] levelFrames = s.dc6("data\\global\\ui\\PANEL\\level.dc6");
         levelCross = levelFrames != null && levelFrames.length > 0 ? cropped(levelFrames[0]) : null;
+        D2Sprites.Frame[] mercFrames = s.dc6("data\\global\\ui\\Hireables\\RogueIcon.dc6");
+        mercIcon = mercFrames != null && mercFrames.length > 0 ? cropped(mercFrames[0]) : null;
+        D2Sprites.Frame[] cubeFrames = s.dc6("data\\global\\items\\invbox.dc6");
+        cubeIcon = cubeFrames != null && cubeFrames.length > 0 ? cropped(cubeFrames[0]) : null;
         D2Sprites.Frame[] duroFrames = s.dc6("data\\global\\ui\\PANEL\\DuroIcon.dc6");
         duro = new Bitmap[duroFrames != null ? duroFrames.length : 0];
         for (int i = 0; i < duro.length; i++) duro[i] = cropped(duroFrames[i]);
@@ -167,6 +191,9 @@ public final class D2Hud {
         fontWidth = widths(s.read("data\\local\\font\\latin\\font16.tbl"), 10);
         smallFont = bitmaps(need(s, "data\\local\\font\\latin\\font8.dc6", 256));
         smallFontWidth = widths(s.read("data\\local\\font\\latin\\font8.tbl"), 6);
+        D2Sprites.Frame[] exocet = s.dc6("data\\local\\font\\latin\\fontexocet10.dc6");
+        stoneFont = exocet != null && exocet.length >= 256 ? bitmaps(exocet) : null;
+        stoneFontWidth = stoneFont != null ? widths(s.read("data\\local\\font\\latin\\fontexocet10.tbl"), 9) : null;
         D2Sprites.Frame[] tiny = s.dc6("data\\local\\font\\latin\\font6.dc6");
         byte[] tinyTbl = tiny != null && tiny.length >= 256 ? s.read("data\\local\\font\\latin\\font6.tbl") : null;
         tinyFont = tinyTbl != null ? bitmaps(tiny) : null;
@@ -184,8 +211,9 @@ public final class D2Hud {
         }
         else xpPiece = null;
         stonePiece = crop(ctrl[3], 0, 9, STONE_W, STONE_H);
-        D2Sprites.Frame[] buttonFrames = s.dc6("data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6");
-        gameButton = buttonFrames != null && buttonFrames.length >= 2 ? bitmaps(buttonFrames) : null;
+        D2Sprites.Frame[] buttonFrames = s.dc6("data\\global\\ui\\PANEL\\buysellbtn.dc6");
+        gameButton = buttonFrames != null && buttonFrames.length >= 2 && square(buttonFrames[0]) && square(buttonFrames[1])
+            ? new Bitmap[]{pageStone(buttonFrames[0]), pageStone(buttonFrames[1])} : null;
         for (int tier = 1; tier <= 5; tier++) {
             D2Sprites.Frame[] heal = s.dc6("data\\global\\items\\invhp" + tier + ".dc6");
             D2Sprites.Frame[] mana = s.dc6("data\\global\\items\\invmp" + tier + ".dc6");
@@ -211,8 +239,12 @@ public final class D2Hud {
         }
         D2Sprites.Frame[] stashButtons = s.dc6("data\\global\\ui\\PANEL\\buysellbtn.dc6");
         blankButton = stashButtons != null && stashButtons.length >= 2 ? new Bitmap[]{bitmap(stashButtons[0]), bitmap(stashButtons[1])} : null;
+        int anvil = D2MaterialsLayer.FRAME_ANVIL;
+        anvilButton = stashButtons != null && stashButtons.length > anvil + 1
+            ? new Bitmap[]{bitmap(stashButtons[anvil]), bitmap(stashButtons[anvil + 1])} : null;
         D2Sprites.Frame[] medium = s.dc6("data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6");
         mediumButton = medium != null && medium.length >= 2 ? new Bitmap[]{bitmap(medium[0]), bitmap(medium[1])} : null;
+        layerArt = D2LayerArt.load(s, this::gameText);
 
         try {
             D2ShrinePictures.Picture[] shrines = D2ShrinePictures.load(s);
@@ -275,7 +307,7 @@ public final class D2Hud {
             }
         }
         for (int i = 0; i < ICON_FILES.length; i++) {
-            D2Sprites.Frame[] frames = s.dc6("data\\global\\ui\\SPELLS\\" + ICON_FILES[i] + "Skillicon.dc6");
+            D2Sprites.Frame[] frames = s.dc6(skillIconFile(i));
             if (frames != null) skillIcons[i] = bitmaps(frames);
         }
 
@@ -291,6 +323,13 @@ public final class D2Hud {
 
 
         redPixelText.setFilterBitmap(false);
+        float stone = (D2GameFont.STONE_RGB & 0xFF) / 255f;
+        stonePixelText.setFilterBitmap(false);
+        stonePixelText.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
+            stone, 0, 0, 0, 0,
+            0, stone, 0, 0, 0,
+            0, 0, stone, 0, 0,
+            0, 0, 0, 1, 0})));
         redPixelText.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
             1.00f, 0, 0, 0, 0,
             0, 0.25f, 0, 0, 0,
@@ -627,6 +666,13 @@ public final class D2Hud {
     }
 
 
+    public boolean drawAnvilButton(Canvas canvas, boolean pressed, RectF where, Paint with) {
+        if (anvilButton == null) return false;
+        canvas.drawBitmap(anvilButton[pressed ? 1 : 0], null, where, with != null ? with : paint);
+        return true;
+    }
+
+
 
 
 
@@ -646,7 +692,7 @@ public final class D2Hud {
 
 
     public void drawGameButton(Canvas canvas, String text, boolean pressed, boolean warn, RectF where) {
-        drawStoneButton(canvas, gameButton, text, pressed, warn, where);
+        drawStoneButton(canvas, gameButton, text, pressed, warn, where, true);
     }
 
 
@@ -658,16 +704,63 @@ public final class D2Hud {
 
 
     private void drawStoneButton(Canvas canvas, Bitmap[] stone, String text, boolean pressed, boolean warn, RectF where) {
+        drawStoneButton(canvas, stone, text, pressed, warn, where, false);
+    }
+
+
+
+
+
+    private void drawStoneButton(Canvas canvas, Bitmap[] stone, String text, boolean pressed, boolean warn, RectF where,
+                                 boolean fill) {
         int sw = stone[0].getWidth(), sh = stone[0].getHeight();
-        int s = D2StoneButton.scale(where.height(), sh);
-        int[] at = D2StoneButton.stone(where.centerX(), where.centerY(), sw, sh, s);
+
+        int s = fill ? Math.max(1, (int) (where.height() / sh)) : D2StoneButton.scale(where.height(), sh);
+        int[] at = fill ? new int[]{Math.round(where.left), Math.round(where.top), Math.round(where.width()), Math.round(where.height())}
+            : D2StoneButton.stone(where.centerX(), where.centerY(), sw, sh, s);
         dst.set(at[0], at[1], at[0] + at[2], at[1] + at[3]);
         canvas.drawBitmap(stone[pressed ? 1 : 0], null, dst, pixelPaint);
-        int ls = D2StoneButton.labelScale(D2FontText.width(smallFontWidth, text), sw, s), shift = pressed ? s : 0;
+        int shift = pressed ? s : 0;
 
-        glyphsSharp(canvas, text, at[0] + at[2] / 2f + shift, at[1] + at[3] / 2f + shift, ls, smallFont, smallFontWidth,
-            SMALL_CELL, SMALL_CELL / 2, warn ? redPixelText : pixelPaint);
+        stoneText(canvas, text, at[0] + at[2] / 2f + shift, at[1] + at[3] / 2f + shift, s, sw, warn);
     }
+
+
+
+
+
+
+
+
+    private void stoneText(Canvas canvas, String text, float cx, float cy, int s, int room, boolean warn) {
+        if (text == null) return;
+        String upper = text.toUpperCase(java.util.Locale.ROOT);
+
+        int fit = room == D2Materials.BUTTON_W ? D2MaterialsLayer.MEDIUM_ROOM : room - 12;
+        if (stoneFont != null && D2FontText.width(stoneFontWidth, upper) <= fit) {
+            glyphsSharp(canvas, upper, cx, cy, s, stoneFont, stoneFontWidth, STONE_CELL, STONE_BASE, warn ? redPixelText : stonePixelText);
+            return;
+        }
+        int w = D2FontText.width(smallFontWidth, text), ls = w <= fit ? s : D2StoneButton.labelScale(w, room, s);
+        Paint with = warn ? redPixelText : stoneFont != null ? stonePixelText : pixelPaint;
+        glyphsSharp(canvas, text, cx, cy, ls, smallFont, smallFontWidth, SMALL_CELL, SMALL_CELL / 2, with);
+    }
+
+
+
+
+
+    public void drawStoneSign(Canvas canvas, boolean plus, float cx, float cy, float scale) {
+        int arm = D2InputBox.SIGN_ARM;
+        for (int pass = 0; pass < 2; pass++) {
+            int o = pass == 0 ? 1 : 0;
+            signPaint.setColor(0xFF000000 | (pass == 0 ? D2Layer.STONE_SHADE_RGB : D2Layer.STONE_CORE_RGB));
+            canvas.drawRect(cx - (arm + o) * scale, cy - (1.5f + o) * scale, cx + (arm + o) * scale, cy + (1.5f + o) * scale, signPaint);
+            if (plus) canvas.drawRect(cx - (1.5f + o) * scale, cy - (arm + o) * scale, cx + (1.5f + o) * scale, cy + (arm + o) * scale, signPaint);
+        }
+    }
+
+    private final Paint signPaint = new Paint();
 
 
 
@@ -679,6 +772,23 @@ public final class D2Hud {
         return page >= 1 && page <= 3 && row >= 1 && row <= 6 && column >= 1 && column <= 3 ? v : 0;
     }
 
+
+    String skillIconPath(int skillId) {
+        if (skillIcon(skillId) == null) return null;
+        int cls = skillClass[skillId];
+        String file = skillIconFile(cls >= 0 && cls < 7 ? cls : 7);
+        return file.substring(0, file.length() - ".dc6".length());
+    }
+
+
+    private static String skillIconFile(int i) {
+        return "data\\global\\ui\\SPELLS\\" + ICON_FILES[i] + "Skillicon.dc6";
+    }
+
+
+    int skillIconFrame(int skillId) {
+        return skillIcon(skillId) != null ? skillCel[skillId] : -1;
+    }
 
 
     public Bitmap skillIcon(int skillId) {
@@ -703,6 +813,20 @@ public final class D2Hud {
 
     public void drawLevelCross(Canvas canvas, RectF where) {
         if (levelCross != null) drawSharp(canvas, levelCross, SHARP_CROSS, where, 255);
+    }
+
+
+    public boolean drawMercIcon(Canvas canvas, RectF where) {
+        if (mercIcon == null) return false;
+        drawSharp(canvas, mercIcon, SHARP_MERC, where, 255);
+        return true;
+    }
+
+
+    public boolean drawCubeIcon(Canvas canvas, RectF where) {
+        if (cubeIcon == null) return false;
+        drawSharp(canvas, cubeIcon, SHARP_CUBE, where, 255);
+        return true;
     }
 
 
@@ -801,8 +925,10 @@ public final class D2Hud {
 
 
 
+
     public void drawOrbNumbers(Canvas canvas, int gameWidth, int gameHeight, float scale, float x0, float y0,
-                               boolean compact, int life, int maxLife, int mana, int maxMana, boolean showLife) {
+                               boolean compact, int life, int maxLife, int mana, int maxMana, boolean showLife,
+                               boolean showMana) {
         int top = gameHeight - PIECE_H + 8;
         int lifeX, manaX;
         if (compact) {
@@ -816,7 +942,7 @@ public final class D2Hud {
         }
         float cy = y0 + (top - 9) * scale;
         if (showLife) numbers(canvas, life + " / " + maxLife, x0 + (lifeX + ORB / 2f) * scale, cy, scale);
-        if (maxMana > 0) numbers(canvas, mana + " / " + maxMana, x0 + (manaX + ORB / 2f) * scale, cy, scale);
+        if (showMana && maxMana > 0) numbers(canvas, mana + " / " + maxMana, x0 + (manaX + ORB / 2f) * scale, cy, scale);
     }
 
     private void numbers(Canvas canvas, String text, float cx, float cy, float scale) {
@@ -1043,6 +1169,22 @@ public final class D2Hud {
         D2Sprites.Frame[] f = s.dc6(name);
         if (f == null || f.length < frames) throw new IOException("missing " + name);
         return f;
+    }
+
+    private static boolean square(D2Sprites.Frame f) {
+        return f.width == D2PageButtons.SQUARE && f.height == D2PageButtons.SQUARE;
+    }
+
+
+    private static Bitmap pageStone(D2Sprites.Frame f) {
+        int e = D2PageButtons.EDGE, t = D2PageButtons.TILE, w = D2PageButtons.STONE_W, h = f.height;
+        int[] px = new int[w * h];
+        for (int y = 0; y < h; y++) {
+            System.arraycopy(f.argb, y * f.width, px, y * w, e);
+            for (int i = 0; i < D2PageButtons.TILES; i++) System.arraycopy(f.argb, y * f.width + e, px, y * w + e + i * t, t);
+            System.arraycopy(f.argb, y * f.width + e + t, px, y * w + w - e, e);
+        }
+        return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888);
     }
 
     private static Bitmap bitmap(D2Sprites.Frame f) {

@@ -301,12 +301,36 @@ __attribute__((used)) void __stdcall stashMarkFiles(void) {
     for (int i = 0; i < 3; i++) stashMark(stashFiles[i], &stashMarks[i]);
 }
 
+static int stashSharedSss = -1;
+
+
+
+
+
+
+
+static int stashSharedWritten(void) {
+    if (stashSharedSss >= 0) return stashSharedSss;
+    HMODULE plugy = GetModuleHandleA("PlugY.dll");
+    char path[MAX_PATH];
+    DWORD n = plugy ? GetModuleFileNameA(plugy, path, sizeof(path)) : 0;
+    if (n == 0 || n >= sizeof(path) - 16) stashSharedSss = 1;
+    else {
+        char* slash = strrchr(path, '\\');
+        strcpy(slash ? slash + 1 : path, "PlugY.ini");
+        stashSharedSss = GetPrivateProfileIntA("STASH", "ActiveSharedStash", 1, path) != 0
+            && GetPrivateProfileIntA("STASH", "ActiveMultiPageStash", 1, path) != 0;
+    }
+    logLine("stash: PlugY's shared stash %s", stashSharedSss ? "on (.sss confirmed)" : "off (.sss untouched, not confirmed)");
+    return stashSharedSss;
+}
+
 
 __attribute__((used)) void __stdcall stashAfterSave(void);
 __attribute__((used)) void __stdcall stashAfterSave(void) {
     if (!stashSaving) return;
 
-    int files = plugyLoaded && plugySavePatched ? 3 : 1, all = 1;
+    int files = plugyLoaded && plugySavePatched ? (stashSharedWritten() ? 3 : 2) : 1, all = 1;
     for (int i = 0; i < files; i++) if (!stashConfirmed(stashFiles[i], &stashMarks[i], i)) all = 0;
     if (stashTestNoConfirm) all = 0;
     stashTestHere(2);
@@ -509,7 +533,7 @@ static void stashHook(void) {
 static LONG stashPending;
 static DWORD stashPendingCode;
 static int stashLastResult;
-static DWORD stashAllIds[40];
+static DWORD stashAllIds[INV_MAX_CELLS];
 static int stashAllLeft;
 static int stashOrderOpen;
 static BYTE stashDone;
@@ -542,9 +566,11 @@ static int stashSubmit(DWORD code, LONG a1, LONG a2) {
 
 
 
+
 static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
+    int open = getUiVar(0x19) || (kind == 2 && getUiVar(0x1A) && cubeStashNear(player));
     const char* why = stashHooked != 1 || !stashFnCreate ? "not available" : !stashLoadedOk || stashBroken ? "no stash file"
-        : !singlePlayerGame() ? "not single player" : worldPaused() ? "paused" : !getUiVar(0x19) ? "stash closed"
+        : !singlePlayerGame() ? "not single player" : worldPaused() ? "paused" : !open ? "stash closed"
         : stashUnsaved ? "locked (last save)" : stashOrderOpen || stashPending || stashAllLeft ? "busy"
         : equipCursorItem(player) ? "an item on the cursor" : NULL;
     if (why) {
@@ -572,7 +598,7 @@ static void stashCommand(void* player, BYTE kind, LONG a1, LONG a2) {
             if (!readable(data, 0x70)) break;
             BYTE* txt = (BYTE*) fGetItemText(RD32(item, U_TXTNO));
             if (RD8(data, IDATA_LOCATION) == 0x00 && RD8(data, IDATA_NODEPAGE) == 1 && readable(txt, 0x90)
-                && stashKind((const char*) txt + ITXT_CODE) >= 0 && stashAllLeft < 40)
+                && stashKind((const char*) txt + ITXT_CODE) >= 0 && stashAllLeft < INV_MAX_CELLS)
                 stashAllIds[stashAllLeft++] = RD32(item, U_ID);
             item = RDP(data, IDATA_NEXTINV);
         }
@@ -748,7 +774,7 @@ static LONG stashServer(DWORD code, LONG arg1, LONG arg2, void* game, void* unit
     }
     if (code == STASH_CODE_WITHDRAW) {
         if (arg1 < 0 || arg1 >= STASH_KINDS) return STASH_NOT_ALLOWED;
-        LONG want = arg2 > 0 ? arg2 : 40;
+        LONG want = arg2 > 0 ? arg2 : invGridW * invGridH;
         DWORD c = (DWORD) (BYTE) stashCodes[arg1][0] | (DWORD) (BYTE) stashCodes[arg1][1] << 8
             | (DWORD) (BYTE) stashCodes[arg1][2] << 16 | 0x20u << 24;
         while (*moved < want && stash.count[arg1]) {

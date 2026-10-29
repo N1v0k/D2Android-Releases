@@ -18,6 +18,19 @@ public final class Wegsuche {
 
     public static final int MAX_KNOTEN = 50_000;
 
+
+
+
+
+    public static final long MAX_MS = 250;
+
+    public static final int RAND_AUSSEN = 2;
+
+
+
+
+    public static final int ZIEL_AUSSEN_NAH = 12;
+
     public static final class Punkt {
         public final int x, y;
         public Punkt(int x, int y) { this.x = x; this.y = y; }
@@ -32,6 +45,8 @@ public final class Wegsuche {
         public Punkt ziel;
 
         public final boolean abgebrochen;
+
+        public boolean zeitAus;
         Weg(List<Punkt> knoten, int kosten, int untersucht, boolean abgebrochen) {
             this.knoten = knoten; this.kosten = kosten; this.untersucht = untersucht; this.abgebrochen = abgebrochen;
         }
@@ -57,12 +72,19 @@ public final class Wegsuche {
     }
 
     public static Weg suche(Karte k, int sx, int sy, int zx, int zy, int maxKnoten) {
+        return suche(k, sx, sy, zx, zy, maxKnoten, MAX_MS);
+    }
+
+
+    public static Weg suche(Karte k, int sx, int sy, int zx, int zy, int maxKnoten, long maxMs) {
+        long bis = maxMs > 0 ? System.nanoTime() + maxMs * 1_000_000L : Long.MAX_VALUE;
         if (k.feld(zx, zy) == Karte.WAND) {
 
             Punkt p = freiNahe(k, zx, zy, 6);
             if (p == null) return null;
             zx = p.x; zy = p.y;
         }
+        boolean zielAussen = k.ausserhalb(zx, zy, RAND_AUSSEN);
         Map<Long, Integer> g = new HashMap<>();
         Map<Long, Long> von = new HashMap<>();
         PriorityQueue<long[]> offen = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
@@ -80,12 +102,20 @@ public final class Wegsuche {
             if (top[0] - heuristik(cx, cy, zx, zy) > gc) continue;
             if (cur == ziel) return mitZiel(new Weg(pfad(von, start, ziel), gc, untersucht, false), zx, zy);
             if (++untersucht > maxKnoten) return mitZiel(new Weg(pfad(von, start, best), g.get(best), untersucht, true), zx, zy);
+            if ((untersucht & 255) == 0 && System.nanoTime() > bis) {
+                Weg w = mitZiel(new Weg(pfad(von, start, best), g.get(best), untersucht, true), zx, zy);
+                w.zeitAus = true;
+                return w;
+            }
             long h = heuristik(cx, cy, zx, zy);
             if (h < bestH) { bestH = h; best = cur; }
             for (int i = 0; i < 8; i++) {
                 int nx = cx + DX[i], ny = cy + DY[i];
                 int extra = feldKosten(k, nx, ny);
                 if (extra < 0) continue;
+
+                if (extra >= UNBEKANNT && k.feld(nx, ny) == Karte.UNBEKANNT && k.ausserhalb(nx, ny, RAND_AUSSEN)
+                    && !(zielAussen && Math.max(Math.abs(nx - zx), Math.abs(ny - zy)) <= ZIEL_AUSSEN_NAH)) continue;
 
                 if (i >= 4 && (k.feld(cx + DX[i], cy) == Karte.WAND || k.feld(cx, cy + DY[i]) == Karte.WAND)) continue;
                 int ng = gc + (i < 4 ? 10 : 14) + extra;

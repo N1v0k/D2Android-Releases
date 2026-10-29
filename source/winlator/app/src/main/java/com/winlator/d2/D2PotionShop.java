@@ -14,7 +14,11 @@ public final class D2PotionShop {
     public static final int COMMAND = 16;
 
     public static final int REPAIR_COMMAND = 29;
-    public static final int RESERVE_MAX = 10, RESERVE_DEFAULT = 5;
+
+
+
+
+    public static final int RESERVE_MAX = 20, RESERVE_MAX_BIG = 40, RESERVE_DEFAULT = 5;
 
     public static final int[] MIN_GOLD_STEPS = {0, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000};
 
@@ -47,11 +51,22 @@ public final class D2PotionShop {
     public static final class Need {
         public final int heal, mana, healBelt, manaBelt;
 
+
+
+
+        public final boolean healNoColumn, manaNoColumn;
+
         Need(int heal, int mana, int healBelt, int manaBelt) {
+            this(heal, mana, healBelt, manaBelt, false, false);
+        }
+
+        Need(int heal, int mana, int healBelt, int manaBelt, boolean healNoColumn, boolean manaNoColumn) {
             this.heal = heal;
             this.mana = mana;
             this.healBelt = healBelt;
             this.manaBelt = manaBelt;
+            this.healNoColumn = healNoColumn;
+            this.manaNoColumn = manaNoColumn;
         }
 
 
@@ -107,11 +122,16 @@ public final class D2PotionShop {
             buy[k] = forBelt + forReserve;
             toBelt[k] = room[k];
         }
-        return new Need(buy[0], buy[1], toBelt[0], toBelt[1]);
+        return new Need(buy[0], buy[1], toBelt[0], toBelt[1], !healKnown, !manaKnown);
     }
 
     static int clamp(int reserve) {
-        return Math.max(0, Math.min(RESERVE_MAX, reserve));
+        return Math.max(0, Math.min(RESERVE_MAX_BIG, reserve));
+    }
+
+
+    public static int reserveMax(boolean bigInventory) {
+        return bigInventory ? RESERVE_MAX_BIG : RESERVE_MAX;
     }
 
 

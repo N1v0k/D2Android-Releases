@@ -67,6 +67,10 @@ static int valueWanted(DWORD now);
 static int diffLinesAdd(void);
 static void diffLinesRemove(int added);
 static int diffWanted(DWORD now);
+static void layersDraw(void);
+static int layersCoverHover(DWORD now, const long* box);
+static int layersWanted(DWORD now);
+static int layersHideTooltip(void);
 
 static void checkCompareSites(void) {
     HMODULE win = GetModuleHandleA("D2Win.dll");
@@ -285,6 +289,16 @@ static void drawComparison(void) {
 
 
 __attribute__((force_align_arg_pointer)) static void __cdecl hoverDrawn(void) {
+    layersDraw();
+    if (layersHideTooltip()) return;
+
+
+    if (hoverText[0] && !RD32(client, RVA_HoverGrid) && !RD32(client, RVA_HoverBody)) {
+        const DWORD* hover = (const DWORD*) (hoverText + HOVER_CHARS);
+        long box[4];
+        hoverBox(hoverText, (long) hover[0], (long) hover[1], hover[3], box);
+        if (layersCoverHover(GetTickCount(), box)) return;
+    }
 
 
     int added = valueLineAdd();
@@ -311,6 +325,6 @@ static void applyCompare(int on) {
 static void updateCompare(DWORD now) {
     if (!compareAvailable) return;
     compareOn = (int) (now - compareUntil) < 0;
-    int want = valueWanted(now) | diffWanted(now) | compareOn;
+    int want = valueWanted(now) | diffWanted(now) | compareOn | layersWanted(now);
     if (want != compareApplied) applyCompare(want);
 }

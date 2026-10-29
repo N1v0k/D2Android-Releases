@@ -74,34 +74,6 @@ public final class D2Materials {
 
 
 
-    public static final int SYMBOL_RUNE = 0, SYMBOL_GEM = SKULLS_FIRST - 1;
-
-
-
-
-    static final int[] SYMBOL_RUNE_BOX = {-5, -3, 17}, SYMBOL_GEM_BOX = {5, 4, 17};
-
-    static final int[] SYMBOL_ALONE_BOX = {0, 0, 24};
-
-
-
-
-
-    public static int[][] symbol(boolean rune, boolean gem) {
-        if (rune && gem) return new int[][]{box(SYMBOL_RUNE, SYMBOL_RUNE_BOX), box(SYMBOL_GEM, SYMBOL_GEM_BOX)};
-        if (rune) return new int[][]{box(SYMBOL_RUNE, SYMBOL_ALONE_BOX)};
-        if (gem) return new int[][]{box(SYMBOL_GEM, SYMBOL_ALONE_BOX)};
-        return new int[0][];
-    }
-
-    private static int[] box(int kind, int[] b) {
-        return new int[]{kind, b[0], b[1], b[2]};
-    }
-
-
-
-
-
     public static int soundKind(int order, int arg, Snapshot s) {
         if (order == ORDER_WITHDRAW) return arg >= 0 && arg < KINDS ? arg : -1;
         if (order == ORDER_DEPOSIT_ALL && s != null) for (int k = 0; k < KINDS; k++) if (s.inventory[k] > 0) return k;
@@ -262,8 +234,16 @@ public final class D2Materials {
 
 
 
-    public static final int CELL = 29, GRID_X = 154, GRID_Y = 142;
+
+    public static final int CELL = 30, GRID_X = 154, GRID_Y = 142;
     public static final int INFO_Y = GRID_Y + 6 * CELL + 14;
+
+    public static final int RECIPE_Y = INFO_Y + 10, RECIPE_H = 20;
+
+
+    public static boolean onRecipeLine(float lx, float ly) {
+        return lx >= WIN_X + 10 && lx < WIN_X + WIN_W - 10 && ly >= RECIPE_Y - 2 && ly < RECIPE_Y + RECIPE_H + 2;
+    }
     public static final int BUTTON_W = 128, BUTTON_H = 35, BUTTON_X = WIN_X + (WIN_W - BUTTON_W) / 2,
         BUTTON_Y = WIN_Y + WIN_H - BUTTON_H - 16;
 

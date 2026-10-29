@@ -1,7 +1,5 @@
 package com.winlator.d2;
 
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 
 
@@ -14,16 +12,13 @@ final class D2PadFocus {
     private D2PadFocus() {}
 
 
+
+
+
     static <T extends View> T frame(T view) {
         view.setFocusable(true);
-        float density = view.getResources().getDisplayMetrics().density;
-        GradientDrawable focused = new GradientDrawable();
-        focused.setColor(0x24C8B074);
-        focused.setStroke(Math.max(2, Math.round(2 * density)), 0xFFC8B074);
-        StateListDrawable states = new StateListDrawable();
-        states.addState(new int[]{android.R.attr.state_focused}, focused);
-        states.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(0));
-        view.setForeground(states);
+        view.setDefaultFocusHighlightEnabled(false);
+        view.setForeground(new D2PadFrame.Focused(view.getResources().getDisplayMetrics().density));
         return view;
     }
 
@@ -32,11 +27,35 @@ final class D2PadFocus {
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> walk(root));
     }
 
-    private static void walk(View v) {
-        if (v.isClickable() && !v.isFocusable() && v.getVisibility() == View.VISIBLE) frame(v);
+
+
+
+
+    interface Own {}
+
+
+    static void walk(View v) {
+
+        if (v.isClickable() && v.getVisibility() == View.VISIBLE && !(v instanceof Own) && !(v.getForeground() instanceof D2PadFrame.Focused))
+            frame(v);
         if (v instanceof android.view.ViewGroup) {
             android.view.ViewGroup g = (android.view.ViewGroup) v;
             for (int i = 0; i < g.getChildCount(); i++) walk(g.getChildAt(i));
         }
+    }
+
+
+
+
+
+    static void keep(View box, Runnable rebuild) {
+        View focus = box.findFocus();
+        java.util.ArrayList<View> before = box.getFocusables(View.FOCUS_FORWARD);
+        int at = focus != null ? before.indexOf(focus) : -1;
+        rebuild.run();
+        if (at < 0) return;
+        walk(box);
+        java.util.ArrayList<View> after = box.getFocusables(View.FOCUS_FORWARD);
+        if (!after.isEmpty()) after.get(Math.min(at, after.size() - 1)).requestFocus();
     }
 }

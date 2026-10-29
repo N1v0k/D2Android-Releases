@@ -448,6 +448,8 @@ static LONG srvInvulnerable(void* unit, int on, LONG* count) {
 #define SRV_CODE_STASH_WITHDRAW 0xA0D20872u
 #define SRV_CODE_STASH_ALL      0xA0D20873u
 static LONG stashServer(DWORD code, LONG arg1, LONG arg2, void* game, void* unit, LONG* moved);
+#define SRV_CODE_SPIELWEISE     0xA0D21088u
+static LONG spielweiseServer(LONG arg, LONG arg2, void* game);
 
 #ifdef D2MOD_TESTCMDS
 #define SRV_CODE_DIRECT_TEST 0xA0D2F127u
@@ -459,6 +461,7 @@ static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     case SRV_CODE_HEAL: return srvHeal(unit);
     case SRV_CODE_EFFECTS: return srvEffects(game, unit);
     case SRV_CODE_DAMAGE: return damagePatchServer();
+    case SRV_CODE_SPIELWEISE: return spielweiseServer(s->arg, s->arg2, game);
     case SRV_CODE_STASH_DEPOSIT:
     case SRV_CODE_STASH_WITHDRAW:
     case SRV_CODE_STASH_ALL: return stashServer(s->code, s->arg, s->arg2, game, unit, &s->count);

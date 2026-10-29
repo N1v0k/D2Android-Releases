@@ -48,7 +48,48 @@ static int sortFaultNext;
 #endif
 
 
+
+
+
+
+
+
+#define RVA_DrawCursorItem      0x5F480
+static struct {
+    DWORD rva;
+    BYTE original[5];
+} sortItemSites[2] = {{0x14FF7, {0}}, {0x14E6C, {0}}};
+static const BYTE sortItemSkip[5] = {0x83, 0xC4, 0x08, 0x90, 0x90};
+static int sortItemChecked, sortItemAvailable, sortItemHidden;
+
+static void sortCheckItemSites(void) {
+    sortItemChecked = 1;
+    sortItemAvailable = 1;
+    for (int i = 0; i < 2; i++) {
+        BYTE* at = (BYTE*) (client + sortItemSites[i].rva);
+        DWORD target = (DWORD) at + 5 + *(DWORD*) (at + 1);
+        if (at[0] != 0xE8 || target != client + RVA_DrawCursorItem) sortItemAvailable = 0;
+        else memcpy(sortItemSites[i].original, at, 5);
+    }
+    logLine(sortItemAvailable ? "sort: cursor item sites verified"
+                              : "sort: cursor item sites not as expected: the item shows while sorting");
+}
+
+static void sortHideCursorItem(int hide) {
+    for (int i = 0; i < 2; i++) {
+        BYTE* at = (BYTE*) (client + sortItemSites[i].rva);
+        DWORD old;
+        if (!VirtualProtect(at, 5, PAGE_EXECUTE_READWRITE, &old)) continue;
+        memcpy(at, hide ? sortItemSkip : sortItemSites[i].original, 5);
+        VirtualProtect(at, 5, old, &old);
+        FlushInstructionCache(GetCurrentProcess(), at, 5);
+    }
+    sortItemHidden = hide;
+}
+
+
 static int sortRead(void* player, SortItem* out, int charmsFixed) {
+    int cubeOpen = getUiVar(0x1A) != 0;
     void* inventory = RDP(player, U_INVENTORY);
     int n = 0, guard = 0;
     for (void* item = readable(inventory, 0x10) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
@@ -81,7 +122,7 @@ static int sortRead(void* player, SortItem* out, int charmsFixed) {
             s->w = (BYTE) w;
             s->h = (BYTE) h;
             s->group = (BYTE) group;
-            s->fixed = (BYTE) (cat == CAT_CHARM && charmsFixed);
+            s->fixed = (BYTE) ((cat == CAT_CHARM && charmsFixed) || (cubeOpen && strncmp(itemCode(item), "box", 3) == 0));
             s->tx = s->x;
             s->ty = s->y;
         }
@@ -142,7 +183,7 @@ static void sortStart(void* player, BYTE place, BYTE options, DWORD now) {
     sort.activeMs = 0;
     const char* why = !equipAvailable ? "senders not checked" : !singlePlayerGame() ? "not single player"
         : worldPaused() ? "paused" : place != 0 ? "not the inventory"
-        : getUiVar(0x0C) || getUiVar(0x17) || getUiVar(0x19) || getUiVar(0x1A) ? "shop, trade, stash or cube open"
+        : getUiVar(0x0C) || getUiVar(0x17) || getUiVar(0x19) ? "shop, trade or stash open"
         : equipCursorId(player) ? "something on the cursor" : equip.step != EQ_NONE ? "Anlegen running"
         : takeSentAt && (long) (now - takeSentAt) < 3000 ? "Nehmen running" : sortMonsterNear(player) ? "monster near"
         : NULL;
@@ -150,6 +191,9 @@ static void sortStart(void* player, BYTE place, BYTE options, DWORD now) {
         sortDone(SORT_NOT_STARTED, why);
         return;
     }
+
+    sortW = invGridW < SORT_MAX_W ? invGridW : SORT_MAX_W;
+    sortH = invGridH < SORT_MAX_H ? invGridH : SORT_MAX_H;
     int n = sortRead(player, sort.items, options & 1);
     if (n < 0) {
         sortDone(SORT_NOT_STARTED, "inventory not readable");
@@ -171,7 +215,7 @@ static void sortStart(void* player, BYTE place, BYTE options, DWORD now) {
 }
 
 
-static void sortTick(void* player, DWORD now) {
+static void sortStep(void* player, DWORD now) {
     if (!sort.active) return;
     if (!player || player != sort.player) {
 
@@ -290,4 +334,11 @@ static void sortTick(void* player, DWORD now) {
         else if (waited > SORT_STEP_MS) sortDone(SORT_CURSOR, "refused, stayed on the cursor");
         break;
     }
+}
+
+
+static void sortTick(void* player, DWORD now) {
+    sortStep(player, now);
+    if (sort.active && !sortItemChecked) sortCheckItemSites();
+    if (sortItemAvailable && sortItemHidden != sort.active) sortHideCursorItem(sort.active);
 }

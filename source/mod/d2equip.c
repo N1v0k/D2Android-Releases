@@ -97,7 +97,7 @@ static int equipSize(void* item, int* w, int* h) {
 
 
 static int equipFreePlace(void* player, DWORD skip, int w, int h, DWORD* outX, DWORD* outY) {
-    BYTE used[INV_W * INV_H] = {0};
+    BYTE used[INV_MAX_CELLS] = {0};
     void* inventory = RDP(player, U_INVENTORY);
     int guard = 0;
     for (void* item = readable(inventory, 0x10) ? RDP(inventory, INV_FIRST) : NULL; item && guard < 512; guard++) {
@@ -108,18 +108,18 @@ static int equipFreePlace(void* player, DWORD skip, int w, int h, DWORD* outX, D
         if (RD8(data, IDATA_LOCATION) == 0x00 && RD8(data, IDATA_NODEPAGE) == 1 && RD32(item, U_ID) != skip
             && readable(path, 0x14) && equipSize(item, &iw, &ih)) {
             int x0 = (int) RD32(path, IPATH_X), y0 = (int) RD32(path, IPATH_Y);
-            for (int y = y0; y < y0 + ih && y < INV_H; y++)
-                for (int x = x0; x < x0 + iw && x < INV_W; x++)
-                    if (x >= 0 && y >= 0) used[y * INV_W + x] = 1;
+            for (int y = y0; y < y0 + ih && y < invGridH; y++)
+                for (int x = x0; x < x0 + iw && x < invGridW; x++)
+                    if (x >= 0 && y >= 0) used[y * invGridW + x] = 1;
         }
         item = RDP(data, IDATA_NEXTINV);
     }
-    for (int x = 0; x + w <= INV_W; x++) {
-        for (int y = 0; y + h <= INV_H; y++) {
+    for (int x = 0; x + w <= invGridW; x++) {
+        for (int y = 0; y + h <= invGridH; y++) {
             int free = 1;
             for (int dy = 0; dy < h && free; dy++)
                 for (int dx = 0; dx < w && free; dx++)
-                    if (used[(y + dy) * INV_W + x + dx]) free = 0;
+                    if (used[(y + dy) * invGridW + x + dx]) free = 0;
             if (free) {
                 *outX = (DWORD) x;
                 *outY = (DWORD) y;

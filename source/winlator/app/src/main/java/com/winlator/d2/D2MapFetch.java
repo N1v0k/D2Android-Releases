@@ -35,7 +35,35 @@ public final class D2MapFetch {
 
     public D2MapFetch(Sender sender) { this.sender = sender; }
 
-    public synchronized Karte karte() { return karte; }
+
+
+
+
+    public synchronized Karte karte() {
+        if (alt != null && (alt.level != level || vollstaendige(karte) >= vollstaendige(alt))) alt = null;
+        return alt != null ? alt : karte;
+    }
+
+
+    private Karte alt;
+
+    private static int vollstaendige(Karte k) {
+        if (k == null) return -1;
+        int n = 0;
+        for (Karte.Raum r : k.alleRaeume()) if (r.vollstaendig()) n++;
+        return k.raeumeGesamt() >= 0 && k.anzahlRaeume() >= k.raeumeGesamt() ? n : -1;
+    }
+
+
+
+
+
+
+    public synchronized void neuLaden() {
+        Karte vorher = alt != null ? alt : karte;
+        reset(level);
+        alt = vorher != null && vorher.level == level ? vorher : null;
+    }
 
 
     public synchronized void level(int level) {
@@ -48,6 +76,7 @@ public final class D2MapFetch {
     public synchronized void reset() { reset(level); }
 
     private void reset(int level) {
+        alt = null;
         gesamt = -1;
         raeume.clear();
         bytes = 0;

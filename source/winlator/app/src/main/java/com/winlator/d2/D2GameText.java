@@ -17,7 +17,7 @@ import java.util.List;
 
 
 @SuppressLint("ViewConstructor")
-final class D2GameText extends View {
+final class D2GameText extends View implements D2PadPages.Stepper {
     private final D2SettingsLook look;
     private final D2GameFont font;
     private final int rgb;
@@ -36,6 +36,22 @@ final class D2GameText extends View {
     int gain = 100;
 
     private final int gap;
+
+
+
+
+
+    java.util.function.IntPredicate step;
+
+    @Override
+    public boolean padSteps() {
+        return step != null && isEnabled() && isClickable();
+    }
+
+    @Override
+    public boolean padStep(int direction) {
+        return step != null && step.test(direction);
+    }
 
     D2GameText(Context context, D2SettingsLook look, D2GameFont font, int rgb, String text) {
         super(context);
@@ -142,7 +158,7 @@ final class D2GameText extends View {
             super(context);
             this.look = look;
             stone = look.wideStone;
-            label = D2SettingsLook.text(look.exocet10, text.toUpperCase(java.util.Locale.ROOT), 0);
+            label = D2SettingsLook.text(look.exocet10, text.toUpperCase(java.util.Locale.ROOT), D2GameFont.STONE_RGB);
             pixels.setFilterBitmap(false);
             setClickable(true);
             setOnClickListener((v) -> action.run());
@@ -173,6 +189,7 @@ final class D2GameText extends View {
             pixels.setAlpha(isEnabled() ? 255 : 115);
             where.set(0, 0, getWidth(), getHeight());
             canvas.drawBitmap(stone, null, where, pixels);
+            k = D2StoneButton.labelScale(label.getWidth(), stone.getWidth(), k);
             float w = label.getWidth() * k, h = label.getHeight() * k, x = (getWidth() - w) / 2f - shift, y = (getHeight() - h) / 2f + k + shift;
             where.set(x, y, x + w, y + h);
             canvas.drawBitmap(label, null, where, pixels);

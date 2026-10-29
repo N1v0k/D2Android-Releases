@@ -81,6 +81,11 @@ public final class Wegpunkte {
         return schritt != Schritt.AUS;
     }
 
+
+    public void beenden() {
+        schritt = Schritt.AUS;
+    }
+
     public Schritt schritt() {
         return schritt;
     }

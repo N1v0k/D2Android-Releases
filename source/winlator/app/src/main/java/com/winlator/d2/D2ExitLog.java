@@ -73,6 +73,7 @@ public final class D2ExitLog {
 
             boolean self = info.getReason() == ApplicationExitInfo.REASON_EXIT_SELF;
             append(D2ExitText.appExit(self, time(info.getTimestamp()), reason(info.getReason()), details));
+            if (!self) D2Telemetry.systemExit(context, info.getReason(), info.getTimestamp());
             if (info.getTimestamp() >= newestTime) {
                 newestTime = info.getTimestamp();
                 if (!self) newest = reason(info.getReason());

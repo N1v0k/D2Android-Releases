@@ -38,6 +38,38 @@ public final class D2InstallKeys {
     }
 
 
+    public enum Verdict {
+
+        OK,
+
+        SWAPPED,
+
+        WARN
+    }
+
+    public static Verdict verdict(D2CdKey.Kind classic, D2CdKey.Kind lod) {
+        if (classic == D2CdKey.Kind.CLASSIC && lod == D2CdKey.Kind.LOD) return Verdict.OK;
+        if (classic == D2CdKey.Kind.LOD && lod == D2CdKey.Kind.CLASSIC) return Verdict.SWAPPED;
+        return Verdict.WARN;
+    }
+
+
+    public enum Problem { NONE, CHARACTER, CHECKSUM, OTHER_PRODUCT, IS_CLASSIC, IS_LOD, EMPTY, LENGTH }
+
+
+    public static Problem problem(D2CdKey.Kind kind, boolean classicField) {
+        switch (kind) {
+            case CLASSIC: return classicField ? Problem.NONE : Problem.IS_CLASSIC;
+            case LOD: return classicField ? Problem.IS_LOD : Problem.NONE;
+            case BAD_CHARACTER: return Problem.CHARACTER;
+            case BAD_CHECKSUM: return Problem.CHECKSUM;
+            case EMPTY: return Problem.EMPTY;
+            case BAD_LENGTH: return Problem.LENGTH;
+            default: return Problem.OTHER_PRODUCT;
+        }
+    }
+
+
     public static String masked(char[] key) {
         return "\u2022\u2022\u2022\u2022 (" + key.length + ")";
     }
