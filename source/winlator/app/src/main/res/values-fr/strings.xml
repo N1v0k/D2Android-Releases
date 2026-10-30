@@ -55,7 +55,7 @@
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Le portail de Nihlathak reste ouvert</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain près du point de passage d\'Harrogath</string>
     <string name="settings_plugy_AlwaysRegenMapInSP">Nouvelle carte à chaque chargement</string>
-    <string name="settings_plugy_hint">Effectif au prochain lancement du jeu. Avant, l\'app copie tes sauvegardes dans Download/%1$s.</string>
+    <string name="settings_plugy_hint">Effectif au prochain lancement du jeu. Avant, l\'app fait une copie de secours de tes sauvegardes.</string>
 
     <string name="plugy_stats_plus_hint">Toucher : 1 point, double toucher : 5 points, appui long : tous les points libres</string>
     <string name="settings_background">Arrière-plan</string>
@@ -75,14 +75,14 @@
     <string name="saves_game_running">Le jeu tourne encore : choisis \"Sauvegarder et quitter\" dans le jeu, puis charge.</string>
     <string name="saves_no_picker">Aucun sélecteur de fichiers disponible.</string>
     <string name="saves_load_title">Charger les sauvegardes ?</string>
-    <string name="saves_load_message">Tes sauvegardes actuelles sont d\'abord copiées dans Download/%1$s. Les personnages du fichier remplacent ceux du même nom, tous les autres restent.</string>
+    <string name="saves_load_message">Tes sauvegardes actuelles sont d\'abord copiées dans l\'app. Les personnages du fichier remplacent ceux du même nom, tous les autres restent.</string>
     <string name="saves_load">Charger</string>
     <string name="cancel">Annuler</string>
     <string name="saves_loading">Chargement des sauvegardes...</string>
     <string name="saves_import_running">Chargement des sauvegardes en cours, attends que ce soit fini.</string>
     <string name="saves_backup_failed">Échec de la copie de secours, rien chargé : %1$s</string>
     <string name="saves_loaded">%1$d fichiers chargés.%2$s</string>
-    <string name="saves_backup_note">\u0020Copie de secours : Download/%1$s</string>
+    <string name="saves_backup_note">\u0020Copie de secours dans l\'app : %1$s</string>
     <string name="saves_load_failed">Échec du chargement : %1$s%2$s</string>
     <string name="saves_backup_paren">\u0020(copie de secours : %1$s)</string>
     <string name="saves_error_unreadable">Le fichier est illisible</string>
@@ -92,7 +92,7 @@
     <string name="saves_error_replace">Impossible de remplacer %1$s</string>
     <string name="saves_error_write">Impossible d\'écrire %1$s</string>
     <string name="saves_error_file_too_large">Un fichier est trop gros pour une sauvegarde</string>
-    <string name="saves_error_import_unfinished">Un import de sauvegardes interrompu n\'a pas pu être terminé. Copie de secours dans Download/%1$s</string>
+    <string name="saves_error_import_unfinished">Un import de sauvegardes interrompu n\'a pas pu être terminé. Une copie de secours se trouve dans l\'app (paramètres, sauvegardes).</string>
     <string name="saves_error_broken_zip">Le fichier n\'est pas une archive zip lisible</string>
 
 
@@ -585,7 +585,7 @@
     <string name="repair_stash">Coffre de %1$s restauré : la sauvegarde avait été interrompue la dernière fois.</string>
     <string name="repair_shared_stash">Coffre partagé restauré : la sauvegarde avait été interrompue la dernière fois.</string>
     <string name="repair_character">%1$s : la sauvegarde a été interrompue la dernière fois. Sauvegarde du %2$s restaurée (copie de PlugY) ; les fichiers coupés sont posés à côté.</string>
-    <string name="repair_character_broken">%1$s est abîmé (sauvegarde interrompue) et PlugY n\'en a pas de copie. Les copies de secours de l\'app sont dans Download/%2$s.</string>
+    <string name="repair_character_broken">%1$s est abîmé (sauvegarde interrompue) et PlugY n\'en a pas de copie. Les copies de secours de l\'app sont dans les paramètres, sous sauvegardes.</string>
     <string name="repair_character_hardcore">%1$s (hardcore ou inconnu) : la sauvegarde a été interrompue la dernière fois, le fichier du personnage est abîmé. Pas restauré tout seul : c\'est peut-être la mort qui était en train d\'être sauvegardée. La dernière copie de PlugY est dans %2$s.</string>
     <string name="launch_import_running">Des sauvegardes sont en cours de chargement dans les réglages du jeu. Touche \"Jouer\" quand c\'est fini.</string>
     <string name="btn_heal">Soins</string>
@@ -594,8 +594,8 @@
 
 
     <string name="launch_notify_open">Réponds à la question d\'Android sur les notifications (Autoriser ou Ne pas autoriser), puis touche Jouer.</string>
-    <string name="launch_no_storage">Sans accès au stockage, l\'app ne peut pas lire le dossier du jeu.</string>
-    <string name="launch_asking_storage">L\'app a besoin d\'accéder à \"Download\" : le jeu y est ou y sera. Autorise-le.</string>
+    <string name="launch_no_storage">Sans accès au stockage, l\'app ne peut ni installer le jeu ni prendre un dossier du jeu sur le téléphone.</string>
+    <string name="launch_asking_storage">L\'app demande l\'accès au stockage du téléphone. Il lui sert à installer le jeu et à prendre un dossier du jeu ou des sauvegardes sur le téléphone. Autorise-le.</string>
     <string name="launch_preparing">Préparation de Diablo II...</string>
     <string name="launch_helpers_off">Les aides de jeu de l\'app sont désactivées, le jeu ne démarre donc pas tout seul. Pour les réactiver : Réglages du jeu > Jeu.</string>
     <string name="launch_play">Jouer</string>
@@ -669,12 +669,15 @@
     <string name="folder_no_picker">Ce téléphone n\'a pas de sélecteur de dossier.</string>
 
     <string name="check_unsupported_title">Cet appareil n\'est pas pris en charge</string>
-    <string name="check_unsupported_gpu">Diablo II ne tourne ici que sur les téléphones Qualcomm Snapdragon avec un GPU Adreno 6xx-8xx. Trouvé : %1$s %2$s, GPU %3$s.</string>
+    <string name="check_unsupported_gpu">Diablo II tourne ici sur les téléphones Qualcomm Snapdragon avec un GPU Adreno 6xx-8xx et sur les appareils avec un GPU Mali, Xclipse ou PowerVR DXT et Vulkan 1.1. Trouvé : %1$s %2$s, GPU %3$s.</string>
     <string name="check_unsupported_pages">Cet Android utilise des pages mémoire de 16 Ko ; la couche d\'émulation a besoin de 4 Ko.</string>
     <string name="check_unsupported_abi">Il faut un appareil ARM 64 bits.</string>
     <string name="check_untested_title">Appareil non testé</string>
     <string name="check_untested">%1$s n\'a pas été testé. Le jeu peut saccader ou rester noir.</string>
     <string name="check_untested_unknown">La puce graphique n\'a pas été reconnue. Le jeu peut saccader ou rester noir.</string>
+    <string name="check_vortek">%1$s : ici, Diablo II passe par une couche graphique supplémentaire pour cette puce. C\'est expérimental : le jeu peut être lent ou afficher des erreurs graphiques.</string>
+    <string name="game_early_end">Le jeu s\'est fermé juste après le démarrage. La raison est dans le journal, que tu peux envoyer avec « Partager le diagnostic ».</string>
+    <string name="game_early_end_ok">Fermer</string>
     <string name="check_start_anyway">Lancer quand même</string>
     <string name="check_space_title">Peu d\'espace libre</string>
     <string name="check_space">Seulement %1$s de libre ; la première installation a besoin d\'environ 1 Go.</string>
@@ -709,7 +712,7 @@
     <string name="install_action_keys">Saisir à nouveau les clés</string>
     <string name="install_action_access">Autoriser l\'accès</string>
     <string name="install_action_storage">Ouvrir le stockage</string>
-    <string name="install_fail_no_access">L\'app n\'a pas le droit d\'utiliser \"Download\". Sans cet accès, elle ne peut pas stocker le jeu. Touche \"Autoriser l\'accès\".</string>
+    <string name="install_fail_no_access">L\'app n\'a pas le droit d\'accéder au stockage du téléphone. Sans cet accès, l\'installation ne peut pas se faire. Touche \"Autoriser l\'accès\".</string>
     <string name="install_fail_no_space">Pas assez de place : %1$s Go libres, %2$s Go nécessaires. Supprime des photos, des vidéos ou d\'anciens téléchargements, puis touche \"Réessayer\". Ce qui est téléchargé reste.</string>
     <string name="install_fail_no_network">Impossible de joindre Blizzard. Vérifie le Wi-Fi et le mode avion. Un Wi-Fi avec page de connexion (hôtel, train) demande de se connecter d\'abord dans le navigateur. Puis touche \"Réessayer\". (%1$s)</string>
     <string name="install_fail_refused">Blizzard a refusé le téléchargement (%1$s). Réessaie plus tard. Rien n\'a été installé.</string>
@@ -750,7 +753,7 @@
     <string name="install_failed_title">Installation arrêtée</string>
     <string name="install_again">Réessayer</string>
     <string name="install_leave">Retour</string>
-    <string name="install_intro">L\'app télécharge Diablo II et Lord of Destruction avec le téléchargeur officiel de Blizzard, les installe avec tes propres clés CD et met le jeu à jour en 1.13d. Tout va dans Download/D2Android. Utilise le Wi-Fi : environ 2 Go sont téléchargés.</string>
+    <string name="install_intro">L\'app télécharge Diablo II et Lord of Destruction avec le téléchargeur officiel de Blizzard, les installe avec tes propres clés CD et met le jeu à jour en 1.13d. Tout va dans le stockage propre de l\'app. Utilise le Wi-Fi : environ 2 Go sont téléchargés.</string>
     <string name="install_language">Langue du jeu</string>
     <string name="install_lang_en">English (enUS)</string>
     <string name="install_lang_de">Deutsch (deDE)</string>
@@ -758,7 +761,7 @@
     <string name="install_lang_es">Español (esES)</string>
     <string name="install_lang_it">Italiano (itIT)</string>
     <string name="install_lang_soon">%1$s, bientôt</string>
-    <string name="install_space">Espace libre dans Download/</string>
+    <string name="install_space">Espace libre sur le téléphone</string>
     <string name="install_space_ok">%1$s Go libres, assez (au moins %2$s Go nécessaires).</string>
     <string name="install_space_low">Seulement %1$s Go libres, il faut au moins %2$s Go. Libère de la place et reviens.</string>
     <string name="install_next">Suivant</string>
@@ -767,9 +770,9 @@
     <string name="install_downloaded">Les deux téléchargements sont finis. Clés et installation arrivent dans le prochain build.</string>
     <string name="install_installing">Installation de %1$s... (installateur de Blizzard, quelques minutes)</string>
     <string name="install_patching">Mise à jour vers 1.13d...</string>
-    <string name="install_done">Diablo II 1.13d est installé dans Download/%1$s.</string>
+    <string name="install_done">Diablo II 1.13d est installé dans l\'app.</string>
     <string name="install_use_title">Utiliser la nouvelle installation ?</string>
-    <string name="install_use_message">Le jeu démarrera désormais depuis Download/%1$s. Ton ancien dossier du jeu n\'est pas touché.</string>
+    <string name="install_use_message">Le jeu démarrera désormais depuis la nouvelle installation. Ton ancien dossier du jeu n\'est pas touché.</string>
     <string name="install_use_yes">L\'utiliser</string>
     <string name="install_use_no">Pas maintenant</string>
     <string name="install_game_running">Le jeu tourne encore : choisis \"Sauvegarder et quitter\" dans le jeu, puis installe.</string>
@@ -816,7 +819,7 @@
     <string name="news_none">Cette version n\'a pas de liste des changements.</string>
     <string name="settings_update_check">Chercher une nouvelle version une fois par jour</string>
     <string name="settings_telemetry">Envoyer des statistiques d\'utilisation anonymes</string>
-    <string name="settings_telemetry_hint">Au plus une fois par jour, et après un plantage, un message anonyme part vers Aptabase (serveurs dans l\'UE) : versions de l\'app et d\'Android, modèle du téléphone, puce graphique, fréquence de l\'écran, langue, quelques réglages (images par seconde, taille, aide à la visée, reprise, manette), temps de jeu et nombre de parties, et pour tes personnages classe, niveau (par paliers de cinq), acte, difficulté et hardcore ; après un plantage, un code de raison fixe. Pas de noms, pas de sauvegardes, pas de journaux, pas d\'identifiant d\'appareil. Désactivé : plus rien n\'est envoyé et ce qui attend est effacé.</string>
+    <string name="settings_telemetry_hint">Au plus une fois par jour, et après un plantage, un message anonyme part vers Aptabase (serveurs dans l\'UE) : versions de l\'app et d\'Android, fabricant et modèle du téléphone, mémoire vive (arrondie), puce (SoC et type de CPU), puce graphique avec la version du pilote OpenGL et Vulkan, taille des pages mémoire, sortie audio (tampon et fréquence) et si le son du jeu a démarré, résultat du contrôle de l\'appareil et voie graphique, fréquence de l\'écran, langue, quelques réglages (images par seconde, taille, aide à la visée, reprise, manette), temps de jeu et nombre de parties, mémoire utilisée par le jeu (après 10 minutes et à la fin), et pour tes personnages classe, niveau (par paliers de cinq), acte, difficulté et hardcore ; après un plantage, un code de raison fixe, où était l\'app (installation, chargement, jeu, pages de l\'app), depuis combien de temps elle tournait et le code de sortie. Pas de noms, pas de sauvegardes, pas de journaux, pas d\'identifiant d\'appareil, pas de numéro de série. Désactivé : plus rien n\'est envoyé et ce qui attend est effacé.</string>
     <string name="update_available">La version %1$s est disponible</string>
     <string name="update_obtainium">Télécharge-la depuis la page de téléchargement. Si tu as installé l\'app avec Obtainium, il récupère la mise à jour pour toi.</string>
     <string name="update_download">Page de téléchargement</string>
@@ -1151,7 +1154,7 @@
     <string name="char_deleted_how">Double appui : rétablir · Maintenir : supprimer</string>
     <string name="char_deleted_status">%1$s supprimé. Un double appui sur la carte le rétablit.</string>
     <string name="char_restored">%1$s est de retour</string>
-    <string name="char_purged">%1$s supprimé définitivement. Sauvegarde : Download/D2Android/Sicherungen</string>
+    <string name="char_purged">%1$s supprimé définitivement. La copie de secours est dans les paramètres, sous sauvegardes.</string>
     <string name="char_restore_collision">Il y a de nouveau un personnage \"%1$s\". Supprimez-le ou renommez-le d\'abord.</string>
     <string name="char_delete_failed">Suppression impossible : pas de sauvegarde. Rien n\'a été supprimé.</string>
     <string name="char_delete_busy">Pas maintenant : le jeu démarre ou des sauvegardes sont chargées.</string>
@@ -1306,7 +1309,7 @@
     <string name="settings_mods_legend">Diamant : l\'original. Topaze : un mod qui fonctionne, non vérifié par nous.</string>
     <string name="settings_mods_active">ACTIF</string>
     <string name="settings_mods_game_running">Quitte d\'abord le jeu : il utilise le dossier et les sauvegardes.</string>
-    <string name="settings_mods_remove_ask">Retirer le mod %1$s ? Ses sauvegardes vont d\'abord dans Download/%2$s (un zip), puis son dossier est supprimé.</string>
+    <string name="settings_mods_remove_ask">Retirer le mod %1$s ? Ses sauvegardes vont d\'abord dans les copies de secours de l\'app (un zip), puis son dossier est supprimé.</string>
     <string name="settings_mods_remove_yes">Retirer</string>
     <string name="settings_mods_removed">%1$s retiré.</string>
     <string name="settings_mods_remove_failed">Non retiré : %1$s</string>
@@ -1629,7 +1632,7 @@
     <string name="telemetry_title">Statistiques anonymes ?</string>
     <string name="telemetry_intro">Elles nous aident à faire bien tourner D2Android sur plus de téléphones. Au plus une fois par jour, et après un plantage, un court message part vers Aptabase (serveurs dans l\'UE). Rien n\'est envoyé avant ton « oui ».</string>
     <string name="telemetry_in">Ce qu\'elles contiennent</string>
-    <string name="telemetry_in_points">Appareil : fabricant, modèle, puce graphique, fréquence (Hz), version d\'Android et de l\'app, langue, manette\nquelques réglages : images par seconde, taille, aide à la visée, reprise\npersonnages seulement en chiffres : nombre, classes, niveau par pas de cinq, acte, difficulté, hardcore\ntemps de jeu, nombre de parties et leur fin\naprès un plantage un code fixe</string>
+    <string name="telemetry_in_points">Appareil : fabricant, modèle, mémoire vive (arrondie), puce, puce graphique avec version du pilote (OpenGL, Vulkan), fréquence (Hz), version d\'Android et de l\'app, langue, manette\nrésultat du contrôle de l\'appareil et voie graphique, sortie audio et si le son du jeu a démarré\nquelques réglages : images par seconde, taille, aide à la visée, reprise\npersonnages seulement en chiffres : nombre, classes, niveau par pas de cinq, acte, difficulté, hardcore\ntemps de jeu, nombre de parties et leur fin, mémoire utilisée par le jeu\naprès un plantage un code fixe, où et après combien de temps</string>
     <string name="telemetry_out">Ce qu\'elles ne contiennent pas</string>
     <string name="telemetry_out_points">pas de noms, pas de sauvegardes, pas de fichiers, pas de journaux\npas d\'identifiant d\'appareil, rien qui mène à toi</string>
     <string name="telemetry_footer">Tu peux le changer à tout moment dans Réglages &gt; Aide et infos.</string>
@@ -1649,4 +1652,24 @@
     <string name="win_info_inv">toucher : prendre, poser|maintenir : utiliser · glisser : stats|2× toucher : potion à la ceinture</string>
     <string name="win_info_inv_stash">toucher : prendre, poser|maintenir : utiliser · glisser : stats|2× toucher : vers le coffre</string>
     <string name="win_info_inv_pad">A : prendre, poser · X : utiliser|R3 maintenir : trier</string>
+
+    <string name="move_progress">Transfert du jeu dans l\'application : %1$d sur %2$d Mo</string>
+    <string name="move_no_space">Espace insuffisant pour transférer le jeu dans l\'application : %1$s nécessaires, %2$s libres.</string>
+    <string name="move_failed">Le jeu n\'a pas pu être transféré dans l\'application (%1$s). Le prochain lancement réessaiera.</string>
+    <string name="settings_saves_backups">Partager copies</string>
+    <string name="saves_backups_none">Pas encore de copie de secours.</string>
+    <string name="move_cleanup_title">Supprimer les anciens fichiers du jeu ?</string>
+    <string name="move_cleanup_message">Le jeu est maintenant dans l\'app. Tu n\'as plus besoin des anciens fichiers du jeu dans %1$s (%2$s). Tes sauvegardes y restent.</string>
+    <string name="move_cleanup_delete">Supprimer</string>
+    <string name="move_cleanup_done">Anciens fichiers du jeu supprimés (%1$s libérés).</string>
+    <string name="settings_saves_from_download">Depuis Download</string>
+    <string name="saves_from_download_ask">Les sauvegardes de %1$s remplacent celles de l\'app. L\'app copie d\'abord les actuelles.</string>
+    <string name="saves_from_download_none">Aucune sauvegarde dans Download.</string>
+    <string name="saves_from_download_done">Sauvegardes reprises de Download.</string>
+    <string name="move_done_hint">Le jeu et tes sauvegardes sont maintenant dans l\'app. Garde une copie avec Réglages > Sauvegardes > Partager parties.</string>
+    <string name="move_pending">Sera copié dans l\'app quand tu reviens à la page d\'accueil : %1$s</string>
+    <string name="move_checking">Vérification de la copie : %1$d sur %2$d Mo</string>
+    <string name="game_in_app">Dans l\'app</string>
+    <string name="game_in_app_from">Dans l\'app (repris de %1$s)</string>
+    <string name="settings_saves_save_as">Enregistrer sous</string>
 </resources>

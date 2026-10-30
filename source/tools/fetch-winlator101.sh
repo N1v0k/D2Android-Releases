@@ -69,6 +69,14 @@ unzip -q -o -j "$D2DX_ZIP" glide3x.dll README.md 'licenses/*' -d "$OUT_DIR/d2dx"
 
 python3 -I "$REPO_DIR/tools/binpatch.py" d2dx-glide3x "$OUT_DIR/d2dx/glide3x.dll"
 
+python3 -I "$REPO_DIR/tools/binpatch.py" d2dx-glide3x-frametime "$OUT_DIR/d2dx/glide3x.dll"
+
+
+for n in 512 1024; do
+  cp "$OUT_DIR/d2dx/glide3x.dll" "$OUT_DIR/d2dx/glide3x-atlas$n.dll"
+  python3 -I "$REPO_DIR/tools/binpatch.py" "d2dx-glide3x-atlas$n" "$OUT_DIR/d2dx/glide3x-atlas$n.dll"
+done
+
 rm -rf "$OUT_DIR/plugy"
 mkdir -p "$OUT_DIR/plugy"
 unzip -q -o "$PLUGY_ZIP" PlugY.dll 'PlugY/*' PlugY_The_Survival_Kit_-_Readme.txt -d "$OUT_DIR/plugy"

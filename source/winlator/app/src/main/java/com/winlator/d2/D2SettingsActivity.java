@@ -114,7 +114,7 @@ public class D2SettingsActivity extends D2Activity {
         }
     }
     private static final int ID_AUTO = 1000, ID_LANGUAGE = 1100, ID_FRAME_RATE = 1200, IMPORT_REQUEST_CODE = 4720,
-        FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722, MOD_REQUEST_CODE = 4723;
+        FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722, MOD_REQUEST_CODE = 4723, EXPORT_REQUEST_CODE = 4724;
 
     private TextView savesStatus;
 
@@ -429,7 +429,7 @@ public class D2SettingsActivity extends D2Activity {
             case "plugy":
                 if (!D2PlugY.isBundled(this)) return null;
                 box.addView(guardedRow(GUARD_PLUGY, e.label));
-                box.addView(hint(getString(R.string.settings_plugy_hint, D2Saves.BACKUP_FOLDER)));
+                box.addView(hint(getString(R.string.settings_plugy_hint)));
                 box.addView(hint(getString(R.string.settings_plugy_moved)));
                 box.addView(hint(getString(R.string.settings_big_stash_moved)));
                 return box;
@@ -506,6 +506,12 @@ public class D2SettingsActivity extends D2Activity {
                 box.addView(hint(getString(R.string.settings_saves_hint)));
                 box.addView(button(D2ButtonTiers.PLAIN, e.label, this::shareSaves), matchWidth());
                 return box;
+            case "savesBackups":
+                return button(D2ButtonTiers.PLAIN, e.label, this::shareBackups);
+            case "savesSaveAs":
+                return button(D2ButtonTiers.PLAIN, e.label, this::saveSavesAs);
+            case "savesFromDownload":
+                return button(D2ButtonTiers.PLAIN, e.label, this::savesFromDownload);
             case "savesLoad": {
                 loadButton = button(D2ButtonTiers.PLAIN, e.label, this::pickSavesZip);
                 box.addView(loadButton, matchWidth());
@@ -826,7 +832,7 @@ public class D2SettingsActivity extends D2Activity {
             return;
         }
         TextView message = new TextView(this);
-        message.setText(getString(R.string.settings_mods_remove_ask, mod.name, D2Saves.BACKUP_FOLDER));
+        message.setText(getString(R.string.settings_mods_remove_ask, mod.name));
         message.setTextSize(16);
         int pad = dp(16);
         message.setPadding(pad, pad, pad, 0);
@@ -866,7 +872,7 @@ public class D2SettingsActivity extends D2Activity {
                 File backup = D2Saves.newestSaveFile(mod.saves()) > 0 ? D2Saves.backup(mod.saves(), "vor-Mod-entfernen-" + mod.id) : null;
                 D2Mods.remove(this, mod);
                 line = getString(R.string.settings_mods_removed, mod.name)
-                    + (backup != null ? " " + getString(R.string.saves_backup_note, D2Saves.BACKUP_FOLDER + "/" + backup.getName()) : "");
+                    + (backup != null ? " " + getString(R.string.saves_backup_note, backup.getName()) : "");
                 D2Trace.log("mods: " + mod.id + " removed");
             }
             catch (IOException e) {
@@ -1418,7 +1424,7 @@ public class D2SettingsActivity extends D2Activity {
                     for (D2ModInfo.Mod mod : folders) {
                         File backup = D2Saves.backup(mod != null ? mod.saves() : D2Saves.saveDir(gameDir),
                             mod != null ? reason + "-" + mod.id : reason);
-                        if (backup != null) names.add(D2Saves.BACKUP_FOLDER + "/" + backup.getName());
+                        if (backup != null) names.add(backup.getName());
                     }
                     guardSet(kind, false);
                     message = names.isEmpty() ? null : getString(R.string.stash_guard_off_backup, guardOff(kind), String.join(", ", names));
@@ -1596,11 +1602,17 @@ public class D2SettingsActivity extends D2Activity {
             File dir = GameLocator.gameDir(this);
             if (dir == null) {
                 String chosen = GameLocator.chosenPath(this);
-                folderLine = chosen != null ? getString(R.string.folder_gone, chosen) : getString(R.string.saves_no_game_folder);
+
+                folderLine = chosen == null ? getString(R.string.saves_no_game_folder) : new File(chosen).isDirectory()
+                    ? getString(R.string.move_pending, chosen) : getString(R.string.folder_gone, chosen);
             }
             else {
                 GameVersion.Result check = GameLocator.check(this, dir);
-                folderLine = check.dir.getAbsolutePath() + "\n" + GameLocator.message(this, check);
+
+                String from = GameLocator.chosenPath(this);
+                String where = D2Store.isGame(check.dir) ? (from != null && !D2Store.isGame(new File(from))
+                    ? getString(R.string.game_in_app_from, from) : getString(R.string.game_in_app)) : check.dir.getAbsolutePath();
+                folderLine = where + "\n" + GameLocator.message(this, check);
             }
         }
         folderStatus.setText(folderLine);
@@ -1618,6 +1630,90 @@ public class D2SettingsActivity extends D2Activity {
         });
     }
 
+
+
+
+
+
+    private void savesFromDownload() {
+        File source = GameLocator.sourceDir(this);
+        File from = source != null && !D2Store.isGame(source) ? D2Umzug.saveFolder(source) : null;
+        if (from == null || !D2Umzug.hasCharacters(from)) {
+            savesStatus(getString(R.string.saves_from_download_none));
+            return;
+        }
+        ask(getString(R.string.settings_saves_from_download), getString(R.string.saves_from_download_ask, from.getPath()),
+            getString(R.string.saves_load), () -> {
+
+                if (D2TouchOverlay.isGameRunning() || !D2Saves.beginImport()) {
+                    savesStatus(getString(R.string.settings_mods_busy));
+                    return;
+                }
+                lockForImport(true);
+                new Thread(() -> {
+                try {
+
+                    File backup = D2Umzug.zipTree(D2Store.saves(),
+                        new File(D2Store.backups(), D2Saves.zipName("Sicherung-" + "vor-Download-Uebernahme")));
+                    D2Umzug.copyIn(from, D2Store.base(), D2Umzug.SAVES, null, (w, d, t) -> {});
+                    D2Trace.log("saves taken from " + from + (backup != null ? ", backup " + backup.getName() : ""));
+                    savesStatus(getString(R.string.saves_from_download_done)
+                        + (backup != null ? getString(R.string.saves_backup_note, backup.getName()) : ""));
+                }
+                catch (IOException e) {
+                    savesStatus(getString(R.string.saves_share_failed, savesError(e)));
+                }
+                finally {
+                    D2Saves.endImport();
+                    handler.post(() -> lockForImport(false));
+                }
+            }, "d2-saves-download").start();
+            });
+    }
+
+
+    private void shareBackups() {
+        File[] backups = D2Store.backups().listFiles((d, n) -> n.endsWith(".zip"));
+        if (backups == null || backups.length == 0) {
+            savesStatus(getString(R.string.saves_backups_none));
+            return;
+        }
+        savesStatus(getString(R.string.saves_packing));
+        new Thread(() -> {
+            try {
+                File folder = new File(getFilesDir(), "share");
+                File[] old = folder.listFiles();
+                if (old != null) for (File file : old)
+                    file.delete();
+
+                folder.mkdirs();
+                File zip = new File(folder, D2Saves.zipName("Diablo2-Sicherungen"));
+                byte[] buf = new byte[64 << 10];
+                try (java.util.zip.ZipOutputStream out = new java.util.zip.ZipOutputStream(new java.io.FileOutputStream(zip))) {
+                    for (File b : backups) {
+                        out.putNextEntry(new java.util.zip.ZipEntry(b.getName()));
+                        try (java.io.InputStream in = new java.io.FileInputStream(b)) {
+                            for (int r; (r = in.read(buf)) > 0; ) out.write(buf, 0, r);
+                        }
+                        out.closeEntry();
+                    }
+                }
+                Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".FileProvider", zip);
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("application/zip");
+                send.putExtra(Intent.EXTRA_STREAM, uri);
+                send.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.settings_saves_backups));
+                send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                handler.post(() -> {
+                    savesStatus(getResources().getQuantityString(R.plurals.saves_packed, backups.length, backups.length));
+                    startActivity(Intent.createChooser(send, getString(R.string.settings_saves_backups)));
+                });
+            }
+            catch (Exception e) {
+                savesStatus(getString(R.string.saves_share_failed, savesError(e)));
+            }
+        }, "d2-backups-share").start();
+    }
 
     private void shareSaves() {
         File gameDir = GameLocator.gameDir(this);
@@ -1679,6 +1775,59 @@ public class D2SettingsActivity extends D2Activity {
         if (importing) handler.postDelayed(() -> lockForImport(D2Saves.importRunning()), 500);
     }
 
+
+    private void saveSavesAs() {
+        Intent create = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        create.addCategory(Intent.CATEGORY_OPENABLE);
+        create.setType("application/zip");
+        create.putExtra(Intent.EXTRA_TITLE, D2Saves.zipName("Diablo2-Spielstaende"));
+        try {
+            startActivityForResult(create, EXPORT_REQUEST_CODE);
+        }
+        catch (android.content.ActivityNotFoundException e) {
+            savesStatus(getString(R.string.saves_share_failed, savesError(e)));
+        }
+    }
+
+
+    private void writeSavesTo(Uri uri) {
+        File gameDir = GameLocator.gameDir(this);
+        if (gameDir == null) {
+            savesStatus(getString(R.string.saves_no_game_folder));
+            return;
+        }
+        savesStatus(getString(R.string.saves_packing));
+        D2ModInfo.Mod mod = D2Mods.active(this);
+        File saves = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
+        new Thread(() -> {
+            try {
+                File folder = new File(getFilesDir(), "share");
+                File[] old = folder.listFiles();
+                if (old != null) for (File file : old)
+                    file.delete();
+                File zip = new File(folder, D2Saves.zipName("Diablo2-Spielstaende"));
+                if (!D2TouchOverlay.isGameRunning() && D2Saves.recover(saves)) D2SaveRepair.run(saves);
+                int count = D2Saves.zip(saves, zip);
+                if (count == 0) {
+                    savesStatus(getString(R.string.saves_none_found, saves));
+                    return;
+                }
+                byte[] buf = new byte[64 << 10];
+                try (java.io.InputStream in = new java.io.FileInputStream(zip);
+                     java.io.OutputStream out = getContentResolver().openOutputStream(uri, "w")) {
+                    if (out == null) throw new IOException(String.valueOf(uri));
+                    for (int r; (r = in.read(buf)) > 0; ) out.write(buf, 0, r);
+                }
+
+                zip.delete();
+                savesStatus(getResources().getQuantityString(R.plurals.saves_packed, count, count));
+            }
+            catch (Exception e) {
+                savesStatus(getString(R.string.saves_share_failed, savesError(e)));
+            }
+        }, "d2-saves-save-as").start();
+    }
+
     private void pickSavesZip() {
         if (D2TouchOverlay.isGameRunning()) {
             savesStatus(getString(R.string.saves_game_running));
@@ -1724,32 +1873,40 @@ public class D2SettingsActivity extends D2Activity {
             pendingPick = () -> D2FolderPickDialog.show(this, dir, check, before, this::chooseFolder);
             return;
         }
+        if (requestCode == EXPORT_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) writeSavesTo(data.getData());
+            return;
+        }
         if (requestCode == MOD_REQUEST_CODE) {
             if (resultCode == RESULT_OK && data != null && data.getData() != null) importMod(data.getData());
             return;
         }
         if (requestCode != IMPORT_REQUEST_CODE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
+        ask(getString(R.string.saves_load_title), getString(R.string.saves_load_message), getString(R.string.saves_load),
+            () -> importSaves(uri));
+    }
 
 
+    private void ask(String titleText, String messageText, String positive, Runnable onPositive) {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(20);
         content.setPadding(pad, pad, pad, 0);
         TextView title = new TextView(this);
-        title.setText(getString(R.string.saves_load_title));
+        title.setText(titleText);
         title.setTextSize(18);
         D2Style.heading(title);
         content.addView(title);
         TextView message = new TextView(this);
-        message.setText(getString(R.string.saves_load_message, D2Saves.BACKUP_FOLDER));
+        message.setText(messageText);
         message.setTextSize(16);
         message.setPadding(0, dp(8), 0, 0);
         D2Style.text(message);
         content.addView(message);
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setView(content)
-            .setPositiveButton(getString(R.string.saves_load), (d, which) -> importSaves(uri))
+            .setPositiveButton(positive, (d, which) -> onPositive.run())
             .setNegativeButton(getString(R.string.cancel), null)
             .create();
         dialog.show();
@@ -1808,7 +1965,7 @@ public class D2SettingsActivity extends D2Activity {
                 try (InputStream in = getContentResolver().openInputStream(uri)) {
                     if (in == null) throw new D2Saves.Failure(D2Saves.Failure.Reason.UNREADABLE, null);
                     int count = D2Saves.importZip(in, saveDir);
-                    savesStatus(getString(R.string.saves_loaded, count, backup != null ? getString(R.string.saves_backup_note, D2Saves.BACKUP_FOLDER + "/" + backup.getName()) : ""));
+                    savesStatus(getString(R.string.saves_loaded, count, backup != null ? getString(R.string.saves_backup_note, backup.getName()) : ""));
                 }
                 catch (Exception e) {
                     savesStatus(getString(R.string.saves_load_failed, savesError(e), backup != null ? getString(R.string.saves_backup_paren, backup.getName()) : ""));
@@ -1862,7 +2019,7 @@ public class D2SettingsActivity extends D2Activity {
             case CANNOT_REPLACE: return D2Text.get(context, R.string.saves_error_replace, f.subject);
             case CANNOT_WRITE: return D2Text.get(context, R.string.saves_error_write, f.subject);
             case FILE_TOO_LARGE: return D2Text.get(context, R.string.saves_error_file_too_large);
-            case IMPORT_UNFINISHED: return D2Text.get(context, R.string.saves_error_import_unfinished, D2Saves.BACKUP_FOLDER);
+            case IMPORT_UNFINISHED: return D2Text.get(context, R.string.saves_error_import_unfinished);
             case BROKEN_ZIP: return D2Text.get(context, R.string.saves_error_broken_zip);
             default: return f.getMessage();
         }

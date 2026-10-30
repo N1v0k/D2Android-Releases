@@ -22,6 +22,8 @@ public final class GameLocator {
     public static final String KEY_GAME_DIR = "gameDir";
 
     private static final String KEY_ACCEPTED = "gameDirAccepted";
+
+    private static final String KEY_IMPORT = "gameDirImport";
     private static final String CHECKSUMS_ASSET = "checksums-113d.txt";
     private static Map<String, String> reference;
 
@@ -40,6 +42,16 @@ public final class GameLocator {
 
 
     public static File gameDir(Context context) {
+
+        D2Store.init(context);
+        return D2Store.ready() ? D2Store.game() : null;
+    }
+
+
+
+
+
+    public static File sourceDir(Context context) {
         adoptUsedFolder(context);
         String chosen = chosenPath(context);
         if (chosen == null) return null;
@@ -116,8 +128,9 @@ public final class GameLocator {
     public static GameVersion.Result choose(Context context, File dir) {
         GameVersion.Result result = check(context, dir);
         if (result.status == GameVersion.Status.OK || result.status == GameVersion.Status.MODIFIED) {
+
             context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).edit()
-                .putString(KEY_GAME_DIR, result.dir.getAbsolutePath()).apply();
+                .putString(KEY_GAME_DIR, result.dir.getAbsolutePath()).putString(KEY_IMPORT, result.dir.getAbsolutePath()).apply();
 
 
             String before = D2Settings.gameLanguage(context);
@@ -128,12 +141,31 @@ public final class GameLocator {
     }
 
 
+    static String pendingImport(Context context) {
+        String path = context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).getString(KEY_IMPORT, null);
+        return path != null && new File(path).isDirectory() ? path : null;
+    }
+
+    static void importDone(Context context) {
+        context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).edit().remove(KEY_IMPORT).apply();
+    }
+
+
     public static boolean accepted(Context context, GameVersion.Result result) {
         return acceptKey(result).equals(context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).getString(KEY_ACCEPTED, null));
     }
 
     public static void accept(Context context, GameVersion.Result result) {
         context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).edit().putString(KEY_ACCEPTED, acceptKey(result)).apply();
+    }
+
+
+    static void moveAccepted(Context context, java.util.Map<String, String> folders) {
+        android.content.SharedPreferences prefs = context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE);
+        String old = prefs.getString(KEY_ACCEPTED, null);
+        if (old == null) return;
+        java.util.Map<String, String> moved = D2Umzug.rekeyed(java.util.Collections.singletonList(old), folders, "");
+        if (!moved.isEmpty()) prefs.edit().putString(KEY_ACCEPTED, moved.get(old)).apply();
     }
 
     private static String acceptKey(GameVersion.Result result) {

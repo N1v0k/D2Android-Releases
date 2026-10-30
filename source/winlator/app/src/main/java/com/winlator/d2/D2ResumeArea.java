@@ -15,6 +15,25 @@ final class D2ResumeArea {
     private D2ResumeArea() {}
 
 
+
+
+
+    static void moveKeys(Context context, java.util.Map<String, String> folders) {
+        android.content.SharedPreferences prefs = context.getSharedPreferences("d2resume", Context.MODE_PRIVATE);
+        java.util.Map<String, ?> all = prefs.getAll();
+        java.util.Map<String, String> moved = D2Umzug.rekeyed(all.keySet(), folders, "resume|");
+        if (moved.isEmpty()) return;
+        android.content.SharedPreferences.Editor edit = prefs.edit();
+        for (java.util.Map.Entry<String, String> m : moved.entrySet()) {
+            Object value = all.get(m.getKey());
+            if (value instanceof String) edit.putString(m.getValue(), (String) value);
+            edit.remove(m.getKey());
+        }
+        edit.commit();
+        D2Trace.log("move into the app: " + moved.size() + " resume place(s) moved along");
+    }
+
+
     static String key(File dir) {
         try {
             return dir.getCanonicalPath();

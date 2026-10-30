@@ -1,6 +1,5 @@
 package com.winlator.d2;
 
-import android.os.Environment;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -31,7 +30,6 @@ import java.util.zip.ZipOutputStream;
 
 public final class D2Saves {
 
-    public static final String BACKUP_FOLDER = "D2Android/Sicherungen";
     private static final long MAX_FILE = 8L << 20, MAX_TOTAL = 64L << 20;
 
 
@@ -183,6 +181,7 @@ public final class D2Saves {
 
 
     public static File saveDir(File gameDir) {
+        if (D2Store.isGame(gameDir)) return D2Store.saves();
         File[] entries = gameDir.listFiles();
         if (entries != null) {
             for (File entry : entries) if (entry.isDirectory() && entry.getName().equalsIgnoreCase("save")) return entry;
@@ -238,9 +237,11 @@ public final class D2Saves {
     }
 
 
+
+
+
     public static File backup(File saveDir, String reason) throws IOException {
-        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), BACKUP_FOLDER);
-        File out = new File(folder, zipName("Sicherung-" + reason));
+        File out = new File(D2Store.backups(), zipName("Sicherung-" + reason));
         return zip(saveDir, out) > 0 ? out : null;
     }
 

@@ -24,10 +24,14 @@ import java.util.concurrent.TimeUnit;
 public final class D2DeviceProbe {
     public static final long GPU_TIMEOUT_MS = 1000;
 
+    public String glVersion = "";
+
     public final boolean arm64;
     public final long pageSize;
     public final boolean kgsl;
     public String glVendor = "", glRenderer = "";
+
+    public int vulkanVersion;
 
     private D2DeviceProbe(boolean arm64, long pageSize, boolean kgsl) {
         this.arm64 = arm64;
@@ -55,7 +59,7 @@ public final class D2DeviceProbe {
 
 
     public void readGpu() {
-        String[] out = {"", ""};
+        String[] out = {"", "", ""};
         CountDownLatch done = new CountDownLatch(1);
         Thread t = new Thread(() -> {
             EGLDisplay display = EGL14.EGL_NO_DISPLAY;
@@ -77,6 +81,8 @@ public final class D2DeviceProbe {
                 String vendor = GLES20.glGetString(GLES20.GL_VENDOR), renderer = GLES20.glGetString(GLES20.GL_RENDERER);
                 out[0] = vendor != null ? vendor : "";
                 out[1] = renderer != null ? renderer : "";
+                String glVersionText = GLES20.glGetString(GLES20.GL_VERSION);
+                out[2] = glVersionText != null ? glVersionText : "";
             }
             catch (Throwable ignored) {
 
@@ -100,7 +106,39 @@ public final class D2DeviceProbe {
             if (done.await(GPU_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 glVendor = out[0];
                 glRenderer = out[1];
+                glVersion = out[2];
             }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+
+
+
+
+
+    public void readVulkan() {
+        int[] out = {0};
+        CountDownLatch done = new CountDownLatch(1);
+        Thread t = new Thread(() -> {
+            try {
+
+                long[] v = com.winlator.core.GPUHelper.vkGetDeviceVersions();
+                if (v != null && v.length == 3) out[0] = (int) v[0];
+            }
+            catch (Throwable ignored) {
+
+            }
+            finally {
+                done.countDown();
+            }
+        }, "DeviceProbeVulkan");
+        t.setDaemon(true);
+        t.start();
+        try {
+            if (done.await(GPU_TIMEOUT_MS, TimeUnit.MILLISECONDS)) vulkanVersion = out[0];
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -113,7 +151,7 @@ public final class D2DeviceProbe {
     }
 
     public D2DeviceCheck.Result classify() {
-        return D2DeviceCheck.classify(arm64, pageSize, glVendor, glRenderer, kgsl);
+        return D2DeviceCheck.classify(arm64, pageSize, glVendor, glRenderer, kgsl, vulkanVersion, com.winlator.BuildConfig.D2_INTERNAL);
     }
 
 
@@ -129,6 +167,6 @@ public final class D2DeviceProbe {
 
     public String describe() {
         return "device " + Build.MANUFACTURER + " " + Build.MODEL + ", arm64 " + arm64 + ", page " + pageSize + ", kgsl " + kgsl
-            + ", gl '" + glVendor + "' '" + glRenderer + "' -> " + classify();
+            + ", gl '" + glVendor + "' '" + glRenderer + "'" + (kgsl ? "" : ", vulkan " + D2GpuPath.vkName(vulkanVersion)) + " -> " + classify();
     }
 }

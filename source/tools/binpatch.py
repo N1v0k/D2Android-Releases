@@ -16,6 +16,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 import hashlib
 import os
 import sys
@@ -43,6 +52,43 @@ PATCHES = {
         "new": "8b4d08",
         "doc": "tools/patches/d2dx-0.99.529-comexception-hresult.patch",
     },
+    "d2dx-glide3x-frametime": {
+        "file": "glide3x.dll (D2DX 0.99.529 with d2dx-glide3x)",
+        "before": "5c4997371d9ca183bd7f0b17bc2f33eb9193f85e34cd94cc7153127b68bc5725",
+        "after": "c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89",
+        "runs": [
+            {"check_at": 0x5336, "check": "cc" * 42, "at": 0x5336, "old": "cc" * 22,
+             "new": "b828000000f20f2ac8f20f5dc1f20f118708010000c3"},
+            {"check_at": 0x99CC,
+             "check": "8b57140f57c9f20f5ac0f30f5ac80f28c1f20f5c8700010000f20f118f00010000f20f118708010000",
+             "at": 0x99CF,
+             "old": "0f57c9f20f5ac0f30f5ac80f28c1f20f5c8700010000f20f118f00010000f20f118708010000",
+             "new": "f20f5ac0f30f5ac80f28c1f20f5c8700010000f20f118f00010000e847b9ffff660f1f440000"},
+        ],
+        "doc": "tools/patches/d2dx-0.99.529-frametime-clamp.patch",
+    },
+    "d2dx-glide3x-atlas512": {
+        "file": "glide3x-atlas512.dll (D2DX 0.99.529 with d2dx-glide3x and d2dx-glide3x-frametime)",
+        "before": "c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89",
+        "after": "53eab88060db53a34cbff59ee2a223828c862058b590e5167a48369fa631a1e6",
+        "check_at": 0x73E8,
+        "check": "83ec4053565789" "4de4be00080000",
+        "at": 0x73F3,
+        "old": "08",
+        "new": "02",
+        "doc": "tools/patches/d2dx-0.99.529-atlas-512.patch",
+    },
+    "d2dx-glide3x-atlas1024": {
+        "file": "glide3x-atlas1024.dll (D2DX 0.99.529 with d2dx-glide3x and d2dx-glide3x-frametime)",
+        "before": "c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89",
+        "after": "50e9a58706c2f9f87cafb975e8698d1928725f9f774a78fb954a5d683c5aa313",
+        "check_at": 0x73E8,
+        "check": "83ec4053565789" "4de4be00080000",
+        "at": 0x73F3,
+        "old": "08",
+        "new": "04",
+        "doc": "tools/patches/d2dx-0.99.529-atlas-1024.patch",
+    },
 }
 
 
@@ -52,6 +98,11 @@ class PatchError(Exception):
 
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def runs(p):
+
+    return p.get("runs", [p])
 
 
 def apply(name, data):
@@ -65,13 +116,15 @@ def apply(name, data):
     if got != p["before"]:
         raise PatchError("%s: %s has sha256 %s, expected %s (or the patched %s): not patched"
                          % (name, p["file"], got, p["before"], p["after"]))
-    check, old, new = bytes.fromhex(p["check"]), bytes.fromhex(p["old"]), bytes.fromhex(p["new"])
-    rel = p["at"] - p["check_at"]
-    if len(old) != len(new) or rel < 0 or rel + len(old) > len(check) or check[rel:rel + len(old)] != old:
-        raise PatchError("%s: the patch table is inconsistent" % name)
-    if data[p["check_at"]:p["check_at"] + len(check)] != check:
-        raise PatchError("%s: bytes at 0x%X are not the expected ones: not patched" % (name, p["check_at"]))
-    out = data[:p["at"]] + new + data[p["at"] + len(new):]
+    out = data
+    for r in runs(p):
+        check, old, new = bytes.fromhex(r["check"]), bytes.fromhex(r["old"]), bytes.fromhex(r["new"])
+        rel = r["at"] - r["check_at"]
+        if len(old) != len(new) or rel < 0 or rel + len(old) > len(check) or check[rel:rel + len(old)] != old:
+            raise PatchError("%s: the patch table is inconsistent" % name)
+        if data[r["check_at"]:r["check_at"] + len(check)] != check:
+            raise PatchError("%s: bytes at 0x%X are not the expected ones: not patched" % (name, r["check_at"]))
+        out = out[:r["at"]] + new + out[r["at"] + len(new):]
     if sha256(out) != p["after"]:
         raise PatchError("%s: result has sha256 %s, expected %s" % (name, sha256(out), p["after"]))
     return out
@@ -92,7 +145,8 @@ def patch_file(name, path):
 def main(argv):
     if argv[1:] == ["--list"]:
         for name, p in sorted(PATCHES.items()):
-            print("%s: %s, offset 0x%X %s -> %s (%s)" % (name, p["file"], p["at"], p["old"], p["new"], p["doc"]))
+            for r in runs(p):
+                print("%s: %s, offset 0x%X %s -> %s (%s)" % (name, p["file"], r["at"], r["old"], r["new"], p["doc"]))
         return 0
     if len(argv) != 3:
         print(__doc__, file=sys.stderr)

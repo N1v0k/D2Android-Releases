@@ -30,6 +30,11 @@ public final class GameShadow {
 
     private GameShadow() {}
 
+
+    static String d2dxAsset(int atlasLayers) {
+        return atlasLayers >= 2048 ? D2DX_ASSET : "d2/d2dx/glide3x-atlas" + atlasLayers + ".dll";
+    }
+
     public static boolean isD2DXBundled(Context context) {
         try (java.io.InputStream ignored = context.getAssets().open(D2DX_ASSET)) {
             return true;
@@ -87,7 +92,7 @@ public final class GameShadow {
 
         File saveDir = mod != null ? mod.saves() : D2Saves.saveDir(gameDir);
         if (!D2Saves.recover(saveDir)) {
-            throw new IOException(D2Text.get(context, R.string.saves_error_import_unfinished, D2Saves.BACKUP_FOLDER));
+            throw new IOException(D2Text.get(context, R.string.saves_error_import_unfinished));
         }
 
 
@@ -105,7 +110,10 @@ public final class GameShadow {
             ? new File(new File(D2Mods.root(), id), D2ModInfo.CACHE) : null);
 
         File glide = new File(shadowDir, "glide3x.dll");
-        FileUtils.copy(context, D2DX_ASSET, glide);
+
+
+        FileUtils.copy(context, D2Settings.vortek(context)
+            ? d2dxAsset(D2GpuPath.tier(D2Runtime.totalMem(context)).atlasLayers) : D2DX_ASSET, glide);
         if (!glide.isFile()) throw new IOException("D2DX fehlt in dieser App-Version");
 
 

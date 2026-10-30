@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-29). -->
+<?xml version="1.0" encoding="utf-8" standalone="no"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-30). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.winlator">
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -25,6 +25,8 @@
         android:isGame="true"
         android:extractNativeLibs="true"
         android:allowAudioPlaybackCapture="true"
+        android:hasFragileUserData="true"
+        android:fullBackupContent="@xml/d2_backup_rules"
         android:networkSecurityConfig="@xml/network_security_config"
         android:label="@string/app_name">
 

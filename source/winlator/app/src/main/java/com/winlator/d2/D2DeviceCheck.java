@@ -14,7 +14,7 @@ public final class D2DeviceCheck {
     public enum Level { SUPPORTED, UNTESTED, UNSUPPORTED }
 
 
-    public enum Reason { OK, ABI, PAGES, ADRENO_6XX, ADRENO_NEW, ADRENO_OLD, ADRENO_UNLISTED, NO_KGSL, UNKNOWN_QUALCOMM, GPU }
+    public enum Reason { OK, ABI, PAGES, ADRENO_6XX, ADRENO_NEW, ADRENO_OLD, ADRENO_UNLISTED, NO_KGSL, UNKNOWN_QUALCOMM, MALI, XCLIPSE, POWERVR, OTHER_GPU, GPU }
 
     public static final long PAGE_SIZE = 4096;
 
@@ -92,6 +92,16 @@ public final class D2DeviceCheck {
 
 
     public static Result classify(boolean arm64, long pageSize, String glVendor, String glRenderer, boolean kgsl) {
+        return classify(arm64, pageSize, glVendor, glRenderer, kgsl, 0, true);
+    }
+
+
+
+
+
+
+    public static Result classify(boolean arm64, long pageSize, String glVendor, String glRenderer, boolean kgsl,
+                                  int vulkanVersion, boolean internal) {
         if (!arm64) return new Result(Level.UNSUPPORTED, Reason.ABI, 0);
         if (pageSize > 0 && pageSize != PAGE_SIZE) return new Result(Level.UNSUPPORTED, Reason.PAGES, 0);
         String vendor = glVendor == null ? "" : glVendor.toLowerCase(Locale.ROOT);
@@ -106,6 +116,37 @@ public final class D2DeviceCheck {
         }
 
         if (qualcomm) return new Result(Level.UNTESTED, Reason.UNKNOWN_QUALCOMM, 0);
-        return new Result(Level.UNSUPPORTED, Reason.GPU, 0);
+
+
+
+
+
+        Reason family = family(vendor, renderer);
+        if (vulkanVersion < D2GpuPath.MIN_VULKAN) return new Result(Level.UNSUPPORTED, family == Reason.OTHER_GPU ? Reason.GPU : family, 0);
+        if (!D2GpuPath.released(family, renderer, internal)) return new Result(Level.UNSUPPORTED, family, 0);
+        return new Result(D2GpuPath.tested(family, renderer) ? Level.SUPPORTED : Level.UNTESTED, family, 0);
+    }
+
+
+    static Reason family(String vendorLower, String renderer) {
+        String r = renderer.toLowerCase(Locale.ROOT);
+        if (mali(vendorLower, renderer)) return Reason.MALI;
+        if (r.contains("xclipse") || vendorLower.contains("samsung")) return Reason.XCLIPSE;
+        if (r.contains("powervr") || vendorLower.contains("imagination")) return Reason.POWERVR;
+        return Reason.OTHER_GPU;
+    }
+
+
+    static boolean mali(String vendorLower, String renderer) {
+        String r = renderer.toLowerCase(Locale.ROOT);
+        return vendorLower.equals("arm") || r.startsWith("mali") || r.startsWith("immortalis");
+    }
+
+
+
+
+
+    public static boolean vortek(Result result) {
+        return result != null && result.level != Level.UNSUPPORTED && D2GpuPath.FAMILIES.contains(result.reason);
     }
 }

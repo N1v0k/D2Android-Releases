@@ -183,7 +183,7 @@ final class D2StartPage extends FrameLayout {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w <= 0 || h <= 0) return;
         closeMenu();
-        layout = new D2StartLayout(w, h);
+        layout = new D2StartLayout(w, h, getResources().getDisplayMetrics().density, getResources().getConfiguration().smallestScreenWidthDp);
         int bh = layout.backdropHeight;
         int[] back = art.backdrop(bh);
         backdrop = Bitmap.createBitmap(back, D2StartArt.SCREEN_W, bh, Bitmap.Config.ARGB_8888);

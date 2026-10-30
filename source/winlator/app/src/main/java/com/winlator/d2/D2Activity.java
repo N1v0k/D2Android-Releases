@@ -15,6 +15,7 @@ public abstract class D2Activity extends AppCompatActivity {
     protected void attachBaseContext(Context base) {
         languageGeneration = D2Text.generation();
         super.attachBaseContext(D2Text.wrap(base));
+        D2Store.init(base);
     }
 
     @Override

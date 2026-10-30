@@ -55,7 +55,7 @@ final class D2HintView {
 
     private final Context context;
     private final Host host;
-    private final float dp;
+    private float dp;
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF box = new RectF(), tmp = new RectF();
     private D2Hints.Topic textTopic;
@@ -68,6 +68,11 @@ final class D2HintView {
         this.host = host;
         this.dp = dp;
         stroke.setStyle(Paint.Style.STROKE);
+    }
+
+
+    void setDp(float dp) {
+        this.dp = dp;
     }
 
 

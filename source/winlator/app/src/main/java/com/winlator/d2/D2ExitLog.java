@@ -5,7 +5,6 @@ import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.os.Environment;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,7 +20,6 @@ import java.util.Locale;
 
 
 public final class D2ExitLog {
-    private static final String FILE = "D2Android/Protokoll.txt";
     private static final long MAX_SIZE = 200_000;
     private static final String KEY_LAST_EXIT = "lastSystemExit";
 
@@ -73,7 +71,7 @@ public final class D2ExitLog {
 
             boolean self = info.getReason() == ApplicationExitInfo.REASON_EXIT_SELF;
             append(D2ExitText.appExit(self, time(info.getTimestamp()), reason(info.getReason()), details));
-            if (!self) D2Telemetry.systemExit(context, info.getReason(), info.getTimestamp());
+            if (!self) D2Telemetry.systemExit(context, info.getReason(), info.getStatus(), info.getTimestamp());
             if (info.getTimestamp() >= newestTime) {
                 newestTime = info.getTimestamp();
                 if (!self) newest = reason(info.getReason());
@@ -106,7 +104,8 @@ public final class D2ExitLog {
 
     private static synchronized void append(String line) {
         try {
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), FILE);
+            File file = D2Store.protocol();
+            if (file == null) return;
             File parent = file.getParentFile();
             if (parent != null && !parent.isDirectory() && !parent.mkdirs()) return;
             boolean keep = !file.isFile() || file.length() < MAX_SIZE;

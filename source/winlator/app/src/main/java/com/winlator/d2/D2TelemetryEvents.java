@@ -127,12 +127,28 @@ public final class D2TelemetryEvents {
     public static final class Sessions {
         public final int started, endGame, endApp, endError, minutes;
 
+
+
+
+        public final int pss10, pssEnd, pssMin;
+
+        public final int audioOk;
+
         public Sessions(int started, int endGame, int endApp, int endError, int minutes) {
+            this(started, endGame, endApp, endError, minutes, -1, -1, -1, -1);
+        }
+
+        public Sessions(int started, int endGame, int endApp, int endError, int minutes, int pss10, int pssEnd, int pssMin,
+                        int audioOk) {
             this.started = Math.max(0, started);
             this.endGame = Math.max(0, endGame);
             this.endApp = Math.max(0, endApp);
             this.endError = Math.max(0, endError);
             this.minutes = Math.max(0, minutes);
+            this.pss10 = pss10;
+            this.pssEnd = pssEnd;
+            this.pssMin = pssMin;
+            this.audioOk = audioOk;
         }
 
         void put(Map<String, Object> props) {
@@ -143,12 +159,102 @@ public final class D2TelemetryEvents {
 
             props.put("endLost", Math.max(0, started - endGame - endApp - endError));
             props.put("minutes", minutes);
+            putPss(props, pss10, pssEnd, pssMin);
+            if (audioOk >= 0) props.put("audioOk", audioOk);
+        }
+    }
+
+
+    static void putPss(Map<String, Object> props, int pss10, int pssEnd, int pssMin) {
+        if (pss10 >= 0) props.put("pss10", pss10);
+        if (pssEnd >= 0) {
+            props.put("pssEnd", pssEnd);
+            props.put("pssMin", Math.max(0, pssMin));
         }
     }
 
 
     public static int sessionEnd(int status, boolean byApp) {
         return byApp ? 1 : status == 0 ? 0 : 2;
+    }
+
+
+
+
+
+
+
+
+    public static final String PHASE_INSTALL = "install", PHASE_LOADING = "loading", PHASE_GAME = "game", PHASE_APP = "app";
+
+
+
+
+    public static final String PHASE_RUNNING = "running";
+
+    public static final String PATH_TURNIP = "turnip", PATH_VORTEK = "vortek", PATH_NONE = "none";
+
+    public static final int PSS_AT_MIN = 10;
+    public static final long PSS_EVERY_MS = 30_000;
+
+
+    public static int ramMb(long bytes) {
+        if (bytes <= 0) return -1;
+        long mb = bytes >> 20;
+        return (int) Math.min(Integer.MAX_VALUE, (mb + 128) / 256 * 256);
+    }
+
+
+    public static int mb(long bytes) {
+        return bytes < 0 ? -1 : (int) Math.min(Integer.MAX_VALUE, bytes >> 20);
+    }
+
+
+
+
+
+
+    public static String glVersion(String version) {
+        if (version == null) return "";
+        String v = version.trim();
+        int paren = v.indexOf(" (");
+        if (paren >= 0) v = v.substring(0, paren);
+
+        if (v.startsWith("OpenGL ES ")) v = v.substring("OpenGL ES ".length());
+
+        return clean(v);
+    }
+
+
+
+
+
+    public static String vkVersion(long version) {
+        if (version < 0) return "";
+        if (version == 0) return "none";
+        return ((version >>> 22) & 0x3FF) + "." + ((version >> 12) & 0x3FF) + "." + (version & 0xFFF);
+    }
+
+
+
+
+
+    public static String gpuPath(String level, boolean vortek) {
+        if ("UNSUPPORTED".equals(level)) return PATH_NONE;
+        return vortek ? PATH_VORTEK : PATH_TURNIP;
+    }
+
+
+    public static String phase(String phase) {
+        if (PHASE_INSTALL.equals(phase) || PHASE_LOADING.equals(phase) || PHASE_GAME.equals(phase) || PHASE_APP.equals(phase)
+            || PHASE_RUNNING.equals(phase)) return phase;
+        return "unknown";
+    }
+
+
+    public static long seconds(long from, long to) {
+        if (from <= 0 || to < from) return -1;
+        return Math.min(7L * 24 * 60 * 60, (to - from) / 1000);
     }
 
 

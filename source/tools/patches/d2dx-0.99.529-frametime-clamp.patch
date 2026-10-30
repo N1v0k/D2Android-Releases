@@ -1,0 +1,38 @@
+D2DX 0.99.529: the motion prediction steps at most 40 ms (one game tick) per frame.
+
+D2DX predicts where units, texts and weather particles are between the game's
+ticks and moves them by velocity times the time of the last frame. That time had
+no upper bound: after a long frame (the device stalled for a second) a rain drop
+was moved up to 2500 px, and its stretched quad overflowed the 16-bit vertex
+positions. White lines (one, or two crossing) ran across the picture for that
+frame. Now the frame time is stored as at most 40 ms; a longer frame only shows
+the movement of one tick. The app ships the glide3x.dll of the D2DX 0.99.529
+release with the HRESULT fix (d2dx-0.99.529-comexception-hresult.patch) and
+this change in two places, applied by tools/binpatch.py (patch
+"d2dx-glide3x-frametime") when the assets are fetched:
+
+  file      glide3x.dll
+  before    sha256 5c4997371d9ca183bd7f0b17bc2f33eb9193f85e34cd94cc7153127b68bc5725
+  after     sha256 c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89
+  change    file offset 0x5336: cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc -> b8 28 00 00 00 f2 0f 2a c8 f2 0f 5d c1 f2 0f 11 87 08 01 00 00 c3
+            (int3 padding after a function at 0x10005f36: mov eax, 40; cvtsi2sd xmm1, eax;
+            minsd xmm0, xmm1; movsd [edi+0x108], xmm0; ret)
+  change    file offset 0x99cf: 0f 57 c9 f2 0f 5a c0 f3 0f 5a c8 0f 28 c1 f2 0f 5c 87 00 01 00 00 f2 0f 11 8f 00 01 00 00 f2 0f 11 87 08 01 00 00 -> f2 0f 5a c0 f3 0f 5a c8 0f 28 c1 f2 0f 5c 87 00 01 00 00 f2 0f 11 8f 00 01 00 00 e8 47 b9 ff ff 66 0f 1f 44 00 00
+            (RenderContext::Present at 0x1000a5cf: the same computation without the
+            dead "xorps xmm1, xmm1", and "call 0x10005f36" in place of the store of
+            _frameTimeMs; a 6-byte nop keeps the length. Both places use no absolute
+            addresses, so no relocation is involved.)
+
+The source change it corresponds to:
+
+--- a/src/d2dx/RenderContext.cpp
++++ b/src/d2dx/RenderContext.cpp
+@@ -469,7 +469,7 @@
+ 	}
+ 
+ 	double curTime = TimeEndMs(_timeStart);
+-	_frameTimeMs = curTime - _prevTime;
++	_frameTimeMs = min(curTime - _prevTime, 40.0);
+ 	_prevTime = curTime;
+ 
+ 	if (_deviceContext1)

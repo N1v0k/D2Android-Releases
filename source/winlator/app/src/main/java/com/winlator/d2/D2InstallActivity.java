@@ -4,7 +4,6 @@ import com.winlator.R;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -89,6 +88,7 @@ public class D2InstallActivity extends D2Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        D2Telemetry.phase(this, D2TelemetryEvents.PHASE_INSTALL);
         language = D2InstallPlan.defaultLanguage(Locale.getDefault());
         portrait();
 
@@ -166,7 +166,7 @@ public class D2InstallActivity extends D2Activity {
 
         File download = download();
         boolean access = hasStorage();
-        File chosen = GameLocator.gameDir(this);
+        File chosen = GameLocator.sourceDir(this);
         File awaiting = access ? D2InstallPlan.findAwaitingPatch(download, chosen) : null;
 
         File finished = access && awaiting == null ? D2InstallPlan.findFinished(download, chosen) : null;
@@ -287,7 +287,7 @@ public class D2InstallActivity extends D2Activity {
             nextButton.setEnabled(false);
             return;
         }
-        File download = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File download = D2Store.base();
         long usable = download.getUsableSpace();
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         String free = D2InstallPlan.formatGb(usable, locale);
@@ -304,12 +304,12 @@ public class D2InstallActivity extends D2Activity {
     private long neededAtStart() {
         File download = download();
         return D2InstallFlow.neededAtStart(D2InstallPlan.installerBytes(download),
-            D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download, GameLocator.gameDir(this))));
+            D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download, GameLocator.sourceDir(this))));
     }
 
 
     private long neededBeforeKeys() {
-        return D2InstallFlow.neededBeforeKeys(D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download(), GameLocator.gameDir(this))));
+        return D2InstallFlow.neededBeforeKeys(D2InstallPlan.reusableBytes(D2InstallPlan.freeGameDir(download(), GameLocator.sourceDir(this))));
     }
 
 
@@ -365,7 +365,7 @@ public class D2InstallActivity extends D2Activity {
         nextButton.setEnabled(false);
         steps.at(D2InstallSteps.Step.FETCH);
         D2InstallPlan.Language lang = language;
-        File download = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File download = D2Store.base();
         work(() -> {
             D2InstallFailure.Kind failure = null;
             String result;
@@ -645,8 +645,13 @@ public class D2InstallActivity extends D2Activity {
             context.getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getString(KEY_CHECK_PASSED, null));
     }
 
+
+
+
+
     private File download() {
-        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        D2Store.base().mkdirs();
+        return D2Store.base();
     }
 
 
@@ -710,7 +715,7 @@ public class D2InstallActivity extends D2Activity {
 
 
 
-        installTarget = D2InstallPlan.freeGameDir(download(), GameLocator.gameDir(this));
+        installTarget = D2InstallPlan.freeGameDir(download(), GameLocator.sourceDir(this));
         File target = installTarget;
         work(() -> {
             try {
@@ -1231,7 +1236,7 @@ public class D2InstallActivity extends D2Activity {
         work(() -> {
             if (ours) killGuests();
             if (unfinished == null) return;
-            File chosen = GameLocator.gameDir(this);
+            File chosen = GameLocator.sourceDir(this);
             if (chosen != null && chosen.getAbsoluteFile().equals(unfinished.getAbsoluteFile())) return;
             if (D2InstallPlan.discardUnfinished(unfinished)) android.util.Log.i("D2Install", "removed the unfinished " + unfinished);
         });
@@ -1527,7 +1532,11 @@ public class D2InstallActivity extends D2Activity {
                 killGuests();
                 D2Runtime.prepareSession(this);
                 EnvVars env = D2Runtime.guestEnv(this);
-                String dir = "D:\\" + D2InstallPlan.ROOT_FOLDER + "\\" + D2InstallPlan.INSTALLER_FOLDER + "\\" + product.folder;
+
+                File installers = D2InstallPlan.installerDir(download(), product);
+
+                installers.mkdirs();
+                String dir = D2Runtime.dosPath(this, installers);
                 String exe = downloaderFile(new File("/"), product).getName();
                 String command = D2Runtime.guestCommand(screenSize, dir, exe, "--saveas=" + dir + " --autolaunch=0");
                 current.start(command, env, null, (status) -> runOnUiThread(() -> {
@@ -1587,7 +1596,7 @@ public class D2InstallActivity extends D2Activity {
         D2InstallPlan.Product product = DOWNLOAD_ORDER[index];
         D2Trace.log("install: downloader " + product.code + " ended at " + percent + " %");
         closeScreen();
-        File download = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File download = D2Store.base();
         int gen = generation;
         work(() -> {
             String error = null;
@@ -1731,6 +1740,7 @@ public class D2InstallActivity extends D2Activity {
     @Override
     protected void onDestroy() {
         stopped = true;
+        D2Telemetry.phase(this, D2TelemetryEvents.PHASE_APP);
         dismissNoStart();
         wipeKeys();
         boolean runActive = screen != null, held = runHeld;
@@ -2113,7 +2123,7 @@ public class D2InstallActivity extends D2Activity {
     private FrameLayout.LayoutParams statusParams() {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             android.view.Gravity.TOP | android.view.Gravity.END);
-        if (GameLocator.gameDir(this) != null) lp.topMargin = dp(56);
+        if (GameLocator.sourceDir(this) != null) lp.topMargin = dp(56);
         return lp;
     }
 

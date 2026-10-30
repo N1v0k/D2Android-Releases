@@ -412,11 +412,11 @@ public final class D2HelperEntries {
         section(SET_MODS, "mods_add", "modsImport");
         section(SET_MODS, "mods_start", "argDirect", "argTxt", "argNs", "argsFree");
         section(SET_SAVES, "ordner", "gameFolder", "install");
-        section(SET_SAVES, "spielstaende", "savesShare", "savesLoad");
+        section(SET_SAVES, "spielstaende", "savesShare", "savesSaveAs", "savesLoad", "savesFromDownload", "savesBackups");
         section(SET_HELP, "hilfe", "intro", "background");
         section(SET_HELP, "fehlersuche", "diagnose", "report");
         section(SET_HELP, "ueber", "news", "updateCheck", "telemetry", "licenses", "about");
-        for (String k : new String[]{"gameFolder", "install", "savesShare", "savesLoad"}) SCOPE.put(k, BEFORE_START);
+        for (String k : new String[]{"gameFolder", "install", "savesShare", "savesSaveAs", "savesLoad", "savesFromDownload", "savesBackups"}) SCOPE.put(k, BEFORE_START);
         for (String k : new String[]{"gameLines", "frameRate", "skipIntro", "mod", "appLanguage", "plugy", "bigStash", "bigInventory", "autosave",
             "respec", "statsPages"}) SCOPE.put(k, NEXT_START);
         for (String k : new String[]{"plugyActiveSharedGold", "plugyActiveDisplayItemLevel", "plugyActiveDisplayBaseStatsValue", "plugyActiveDoNotCloseNihlathakPortal", "plugyMoveCainNearHarrogathWaypoint", "plugyAlwaysRegenMapInSP"}) SCOPE.put(k, NEXT_START);
@@ -466,6 +466,9 @@ public final class D2HelperEntries {
         keywords("background", "hintergrund background akku benachrichtigung notification");
         keywords("savesShare", "spielstaende saves teilen share backup sichern");
         keywords("savesLoad", "spielstaende saves laden load backup");
+        keywords("savesBackups", "sicherungen backups teilen share spielstaende");
+        keywords("savesSaveAs", "spielstaende saves speichern unter exportieren export datei drive");
+        keywords("savesFromDownload", "spielstaende saves download uebernehmen holen import");
         keywords("gameFolder", "ordner folder spielordner pfad");
         keywords("install", "installieren install download");
         keywords("shortcut", "verknuepfung shortcut symbol icon startbildschirm home screen launcher desktop");
@@ -582,7 +585,7 @@ public final class D2HelperEntries {
             {"bigStash", "settings_plugy_big_stash"}, {"bigInventory", "settings_big_inventory"}, {"autosave", "settings_plugy_autosave"}, {"respec", "settings_plugy_respec"},
             {"statsPages", "settings_plugy_stats"}, {"plugyActiveSharedGold", "settings_plugy_ActiveSharedGold"}, {"plugyActiveDisplayItemLevel", "settings_plugy_ActiveDisplayItemLevel"}, {"plugyActiveDisplayBaseStatsValue", "settings_plugy_ActiveDisplayBaseStatsValue"}, {"plugyActiveDoNotCloseNihlathakPortal", "settings_plugy_ActiveDoNotCloseNihlathakPortal"}, {"plugyMoveCainNearHarrogathWaypoint", "settings_plugy_MoveCainNearHarrogathWaypoint"}, {"plugyAlwaysRegenMapInSP", "settings_plugy_AlwaysRegenMapInSP"}, {"background", "settings_background"}, {"gameFolder", "settings_game_folder"},
             {"install", "settings_install"}, {"shortcut", "settings_shortcut"}, {"savesShare", "settings_saves_share"},
-            {"savesLoad", "settings_saves_load"},
+            {"savesLoad", "settings_saves_load"}, {"savesBackups", "settings_saves_backups"}, {"savesSaveAs", "settings_saves_save_as"}, {"savesFromDownload", "settings_saves_from_download"},
             {"news", "news_title"}, {"updateCheck", "settings_update_check"}, {"telemetry", "settings_telemetry"}, {"licenses", "licenses_title"},
             {"about", "settings_about"}, {"editButtons", "settings_edit_buttons"},
 

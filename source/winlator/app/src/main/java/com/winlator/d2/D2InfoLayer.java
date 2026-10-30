@@ -38,6 +38,18 @@ final class D2InfoLayer {
 
     private D2InfoLayer() {}
 
+
+
+
+
+
+    static final int SMALL_EXTRA = 6;
+
+
+    static String small(String t, java.util.function.ToIntFunction<String> width, int room) {
+        return D2Materials.fit(t, width, room + SMALL_EXTRA);
+    }
+
     static void build(D2Layer l, Art art, int gameWidth, int gameHeight, State st) {
         l.stage(D2Layer.STAGE_BAR);
         int c = Math.round(gameWidth / 2f);
@@ -59,7 +71,7 @@ final class D2InfoLayer {
 
                 if (art.width(D2Layer.FONT8, t) <= room) l.text(cx, cy + DOWN_FONT8, D2Layer.FONT8, colour, D2Layer.CENTRE, t);
                 else l.text(cx, cy + DOWN_FONT6, D2Layer.FONT6, colour, D2Layer.CENTRE,
-                    D2Materials.fit(t, s -> art.width(D2Layer.FONT6, s), room));
+                    small(t, s -> art.width(D2Layer.FONT6, s), room));
             }
         }
         if (st.box && st.boxOpen) {

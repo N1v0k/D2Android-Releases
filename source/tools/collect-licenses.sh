@@ -21,6 +21,8 @@ while IFS='|' read -r dest sha url; do
 done <<LIST
 box64/LICENSE|18731c3637a3dfc5859be67db7d315d438c531396a4ed15a9c88421b520e7883|https://raw.githubusercontent.com/ptitSeb/box64/v0.4.4/LICENSE
 dxvk/LICENSE|a5cb1a6ded7d2d7e92d550ba28edd21be2d1d4044662b399887351023e30ce64|https://raw.githubusercontent.com/doitsujin/dxvk/v2.4.1/LICENSE
+dxvk/LICENSE-1.10.3|240101b852af584ded719e7335a36f9a3aae3ac816774cf3f460c00d2c88c161|https://raw.githubusercontent.com/doitsujin/dxvk/v1.10.3/LICENSE
+vortek/LICENSE|20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331|https://raw.githubusercontent.com/brunodev85/vortek/b1730c5def9b575672e671aee11d79ae7adc63d1/LICENSE
 mesa/license.rst|0d1a0472ecc81830e75c20d59b0ea02841e3db21255e0ebad97ab682c54d6615|https://gitlab.freedesktop.org/mesa/mesa/-/raw/mesa-26.2.0/docs/license.rst
 wine/COPYING.LIB|e237fa56668030e928551ddd60f05df5fe957f75eab874bbd017e085ed722e7c|https://gitlab.winehq.org/wine/wine/-/raw/wine-9.2/COPYING.LIB
 wine/LICENSE|51433d87540ee2f30e3cff986e00e1477880002bf993106a13775ed60d4e0af4|https://gitlab.winehq.org/wine/wine/-/raw/wine-9.2/LICENSE

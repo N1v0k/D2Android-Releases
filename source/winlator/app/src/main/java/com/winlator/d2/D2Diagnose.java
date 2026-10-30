@@ -71,7 +71,8 @@ public final class D2Diagnose {
                     }
 
                     if (shadow != null) for (String name : D2GameLogs.newest(shadow.list())) addGameLog(out, new File(shadow, name), name);
-                    add(out, new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "D2Android/Protokoll.txt"), "Protokoll.txt");
+                    File protocol = D2Store.protocol();
+                    if (protocol != null) add(out, protocol, "Protokoll.txt");
                     out.putNextEntry(new ZipEntry("info.txt"));
                     out.write(info(activity).getBytes("UTF-8"));
                     out.closeEntry();

@@ -110,6 +110,11 @@ public class D2LaunchActivity extends D2Activity {
         spieltest = D2SpieltestPort.requested(getIntent());
 
         if (com.winlator.BuildConfig.D2_INTERNAL) pendingDirect = D2DirectStart.Request.parse(getIntent().getStringExtra(D2DirectStart.EXTRA));
+
+        if (D2SaveMirror.handle(this, getIntent())) {
+            mirrorOnly = true;
+            return;
+        }
         if (D2TouchOverlay.isGameRunning()) {
             toRunningGame(saveAndExit);
             return;
@@ -473,6 +478,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
     private void showNoGame() {
+        if (moveInIfNeeded(false)) return;
         String chosen = GameLocator.chosenPath(this);
         showFolder(null, null);
         if (chosen == null) {
@@ -493,7 +499,7 @@ public class D2LaunchActivity extends D2Activity {
     private boolean stoppedInstall(File dir, GameVersion.Result check) {
         if (dir == null || !D2InstallPlan.unfinishedInstall(dir)) return false;
 
-        if (!D2InstallFlow.inRoot(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), dir)) return false;
+        if (!D2InstallFlow.inRoot(D2Store.base(), dir)) return false;
         boolean saves = D2InstallPlan.hasSaves(dir), passed = D2InstallActivity.checkPassed(this, dir);
         if (!saves && !passed) return true;
         return D2InstallFlow.launcherResumes(true, usable(check != null ? check : GameLocator.check(this, dir)), saves, passed);
@@ -731,6 +737,8 @@ public class D2LaunchActivity extends D2Activity {
 
 
     private void autoStartOrList() {
+
+        if (moveInIfNeeded(pendingDirect != null || spieltest)) return;
         if (pendingDirect != null || spieltest) {
             noStartPage();
             scheduleAutoStart();
@@ -1174,8 +1182,7 @@ public class D2LaunchActivity extends D2Activity {
 
 
     private void purge(File saves, File zip, D2SaveHeader.Info info) throws IOException {
-        File moved = D2CharDelete.purge(zip, new File(android.os.Environment.getExternalStoragePublicDirectory(
-            android.os.Environment.DIRECTORY_DOWNLOADS), D2Saves.BACKUP_FOLDER));
+        File moved = D2CharDelete.purge(zip, D2Store.backups());
         D2Trace.log("character purged: " + zip.getName() + " -> " + moved.getName());
         if (info == null) return;
 
@@ -1249,13 +1256,22 @@ public class D2LaunchActivity extends D2Activity {
     protected void onResume() {
         super.onResume();
         resumed = true;
+        if (mirrorOnly) return;
+
+        if (!busy && GameLocator.pendingImport(this) != null && !D2TouchOverlay.isGameRunning()) moveInIfNeeded(false);
+
+        if (!D2TouchOverlay.isGameRunning()) handler.postDelayed(() -> {
+            if (resumed && !busy && !D2TouchOverlay.isGameRunning()) offerCleanup();
+        }, 1500);
         if (pendingPick != null) {
             Runnable pick = pendingPick;
             pendingPick = null;
             pick.run();
         }
 
-        if (!busy && D2FolderPick.reloadStartPage(startPageFolder, GameLocator.chosenPath(this), startPage != null)) reloadStartPage();
+
+        File played = GameLocator.gameDir(this);
+        if (!busy && D2FolderPick.reloadStartPage(startPageFolder, played != null ? played.getAbsolutePath() : GameLocator.chosenPath(this), startPage != null)) reloadStartPage();
 
         else if (!busy && startPage != null && !modId(D2Mods.active(this)).equals(startPageMod)) reloadStartPage();
         else if (startPage != null) startPage.setRunning(true);
@@ -1274,11 +1290,137 @@ public class D2LaunchActivity extends D2Activity {
         super.onPause();
     }
 
+
+
+
+
+
+
+    private boolean moveInIfNeeded(boolean thenStart) {
+        String pending = GameLocator.pendingImport(this);
+        final boolean first = !D2Store.ready();
+
+        if (!first && pending != null && D2FolderPick.normal(pending).equals(D2FolderPick.normal(D2Umzug.origin(D2Store.base())))) {
+            GameLocator.importDone(this);
+            pending = null;
+        }
+        if (!first && pending == null) return false;
+        final File source = pending != null ? new File(pending) : GameLocator.sourceDir(this);
+
+
+        if (source == null && !(first && (D2Umzug.heldInstallation(D2Store.base())
+            || D2Umzug.ready(D2Store.game())))) return false;
+        if (moving) return true;
+        moving = true;
+        busy = true;
+        playButton.setEnabled(false);
+        noStartPage();
+        new Thread(() -> {
+            String failed = null;
+            try {
+                D2Umzug.Progress progress = (what, done, total) -> status(getString(what.endsWith(D2Umzug.CHECKING)
+                    ? R.string.move_checking : R.string.move_progress, done >> 20, total >> 20));
+                if (!first) {
+                    D2Umzug.importGame(source, D2Store.base(), progress);
+                    GameLocator.importDone(this);
+                    D2Trace.log("folder copied into the app: " + source);
+                }
+                else moveIn(source, progress);
+            }
+            catch (D2Umzug.NoSpace e) {
+                failed = getString(R.string.move_no_space, android.text.format.Formatter.formatShortFileSize(this, e.needed),
+                    android.text.format.Formatter.formatShortFileSize(this, e.free));
+            }
+            catch (IOException | RuntimeException e) {
+                failed = getString(R.string.move_failed, String.valueOf(e.getMessage()));
+            }
+            if (failed != null) D2Trace.log("move into the app: " + failed);
+            final String message = failed;
+            handler.post(() -> {
+                moving = false;
+                busy = false;
+                playButton.setEnabled(true);
+                if (message != null) {
+                    startProblemOnAppPage();
+                    status(message);
+                    return;
+                }
+                status("");
+                reloadStartPage();
+
+                if (first) Toast.makeText(getApplicationContext(), R.string.move_done_hint, Toast.LENGTH_LONG).show();
+                if (thenStart) prepareAndLaunch();
+                else offerCleanup();
+            });
+        }, "d2-umzug").start();
+        return true;
+    }
+
+
+    private void moveIn(File source, D2Umzug.Progress progress) throws IOException {
+        D2Umzug.migrate(source, D2Mods.legacyRoot(), D2Store.base(), progress);
+        GameLocator.importDone(this);
+
+        if (source == null) return;
+        java.util.Map<String, String> folders = new java.util.LinkedHashMap<>();
+        folders.put(D2ResumeArea.key(source), D2ResumeArea.key(D2Store.game()));
+        File[] mods = D2Store.mods().listFiles();
+        if (mods != null) for (File m : mods) if (m.isDirectory())
+            folders.put(D2ResumeArea.key(new File(new File(D2Mods.legacyRoot(), m.getName()), D2Mods.SAVES)),
+                D2ResumeArea.key(new File(m, D2Mods.SAVES)));
+        D2ResumeArea.moveKeys(this, folders);
+        java.util.Map<String, String> paths = new java.util.LinkedHashMap<>();
+        paths.put(source.getAbsolutePath(), D2Store.game().getAbsolutePath());
+        GameLocator.moveAccepted(this, paths);
+
+        if (source.getAbsolutePath().startsWith(D2Runtime.downloadsDir().getAbsolutePath() + File.separator))
+            getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).edit().putString(KEY_CLEANUP, source.getAbsolutePath()).apply();
+        D2Trace.log("move into the app: done");
+    }
+
+
+    private static final String KEY_CLEANUP = "moveCleanup";
+
+
+    private void offerCleanup() {
+        String path = getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).getString(KEY_CLEANUP, null);
+        if (path == null || busy || isFinishing()) return;
+        File old = new File(path);
+        getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).edit().remove(KEY_CLEANUP).apply();
+        long bytes;
+        try {
+            bytes = D2Umzug.gameFilesSize(old);
+        }
+        catch (IOException e) {
+            return;
+        }
+        if (bytes == 0) return;
+        styledDialog(getString(R.string.move_cleanup_title), getString(R.string.move_cleanup_message, old.getPath(),
+            android.text.format.Formatter.formatShortFileSize(this, bytes)), getString(R.string.move_cleanup_delete), () ->
+            new Thread(() -> {
+                try {
+                    long freed = D2Umzug.deleteGameFiles(old);
+                    D2Trace.log("move into the app: old game files deleted, " + (freed >> 20) + " MB");
+                    status(getString(R.string.move_cleanup_done, android.text.format.Formatter.formatShortFileSize(this, freed)));
+                }
+                catch (IOException e) {
+                    status(getString(R.string.move_failed, String.valueOf(e.getMessage())));
+                }
+            }, "d2-umzug-aufraeumen").start());
+    }
+
+
+    private boolean mirrorOnly;
+
+
+    private static volatile boolean moving;
+
     private void prepareAndLaunch() {
 
         if (busy || startCancelled || isFinishing() || isDestroyed()) return;
         if (askNotifications()) return;
         if (!deviceCheckPassed()) return;
+        if (moveInIfNeeded(true)) return;
         File found = GameLocator.gameDir(this);
         if (found == null) {
             startProblemOnAppPage();
@@ -1357,6 +1499,8 @@ public class D2LaunchActivity extends D2Activity {
                 return;
             }
             try {
+
+                if (!D2Runtime.isInstalled(this) || !D2Runtime.isPrefixReady(this)) D2Telemetry.phase(this, D2TelemetryEvents.PHASE_INSTALL);
                 if (!D2Runtime.isInstalled(this)) D2Runtime.install(this, this::status);
                 if (!D2Runtime.isPrefixReady(this)) D2Runtime.setupPrefix(this, this::status);
                 status(getString(R.string.launch_starting));
@@ -1438,6 +1582,11 @@ public class D2LaunchActivity extends D2Activity {
                 intent.putExtra(EXTRA_SAVE_DIR, saveDir.getPath());
                 intent.putExtra(EXTRA_MOD_GRID, playedMod == null || playedMod.originalGrid());
                 if (directStart != null) intent.putExtra(D2DirectStart.EXTRA, directStart.toExtra());
+
+                if (D2Settings.vortek(this)) {
+                    D2Trace.log("Vortek and DXVK 1.10.3");
+                    intent.putExtra(D2GameActivity.EXTRA_VORTEK, true);
+                }
 
 
                 intent.putExtra(D2GameActivity.EXTRA_LOG, com.winlator.BuildConfig.D2_INTERNAL && getIntent().getBooleanExtra(D2GameActivity.EXTRA_LOG, false));
@@ -1545,7 +1694,7 @@ public class D2LaunchActivity extends D2Activity {
                 case SHARED_STASH_RENAMED: line = getString(R.string.repair_shared_stash); break;
                 case CHARACTER_RESTORED: line = getString(R.string.repair_character, r.name, backupTime(r.backup)); break;
                 case CHARACTER_HARDCORE: line = getString(R.string.repair_character_hardcore, r.name, r.folder); break;
-                default: line = getString(R.string.repair_character_broken, r.name, D2Saves.BACKUP_FOLDER); break;
+                default: line = getString(R.string.repair_character_broken, r.name); break;
             }
             D2ExitLog.note("save repair: " + line);
             text.append(text.length() > 0 ? "\n" : "").append(line);
@@ -1605,7 +1754,13 @@ public class D2LaunchActivity extends D2Activity {
                 if (!mod.saves().isDirectory()) mod.saves().mkdirs();
                 user.setStringValue(REG_KEY, "Save Path", D2Runtime.dosPath(this, mod.saves()) + "\\");
             }
-            else user.setStringValue(REG_KEY, "Save Path", dosGameDir + (dosGameDir.endsWith("\\") ? "" : "\\") + "save\\");
+            else {
+
+                File saves = D2Saves.saveDir(gameDir);
+                if (!saves.isDirectory())
+                    saves.mkdirs();
+                user.setStringValue(REG_KEY, "Save Path", D2Runtime.dosPath(this, saves) + "\\");
+            }
             if (user.getDwordValue(REG_KEY + "\\VideoConfig", "Render") == null) {
                 user.setDwordValue(REG_KEY + "\\VideoConfig", "Render", 0);
             }
@@ -1712,7 +1867,8 @@ public class D2LaunchActivity extends D2Activity {
             folderView.setText("");
             return;
         }
-        String line = getString(R.string.folder_line, shortPath(path));
+
+        String line = getString(R.string.folder_line, dir != null && D2Store.isGame(dir) ? getString(R.string.game_in_app) : shortPath(path));
         if (check != null && check.ok()) line += " · " + getString(R.string.folder_ok);
         folderView.setText(line);
     }
@@ -1749,6 +1905,7 @@ public class D2LaunchActivity extends D2Activity {
         showFolder(check.dir, check);
         status(GameLocator.message(this, check));
         D2SettingsLook.load(this, this::lookCame);
+        moveInIfNeeded(false);
     }
 
     private static String shortPath(String path) {
@@ -1773,8 +1930,11 @@ public class D2LaunchActivity extends D2Activity {
             if (prefs.getInt(KEY_DEVICE_OK, -1) == version) deviceChecked = true;
             else {
                 if (!probe.ruledOutEarly()) probe.readGpu();
+                if (!probe.ruledOutEarly() && !probe.kgsl) probe.readVulkan();
                 D2DeviceCheck.Result result = probe.classify();
                 D2Trace.log(probe.describe());
+
+                D2Settings.setVortek(this, D2DeviceCheck.vortek(result));
                 String gpu = probe.gpuName() != null ? probe.gpuName() : getString(R.string.check_gpu_unknown);
                 if (result.level == D2DeviceCheck.Level.SUPPORTED) {
                     prefs.edit().putInt(KEY_DEVICE_OK, version).apply();
@@ -1783,8 +1943,10 @@ public class D2LaunchActivity extends D2Activity {
                 else if (result.level == D2DeviceCheck.Level.UNTESTED) {
                     if (prefs.getInt(KEY_DEVICE_UNTESTED_OK, -1) == version) deviceChecked = true;
                     else {
-                        askStartAnyway(getString(R.string.check_untested_title), probe.gpuName() != null ? getString(R.string.check_untested, gpu)
-                            : getString(R.string.check_untested_unknown), () -> {
+
+                        String untested = D2DeviceCheck.vortek(result) ? getString(R.string.check_vortek, gpu)
+                            : probe.gpuName() != null ? getString(R.string.check_untested, gpu) : getString(R.string.check_untested_unknown);
+                        askStartAnyway(getString(R.string.check_untested_title), untested, () -> {
                             prefs.edit().putInt(KEY_DEVICE_UNTESTED_OK, version).apply();
                             deviceChecked = true;
                         });

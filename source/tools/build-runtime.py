@@ -22,6 +22,12 @@
 
 
 
+
+
+
+
+
+
 import argparse
 import hashlib
 import io
@@ -235,6 +241,61 @@ def build_alsa_plugin(args, root):
     print("alsa plugin android_aserver_d2: %d bytes" % os.path.getsize(out))
 
 
+
+
+VORTEK_ICD = """{
+    "ICD": {
+        "api_version": "1.1.128",
+        "library_path": "/data/data/com.winlator/files/rootfs/lib/libvulkan_vortek.so"
+    },
+    "file_format_version": "1.0.0"
+}
+"""
+VORTEK_SOURCES = ("main.c", "vulkan_calls.c", "vk_object.c", "vk_object_pool.c", "arrays.c",
+                  "descriptor_update_template.c", "ring_buffer.c")
+
+
+def unpack_tgz(path, dest):
+
+    shutil.rmtree(dest, ignore_errors=True)
+    os.makedirs(dest)
+    with tarfile.open(path, "r:gz") as tar:
+        for m in tar.getmembers():
+            if m.issym() or m.islnk() or os.path.isabs(m.name) or ".." in m.name.split("/"):
+                continue
+            tar.extract(m, dest)
+    tops = os.listdir(dest)
+    if len(tops) != 1:
+        raise ValueError("expected one folder in " + path)
+    return os.path.join(dest, tops[0])
+
+
+def build_vortek_client(args, root):
+
+
+    work = os.path.join(args.work, "vortek")
+    src = unpack_tgz(args.vortek_src, os.path.join(work, "src"))
+    headers = unpack_tgz(args.vulkan_headers, os.path.join(work, "headers"))
+    for patch in args.vortek_patch or []:
+        subprocess.check_call(["patch", "-p1", "-s", "-d", src, "-i", os.path.abspath(patch)])
+        print("vortek patch: %s" % os.path.basename(patch))
+    x11 = os.path.join(work, "x11-include")
+    shutil.rmtree(x11, ignore_errors=True)
+    shutil.copytree(os.path.join(args.x11_include, "X11"), os.path.join(x11, "X11"))
+    out = os.path.join(root, "usr/lib/libvulkan_vortek.so")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    subprocess.check_call([args.cc, "-std=gnu11", "-O2", "-Wall", "-Wno-discarded-qualifiers", "-fPIC",
+                           "-DVK_USE_PLATFORM_XLIB_KHR", "-I", os.path.join(src, "include"),
+                           "-isystem", os.path.join(headers, "include"), "-isystem", x11, "-shared", "-o", out]
+                          + [os.path.join(src, "src", f) for f in VORTEK_SOURCES]
+                          + ["-Wl,--no-undefined", "-Wl,-soname,libvulkan_vortek.so", "-Wl,--build-id=none"])
+    os.makedirs(os.path.join(root, "opt/d2/vortek"), exist_ok=True)
+    with open(os.path.join(root, "opt/d2/vortek/vortek_icd.aarch64.json"), "w") as f:
+        f.write(VORTEK_ICD)
+    print("vortek client: %d bytes" % os.path.getsize(out))
+    shutil.rmtree(work, ignore_errors=True)
+
+
 def main():
     global PACKAGE_NEW
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -251,6 +312,10 @@ def main():
     ap.add_argument("--alsa-plugin-src", help="tools/alsa-plugin/module_pcm_android_aserver_d2.c")
     ap.add_argument("--cc", default="aarch64-linux-gnu-gcc", help="C compiler for aarch64 Linux (glibc)")
     ap.add_argument("--alsa-include", default="/usr/include", help="dir containing alsa/asoundlib.h")
+    ap.add_argument("--vortek-src", help="brunodev85/vortek source archive (.tar.gz)")
+    ap.add_argument("--vulkan-headers", help="KhronosGroup/Vulkan-Headers source archive (.tar.gz)")
+    ap.add_argument("--vortek-patch", action="append", help="a patch for the Vortek source (-p1), repeatable")
+    ap.add_argument("--x11-include", default="/usr/include", help="dir containing X11/Xlib.h")
     args = ap.parse_args()
     PACKAGE_NEW = args.package.encode()
     if len(PACKAGE_NEW) != len(PACKAGE_OLD):
@@ -263,6 +328,7 @@ def main():
         "box64": os.path.join(a, "box64", "box64-0.4.4.tzst"),
         "turnip": os.path.join(a, "graphics_driver", "turnip-26.2.0.tzst"),
         "dxvk": os.path.join(a, "dxwrapper", "dxvk-2.4.1.tzst"),
+        "dxvk_mali": os.path.join(a, "dxwrapper", "dxvk-1.10.3.tzst"),
         "wine": args.wine,
     }
     for key, path in inputs.items():
@@ -291,6 +357,12 @@ def main():
     subprocess.check_call([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpatch.py"),
                            "dxvk-d3d11", os.path.join(root, "opt/d2/syswow64/d3d11.dll")])
 
+
+    if args.vortek_src:
+        build_vortek_client(args, root)
+    print("dxvk 1.10.3: %d" % extract(inputs["dxvk_mali"], root,
+                                      lambda p: "opt/d2/dxvk-1.10.3/" + p if p in dxvk else None))
+
     def wine(p):
         parts = p.split("/", 1)
         if len(parts) < 2 or not parts[0].startswith("wine-"):
@@ -307,6 +379,9 @@ def main():
     os.makedirs(meta, exist_ok=True)
     with open(os.path.join(meta, "runtime-version"), "w") as f:
         f.write(args.version + "\n")
+    if args.vortek_src:
+        inputs["vortek_src"] = args.vortek_src
+        inputs["vulkan_headers"] = args.vulkan_headers
     with open(os.path.join(meta, "sources.json"), "w") as f:
         json.dump({k: {"file": os.path.basename(v), "sha256": sha256(v)} for k, v in inputs.items()}, f, indent=2)
 

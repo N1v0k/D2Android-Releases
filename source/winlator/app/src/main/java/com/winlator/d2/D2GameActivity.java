@@ -49,6 +49,8 @@ public class D2GameActivity extends D2Activity {
     public static final String EXTRA_DIR = "d2_dir";
     public static final String EXTRA_PROGRAM = "d2_program";
     public static final String EXTRA_ARGS = "d2_args";
+
+    public static final String EXTRA_VORTEK = "d2_vortek";
     public static final String EXTRA_LOG = "d2_log";
     public static final String EXTRA_WINEDEBUG = "d2_winedebug";
 
@@ -197,6 +199,7 @@ public class D2GameActivity extends D2Activity {
 
 
         screen = new D2GuestScreen(this, root, true, true);
+        screen.setVortek(getIntent().getBooleanExtra(EXTRA_VORTEK, false));
         xServer = screen.getXServer();
         winHandler = screen.getWinHandler();
         loadingView = screen.getLoadingView();
@@ -268,6 +271,20 @@ public class D2GameActivity extends D2Activity {
 
         if (displayRefresh > 0) D2Trace.log("display mode " + Math.round(displayRefresh) + " Hz for the setting of "
             + frameLimit + " fps");
+
+
+
+        boolean vortek = getIntent().getBooleanExtra(EXTRA_VORTEK, false);
+        if (vortek) {
+            D2Runtime.useVortek(this, env);
+            D2Trace.log("Vortek: " + D2GpuPath.tier(D2Runtime.totalMem(this)));
+        }
+        try {
+            D2Runtime.selectDxvk(this, vortek);
+        }
+        catch (IOException e) {
+            D2Trace.log("DXVK for " + (vortek ? "Vortek" : "Turnip") + " not copied: " + e.getMessage());
+        }
         String wineDebug = getIntent().getStringExtra(EXTRA_WINEDEBUG);
         if (wineDebug != null && !wineDebug.isEmpty()) env.put("WINEDEBUG", wineDebug);
 
@@ -289,9 +306,15 @@ public class D2GameActivity extends D2Activity {
 
 
         boolean counted = getIntent().getBooleanExtra(D2LaunchActivity.EXTRA_D2_LAUNCH, false);
+
+        final java.io.File outputFile = output != null ? output : D2Runtime.logFile(this, "guest.log");
         long startedAt = SystemClock.elapsedRealtime();
-        if (counted) D2Telemetry.gameStarted(this);
+
+        if (counted) D2Telemetry.gameStarted(this, GameShadow.LOADER_EXE.equals(getIntent().getStringExtra(EXTRA_PROGRAM)));
+
+        final D2Telemetry.GameWatch gameWatch = counted ? D2Telemetry.watchGame(this, () -> overlay != null && overlay.uiReady()) : null;
         screen.start(command, env, null, (status) -> {
+            if (gameWatch != null) gameWatch.end();
 
             D2ExitLog.gameEnded(status, backgroundMs(), D2GuestComponent.endReason(), D2GuestComponent.endSinceResumeMs());
             if (counted) D2Telemetry.gameEnded(this, status, D2GuestComponent.endReason() != null, SystemClock.elapsedRealtime() - startedAt);
@@ -300,8 +323,59 @@ public class D2GameActivity extends D2Activity {
 
             D2Trace.log("game ended with status " + status + " (Wine desktop)");
             D2Diagnose.keepTraceOfEndedRun(this);
-            runOnUiThread(this::exit);
+
+            long ranMs = SystemClock.elapsedRealtime() - startedAt;
+            if (counted && D2ExitText.earlyEnd(ranMs, D2GuestComponent.endReason(), backgroundMs(), exiting,
+                    D2ExitText.crashed(guestOutputTail(outputFile)), screen.windowShown())) {
+                D2Trace.log("game ended " + ranMs + " ms after its start: early end dialog");
+                D2ExitLog.note("Spiel endete " + ranMs / 1000 + " s nach dem Start (Start fehlgeschlagen)");
+                runOnUiThread(this::showEarlyEnd);
+            }
+            else runOnUiThread(this::exit);
         }, output);
+    }
+
+
+    private String guestOutputTail(java.io.File file) {
+        synchronized (this) {
+            try {
+                if (guestLog != null) guestLog.flush();
+            }
+            catch (IOException ignored) {}
+        }
+        if (file == null || !file.isFile()) return "";
+        try (java.io.RandomAccessFile in = new java.io.RandomAccessFile(file, "r")) {
+            long length = in.length(), from = Math.max(0, length - 65536);
+            byte[] bytes = new byte[(int) (length - from)];
+            in.seek(from);
+            in.readFully(bytes);
+            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            return "";
+        }
+    }
+
+
+    private void showEarlyEnd() {
+        if (exiting || isFinishing()) {
+            exit();
+            return;
+        }
+        loadingView.setVisibility(View.GONE);
+        TextView message = new TextView(this);
+        int pad = Math.round(16 * getResources().getDisplayMetrics().density);
+        message.setPadding(pad, pad, pad, 0);
+        message.setText(D2Text.get(this, R.string.game_early_end));
+        message.setTextSize(16);
+        D2Style.text(message);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(message)
+            .setPositiveButton(D2Text.get(this, R.string.game_early_end_ok), (d, w) -> exit())
+            .setCancelable(false)
+            .create();
+        dialog.show();
+        styleDialog(dialog, 0.5f);
     }
 
 
@@ -1324,13 +1398,17 @@ public class D2GameActivity extends D2Activity {
         catch (IOException ignored) {}
     }
 
-    private synchronized void closeGuestLog() {
-        if (guestLog == null) return;
+    private void closeGuestLog() {
+
+
         ProcessHelper.removeDebugCallback(guestLogCallback);
-        try {
-            guestLog.close();
+        synchronized (this) {
+            if (guestLog == null) return;
+            try {
+                guestLog.close();
+            }
+            catch (IOException ignored) {}
+            guestLog = null;
         }
-        catch (IOException ignored) {}
-        guestLog = null;
     }
 }

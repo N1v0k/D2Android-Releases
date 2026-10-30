@@ -1,0 +1,96 @@
+Vortek client (brunodev85/vortek b1730c5): leaks and a missing pointer, applied by tools/build-runtime.py.
+
+- vkMapMemory on memory that is already mapped returned VK_SUCCESS without setting *ppData.
+- vkFreeMemory freed the mapping record but left the mapping itself (munmap; a placed mapping belongs to the caller).
+- vkFreeCommandBuffers never freed the command buffers' objects; VkObjectPool freed its objects with free() instead
+  of VkObject_free().
+
+diff --color -ru a/include/vortek.h b/include/vortek.h
+--- a/include/vortek.h	2026-10-29 16:10:55.832645863 +0100
++++ b/include/vortek.h	2026-10-29 16:11:06.447633533 +0100
+@@ -123,6 +123,7 @@
+     void* data;
+     int allocationSize;
+     int size;
++    bool placed;
+ } MappedMemory;
+ 
+ typedef struct CommandBatch {
+@@ -264,4 +265,4 @@
+     return requestCode;
+ }
+ 
+-#endif
+\ No newline at end of file
++#endif
+\ No newline at end of file
+diff --color -ru a/src/vk_object_pool.c b/src/vk_object_pool.c
+--- a/src/vk_object_pool.c	2026-10-29 16:10:46.366642625 +0100
++++ b/src/vk_object_pool.c	2026-10-29 16:11:06.447509345 +0100
+@@ -3,7 +3,7 @@
+ static void freeArrayListElements(ArrayList* arrayList) {
+     for (int i = 0; i < arrayList->size; i++) {
+         VkObject* object = arrayList->elements[i];
+-        if (!VKOBJECT_IS_NULL(object)) free(object);
++        if (!VKOBJECT_IS_NULL(object)) VkObject_free(object);
+     }
+     free(arrayList->elements);
+ }
+@@ -56,4 +56,4 @@
+     if (!objectPool->canFreeObjects) return;
+     ArrayList_remove(&objectPool->usedObjects, usedObject);
+     ArrayList_add(&objectPool->availableObjects, usedObject);
+-}
+\ No newline at end of file
++}
+\ No newline at end of file
+diff --color -ru a/src/vulkan_calls.c b/src/vulkan_calls.c
+--- a/src/vulkan_calls.c	2026-10-29 16:10:46.366543123 +0100
++++ b/src/vulkan_calls.c	2026-10-29 16:10:46.384434526 +0100
+@@ -343,7 +343,12 @@
+     VkObject* deviceObject = VkObject_fromHandle(device);
+     VkObject* memoryObject = VkObject_fromHandle(memory);
+     
+-    if (memoryObject->tag) MEMFREE(memoryObject->tag);
++    if (memoryObject->tag) {
++        MappedMemory* mappedMemory = memoryObject->tag;
++        // freeing mapped memory unmaps it implicitly (Vulkan spec); a placed mapping belongs to the caller
++        if (mappedMemory->data && !mappedMemory->placed) munmap(mappedMemory->data, mappedMemory->size);
++        MEMFREE(memoryObject->tag);
++    }
+ 
+     VT_SERIALIZE_CMD(vkFreeMemory, (VkDevice)&deviceObject->id, (VkDeviceMemory)&memoryObject->id, NULL);
+     vt_send(serverRing, REQUEST_CODE_VK_FREE_MEMORY, outputBuffer, bufferSize);
+@@ -358,6 +363,7 @@
+ 
+     MappedMemory* mappedMemory = memoryObject->tag;
+     if (mappedMemory->data) {
++        *ppData = mappedMemory->data;
+         VT_CALL_UNLOCK();
+         return VK_SUCCESS;
+     }
+@@ -1354,9 +1360,16 @@
+         MEMFREE(batch->buffer);
+         MEMFREE(commandBufferObject->tag);
+     }
++
++    // the command buffer objects are freed after serializing, the ids are still needed there
+     
+     VT_SERIALIZE_CMD(vkFreeCommandBuffers, (VkDevice)&deviceObject->id, (VkCommandPool)&commandPoolObject->id, commandBufferCount, pCommandBuffers);
+     vt_send(serverRing, REQUEST_CODE_VK_FREE_COMMAND_BUFFERS, outputBuffer, bufferSize);  
++
++    for (int i = 0; i < commandBufferCount; i++) {
++        VkObject* commandBufferObject = VkObject_fromHandle(pCommandBuffers[i]);
++        VkObject_free(commandBufferObject);
++    }
+     
+     VT_CALL_UNLOCK();
+ }
+@@ -3132,6 +3145,7 @@
+         if (data != MAP_FAILED) {
+             CLOSEFD(fd);
+             mappedMemory->data = data;
++            mappedMemory->placed = placedAddr != NULL;
+ 
+             if (!placedAddr) *ppData = data;
+         }

@@ -1,4 +1,4 @@
-package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-29).
+package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
 
 import android.content.Context;
 import android.media.AudioFormat;
@@ -6,7 +6,6 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 
 import com.winlator.core.KeyValueSet;
-import com.winlator.math.Mathf;
 import com.winlator.sysvshm.SysVSharedMemory;
 
 import java.nio.ByteBuffer;
@@ -35,7 +34,7 @@ public class ALSAClient {
     private ByteBuffer sharedBuffer;
     private ByteBuffer auxBuffer;
     protected final Options options;
-    private static short framesPerBuffer = 256;
+    private static int framesPerBuffer = ALSABufferSize.DEFAULT_BURST;
     private final ALSAMute.Track muteTrack = new ALSAMute.Track();
 
     public static class Options {
@@ -120,6 +119,7 @@ public class ALSAClient {
             .setAudioFormat(format)
             .setBufferSizeInBytes(getBufferSizeInBytes())
             .build();
+        com.winlator.d2.D2Telemetry.audioTrack(audioTrack.getState() == AudioTrack.STATE_INITIALIZED);
 
         bufferCapacity = audioTrack.getBufferCapacityInFrames();
 
@@ -258,23 +258,28 @@ public class ALSAClient {
 
     public static int latencyMillisToBufferSize(int latencyMillis, int channels, DataType dataType, int sampleRate) {
         byte frameBytes = (byte)(channels * dataType.byteCount);
-        int bufferSize = (int)Mathf.roundTo((latencyMillis * sampleRate) / 1000.0f, framesPerBuffer, false);
+
+
+        int bufferSize = ALSABufferSize.frames(latencyMillis, sampleRate, framesPerBuffer, frameBytes);
         return bufferSize * frameBytes;
     }
 
     private boolean isValidBufferSize() {
-        return ((bufferSize % frameBytes) == 0) && bufferSize > 0;
+
+
+
+        return frameBytes > 0 && bufferSize > 0;
     }
 
     public static void assignFramesPerBuffer(Context context) {
         try {
             AudioManager am = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-            String framesPerBufferStr = am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-            framesPerBuffer = Short.parseShort(framesPerBufferStr);
-            if (framesPerBuffer == 0) framesPerBuffer = 256;
+
+
+            framesPerBuffer = ALSABufferSize.burstFrames(am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER));
         }
         catch (Exception e) {
-            framesPerBuffer = 256;
+            framesPerBuffer = ALSABufferSize.DEFAULT_BURST;
         }
     }
 }

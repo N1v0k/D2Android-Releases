@@ -77,11 +77,20 @@ final class D2StartLayout {
     final float listLeft, listX;
 
     D2StartLayout(int width, int height) {
+        this(width, height, 0, 0);
+    }
+
+
+
+
+
+
+    D2StartLayout(int width, int height, float density, int smallestWidthDp) {
         this.width = width;
         this.height = height;
         twoColumns = width >= TWO_COLUMNS_FROM * height;
-        u = twoColumns ? Math.min(height / TWO_HEIGHT_UNITS, width / TWO_WIDTH_UNITS)
-            : Math.min(width / 900f, height / MIN_HEIGHT_UNITS);
+        u = D2UiScale.launcherUnit(twoColumns ? Math.min(height / TWO_HEIGHT_UNITS, width / TWO_WIDTH_UNITS)
+            : Math.min(width / 900f, height / MIN_HEIGHT_UNITS), density, smallestWidthDp);
         scale = 1.95f * u;
         backdropHeight = (int) Math.ceil(height / scale) + 1;
         modTop = 450 * u;

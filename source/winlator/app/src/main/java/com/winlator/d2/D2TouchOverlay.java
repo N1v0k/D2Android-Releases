@@ -123,6 +123,8 @@ public class D2TouchOverlay extends View {
         float cx, cy, r, hw;
 
         float shiftX, shiftY;
+
+        boolean saved;
         boolean pressed;
 
         int icon = ICON_TEXT;
@@ -179,7 +181,12 @@ public class D2TouchOverlay extends View {
 
     private final D2PointHighlight pointHighlight;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final float dp;
+
+    private final float density;
+
+    private float dp;
+
+    private float uiFactor = 1;
     private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -607,7 +614,11 @@ public class D2TouchOverlay extends View {
         this.openMenu = openMenu;
         this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         pointHighlight = new D2PointHighlight(context, prefs, this::showNote);
-        this.dp = context.getResources().getDisplayMetrics().density;
+        android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        this.density = metrics.density;
+
+        this.dp = density * D2UiScale.overlay(metrics.widthPixels, metrics.heightPixels, density,
+            context.getResources().getConfiguration().smallestScreenWidthDp);
         scale = prefs.getFloat("scale", 1);
         debug = com.winlator.BuildConfig.D2_INTERNAL && prefs.getBoolean("debug", false);
         reloadSettings();
@@ -920,7 +931,19 @@ public class D2TouchOverlay extends View {
         boolean fullscreen = xServer.getRenderer() != null && xServer.getRenderer().isFullscreen();
         offsetX = fullscreen ? 0 : transformation.viewOffsetX;
         offsetY = fullscreen ? 0 : transformation.viewOffsetY;
+        applyUiScale(w, h);
         layoutButtons(w, h);
+    }
+
+
+
+
+
+    private void applyUiScale(int w, int h) {
+        uiFactor = D2UiScale.overlay(w, h, density, getResources().getConfiguration().smallestScreenWidthDp);
+        dp = density * uiFactor;
+        strokePaint.setStrokeWidth(2 * dp);
+        if (hintView != null) hintView.setDp(dp);
     }
 
     private void layoutButtons(int w, int h) {
@@ -1056,6 +1079,7 @@ public class D2TouchOverlay extends View {
             addRect(new Button("edit" + i, editLabels[i], editKinds[i], 0, GROUP_EDIT, true), ex + hwid, 8 * dp + half, hwid, half);
             ex += 2 * hwid + gap;
         }
+        keepClearOfHud(w, h);
         avoidCutout(w, h);
     }
 
@@ -1142,7 +1166,55 @@ public class D2TouchOverlay extends View {
         button.cy = cy;
         button.r = radiusDp * dp * scale;
         button.hw = button.r;
+        button.saved = saved != null;
         buttons.add(button);
+    }
+
+
+    private int clearedGameW, clearedGameH;
+
+
+
+
+
+
+
+
+    private void keepClearOfHud(int w, int h) {
+        if (uiFactor <= 1f) return;
+        D2ModState s = mod;
+        int gw, gh;
+        if (s != null && s.gameWidth > 0 && s.gameHeight > 0) {
+            gw = s.gameWidth;
+            gh = s.gameHeight;
+        } else {
+            int[] game = D2MenuScale.expectedGame(xServer.screenInfo.width, xServer.screenInfo.height, D2Settings.gameLines(getContext()));
+            if (game == null) return;
+            gw = game[0];
+            gh = game[1];
+        }
+        clearedGameW = s != null && s.gameWidth > 0 ? gw : 0;
+        clearedGameH = s != null && s.gameHeight > 0 ? gh : 0;
+        int dw = xServer.screenInfo.width, dh = xServer.screenInfo.height;
+        if (dw <= 0 || dh <= 0) return;
+        float kd = Math.min(dw / (float) gw, dh / (float) gh), k = kd * aspect;
+        float[][] rects = D2UiScale.hudRects(hudLayout == D2Settings.HUD_COMPACT, gw, gh, k,
+            (dw - gw * kd) / 2 * aspect + offsetX, (dh - gh * kd) / 2 * aspect + offsetY);
+        float margin = 4 * dp, tab = 12 * k - 6 * dp;
+        idleY -= D2UiScale.liftClear(idleX, idleY, joystickRadius, 0, rects, margin);
+        float lift = 0;
+        for (Button b : buttons) if (inDefaultGroup(b, w)) lift = Math.max(lift, D2UiScale.liftClear(b.cx, b.cy, b.r, tab, rects, margin));
+        for (Button b : buttons) {
+            if (b.group != GROUP_GAME) continue;
+            b.cy -= inDefaultGroup(b, w) ? lift : D2UiScale.liftClear(b.cx, b.cy, b.r, tab, rects, margin);
+            b.cx = Math.max(b.r, Math.min(w - b.r, b.cx));
+            b.cy = Math.max(b.r, Math.min(h - b.r, b.cy));
+        }
+    }
+
+
+    private boolean inDefaultGroup(Button b, int w) {
+        return b.group == GROUP_GAME && !b.saved && b != interactButton && b.cx > w / 2f;
     }
 
     private void addRect(Button button, float cx, float cy, float hw, float hh) {
@@ -1633,12 +1705,21 @@ public class D2TouchOverlay extends View {
 
 
     private void drawMenuTab(Canvas canvas, String text, float cx, float top, int k) {
-        float w = hud.smallTextWidth(text) * k + 8 * dp, h = 12 * k;
+        drawMenuTab(canvas, text, cx, top, k, 8 * dp);
+    }
+
+
+
+
+
+    private void drawMenuTab(Canvas canvas, String text, float cx, float top, float k, float padding) {
+        float w = hud.smallTextWidth(text) * k + padding, h = 12 * k;
         float left = Math.round(cx - w / 2), y = Math.round(top);
         rect.set(left, y, left + Math.round(w), y + h);
         fillPaint.setColor(Color.argb(220, 10, 8, 6));
         canvas.drawRoundRect(rect, 3 * dp, 3 * dp, fillPaint);
-        hud.drawSmallTextSharp(canvas, text, rect.centerX(), y + h / 2, k);
+        if (k == (int) k) hud.drawSmallTextSharp(canvas, text, rect.centerX(), y + h / 2, (int) k);
+        else hud.drawSmallText(canvas, text, rect.centerX(), y + h / 2, k);
     }
 
     private void drawTab(Canvas canvas, String text, float cx, float top) {
@@ -1647,6 +1728,7 @@ public class D2TouchOverlay extends View {
         if (graphics == null) {
             textPaint.setTextSize(10 * dp);
             float w = textPaint.measureText(text) + 8 * dp;
+            if (uiFactor > 1f) cx = D2UiScale.tabInside(cx, w, getWidth());
             rect.set(cx - w / 2, top, cx + w / 2, top + 13 * dp);
             fillPaint.setColor(Color.argb(220, 10, 8, 6));
             canvas.drawRoundRect(rect, 4 * dp, 4 * dp, fillPaint);
@@ -1654,6 +1736,7 @@ public class D2TouchOverlay extends View {
             return;
         }
         float w = graphics.smallTextWidth(text) * k + 8 * dp, h = 12 * k;
+        if (uiFactor > 1f) cx = D2UiScale.tabInside(cx, w, getWidth());
         rect.set(cx - w / 2, top, cx + w / 2, top + h);
         fillPaint.setColor(Color.argb(220, 10, 8, 6));
         canvas.drawRoundRect(rect, 3 * dp, 3 * dp, fillPaint);
@@ -2680,7 +2763,31 @@ public class D2TouchOverlay extends View {
                 rect.right + size * 0.2f, rect.top + size * 0.8f));
         }
 
-        if (button.caption != null && !button.caption.isEmpty()) drawMenuTab(canvas, button.caption, button.cx, rect.bottom - 2 * k, k);
+
+        if (button.caption != null && !button.caption.isEmpty()) {
+            float kc = menuCaptionScale(graphics, k);
+            drawMenuTab(canvas, button.caption, button.cx, rect.bottom - 2 * k, kc, D2UiScale.captionPadding(kc, dp, uiFactor));
+        }
+    }
+
+
+    private float menuCaptionScale(D2Hud graphics, int k) {
+        if (uiFactor <= 1f) return k;
+        float fit = Float.MAX_VALUE;
+        for (Button b : buttons) {
+            if (b.group != GROUP_MENU || b.caption == null || b.caption.isEmpty() || !isVisible(b)) continue;
+
+
+            float half = Float.MAX_VALUE;
+            for (Button o : buttons) {
+                if (o == b || o.group != GROUP_MENU || !isVisible(o) || Math.abs(o.cy - b.cy) > b.r) continue;
+                float d = Math.abs(o.cx - b.cx);
+                half = Math.min(half, o.caption != null && !o.caption.isEmpty() ? d / 2 : d - o.hw);
+            }
+            float room = half == Float.MAX_VALUE ? 2 * b.hw : 2 * Math.max(b.hw, half);
+            fit = Math.min(fit, D2UiScale.captionFit(graphics.smallTextWidth(b.caption), room));
+        }
+        return D2UiScale.captionScale(k, fit, uiFactor);
     }
 
 
@@ -5358,6 +5465,9 @@ public class D2TouchOverlay extends View {
         D2ModState s = modLink.state();
         boolean had = mod != null;
         mod = s;
+
+        if (uiFactor > 1f && s != null && s.gameWidth > 0 && s.gameHeight > 0 && getWidth() > 0 && !editMode
+            && (s.gameWidth != clearedGameW || s.gameHeight != clearedGameH)) layoutButtons(getWidth(), getHeight());
 
         quitLoses = D2InstallFlow.quitLoses(quitLoses, s != null, s != null && autosave && s.plugyLoaded, modLink.reportsWithoutState());
         lastLoses = quitLoses;

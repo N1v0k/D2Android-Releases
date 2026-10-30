@@ -27,6 +27,7 @@ import com.winlator.xenvironment.XEnvironment;
 import com.winlator.xenvironment.components.ALSAServerComponent;
 import com.winlator.xenvironment.components.NetworkInfoUpdateComponent;
 import com.winlator.xenvironment.components.SysVSharedMemoryComponent;
+import com.winlator.xenvironment.components.VortekRendererComponent;
 import com.winlator.xenvironment.components.XServerComponent;
 import com.winlator.xserver.ScreenInfo;
 import com.winlator.xserver.Window;
@@ -56,6 +57,14 @@ public class D2GuestScreen implements XServerHost {
 
     private D2GuestComponent guest;
 
+    private boolean vortek;
+
+    private volatile boolean windowShown;
+
+    public boolean windowShown() {
+        return windowShown;
+    }
+
 
 
 
@@ -73,6 +82,8 @@ public class D2GuestScreen implements XServerHost {
 
             @Override
             public void onMapWindow(Window window) {
+
+                if (window.isRenderable() && !window.getClassName().isEmpty() && !window.isDesktopWindow()) windowShown = true;
                 if (firstWindow && window.isRenderable() && !window.getClassName().isEmpty()) {
                     firstWindow = false;
                     xServerView.getRenderer().setCursorVisible(true);
@@ -118,6 +129,11 @@ public class D2GuestScreen implements XServerHost {
         return loadingView;
     }
 
+
+    public void setVortek(boolean vortek) {
+        this.vortek = vortek;
+    }
+
     public WinHandler getWinHandler() {
         return winHandler;
     }
@@ -139,6 +155,12 @@ public class D2GuestScreen implements XServerHost {
         environment.addComponent(new XServerComponent(xServer, UnixSocketConfig.create(rootPath, UnixSocketConfig.XSERVER_PATH)));
         environment.addComponent(new NetworkInfoUpdateComponent());
         if (audio) environment.addComponent(new ALSAServerComponent(UnixSocketConfig.create(rootPath, UnixSocketConfig.ALSA_SERVER_PATH), new ALSAClient.Options()));
+        if (vortek) {
+            VortekRendererComponent.Options options = new VortekRendererComponent.Options();
+            options.maxDeviceMemory = (short) D2GpuPath.tier(D2Runtime.totalMem(activity)).vortekMemoryMb;
+            environment.addComponent(new VortekRendererComponent(xServer, UnixSocketConfig.create(rootPath,
+                UnixSocketConfig.VORTEK_SERVER_PATH), options, activity.getCacheDir().getPath()));
+        }
         guest = new D2GuestComponent(rootDir, command, env, onEnded, stdinText, outputFile);
         environment.addComponent(guest);
         environment.startEnvironmentComponents();

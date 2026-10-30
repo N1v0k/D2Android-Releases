@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-29). -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-10-30). -->
 
 
 <resources>
@@ -55,7 +55,7 @@
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathak\'s portal stays open</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain stands by the Harrogath waypoint</string>
     <string name="settings_plugy_AlwaysRegenMapInSP">New map at every load</string>
-    <string name="settings_plugy_hint">Works from the next game start. Before that the app backs up your saves to Download/%1$s.</string>
+    <string name="settings_plugy_hint">Works from the next game start. Before that the app makes a backup of your saves.</string>
 
     <string name="plugy_stats_plus_hint">Tap: 1 point, double tap: 5 points, long press: all free points</string>
     <string name="settings_background">Background protection</string>
@@ -75,14 +75,14 @@
     <string name="saves_game_running">The game is still running: please choose "Save and Exit" in the game, then load.</string>
     <string name="saves_no_picker">No file picker available.</string>
     <string name="saves_load_title">Load saved games?</string>
-    <string name="saves_load_message">Your current saves are backed up to Download/%1$s first. Characters from the file replace those with the same name, all others stay.</string>
+    <string name="saves_load_message">Your current saves are backed up in the app first. Characters from the file replace those with the same name, all others stay.</string>
     <string name="saves_load">Load</string>
     <string name="cancel">Cancel</string>
     <string name="saves_loading">Loading the saved games …</string>
     <string name="saves_import_running">Saved games are being loaded – please wait until that is done.</string>
     <string name="saves_backup_failed">Backup failed, nothing loaded: %1$s</string>
     <string name="saves_loaded">%1$d files loaded.%2$s</string>
-    <string name="saves_backup_note">\u0020Backup: Download/%1$s</string>
+    <string name="saves_backup_note">\u0020Backup in the app: %1$s</string>
     <string name="saves_load_failed">Loading failed: %1$s%2$s</string>
     <string name="saves_backup_paren">\u0020(backup: %1$s)</string>
     <string name="saves_error_unreadable">The file cannot be read</string>
@@ -92,7 +92,7 @@
     <string name="saves_error_replace">%1$s cannot be replaced</string>
     <string name="saves_error_write">%1$s cannot be written</string>
     <string name="saves_error_file_too_large">A file is too large for a saved game</string>
-    <string name="saves_error_import_unfinished">An interrupted import of saved games could not be finished. Backup in Download/%1$s</string>
+    <string name="saves_error_import_unfinished">An interrupted import of saved games could not be finished. A backup is in the app (settings, saved games).</string>
     <string name="saves_error_broken_zip">The file is not a readable zip archive</string>
 
 
@@ -584,7 +584,7 @@
     <string name="repair_stash">Stash of %1$s restored: saving was interrupted last time.</string>
     <string name="repair_shared_stash">Shared stash restored: saving was interrupted last time.</string>
     <string name="repair_character">%1$s: saving was interrupted last time. Restored the save of %2$s (PlugY backup); the cut files lie next to it.</string>
-    <string name="repair_character_broken">%1$s is damaged (saving was interrupted) and PlugY has no backup of it. The app\'s backups are in Download/%2$s.</string>
+    <string name="repair_character_broken">%1$s is damaged (saving was interrupted) and PlugY has no backup of it. The app\'s backups are in the settings under saved games.</string>
     <string name="repair_character_hardcore">%1$s (hardcore or unknown): saving was interrupted last time, the character file is damaged. Not restored by itself: the death may be what was being saved. PlugY\'s last backup is in %2$s.</string>
     <string name="launch_import_running">Saved games are being loaded in the game settings. Tap \"Play\" once that is done.</string>
     <string name="btn_heal">Heal</string>
@@ -593,8 +593,8 @@
 
 
     <string name="launch_notify_open">Please answer Android\'s question about notifications (Allow or Don\'t allow), then tap Play.</string>
-    <string name="launch_no_storage">Without storage access the app cannot read the game folder.</string>
-    <string name="launch_asking_storage">The app needs access to \"Download\": the game is or will be there. Please allow it.</string>
+    <string name="launch_no_storage">Without storage access the app can neither install the game nor take a game folder from the phone.</string>
+    <string name="launch_asking_storage">The app asks for access to the phone\'s storage. It needs it to install the game and to take a game folder or saved games from the phone. Please allow it.</string>
     <string name="launch_preparing">Preparing Diablo II …</string>
     <string name="launch_helpers_off">The app\'s game helpers are off, so the game does not start by itself. Switch them on again under Game settings > Game.</string>
     <string name="launch_play">Play</string>
@@ -668,12 +668,15 @@
     <string name="folder_no_picker">This phone has no folder picker.</string>
 
     <string name="check_unsupported_title">This device is not supported</string>
-    <string name="check_unsupported_gpu">Diablo II runs here only on Qualcomm Snapdragon phones with an Adreno 6xx–8xx GPU. Found: %1$s %2$s, GPU %3$s.</string>
+    <string name="check_unsupported_gpu">Diablo II runs here on Qualcomm Snapdragon phones with an Adreno 6xx–8xx GPU and on devices with a Mali, Xclipse or PowerVR DXT GPU and Vulkan 1.1. Found: %1$s %2$s, GPU %3$s.</string>
     <string name="check_unsupported_pages">This Android uses 16 KB memory pages; the emulation layer needs 4 KB.</string>
     <string name="check_unsupported_abi">A 64-bit ARM device is needed.</string>
     <string name="check_untested_title">Untested device</string>
     <string name="check_untested">%1$s has not been tested. The game may stutter or stay black.</string>
     <string name="check_untested_unknown">The graphics chip was not recognised. The game may stutter or stay black.</string>
+    <string name="check_vortek">%1$s: Diablo II runs here over an extra graphics layer for this chip. This is experimental: the game may run slowly or show wrong graphics.</string>
+    <string name="game_early_end">The game ended right after starting. The reason is in the log, which you can send with “Share diagnosis”.</string>
+    <string name="game_early_end_ok">Close</string>
     <string name="check_start_anyway">Start anyway</string>
     <string name="check_space_title">Little free space</string>
     <string name="check_space">Only %1$s free; the first setup needs about 1 GB.</string>
@@ -708,7 +711,7 @@
     <string name="install_action_keys">Enter the keys again</string>
     <string name="install_action_access">Allow access</string>
     <string name="install_action_storage">Open storage</string>
-    <string name="install_fail_no_access">The app may not use \"Download\". Without this access it cannot store the game. Tap \"Allow access\".</string>
+    <string name="install_fail_no_access">The app may not access the phone\'s storage. Without this access the installation cannot run. Tap \"Allow access\".</string>
     <string name="install_fail_no_space">Not enough room: %1$s GB free, %2$s GB needed. Delete photos, videos or old downloads, then tap \"Try again\". What is downloaded stays.</string>
     <string name="install_fail_no_network">Blizzard cannot be reached. Check Wi-Fi and flight mode. A Wi-Fi with a login page (hotel, train) needs you to log in first in the browser. Then tap \"Try again\". (%1$s)</string>
     <string name="install_fail_refused">Blizzard refused the download (%1$s). Try again later. Nothing was installed.</string>
@@ -749,7 +752,7 @@
     <string name="install_failed_title">Setup stopped</string>
     <string name="install_again">Try again</string>
     <string name="install_leave">Back</string>
-    <string name="install_intro">The app downloads Diablo II and Lord of Destruction with Blizzard\'s official downloader, installs them with your own CD keys and updates the game to 1.13d. Everything lands in Download/D2Android. Use Wi-Fi: about 2 GB are downloaded.</string>
+    <string name="install_intro">The app downloads Diablo II and Lord of Destruction with Blizzard\'s official downloader, installs them with your own CD keys and updates the game to 1.13d. Everything lands in the app\'s own storage. Use Wi-Fi: about 2 GB are downloaded.</string>
     <string name="install_language">Game language</string>
 
     <string name="install_lang_en">English (enUS)</string>
@@ -758,7 +761,7 @@
     <string name="install_lang_es">Español (esES)</string>
     <string name="install_lang_it">Italiano (itIT)</string>
     <string name="install_lang_soon">%1$s – soon</string>
-    <string name="install_space">Free space in Download/</string>
+    <string name="install_space">Free space on the phone</string>
     <string name="install_space_ok">%1$s GB free – enough (at least %2$s GB needed).</string>
     <string name="install_space_low">Only %1$s GB free – at least %2$s GB are needed. Free some space and come back.</string>
     <string name="install_next">Next</string>
@@ -767,9 +770,9 @@
     <string name="install_downloaded">Both downloads finished. Keys and installation follow in the next build.</string>
     <string name="install_installing">Installing %1$s … (Blizzard\'s installer, a few minutes)</string>
     <string name="install_patching">Updating to 1.13d …</string>
-    <string name="install_done">Diablo II 1.13d is installed in Download/%1$s.</string>
+    <string name="install_done">Diablo II 1.13d is installed in the app.</string>
     <string name="install_use_title">Use the new installation?</string>
-    <string name="install_use_message">The game will start from Download/%1$s from now on. Your previous game folder stays untouched.</string>
+    <string name="install_use_message">From now on the game starts from the new installation. Your previous game folder stays untouched.</string>
     <string name="install_use_yes">Use it</string>
     <string name="install_use_no">Not now</string>
     <string name="install_game_running">The game is still running: please choose "Save and Exit" in the game, then install.</string>
@@ -816,7 +819,7 @@
     <string name="news_none">This version has no list of changes.</string>
     <string name="settings_update_check">Look for new versions once a day</string>
     <string name="settings_telemetry">Send anonymous usage statistics</string>
-    <string name="settings_telemetry_hint">At most once a day, and after a crash, an anonymous message goes to Aptabase (servers in the EU): app and Android version, phone model, graphics chip, refresh rate, language, some settings (frame rate, size, aim assist, resume, controller), play time and number of games, and for your characters class, level (in steps of five), act, difficulty and hardcore; after a crash a fixed reason code. No names, no saves, no logs, no device ID. Off: nothing is sent any more and what is waiting is deleted.</string>
+    <string name="settings_telemetry_hint">At most once a day, and after a crash, an anonymous message goes to Aptabase (servers in the EU): app and Android version, phone maker and model, total RAM (rounded), chip (SoC and CPU type), graphics chip with its OpenGL and Vulkan driver version, memory page size, audio output (buffer and sample rate) and whether the game\'s sound started, the result of the device check and the graphics path, refresh rate, language, some settings (frame rate, size, aim assist, resume, controller), play time and number of games, the game\'s memory use (after 10 minutes and at the end), and for your characters class, level (in steps of five), act, difficulty and hardcore; after a crash a fixed reason code, where the app was (installation, loading, game, app pages), how long it had run and the exit code. No names, no saves, no logs, no device ID, no serial number. Off: nothing is sent any more and what is waiting is deleted.</string>
     <string name="update_available">Version %1$s is available</string>
     <string name="update_obtainium">Download it from the download page. If you installed the app with Obtainium, it fetches the update for you.</string>
     <string name="update_download">Download page</string>
@@ -1151,7 +1154,7 @@
     <string name="char_deleted_how">Double tap: bring back · Hold: delete for good</string>
     <string name="char_deleted_status">%1$s deleted. Double tap the card to bring it back.</string>
     <string name="char_restored">%1$s is back</string>
-    <string name="char_purged">%1$s deleted for good. Backup: Download/D2Android/Sicherungen</string>
+    <string name="char_purged">%1$s deleted for good. The backup is in the settings under saved games.</string>
     <string name="char_restore_collision">There is a character \"%1$s\" again. Delete or rename it first.</string>
     <string name="char_delete_failed">Could not delete: no backup possible. Nothing was deleted.</string>
     <string name="char_delete_busy">Not now: the game is starting or saves are being loaded.</string>
@@ -1304,7 +1307,7 @@
     <string name="settings_mods_legend">Diamond: the original. Topaz: a mod that runs, not checked by us.</string>
     <string name="settings_mods_active">ACTIVE</string>
     <string name="settings_mods_game_running">Quit the game first: it uses the folder and the saved games.</string>
-    <string name="settings_mods_remove_ask">Remove the mod %1$s? Its saved games go to Download/%2$s first (a zip), then its folder is deleted.</string>
+    <string name="settings_mods_remove_ask">Remove the mod %1$s? Its saved games go into the app\'s backups first (a zip), then its folder is deleted.</string>
     <string name="settings_mods_remove_yes">Remove</string>
     <string name="settings_mods_removed">%1$s removed.</string>
     <string name="settings_mods_remove_failed">Not removed: %1$s</string>
@@ -1627,7 +1630,7 @@
     <string name="telemetry_title">Send anonymous statistics?</string>
     <string name="telemetry_intro">They help us make D2Android run well on more phones. At most once a day, and after a crash, a short message goes to Aptabase (servers in the EU). Nothing is sent before you say yes.</string>
     <string name="telemetry_in">What is in it</string>
-    <string name="telemetry_in_points">Phone: maker, model, graphics chip, refresh rate (Hz), Android and app version, language, controller\nsome settings: frame rate, size, aim assist, resume\ncharacters only as numbers: how many, classes, level in steps of five, act, difficulty, hardcore\nplay time, number of games and how they ended\nafter a crash a fixed code</string>
+    <string name="telemetry_in_points">Phone: maker, model, total RAM (rounded), chip, graphics chip with driver version (OpenGL, Vulkan), refresh rate (Hz), Android and app version, language, controller\nthe device check\'s result and the graphics path, audio output and whether the game\'s sound started\nsome settings: frame rate, size, aim assist, resume\ncharacters only as numbers: how many, classes, level in steps of five, act, difficulty, hardcore\nplay time, number of games and how they ended, the game\'s memory use\nafter a crash a fixed code, where and after how long</string>
     <string name="telemetry_out">What is not in it</string>
     <string name="telemetry_out_points">no names, no saves, no files, no logs\nno device ID, nothing that identifies you</string>
     <string name="telemetry_footer">You can change it any time under Settings &gt; Help and info.</string>
@@ -1647,4 +1650,24 @@
     <string name="win_info_inv">tap: take, put down|hold: use · drag: stats|2× tap: potion to the belt</string>
     <string name="win_info_inv_stash">tap: take, put down|hold: use · drag: stats|2× tap: to the stash</string>
     <string name="win_info_inv_pad">A: take, put down · X: use|R3 hold: sort</string>
+
+    <string name="move_progress">Moving the game into the app: %1$d of %2$d MB</string>
+    <string name="move_no_space">Not enough storage to move the game into the app: %1$s needed, %2$s free.</string>
+    <string name="move_failed">The game could not be moved into the app (%1$s). The next start tries again.</string>
+    <string name="settings_saves_backups">Share backups</string>
+    <string name="saves_backups_none">No backups yet.</string>
+    <string name="move_cleanup_title">Delete the old game files?</string>
+    <string name="move_cleanup_message">The game is in the app now. You no longer need the old game files in %1$s (%2$s). Your saved games there stay.</string>
+    <string name="move_cleanup_delete">Delete</string>
+    <string name="move_cleanup_done">Old game files deleted (%1$s freed).</string>
+    <string name="settings_saves_from_download">Take from Download</string>
+    <string name="saves_from_download_ask">The saved games from %1$s replace the saved games in the app. The app backs up the current ones first.</string>
+    <string name="saves_from_download_none">There are no saved games in Download.</string>
+    <string name="saves_from_download_done">Saved games taken from Download.</string>
+    <string name="move_done_hint">The game and your saved games are in the app now. Keep a copy with Settings > Saved games > Share saved games.</string>
+    <string name="move_pending">Is copied into the app when you go back to the start page: %1$s</string>
+    <string name="move_checking">Checking the copy: %1$d of %2$d MB</string>
+    <string name="game_in_app">In the app</string>
+    <string name="game_in_app_from">In the app (taken from %1$s)</string>
+    <string name="settings_saves_save_as">Save to a file</string>
 </resources>

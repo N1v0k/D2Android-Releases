@@ -1,0 +1,29 @@
+D2DX 0.99.529 for GPUs with little memory: texture atlases with 512 layers instead of 2048.
+
+D2DX tries texture arrays of 2048, then 1024 layers and takes the first one the
+device creates. On a Mali GPU (Vortek, DXVK 1.10.3) 2048 layers succeed but take
+about 930 MB of the shared memory, and Android's low memory killer ends the
+game; with 512 layers the caches take about 230 MB. The app ships a second copy,
+glide3x-atlas512.dll, used only on devices without Adreno and with little RAM. It is the glide3x.dll of the
+D2DX 0.99.529 release with the HRESULT fix (d2dx-0.99.529-comexception-hresult.patch) and the frame time clamp (d2dx-0.99.529-frametime-clamp.patch)
+and one more byte changed, applied by tools/binpatch.py (patch "d2dx-glide3x-atlas512")
+when the assets are fetched:
+
+  file      glide3x-atlas512.dll
+  before    sha256 c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89
+  after     sha256 53eab88060db53a34cbff59ee2a223828c862058b590e5167a48369fa631a1e6
+  change    file offset 0x73f3: 08 -> 02 (mov esi, 0x800 -> mov esi, 0x200)
+
+The source change it corresponds to:
+
+--- a/src/d2dx/RenderContextResources.cpp
++++ b/src/d2dx/RenderContextResources.cpp
+@@ -213,7 +213,7 @@
+ uint32_t RenderContextResources::DetermineMaxTextureArraySize(
+ 	ID3D11Device* device)
+ {
+-	for (uint32_t arraySize = 2048; arraySize > 512; arraySize /= 2)
++	for (uint32_t arraySize = 512; arraySize > 512; arraySize /= 2)
+ 	{
+ 		CD3D11_TEXTURE2D_DESC desc{
+ 			DXGI_FORMAT_R8G8B8A8_UNORM,

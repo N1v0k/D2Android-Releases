@@ -20,6 +20,8 @@ public final class D2Settings {
 
     static final String KEY_SKIP_INTRO = "skipIntro";
 
+    static final String KEY_VORTEK = "vortek";
+
     static final String KEY_APP_LANGUAGE = "appLanguage", KEY_GAME_LANGUAGE = "gameLanguage";
 
     public static final int LINES_AUTO = 0, LINES_600 = 600, LINES_540 = 540;
@@ -124,6 +126,20 @@ public final class D2Settings {
         String free = prefs(context).getString(mod == null ? KEY_ARGS_FREE : KEY_ARGS_FREE + "@" + mod.id, "");
         return D2StartArgs.commandLine(argSwitch(context, KEY_ARG_DIRECT, mod), argSwitch(context, KEY_ARG_TXT, mod),
             argSwitch(context, KEY_ARG_NS, mod), free);
+    }
+
+
+
+
+
+
+    public static boolean vortek(Context context) {
+        return prefs(context).getBoolean(KEY_VORTEK, false) && !new java.io.File("/dev/kgsl-3d0").exists();
+    }
+
+
+    static void setVortek(Context context, boolean on) {
+        prefs(context).edit().putBoolean(KEY_VORTEK, on).apply();
     }
 
     public static String appLanguage(Context context) {

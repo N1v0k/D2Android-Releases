@@ -1,4 +1,4 @@
-#include <jni.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-29).
+#include <jni.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
 #include <malloc.h>
 #include <android/log.h>
 #include <stdlib.h>
@@ -140,6 +140,53 @@ done:
     if (instance) vkDestroyInstance(instance, NULL);
     if (libvulkan) dlclose(libvulkan);
     return version;
+}
+
+
+
+JNIEXPORT jlongArray JNICALL
+Java_com_winlator_core_GPUHelper_vkGetDeviceVersions(JNIEnv *env, jclass obj) {
+    jlong values[3] = {0};
+    int found = 0;
+    VkInstance instance = VK_NULL_HANDLE;
+
+    void* libvulkan = dlopen(LIBVULKAN_PATH, RTLD_NOW | RTLD_LOCAL);
+    if (!libvulkan) goto done;
+
+    PFN_vkCreateInstance vkCreateInstance = dlsym(libvulkan, "vkCreateInstance");
+    PFN_vkDestroyInstance vkDestroyInstance = dlsym(libvulkan, "vkDestroyInstance");
+    PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices = dlsym(libvulkan, "vkEnumeratePhysicalDevices");
+    PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties = dlsym(libvulkan, "vkGetPhysicalDeviceProperties");
+    if (!vkCreateInstance || !vkDestroyInstance || !vkEnumeratePhysicalDevices || !vkGetPhysicalDeviceProperties) goto done;
+
+    VkInstanceCreateInfo createInfo = {0};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    if (vkCreateInstance(&createInfo, NULL, &instance) != VK_SUCCESS) {
+        instance = VK_NULL_HANDLE;
+        goto done;
+    }
+
+    uint32_t deviceCount = 1;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, &physicalDevice);
+    if ((result != VK_SUCCESS && result != VK_INCOMPLETE) || deviceCount == 0 || physicalDevice == VK_NULL_HANDLE) goto done;
+
+    VkPhysicalDeviceProperties properties = {0};
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+    values[0] = (jlong)(uint32_t)properties.apiVersion;
+    values[1] = (jlong)(uint32_t)properties.driverVersion;
+    values[2] = (jlong)(uint32_t)properties.vendorID;
+    found = 1;
+
+done:
+    if (instance) {
+        PFN_vkDestroyInstance destroy = libvulkan ? dlsym(libvulkan, "vkDestroyInstance") : NULL;
+        if (destroy) destroy(instance, NULL);
+    }
+    if (libvulkan) dlclose(libvulkan);
+    jlongArray out = (*env)->NewLongArray(env, found ? 3 : 0);
+    if (out && found) (*env)->SetLongArrayRegion(env, out, 0, 3, values);
+    return out;
 }
 
 JNIEXPORT void JNICALL

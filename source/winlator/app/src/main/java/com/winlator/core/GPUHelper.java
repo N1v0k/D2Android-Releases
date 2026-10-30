@@ -1,4 +1,4 @@
-package com.winlator.core;
+package com.winlator.core;  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -166,6 +166,9 @@ public abstract class GPUHelper {
 
     @CriticalNative
     public static native int vkGetApiVersion();
+
+
+    public static native long[] vkGetDeviceVersions();
 
     public static native void setGlobalEGLContext();
 

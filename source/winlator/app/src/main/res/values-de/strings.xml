@@ -52,7 +52,7 @@
     <string name="settings_plugy_ActiveDoNotCloseNihlathakPortal">Nihlathaks Portal bleibt offen</string>
     <string name="settings_plugy_MoveCainNearHarrogathWaypoint">Cain steht beim Wegpunkt in Harrogath</string>
     <string name="settings_plugy_AlwaysRegenMapInSP">Karte bei jedem Laden neu</string>
-    <string name="settings_plugy_hint">Gilt ab dem nächsten Spielstart. Vorher sichert die App deine Spielstände nach Download/%1$s.</string>
+    <string name="settings_plugy_hint">Gilt ab dem nächsten Spielstart. Vorher legt die App eine Sicherung deiner Spielstände an.</string>
 
     <string name="plugy_stats_plus_hint">Tipp: 1 Punkt, Doppeltipp: 5 Punkte, lange drücken: alle freien Punkte</string>
     <string name="settings_background">Hintergrund-Schutz</string>
@@ -72,14 +72,14 @@
     <string name="saves_game_running">Das Spiel läuft noch: bitte im Spiel „Speichern und Beenden“ wählen, dann laden.</string>
     <string name="saves_no_picker">Keine Dateiauswahl verfügbar.</string>
     <string name="saves_load_title">Spielstände laden?</string>
-    <string name="saves_load_message">Deine jetzigen Spielstände werden zuerst nach Download/%1$s gesichert. Charaktere aus der Datei ersetzen gleichnamige, alle anderen bleiben.</string>
+    <string name="saves_load_message">Deine jetzigen Spielstände werden zuerst in der App gesichert. Charaktere aus der Datei ersetzen gleichnamige, alle anderen bleiben.</string>
     <string name="saves_load">Laden</string>
     <string name="cancel">Abbrechen</string>
     <string name="saves_loading">Lade die Spielstände …</string>
     <string name="saves_import_running">Spielstände werden gerade geladen – bitte warten, bis das fertig ist.</string>
     <string name="saves_backup_failed">Sicherung fehlgeschlagen, nichts geladen: %1$s</string>
     <string name="saves_loaded">%1$d Dateien geladen.%2$s</string>
-    <string name="saves_backup_note">\u0020Sicherung: Download/%1$s</string>
+    <string name="saves_backup_note">\u0020Sicherung in der App: %1$s</string>
     <string name="saves_load_failed">Laden fehlgeschlagen: %1$s%2$s</string>
     <string name="saves_backup_paren">\u0020(Sicherung: %1$s)</string>
     <string name="saves_error_unreadable">Die Datei ist nicht lesbar</string>
@@ -89,7 +89,7 @@
     <string name="saves_error_replace">%1$s kann nicht ersetzt werden</string>
     <string name="saves_error_write">%1$s kann nicht geschrieben werden</string>
     <string name="saves_error_file_too_large">Eine Datei ist zu groß für einen Spielstand</string>
-    <string name="saves_error_import_unfinished">Ein abgebrochener Spielstand-Import ließ sich nicht abschließen. Sicherung unter Download/%1$s</string>
+    <string name="saves_error_import_unfinished">Ein abgebrochener Spielstand-Import ließ sich nicht abschließen. Eine Sicherung liegt in der App (Einstellungen, Spielstände).</string>
     <string name="saves_error_broken_zip">Die Datei ist kein lesbares Zip-Archiv</string>
 
 
@@ -581,7 +581,7 @@
     <string name="repair_stash">Truhe von %1$s wiederhergestellt: Das letzte Speichern war unterbrochen.</string>
     <string name="repair_shared_stash">Geteilte Truhe wiederhergestellt: Das letzte Speichern war unterbrochen.</string>
     <string name="repair_character">%1$s: Das letzte Speichern war unterbrochen. Stand von %2$s wiederhergestellt (PlugY-Sicherung); die abgebrochenen Dateien liegen daneben.</string>
-    <string name="repair_character_broken">%1$s ist beschädigt (Speichern unterbrochen), und PlugY hat keine Sicherung davon. Die Sicherungen der App liegen in Download/%2$s.</string>
+    <string name="repair_character_broken">%1$s ist beschädigt (Speichern unterbrochen), und PlugY hat keine Sicherung davon. Die Sicherungen der App findest du in den Einstellungen unter Spielstände.</string>
     <string name="repair_character_hardcore">%1$s (Hardcore oder unbekannt): Das letzte Speichern war unterbrochen, der Charakter ist beschädigt. Nicht von selbst wiederhergestellt, denn gerade der Tod könnte gespeichert worden sein. Die letzte PlugY-Sicherung liegt in %2$s.</string>
     <string name="launch_import_running">In den Spieleinstellungen werden gerade Spielstände geladen. Danach auf „Spielen“ tippen.</string>
     <string name="btn_heal">Heil</string>
@@ -590,8 +590,8 @@
 
 
     <string name="launch_notify_open">Bitte beantworte die Frage von Android nach Benachrichtigungen (Erlauben oder Nicht erlauben), dann auf Spielen tippen.</string>
-    <string name="launch_no_storage">Ohne Speicherzugriff kann die App den Spielordner nicht lesen.</string>
-    <string name="launch_asking_storage">Die App braucht Zugriff auf „Download“: dort liegt bzw. landet das Spiel. Bitte erlauben.</string>
+    <string name="launch_no_storage">Ohne Speicherzugriff kann die App das Spiel weder installieren noch einen Spielordner vom Handy holen.</string>
+    <string name="launch_asking_storage">Die App fragt nach Zugriff auf den Handy-Speicher. Sie braucht ihn, um das Spiel zu installieren und um einen Spielordner oder Spielstände vom Handy zu holen. Bitte erlauben.</string>
     <string name="launch_preparing">Bereite Diablo II vor …</string>
     <string name="launch_helpers_off">Die Spielhilfen der App sind aus, deshalb startet das Spiel nicht von selbst. Wieder einschalten: Spieleinstellungen > Spiel.</string>
     <string name="launch_play">Spielen</string>
@@ -665,12 +665,15 @@
     <string name="folder_no_picker">Dieses Handy hat keine Ordnerauswahl.</string>
 
     <string name="check_unsupported_title">Dieses Gerät wird nicht unterstützt</string>
-    <string name="check_unsupported_gpu">Diablo II läuft hier nur auf Qualcomm-Snapdragon-Handys mit Adreno-6xx–8xx-Grafik. Gefunden: %1$s %2$s, Grafik %3$s.</string>
+    <string name="check_unsupported_gpu">Diablo II läuft hier auf Qualcomm-Snapdragon-Handys mit Adreno-6xx–8xx-Grafik und auf Geräten mit Mali-, Xclipse- oder PowerVR-DXT-Grafik und Vulkan 1.1. Gefunden: %1$s %2$s, Grafik %3$s.</string>
     <string name="check_unsupported_pages">Dieses Android nutzt 16-KB-Speicherseiten; die Emulation braucht 4 KB.</string>
     <string name="check_unsupported_abi">Es wird ein 64-bit-ARM-Gerät gebraucht.</string>
     <string name="check_untested_title">Ungetestetes Gerät</string>
     <string name="check_untested">%1$s ist ungetestet. Das Spiel kann ruckeln oder schwarz bleiben.</string>
     <string name="check_untested_unknown">Die Grafik wurde nicht erkannt. Das Spiel kann ruckeln oder schwarz bleiben.</string>
+    <string name="check_vortek">%1$s: Diablo II läuft hier über eine eigene Grafikschicht für diesen Chip. Das ist experimentell: Das Spiel kann langsam laufen oder Grafikfehler zeigen.</string>
+    <string name="game_early_end">Das Spiel hat sich gleich nach dem Start beendet. Der Grund steht im Protokoll, das du mit „Diagnose teilen“ schicken kannst.</string>
+    <string name="game_early_end_ok">Schließen</string>
     <string name="check_start_anyway">Trotzdem starten</string>
     <string name="check_space_title">Wenig freier Speicher</string>
     <string name="check_space">Nur %1$s frei; die Ersteinrichtung braucht etwa 1 GB.</string>
@@ -705,7 +708,7 @@
     <string name="install_action_keys">Keys neu eingeben</string>
     <string name="install_action_access">Zugriff erlauben</string>
     <string name="install_action_storage">Speicher öffnen</string>
-    <string name="install_fail_no_access">Die App darf nicht auf „Download“ zugreifen. Ohne diesen Zugriff kann sie das Spiel nicht speichern. Tippe auf „Zugriff erlauben“.</string>
+    <string name="install_fail_no_access">Die App darf nicht auf den Handy-Speicher zugreifen. Ohne diesen Zugriff läuft die Installation nicht. Tippe auf „Zugriff erlauben“.</string>
     <string name="install_fail_no_space">Zu wenig Platz: %1$s GB frei, %2$s GB nötig. Lösche Fotos, Videos oder alte Downloads und tippe dann auf „Erneut versuchen“. Was schon geladen ist, bleibt.</string>
     <string name="install_fail_no_network">Blizzard ist nicht erreichbar. Prüfe WLAN und Flugmodus. In einem WLAN mit Anmeldeseite (Hotel, Zug) musst du dich zuerst im Browser anmelden. Tippe dann auf „Erneut versuchen“. (%1$s)</string>
     <string name="install_fail_refused">Blizzard hat den Download abgelehnt (%1$s). Versuche es später noch einmal. Es wurde nichts installiert.</string>
@@ -746,7 +749,7 @@
     <string name="install_failed_title">Einrichtung angehalten</string>
     <string name="install_again">Erneut versuchen</string>
     <string name="install_leave">Zurück</string>
-    <string name="install_intro">Die App lädt Diablo II und Lord of Destruction mit Blizzards offiziellem Downloader, installiert sie mit deinen eigenen CD-Keys und bringt das Spiel auf 1.13d. Alles landet in Download/D2Android. Bitte WLAN nutzen: es werden rund 2 GB geladen.</string>
+    <string name="install_intro">Die App lädt Diablo II und Lord of Destruction mit Blizzards offiziellem Downloader, installiert sie mit deinen eigenen CD-Keys und bringt das Spiel auf 1.13d. Alles landet im eigenen Speicher der App. Bitte WLAN nutzen: es werden rund 2 GB geladen.</string>
     <string name="install_language">Spielsprache</string>
 
     <string name="install_lang_en">English (enUS)</string>
@@ -755,7 +758,7 @@
     <string name="install_lang_es">Español (esES)</string>
     <string name="install_lang_it">Italiano (itIT)</string>
     <string name="install_lang_soon">%1$s – bald</string>
-    <string name="install_space">Freier Platz in Download/</string>
+    <string name="install_space">Freier Platz am Handy</string>
     <string name="install_space_ok">%1$s GB frei – reicht (mindestens %2$s GB nötig).</string>
     <string name="install_space_low">Nur %1$s GB frei – mindestens %2$s GB sind nötig. Bitte Platz schaffen und wiederkommen.</string>
     <string name="install_next">Weiter</string>
@@ -764,9 +767,9 @@
     <string name="install_downloaded">Beide Downloads fertig. Keys und Installation folgen im nächsten Build.</string>
     <string name="install_installing">Installiere %1$s … (Blizzards Installer, einige Minuten)</string>
     <string name="install_patching">Bringe das Spiel auf 1.13d …</string>
-    <string name="install_done">Diablo II 1.13d ist in Download/%1$s installiert.</string>
+    <string name="install_done">Diablo II 1.13d ist in der App installiert.</string>
     <string name="install_use_title">Neue Installation verwenden?</string>
-    <string name="install_use_message">Das Spiel startet ab jetzt aus Download/%1$s. Dein bisheriger Spielordner bleibt unverändert.</string>
+    <string name="install_use_message">Das Spiel startet ab jetzt aus der neuen Installation. Dein bisheriger Spielordner bleibt unverändert.</string>
     <string name="install_use_yes">Verwenden</string>
     <string name="install_use_no">Jetzt nicht</string>
     <string name="install_game_running">Das Spiel läuft noch: bitte im Spiel „Speichern und beenden“ wählen, dann installieren.</string>
@@ -813,7 +816,7 @@
     <string name="news_none">Diese Version hat keine Liste der Änderungen.</string>
     <string name="settings_update_check">Einmal am Tag nach neuen Versionen suchen</string>
     <string name="settings_telemetry">Anonyme Nutzungsstatistik senden</string>
-    <string name="settings_telemetry_hint">Höchstens einmal am Tag und nach einem Absturz geht eine anonyme Meldung an Aptabase (Server in der EU): App- und Android-Version, Gerätemodell, Grafikchip, Bildwiederholrate, Sprache, einige Einstellungen (Bildrate, Größe, Zielhilfe, Fortsetzen, Controller), Spielzeit und Zahl der Spiele, und zu deinen Charakteren Klasse, Stufe (in Fünferschritten), Akt, Schwierigkeit und Hardcore; nach einem Absturz ein fester Grund-Code. Keine Namen, keine Spielstände, keine Logs, keine Geräte-ID. Aus: Es geht nichts mehr hinaus, und Wartendes wird gelöscht.</string>
+    <string name="settings_telemetry_hint">Höchstens einmal am Tag und nach einem Absturz geht eine anonyme Meldung an Aptabase (Server in der EU): App- und Android-Version, Hersteller und Modell des Geräts, Arbeitsspeicher (gerundet), Chip (SoC und CPU-Typ), Grafikchip mit OpenGL- und Vulkan-Treiberversion, Speicherseitengröße, Audioausgabe (Puffer und Abtastrate) und ob der Ton des Spiels startete, Ergebnis des Gerätechecks und Grafikweg, Bildwiederholrate, Sprache, einige Einstellungen (Bildrate, Größe, Zielhilfe, Fortsetzen, Controller), Spielzeit und Zahl der Spiele, Speicherbedarf des Spiels (nach 10 Minuten und am Ende), und zu deinen Charakteren Klasse, Stufe (in Fünferschritten), Akt, Schwierigkeit und Hardcore; nach einem Absturz ein fester Grund-Code, wo die App gerade war (Installation, Laden, Spiel, App-Seiten), wie lange sie lief und der Exit-Code. Keine Namen, keine Spielstände, keine Logs, keine Geräte-ID, keine Seriennummer. Aus: Es geht nichts mehr hinaus, und Wartendes wird gelöscht.</string>
     <string name="update_available">Version %1$s ist verfügbar</string>
     <string name="update_obtainium">Herunterladen über die Download-Seite. Wer die App mit Obtainium installiert hat, bekommt das Update dort.</string>
     <string name="update_download">Zur Download-Seite</string>
@@ -1147,7 +1150,7 @@
     <string name="char_deleted_how">Doppeltipp: zurückholen · Halten: endgültig löschen</string>
     <string name="char_deleted_status">%1$s gelöscht. Doppeltipp auf die Karte holt ihn zurück.</string>
     <string name="char_restored">%1$s ist wieder da</string>
-    <string name="char_purged">%1$s endgültig gelöscht. Sicherung: Download/D2Android/Sicherungen</string>
+    <string name="char_purged">%1$s endgültig gelöscht. Die Sicherung findest du in den Einstellungen unter Spielstände.</string>
     <string name="char_restore_collision">Es gibt wieder einen Charakter \"%1$s\". Erst diesen löschen oder umbenennen.</string>
     <string name="char_delete_failed">Löschen ging nicht: keine Sicherung möglich. Es wurde nichts gelöscht.</string>
     <string name="char_delete_busy">Gerade nicht möglich: Das Spiel startet oder Spielstände werden geladen.</string>
@@ -1300,7 +1303,7 @@
     <string name="settings_mods_legend">Diamant: das Original. Topas: Mod läuft, nicht von uns geprüft.</string>
     <string name="settings_mods_active">AKTIV</string>
     <string name="settings_mods_game_running">Erst das Spiel beenden: es nutzt den Ordner und die Spielstände.</string>
-    <string name="settings_mods_remove_ask">Den Mod %1$s entfernen? Seine Spielstände kommen vorher nach Download/%2$s (ein Zip), dann wird sein Ordner gelöscht.</string>
+    <string name="settings_mods_remove_ask">Den Mod %1$s entfernen? Seine Spielstände kommen vorher als Zip in die Sicherungen der App, dann wird sein Ordner gelöscht.</string>
     <string name="settings_mods_remove_yes">Entfernen</string>
     <string name="settings_mods_removed">%1$s entfernt.</string>
     <string name="settings_mods_remove_failed">Nicht entfernt: %1$s</string>
@@ -1623,7 +1626,7 @@
     <string name="telemetry_title">Anonyme Statistik senden?</string>
     <string name="telemetry_intro">Sie hilft uns, D2Android auf mehr Handys gut laufen zu lassen. Höchstens einmal am Tag und nach einem Absturz geht eine kurze Meldung an Aptabase (Server in der EU). Vor deinem „Ja“ wird nichts gesendet.</string>
     <string name="telemetry_in">Was drin ist</string>
-    <string name="telemetry_in_points">Gerät: Hersteller, Modell, Grafikchip, Bildwiederholrate (Hz), Android- und App-Version, Sprache, Controller\neinige Einstellungen: Bildrate, Größe, Zielhilfe, Fortsetzen\nCharaktere nur als Zahlen: Anzahl, Klassen, Stufe in Fünferschritten, Akt, Schwierigkeit, Hardcore\nSpielzeit, Zahl der Spiele und wie sie endeten\nnach einem Absturz ein fester Code</string>
+    <string name="telemetry_in_points">Gerät: Hersteller, Modell, Arbeitsspeicher (gerundet), Chip, Grafikchip mit Treiberversion (OpenGL, Vulkan), Bildwiederholrate (Hz), Android- und App-Version, Sprache, Controller\nErgebnis des Gerätechecks und Grafikweg, Audioausgabe und ob der Ton des Spiels startete\neinige Einstellungen: Bildrate, Größe, Zielhilfe, Fortsetzen\nCharaktere nur als Zahlen: Anzahl, Klassen, Stufe in Fünferschritten, Akt, Schwierigkeit, Hardcore\nSpielzeit, Zahl der Spiele und wie sie endeten, Speicherbedarf des Spiels\nnach einem Absturz ein fester Code, wo und nach welcher Zeit</string>
     <string name="telemetry_out">Was nicht drin ist</string>
     <string name="telemetry_out_points">keine Namen, keine Spielstände, keine Dateien, keine Logs\nkeine Geräte-ID, nichts, was auf dich zeigt</string>
     <string name="telemetry_footer">Du kannst es jederzeit ändern, unter Einstellungen &gt; Hilfe und Info.</string>
@@ -1643,4 +1646,24 @@
     <string name="win_info_inv">tippen: nehmen, ablegen|halten: benutzen · ziehen: Werte|2× tippen: Trank in den Gürtel</string>
     <string name="win_info_inv_stash">tippen: nehmen, ablegen|halten: benutzen · ziehen: Werte|2× tippen: in die Truhe</string>
     <string name="win_info_inv_pad">A: nehmen, ablegen · X: benutzen|R3 halten: Ordnen</string>
+
+    <string name="move_progress">Übernehme das Spiel in die App: %1$d von %2$d MB</string>
+    <string name="move_no_space">Zu wenig Speicher, um das Spiel in die App zu übernehmen: %1$s nötig, %2$s frei.</string>
+    <string name="move_failed">Das Spiel ließ sich nicht in die App übernehmen (%1$s). Der nächste Start versucht es neu.</string>
+    <string name="settings_saves_backups">Sicherungen teilen</string>
+    <string name="saves_backups_none">Noch keine Sicherungen.</string>
+    <string name="move_cleanup_title">Alte Spieldateien löschen?</string>
+    <string name="move_cleanup_message">Das Spiel liegt jetzt in der App. Die alten Spieldateien in %1$s brauchst du nicht mehr (%2$s). Deine Spielstände dort bleiben liegen.</string>
+    <string name="move_cleanup_delete">Löschen</string>
+    <string name="move_cleanup_done">Alte Spieldateien gelöscht (%1$s frei).</string>
+    <string name="settings_saves_from_download">Aus Download holen</string>
+    <string name="saves_from_download_ask">Die Spielstände aus %1$s ersetzen die Spielstände in der App. Die App sichert die jetzigen vorher.</string>
+    <string name="saves_from_download_none">In Download liegen keine Spielstände.</string>
+    <string name="saves_from_download_done">Spielstände aus Download übernommen.</string>
+    <string name="move_done_hint">Spiel und Spielstände sind jetzt in der App. Eine Kopie sicherst du über Einstellungen > Spielstände > Spielstände teilen.</string>
+    <string name="move_pending">Wird in die App kopiert, sobald du zur Startseite zurückgehst: %1$s</string>
+    <string name="move_checking">Prüfe die Kopie: %1$d von %2$d MB</string>
+    <string name="game_in_app">In der App</string>
+    <string name="game_in_app_from">In der App (übernommen aus %1$s)</string>
+    <string name="settings_saves_save_as">Spielstände speichern</string>
 </resources>

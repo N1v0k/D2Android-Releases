@@ -101,6 +101,7 @@ public class D2KeepAliveService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        D2Store.init(this);
         boolean paused = intent != null && intent.getBooleanExtra(EXTRA_PAUSED, false);
         Notification notification = buildNotification(paused);
         shown = true;

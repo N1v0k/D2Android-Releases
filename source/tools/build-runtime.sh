@@ -9,6 +9,8 @@
 
 
 
+
+
 set -euo pipefail
 
 RUNTIME_VERSION=2
@@ -39,6 +41,7 @@ rootfs_patches.tzst 49ab7a5158ef7ccff5ae96dfd539df48483454ed11c0d6788a4f95e0104c
 box64/box64-0.4.4.tzst e1a34fed50bb38ef7fbf51ad5e5b9a76ec4c8178f9cfb4b9f6def0497f2f446c
 graphics_driver/turnip-26.2.0.tzst 1e5bd643d64b450960ea3208cc96599a4de577f178e9ba0843b1c37083ce50d2
 dxwrapper/dxvk-2.4.1.tzst 897cc48500241006c15c62f200e9a6e1ea8a674bd285da25df6f68fdcdbfe42e
+dxwrapper/dxvk-1.10.3.tzst 18ed7c263e0d52c4bbd0e7345b4f22908c10966f37d7d6d80c639ec45123075a
 "
 
 mkdir -p "$SRC" "$OUT_DIR"
@@ -65,20 +68,32 @@ fi
 ALSA_PLUGIN="$REPO_DIR/tools/alsa-plugin/module_pcm_android_aserver_d2.c"
 
 
-key=$( { echo "$RUNTIME_VERSION"; echo "versioned-by-key"; [ "$PACKAGE" = at.d2android ] || echo "$PACKAGE"; echo "$SOURCES"; sha256sum "$WINE" "$REPO_DIR/tools/build-runtime.py" "$REPO_DIR/tools/binpatch.py" "$ALSA_PLUGIN" | cut -d' ' -f1; } | sha256sum | cut -c1-16)
+VORTEK_COMMIT=b1730c5def9b575672e671aee11d79ae7adc63d1
+VORTEK_SRC="$CACHE_DIR/vortek-$VORTEK_COMMIT.tar.gz"
+fetch_block "vortek/vortek-$VORTEK_COMMIT.tar.gz" eef892505c77fb6f3cc7bc78a151662ffb77bab934e5eeff8ead7270a6734c82 "$VORTEK_SRC" \
+  "https://codeload.github.com/brunodev85/vortek/tar.gz/$VORTEK_COMMIT" || exit 1
+VULKAN_HEADERS="$CACHE_DIR/Vulkan-Headers-1.3.302.tar.gz"
+fetch_block "khronos/Vulkan-Headers-1.3.302.tar.gz" 996c3f4220971e3b3cd6b8933e9e81f0bc82b6d2d6449b6f02c66946d65bf944 "$VULKAN_HEADERS" \
+  "https://codeload.github.com/KhronosGroup/Vulkan-Headers/tar.gz/refs/tags/v1.3.302" || exit 1
+VORTEK_PATCHES=$(ls "$REPO_DIR"/tools/patches/vortek-client-*.patch 2>/dev/null | sort)
+
+
+key=$( { echo "$RUNTIME_VERSION"; echo "versioned-by-key"; [ "$PACKAGE" = at.d2android ] || echo "$PACKAGE"; echo "$SOURCES"; sha256sum "$WINE" "$REPO_DIR/tools/build-runtime.py" "$REPO_DIR/tools/binpatch.py" "$ALSA_PLUGIN" "$VORTEK_SRC" "$VULKAN_HEADERS" $VORTEK_PATCHES | cut -d' ' -f1; } | sha256sum | cut -c1-16)
 cached="$CACHE_DIR/runtime-$key.txz"
 if [ ! -s "$cached" ] || [ ! -s "$cached.info" ]; then
 
-  if ! command -v aarch64-linux-gnu-gcc >/dev/null || [ ! -f /usr/include/alsa/asoundlib.h ]; then
+
+  if ! command -v aarch64-linux-gnu-gcc >/dev/null || [ ! -f /usr/include/alsa/asoundlib.h ] || [ ! -f /usr/include/X11/Xlib.h ]; then
     if [ -n "${CI:-}" ]; then
-      sudo apt-get update -q && sudo apt-get install -y -q gcc-aarch64-linux-gnu libasound2-dev
+      sudo apt-get update -q && sudo apt-get install -y -q gcc-aarch64-linux-gnu libasound2-dev libx11-dev
     else
-      echo "need gcc-aarch64-linux-gnu and libasound2-dev (see the local build notes)" >&2; exit 1
+      echo "need gcc-aarch64-linux-gnu, libasound2-dev and libx11-dev (see the local build notes)" >&2; exit 1
     fi
   fi
   python3 -I "$REPO_DIR/tools/build-runtime.py" --winlator-assets "$SRC" --wine "$WINE" \
     --version "$RUNTIME_VERSION-$key" --out "$CACHE_DIR/runtime-build.txz" --alsa-plugin-src "$ALSA_PLUGIN" \
-    --package "$PACKAGE"
+    --vortek-src "$VORTEK_SRC" --vulkan-headers "$VULKAN_HEADERS" $(for f in $VORTEK_PATCHES; do echo --vortek-patch "$f"; done) \
+    --package "$PACKAGE" --work "$CACHE_DIR/runtime-work"
   mv "$CACHE_DIR/runtime-info.txt" "$cached.info"
   mv "$CACHE_DIR/runtime-build.txz" "$cached"
 fi

@@ -34,6 +34,25 @@ final class D2ExitText {
     }
 
 
+    static final long EARLY_END_MS = 30_000;
+
+
+
+
+
+
+
+    static boolean earlyEnd(long runMs, String appReason, long backgroundMs, boolean exiting, boolean crashed, boolean windowShown) {
+        return runMs >= 0 && runMs < EARLY_END_MS && appReason == null && backgroundMs < 0 && !exiting
+            && (crashed || !windowShown);
+    }
+
+
+    static boolean crashed(String output) {
+        return output != null && (output.contains("wine: Unhandled ") || output.contains("wineserver crashed"));
+    }
+
+
     static final long RESUME_WORTH_NOTING_MS = 60_000;
 
 

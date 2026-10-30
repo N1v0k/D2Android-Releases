@@ -40,6 +40,11 @@ public final class D2Mods {
 
 
     public static File root() {
+        return D2Store.mods();
+    }
+
+
+    static File legacyRoot() {
         return new File(D2Runtime.downloadsDir(), FOLDER);
     }
 

@@ -82,6 +82,8 @@ public final class D2Runtime {
         String driveC = driveC(context).getAbsolutePath();
         String downloads = downloadsDir().getAbsolutePath();
         String game = gameDrivePath(context);
+        D2Store.init(context);
+        String store = D2Store.base().getAbsolutePath();
         String drive;
         String rest;
         if (path.equals(driveC) || path.startsWith(driveC + "/")) {
@@ -96,6 +98,11 @@ public final class D2Runtime {
 
             drive = "E:";
             rest = path.substring(game.length());
+        }
+        else if (store != null && (path.equals(store) || path.startsWith(store + "/"))) {
+
+            drive = "F:";
+            rest = path.substring(store.length());
         }
         else {
             drive = "Z:";
@@ -259,6 +266,7 @@ public final class D2Runtime {
         File[] dlls = new File(root, "opt/d2/syswow64").listFiles();
         if (dlls == null || dlls.length == 0) throw new IOException(D2Text.get(context, R.string.runtime_no_dxvk));
         for (File dll : dlls) copyFile(dll, new File(windows, "syswow64/" + dll.getName()));
+        new File(prefix, DXVK_MALI_MARKER).delete();
         copyFile(new File(root, "opt/d2/winhandler.exe"), new File(windows, "winhandler.exe"));
 
 
@@ -323,6 +331,8 @@ public final class D2Runtime {
         FileUtils.symlink(downloadsDir().getAbsolutePath(), dosdevices.getPath() + "/d:");
         String game = gameDrivePath(context);
         if (game != null) FileUtils.symlink(game, dosdevices.getPath() + "/e:");
+        D2Store.init(context);
+        FileUtils.symlink(D2Store.base().getAbsolutePath(), dosdevices.getPath() + "/f:");
     }
 
     private static void copyFile(File src, File dst) throws IOException {
@@ -408,6 +418,8 @@ public final class D2Runtime {
         return env;
     }
 
+    private static final String DXVK_CONF = "d3d11.constantBufferRangeCheck = \"True\"\n";
+
 
     public static void prepareSession(Context context) {
         File root = rootDir(context);
@@ -418,7 +430,7 @@ public final class D2Runtime {
         File config = new File(root, "home/xuser/.config");
         config.mkdirs();
         new File(root, "home/xuser/.cache").mkdirs();
-        FileUtils.writeString(new File(config, "dxvk.conf"), "d3d11.constantBufferRangeCheck = \"True\"\n");
+        FileUtils.writeString(new File(config, "dxvk.conf"), DXVK_CONF);
         refreshDrives(context);
     }
 
@@ -432,6 +444,62 @@ public final class D2Runtime {
         FileUtils.symlink(dir.getAbsolutePath(), new File(rootDir(context), D2DxvkLog.LINK).getPath());
         env.put("DXVK_LOG_LEVEL", warnings ? "warn" : "error");
         env.put("DXVK_LOG_PATH", D2DxvkLog.WINE_PATH);
+    }
+
+
+
+
+    static final String VORTEK_ICD = "opt/d2/vortek/vortek_icd.aarch64.json";
+
+    static final String DXVK_MALI_DIR = "opt/d2/dxvk-1.10.3/syswow64";
+    private static final String DXVK_ADRENO_DIR = "opt/d2/syswow64";
+
+    private static final String DXVK_MALI_MARKER = ".d2android-dxvk-mali";
+
+
+
+
+
+    public static void useVortek(Context context, EnvVars env) {
+        String icd = new File(rootDir(context), VORTEK_ICD).getPath();
+        env.put("VK_ICD_FILENAMES", icd);
+        env.put("VK_DRIVER_FILES", icd);
+
+        D2GpuPath.Tier tier = D2GpuPath.tier(totalMem(context));
+        if (tier.dxvkMemoryMb > 0) {
+            FileUtils.writeString(new File(rootDir(context), "home/xuser/.config/dxvk.conf"), DXVK_CONF
+                + "dxgi.maxDeviceMemory = " + tier.dxvkMemoryMb + "\n");
+        }
+    }
+
+
+    public static long totalMem(Context context) {
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            android.app.ActivityManager.MemoryInfo info = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(info);
+            return info.totalMem;
+        }
+        catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
+
+
+
+
+
+    public static void selectDxvk(Context context, boolean vortek) throws IOException {
+        File root = rootDir(context);
+        File marker = new File(prefixDir(context), DXVK_MALI_MARKER);
+        if (!vortek && !marker.exists()) return;
+        File[] dlls = new File(root, vortek ? DXVK_MALI_DIR : DXVK_ADRENO_DIR).listFiles();
+        if (dlls == null || dlls.length == 0) throw new IOException(D2Text.get(context, R.string.runtime_no_dxvk));
+        File syswow64 = new File(prefixDir(context), "drive_c/windows/syswow64");
+        for (File dll : dlls) copyFile(dll, new File(syswow64, dll.getName()));
+        if (vortek) FileUtils.writeString(marker, "1.10.3\n");
+        else marker.delete();
     }
 
 
