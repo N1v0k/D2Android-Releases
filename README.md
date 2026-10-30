@@ -181,8 +181,8 @@ playable on a phone, not to change the game.
 - **Single player:** number of players (`/players`) for more life, experience and loot.
 - **PlugY** (optional): shared stash, many stash pages, a larger stash, ladder rune words, autosave, taking back skill
   and attribute points, extended character stats; more PlugY options can be switched on in the settings.
-- **Saved games:** share all characters and stashes as one zip file and load them on another phone; the current saves
-  are backed up first.
+- **Saved games:** they live inside the app. Share all characters and stashes as one zip file to keep a copy or to
+  load them on another phone; loading backs up the current saves first.
 
 ### Installing the game
 
@@ -198,10 +198,12 @@ playable on a phone, not to change the game.
 
 ## Requirements
 
-- An Android phone with a **Snapdragon processor and Adreno graphics** (64-bit, Android 8 or newer).
-  Tested on RedMagic 8 Pro and RedMagic 10 Pro. Other Snapdragon phones may work: **best effort, not officially
-  supported.** Phones with other graphics chips (Mali, PowerVR, Xclipse) are not supported.
-- About **5 GB free space** in `Download/` for the installation without a PC (less once installed).
+- An Android phone or tablet (64-bit, Android 8 or newer) with **Adreno graphics (Snapdragon)** or, from 1.5.1,
+  **Mali, Samsung Xclipse or PowerVR DXT graphics** (e.g. Pixel 10). Tested on RedMagic 8 Pro and RedMagic 10 Pro
+  (Adreno), on tablets with Mali-G52 and Mali-G57, and on Xclipse 940 and PowerVR DXT. Other devices with these chips
+  may work: **best effort, not officially supported.** PowerVR BXM and older PowerVR chips are not supported yet.
+- About **5 GB free space** for the installation without a PC (less once installed). The update from 1.5.0 or older
+  moves the game into the app once and needs about as much free space as your game folder (about 1.4 GB).
 - **Your own Diablo II and Lord of Destruction:** two CD keys (Classic and LoD), or a game folder at version 1.13d.
 - Optional: a gamepad (Bluetooth or USB).
 
@@ -225,13 +227,13 @@ The app does what you would do on a PC, with Blizzard's own files. The installat
 step with its progress:
 
 1. In the app tap **Install the game (without a PC)** and choose the game language (English or German). The
-   app checks the free space in `Download/`.
+   app checks the free space.
 2. The app downloads **Blizzard's official downloaders** for Diablo II and Lord of Destruction from Blizzard's servers
    and runs them. Use Wi-Fi: about 2 GB are downloaded, which takes 10 to 40 minutes. The downloaded installer files
    are checked against known checksums.
 3. **Type in your two CD keys.** They are handed straight to Blizzard's installer and are **never stored, logged or
    sent anywhere else** by the app. On screen they stay masked.
-4. Blizzard's installer installs the game to `Download/D2Android/Diablo2` (about 4 minutes), then the app applies
+4. Blizzard's installer installs the game into the app's own storage (about 4 minutes), then the app applies
    **Blizzard's official 1.13d patch** and checks the result. If the patch stops (for example without network), it
    goes on with the next start; the keys are not needed again.
 5. The app asks **Use the new installation?** Tap **Use it** (you can also delete the installer files, about 2 GB) –
@@ -245,16 +247,30 @@ If you already have Diablo II + LoD at version 1.13d on a PC: copy the whole gam
 `d2data.mpq`, `d2exp.mpq` …) to the phone, for example to `Download/Diablo II`, then choose it in the app: on the
 first start tap **Choose game folder** (later: **Settings → Saved games → Choose game folder**). The app does not
 search the phone for a game by itself, it uses the folder you choose, and it tells you what it found there. It checks
-the version; other versions (1.14, Resurrected) do not work.
+the version; other versions (1.14, Resurrected) do not work. The app then copies the folder once into its own storage
+(with progress) and plays from there; afterwards it offers to delete the game files in `Download` (your saves there
+stay).
 
 ### Bring your saved games
 
 - **From another phone with D2Android:** Settings → Saved games → **Share saved games** there, then **Load saved games**
   here.
-- **From a PC:** copy the `save` folder of your game (`.d2s` characters, plus the stash files) into the `save` folder
-  of the game folder on the phone. Characters must come from 1.13d (or older) single player.
+- **From a PC:** copy the `save` folder of your game (`.d2s` characters, plus the stash files) into the game folder
+  before you choose it: the app takes the characters along while it has none yet. Later: put them into the `save`
+  folder of the game folder in `Download` and use **Settings → Saved games → Take from Download**. Characters must
+  come from 1.13d (or older) single player.
 - **PlugY:** the shared stash lives in its own file (`_LOD_SharedStashSave.sss`) next to your characters. Copy it too,
   or the shared stash starts empty. Before the first start with PlugY the app backs up your saves.
+
+### Where your game and saves live (from 1.5.1)
+
+The game and your saved games are inside the app. On the first start after the update the app copies them once from
+`Download/D2Android` (with progress); after that it only uses its own copy, which makes saving smooth. The old files
+in `Download` are no longer used and stay until you delete them; the app offers to delete the old game files for you.
+
+- **Keep a copy:** Settings → Saved games → **Save to a file** (a place you choose, e.g. Drive or a folder) or
+  **Share saved games**. Do this now and then, especially before switching phones.
+- **Load:** Settings → Saved games → **Load saved games** (zip) or **Take from Download**.
 
 ## Updates
 
@@ -264,7 +280,7 @@ the version; other versions (1.14, Resurrected) do not work.
   not download anything on its own. You can turn this off in the settings. The **What's new** page lists the changes of
   every version and works offline.
 
-Updates install over the old version; your game folder and saved games stay where they are.
+Updates install over the old version; the game and your saved games stay in the app.
 
 ## Feedback
 
@@ -275,7 +291,8 @@ D2Android is a hobby project. Bug reports and ideas are welcome as
   **≡ → Settings → Help and info → Share diagnosis** right after the problem creates a file (what the app did in the
   last minutes, no game files) that helps a lot. **Report a bug** right below it opens the bug form with phone model,
   Android version and app version already filled in.
-- Tested on RedMagic 8 Pro and 10 Pro. Everything else is best effort and not officially supported.
+- Tested on RedMagic 8 Pro and 10 Pro, two tablets with Mali graphics, Xclipse 940 and PowerVR DXT. Everything else
+  is best effort and not officially supported.
 - Please do not post CD keys, game files or saved games of other people.
 
 ## FAQ
@@ -297,8 +314,8 @@ Yes, you need your own purchased copy. The app ships no Blizzard files: the inst
 own downloaders and your keys, the alternative uses your own game folder.
 
 **Where are my saved games? Do they survive an update or reinstall?**
-In the `save` folder of the game folder (by default `Download/D2Android/Diablo2/save`). They stay when you update or
-uninstall the app. Use **Share saved games** for a backup.
+Inside the app (from 1.5.1). They stay when you update the app. Uninstalling removes them: Android asks whether to
+keep the app's data, and **Share saved games** gives you a copy to keep anywhere you like.
 
 **How about battery and heat?**
 The game runs through a compatibility layer and keeps the CPU and GPU busy. Expect roughly the battery drain of a
@@ -309,8 +326,13 @@ background help.
 Yes. Connect a gamepad over Bluetooth or USB; it is set up like Diablo II: Resurrected. See [Gamepad](#gamepad).
 
 **Does the app collect data?**
-No. It has no accounts, no ads and no analytics. The only connections are the downloads from Blizzard during the
-installation and the daily version check (one request to GitHub, can be turned off).
+Only anonymous statistics, and only if you say yes when the app asks on the first start; before that nothing is sent.
+Then, at most once a day and after a crash, an anonymous message goes to Aptabase (servers in the EU): app and Android
+version, phone maker and model, RAM (rounded), chip, graphics chip with its driver versions, audio output, the result
+of the device check, some settings, play time, the game's memory use, characters only as numbers, and after a crash
+where the app was and how it ended. No names, no saved games, no logs, no device ID. Turn it off under
+**Settings → Help and info**. Apart from that: no accounts, no ads; the other connections are the downloads from
+Blizzard during the installation and the daily version check (one request to GitHub, can be turned off).
 
 ## Roadmap
 
