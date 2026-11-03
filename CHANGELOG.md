@@ -3,6 +3,27 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.5.2 (2026-11-03)
+
+- Skill buttons: a second set of four. The small "1/2" button at the top of the arc switches between F1–F4 and F5–F8; every game starts with set 1. A skill that only comes from your second weapon (e.g. Call to Arms) is marked "II": one tap swaps weapons, casts and swaps back. An optional "I/II" button next to Attack swaps weapons (Game helpers › Controls › Skill buttons), and a shoulder trigger can do it too.
+- Teleport: how far you jump follows how far you push the joystick, from a short hop to the edge of the screen. Like on the PC it now goes through thick walls and across gaps. With a gamepad: hold the Teleport button, aim with the left stick, let go to jump once.
+- Sound: comes back cleanly after the app was in the background. If the sound output stops working, the app starts it again by itself.
+- Game settings: what you set in the game's options, such as the resolution 640×480 or 800×600, now stays after quitting. Settings › Picture size shows it; a size there switches back to the wide picture.
+- Start: on some devices, such as Mali tablets, the game sometimes closed right after starting. Fixed.
+- Second game: no more crash ("Unrecoverable internal error") when you load a character again after buying, opening the stash or the recipe book without restarting the app.
+- Shared stash: a shared stash with more than 5 pages now shows all of them.
+- Recipe book: "Item" also finds your item in the large inventory, and Back closes the search at once. Ingredients on the materials page count as "in stash".
+- Loading screen: "Tap: start in town" now works until you arrive, also with a late tap.
+- Square screens: the game picture, the pointer, the buttons and the menu bar stay on the screen.
+- Adreno 840 (e.g. Poco F9 Pro): the graphics driver now knows this chip. If a graphics chip is not supported, the app now says so instead of just closing.
+- "Delete the old game files?" deletes only checked game files. Saved games, also in other folders, mods and your own files stay.
+- Bigger stacks: a tome keeps holding 80 scrolls after "Save and Exit" and a new game.
+- Smaller fixes: no line through the open belt, no mana number above an open cube or stash, the info grid's edge without gaps, hints count as seen only after 2 seconds.
+
+### Known issue
+
+- 640×480 chosen in the game's options now stays. The app's overlays (such as the recipe book's "Item" and the info grid) are not tested in 640×480 yet. If something is off, choose a size under Settings › Picture size to go back to the wide picture.
+
 ## 1.5.1 (2026-10-30)
 
 - New devices: phones and tablets with Mali, Samsung Xclipse or PowerVR DXT graphics (e.g. Pixel 10) are now supported and go straight into the game, with the same picture as on Snapdragon. Tested on Mali-G52 and Mali-G57 tablets, Xclipse 940 and PowerVR DXT. PowerVR BXM is not supported yet.
