@@ -24,7 +24,7 @@ public final class D2RezeptBuch {
         T_HAVE = 318, T_LACKS = 319, T_INGREDIENTS = 320, T_LADDER_OFF = 321, T_WHERE_INV = 322, T_WHERE_CUBE = 323,
         T_WHERE_STASH = 324, T_WHERE_MAT = 325, T_CUBE_HAS = 326, T_CUBE_MAKES = 327, T_CUBE_ALMOST = 328, T_MATERIALS_LINK = 329,
         T_EMPTY = 330, T_MISSING_N = 331, T_HITS = 332, T_LADDER_MARK = 333, T_STALE = 334, T_STALE_NONE = 335, T_INSERT = 336,
-        T_ON_PAGE = 337, T_ON_PAGE_SHARED = 338;
+        T_ON_PAGE = 337, T_ON_PAGE_SHARED = 338, T_IN_STASH = 339;
 
     public static final int TAB_CAN = 0, TAB_CUBE = 1, TAB_RUNEWORDS = 2;
 
@@ -348,6 +348,7 @@ public final class D2RezeptBuch {
         }
         if (!open) return false;
         if (hit >= HIT_TAB && hit < HIT_TAB + 3) {
+            if (hit - HIT_TAB != tab) query = "";
             tab = hit - HIT_TAB;
             page = 0;
             detail = null;
@@ -411,6 +412,7 @@ public final class D2RezeptBuch {
     public void padTab(int by) {
         if (!open) return;
         tab = (tab + by + 3) % 3;
+        query = "";
         page = 0;
         detail = null;
         focus = -1;
@@ -889,7 +891,7 @@ public final class D2RezeptBuch {
             boolean lacks = s.have[k] < z.count;
             if (z.picture != null) item(l, z.picture, x0 + 14, y, 15, lacks, lacks ? art.colour(0xC83030) : 0);
             String label = (z.count > 1 ? z.count + "x " : "") + z.label;
-            String mark = texte.t(lacks ? T_LACKS : T_HAVE);
+            String mark = mark(s, k, z.count);
             int markW = art.width(D2Layer.FONT8, mark);
             l.text(x0 + 36, y + 13, D2Layer.FONT8, lacks ? D2Layer.GREY : D2Layer.WHITE, D2Layer.LEFT,
                 fit(art, label, WW - 36 - markW - 20));
@@ -898,6 +900,20 @@ public final class D2RezeptBuch {
         }
 
         if (!e.isRuneword()) D2MaterialsLayer.pageStone(l, art, texte.t(T_INSERT), ox + INSERT_X, oy + INSERT_Y, insertPressed, D2Layer.STONE_TEXT);
+    }
+
+
+
+
+
+
+    String mark(D2RezeptBestand.Lage s, int k, int count) {
+        if (s.have[k] < count) return texte.t(T_LACKS);
+        if (s.carried[k] >= count) return texte.t(T_HAVE);
+        if (s.pageOf != null && k < s.pageOf.length && s.pageOf[k] > 0) {
+            return texte.t(s.sharedOf[k] ? T_ON_PAGE_SHARED : T_ON_PAGE, s.pageOf[k]);
+        }
+        return texte.t(T_IN_STASH);
     }
 
 

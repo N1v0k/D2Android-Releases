@@ -22,6 +22,12 @@ public final class D2Hints {
 
     public static final long SHOW_MS = 10000;
 
+
+
+
+
+    public static final long SEEN_MS = 2000;
+
     public static final long GAP_MS = 20000;
 
     public static final long FIGHT_MS = 3000;
@@ -63,6 +69,8 @@ public final class D2Hints {
 
     private final EnumSet<Topic> seen = EnumSet.noneOf(Topic.class);
     private Topic showing;
+
+    private boolean showingWasPending;
     private long shownAt, hiddenAt = Long.MIN_VALUE / 2;
     private int lastSkillPoints = -1;
 
@@ -103,7 +111,13 @@ public final class D2Hints {
     }
 
 
+    public long shownAt() {
+        return shownAt;
+    }
+
+
     public void update(Facts f, long now) {
+        if (showing != null && now - shownAt >= SEEN_MS) markSeen(showing);
         if (f.skillPoints >= 0) {
             if (lastSkillPoints >= 0 && f.skillPoints < lastSkillPoints) pending.add(Topic.NEW_SKILL);
             lastSkillPoints = f.skillPoints;
@@ -119,27 +133,31 @@ public final class D2Hints {
             showing = t;
             shownAt = now;
 
-            seen.add(t);
-            seenChanged = true;
-            pending.remove(t);
+
+            showingWasPending = pending.remove(t);
             return;
         }
     }
 
 
     public void dismiss(long now) {
-        if (showing != null) hide(now);
+        if (showing == null) return;
+        markSeen(showing);
+        hide(now);
     }
 
 
     public void newGame(long now) {
         lastSkillPoints = -1;
-        pending.clear();
         if (showing != null) hide(now);
+        pending.clear();
     }
 
     private void hide(long now) {
+
+        if (!seen.contains(showing) && now - shownAt < SEEN_MS && showingWasPending) pending.add(showing);
         showing = null;
+        showingWasPending = false;
         hiddenAt = now;
     }
 

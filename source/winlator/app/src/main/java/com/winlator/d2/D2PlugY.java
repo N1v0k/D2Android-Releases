@@ -30,7 +30,10 @@ public final class D2PlugY {
     }
 
 
-    public static void install(Context context, File shadowDir, boolean enabled) throws IOException {
+
+
+
+    public static void install(Context context, File shadowDir, File saveDir, boolean enabled) throws IOException {
         File dll = new File(shadowDir, "PlugY.dll");
         D2Settings.setRespecStarted(context, false);
 
@@ -47,8 +50,9 @@ public final class D2PlugY {
         if (files != null) for (String name : files) FileUtils.copy(context, ASSET_DIR + "/PlugY/" + name, new File(folder, name));
         boolean respec = D2Settings.respec(context);
         boolean[] extras = extras(context);
-        FileUtils.writeString(new File(shadowDir, "PlugY.ini"), withSharedStash(ini(D2Settings.bigStash(context), respec,
-            D2Settings.statsPages(context), extras), D2Settings.sharedStash(context)));
+        String ini = withSharedStash(ini(D2Settings.bigStash(context), respec, D2Settings.statsPages(context), extras),
+            D2Settings.sharedStash(context));
+        FileUtils.writeString(new File(shadowDir, "PlugY.ini"), withSharedPages(ini, sharedPages(saveDir)));
         D2Settings.setRespecStarted(context, respec);
         D2Settings.setLadderStarted(context, extras[java.util.Arrays.asList(EXTRA_KEYS).indexOf("ActiveLadderRunewords")]);
     }
@@ -185,6 +189,63 @@ public final class D2PlugY {
     static String withSharedStash(String ini, boolean on) {
         if (on) return ini;
         return set(set(ini, "ActiveSharedStash", "0"), "ActiveSharedGold", "0");
+    }
+
+
+    static final int SHARED_PAGES = 5;
+
+    static final int MAX_SHARED_PAGES = 100000;
+
+
+
+
+
+
+
+
+    static int sharedPages(File saveDir) {
+        int pages = SHARED_PAGES;
+        File[] files = saveDir != null ? saveDir.listFiles() : null;
+        if (files == null) return pages;
+        for (File f : files) {
+            if (!f.isFile() || !f.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".sss")) continue;
+            int n = sharedPagesIn(head(f));
+            if (n < 0) return 0;
+            pages = Math.max(pages, n);
+        }
+        return pages;
+    }
+
+
+
+
+
+    static int sharedPagesIn(byte[] head) {
+        if (head == null) return -1;
+        if (head.length == 0) return 0;
+        if (head.length < 10 || head[0] != 'S' || head[1] != 'S' || head[2] != 'S' || head[3] != 0 || head[4] != '0') return -1;
+        int at = head[5] == '1' ? 6 : head[5] == '2' ? 10 : -1;
+        if (at < 0 || head.length < at + 4) return -1;
+        long n = (head[at] & 0xFFL) | (head[at + 1] & 0xFFL) << 8 | (head[at + 2] & 0xFFL) << 16 | (head[at + 3] & 0xFFL) << 24;
+        return n > MAX_SHARED_PAGES ? -1 : (int) n;
+    }
+
+
+    private static byte[] head(File f) {
+        try (InputStream in = new java.io.FileInputStream(f)) {
+            byte[] b = new byte[14];
+            int at = 0;
+            for (int n; at < b.length && (n = in.read(b, at, b.length - at)) > 0; ) at += n;
+            return java.util.Arrays.copyOf(b, at);
+        }
+        catch (IOException e) {
+            return null;
+        }
+    }
+
+
+    static String withSharedPages(String ini, int pages) {
+        return set(ini, "MaxSharedPages", String.valueOf(pages));
     }
 
     private static String set(String ini, String key, String value) {

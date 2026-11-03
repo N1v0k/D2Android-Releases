@@ -113,7 +113,7 @@ public class D2SettingsActivity extends D2Activity {
             default: return "";
         }
     }
-    private static final int ID_AUTO = 1000, ID_LANGUAGE = 1100, ID_FRAME_RATE = 1200, IMPORT_REQUEST_CODE = 4720,
+    private static final int ID_AUTO = 1000, ID_LANGUAGE = 1100, ID_FRAME_RATE = 1200, ID_INGAME_SIZE = 1900, IMPORT_REQUEST_CODE = 4720,
         FOLDER_REQUEST_CODE = 4721, INSTALL_REQUEST_CODE = 4722, MOD_REQUEST_CODE = 4723, EXPORT_REQUEST_CODE = 4724;
 
     private TextView savesStatus;
@@ -351,13 +351,35 @@ public class D2SettingsActivity extends D2Activity {
                 box.addView(label(e.label));
                 box.addView(hint(getString(R.string.settings_size_hint)));
                 RadioGroup sizeGroup = new RadioGroup(this);
+
+
+                File startDir = GameShadow.dir(this);
+                String ingame = D2IngameResolution.size(D2IngameResolution.read(startDir));
+                View ingameHint = null;
+                if (ingame != null) {
+                    addOption(sizeGroup, ID_INGAME_SIZE, getString(R.string.settings_size_ingame, ingame.replace('x', '\u00D7')));
+                    ingameHint = hint(getString(R.string.settings_size_ingame_hint));
+                    sizeGroup.addView(ingameHint);
+                }
                 addOption(sizeGroup, D2Settings.LINES_540, getString(R.string.settings_size_540));
                 addOption(sizeGroup, D2Settings.LINES_600, getString(R.string.settings_size_600));
                 addOption(sizeGroup, ID_AUTO, getString(R.string.settings_size_auto));
                 int lines = D2Settings.gameLines(this);
-                sizeGroup.check(lines == D2Settings.LINES_AUTO ? ID_AUTO : lines);
-                sizeGroup.setOnCheckedChangeListener((group, id) -> D2Settings.setGameLines(this, id == ID_AUTO ? D2Settings.LINES_AUTO : id));
+                sizeGroup.check(ingame != null ? ID_INGAME_SIZE : lines == D2Settings.LINES_AUTO ? ID_AUTO : lines);
+                final View ingameHintView = ingameHint;
+                sizeGroup.setOnCheckedChangeListener((group, id) -> {
+                    if (id == View.NO_ID || id == ID_INGAME_SIZE) return;
+                    D2Settings.setGameLines(this, id == ID_AUTO ? D2Settings.LINES_AUTO : id);
+                    View ingameRow = group.findViewById(ID_INGAME_SIZE);
+                    if (ingameRow == null) return;
+                    D2IngameResolution.resetToWide(startDir);
+                    group.post(() -> {
+                        group.removeView(ingameRow);
+                        if (ingameHintView != null) group.removeView(ingameHintView);
+                    });
+                });
                 box.addView(sizeGroup);
+                box.addView(hint(getString(R.string.settings_size_note)));
                 return box;
             }
             case "frameRate": {

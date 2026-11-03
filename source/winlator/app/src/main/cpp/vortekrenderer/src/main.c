@@ -1,4 +1,4 @@
-#include <limits.h>  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+#include <limits.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 #include <jni.h>
 #include <libgen.h>
 #include <sys/stat.h>
@@ -8,6 +8,7 @@
 #include "request_handler.h"
 #include "vulkan_helper.h"
 #include "jni_utils.h"
+#include "vortek_log.h"
 
 VulkanWrapper vulkanWrapper = {0};
 bool vortekSerializerCastVkObject = true;
@@ -48,6 +49,18 @@ Java_com_winlator_xenvironment_components_VortekRendererComponent_initVulkanWrap
     (*env)->ReleaseStringUTFChars(env, cacheDir, cacheDirC);
     void* libvulkan = openVulkanLibrary();
     initVulkanWrapper(&vulkanWrapper, libvulkan);
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_winlator_xenvironment_components_VortekRendererComponent_openLog(JNIEnv *env, jclass cls, jstring path) {
+    if (!path) {
+        vortekLog_open(NULL);
+        return;
+    }
+    const char* pathC = (*env)->GetStringUTFChars(env, path, NULL);
+    vortekLog_open(pathC);
+    (*env)->ReleaseStringUTFChars(env, path, pathC);
 }
 
 JNIEXPORT jboolean JNICALL

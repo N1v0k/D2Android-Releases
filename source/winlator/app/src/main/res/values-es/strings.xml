@@ -30,6 +30,9 @@
     <string name="settings_size_540">Grande (540 líneas, muy nítido, predeterminado)</string>
     <string name="settings_size_600">Mediano (600 líneas, como el original)</string>
     <string name="settings_size_auto">Pequeño (720 líneas, más mundo a la vista)</string>
+    <string name="settings_size_ingame">Elegido en el juego: %1$s (4:3, con bordes)</string>
+    <string name="settings_size_ingame_hint">Toca un tamaño de abajo para volver a la imagen ancha.</string>
+    <string name="settings_size_note">En las opciones del juego (Resolución) también puedes elegir 640×480 u 800×600 (4:3, con bordes). La app guarda esa elección. Un tamaño aquí vuelve a la imagen ancha.</string>
     <string name="settings_frame_rate">Imágenes por segundo</string>
     <string name="settings_frame_rate_hint">Menos imágenes por segundo ahorran batería y el móvil se calienta menos. Se aplica desde el próximo inicio del juego.</string>
     <string name="settings_frame_rate_unlimited">Sin límite</string>
@@ -306,6 +309,8 @@
     <string name="helper_directWalk_info">Los monstruos y nombres en el camino no detienen al personaje.</string>
     <string name="helper_tapMoves_label">Un toque en la pantalla mueve al personaje</string>
     <string name="helper_tapMoves_info">Desactivado: un toque en el mundo no hace nada, solo andas con el joystick.</string>
+    <string name="helper_weaponSwapButton_label">Botón «I/II»: cambiar de arma</string>
+    <string name="helper_weaponSwapButton_info">Un botón pequeño junto a «Atacar» cambia de arma como W (p. ej. Llamada a las armas). Los beneficios se mantienen al volver. Un botón de habilidad con «II» cambia, lanza y vuelve solo.</string>
     <string name="helper_joystickVisible_label">Mostrar el joystick</string>
     <string name="helper_joystickVisible_info">También funciona invisible, en cualquier punto de la mitad izquierda.</string>
     <string name="helper_diagnose_label">Compartir diagnóstico</string>
@@ -381,6 +386,8 @@
     <string name="assign_for_left">Toca la habilidad izquierda para %1$s · toca aquí: lista derecha</string>
     <string name="note_skill_not_for_attack">Esta habilidad no puede ir en Atacar</string>
     <string name="note_slot_free">%1$s está libre: toca \"%2$s\" y luego %1$s</string>
+    <string name="note_skill_set">Juego %1$d: %2$s a %3$s</string>
+    <string name="note_swap_cast_failed">El cambio de arma no llegó, no se lanzó nada</string>
 
     <string name="tree_pick_for">Toca el botón F para %1$s</string>
     <string name="tree_pick_skill">la habilidad</string>
@@ -678,6 +685,9 @@
     <string name="check_vortek">%1$s: aquí Diablo II funciona a través de una capa gráfica adicional para este chip. Es experimental: el juego puede ir lento o mostrar fallos gráficos.</string>
     <string name="game_early_end">El juego se cerró justo después de iniciarse. El motivo está en el registro, que puedes enviar con «Compartir diagnóstico».</string>
     <string name="game_early_end_ok">Cerrar</string>
+    <string name="game_early_end_gpu">El controlador gráfico de la app aún no es compatible con este chip gráfico (%1$s, ID de chip %2$s), por eso el juego no puede iniciarse. Envíanos el diagnóstico con «Compartir diagnóstico» para que podamos añadirlo en una actualización.</string>
+    <string name="game_early_end_driver">El controlador gráfico no pudo iniciar Vulkan en este chip gráfico (%1$s), por eso el juego no puede iniciarse. Este chip o su controlador aún no es compatible. Envíanos el diagnóstico con «Compartir diagnóstico».</string>
+    <string name="game_early_end_gpu_unknown">modelo desconocido</string>
     <string name="check_start_anyway">Iniciar de todos modos</string>
     <string name="check_space_title">Poco espacio libre</string>
     <string name="check_space">Solo %1$s libres; la primera instalación necesita cerca de 1 GB.</string>
@@ -1221,11 +1231,12 @@
     <string name="settings_group_spielstaende">Partidas</string>
     <string name="settings_group_spielstaende_desc">Carpeta, instalar, compartir, cargar</string>
     <string name="settings_group_hilfe">Ayuda e info</string>
-    <string name="settings_group_hilfe_desc">Guía, segundo plano, informar de un error, licencias</string>
+    <string name="settings_group_hilfe_desc">Consejos, segundo plano, informar de un error, licencias</string>
     <string name="settings_section_gehen">Andar</string>
     <string name="settings_section_joystick">Joystick</string>
     <string name="settings_section_zielhilfe">Ayuda de puntería</string>
     <string name="settings_section_schultertasten">Gatillos</string>
+    <string name="settings_section_fertigkeiten">Botones de habilidad</string>
     <string name="settings_section_gamepad">Mando</string>
     <string name="settings_section_menue">Botones arriba a la derecha</string>
     <string name="settings_section_untere_leiste">Barra inferior</string>
@@ -1544,6 +1555,7 @@
     <string name="rb_insert_failed_stash">No colocado: ¿alijo demasiado lejos?</string>
     <string name="rb_on_page">en la página %1$d</string>
     <string name="rb_on_page_shared">en la página %1$d (compartido)</string>
+    <string name="rb_in_stash">en el alijo</string>
     <string name="rb_insert_page">%1$s está en la página %2$d de tu alijo: ve a esa página</string>
     <string name="rb_insert_page_shared">%1$s está en la página %2$d del alijo compartido: ve a esa página</string>
     <string name="rb_unavailable">Recetas: solo en una partida con el mod</string>
@@ -1659,7 +1671,7 @@
     <string name="settings_saves_backups">Compartir copias</string>
     <string name="saves_backups_none">Todavía no hay copias.</string>
     <string name="move_cleanup_title">¿Borrar los archivos antiguos del juego?</string>
-    <string name="move_cleanup_message">El juego ya está en la app. Ya no necesitas los archivos antiguos del juego en %1$s (%2$s). Tus partidas allí se quedan.</string>
+    <string name="move_cleanup_message">El juego ya está en la app. Ya no necesitas los archivos antiguos del juego en %1$s (%2$s). Solo se borran los archivos del juego que están en la app. Tus partidas (también en carpetas como save.alt), mods y archivos propios allí se quedan.</string>
     <string name="move_cleanup_delete">Borrar</string>
     <string name="move_cleanup_done">Archivos antiguos del juego borrados (%1$s libres).</string>
     <string name="settings_saves_from_download">Traer de Download</string>

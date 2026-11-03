@@ -8,7 +8,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -142,11 +144,23 @@ final class D2Umzug {
 
 
 
-    static long deleteGameFiles(File gameDir) throws IOException {
-        long freed = gameFilesSize(gameDir);
+
+
+    static long deleteGameFiles(File gameDir, File copy, Progress progress) throws IOException {
+        if (!ready(copy)) throw new IOException("the game is not in the app yet");
+        List<File[]> files = oldGameFiles(gameDir, copy);
+        long total = 0;
+        for (File[] p : files) total += p[0].length();
+        long done = 0, freed = 0;
+        for (File[] p : files) {
+            long length = p[0].length();
+            if (p[1].isFile() && p[1].length() == length && Arrays.equals(sha256(p[0]), sha256(p[1])) && p[0].delete())
+                freed += length;
+            done += length;
+            progress.at(GAME + CHECKING, done, total);
+        }
         File[] list = gameDir.listFiles();
-        if (list == null) throw new IOException("cannot list " + gameDir);
-        for (File f : list) if (!f.getName().equalsIgnoreCase("save")) delete(f);
+        if (list != null) for (File f : list) if (f.isDirectory() && gameFolder(f.getName())) pruneEmpty(f);
         String[] left = gameDir.list();
         if (left != null && left.length == 0)
             gameDir.delete();
@@ -154,8 +168,74 @@ final class D2Umzug {
     }
 
 
-    static long gameFilesSize(File gameDir) throws IOException {
-        return gameDir != null && gameDir.isDirectory() ? size(gameDir, new String[]{"save"}) : 0;
+    static long gameFilesSize(File gameDir, File copy) throws IOException {
+        if (gameDir == null || !gameDir.isDirectory() || !ready(copy)) return 0;
+        long sum = 0;
+        for (File[] p : oldGameFiles(gameDir, copy)) sum += p[0].length();
+        return sum;
+    }
+
+
+
+
+
+
+    static List<File[]> oldGameFiles(File gameDir, File copy) throws IOException {
+        List<File[]> out = new ArrayList<>();
+        File[] list = gameDir.listFiles();
+        if (list == null) throw new IOException("cannot list " + gameDir);
+        for (File f : list) {
+            String n = f.getName();
+            File c = new File(copy, n);
+            if (f.isDirectory()) {
+                if (gameFolder(n) && c.isDirectory()) sameFiles(f, c, out);
+            }
+            else if (f.isFile() && gameFile(n) && !saveFile(n) && c.isFile() && c.length() == f.length()) out.add(new File[]{f, c});
+        }
+        return out;
+    }
+
+    private static void sameFiles(File dir, File copy, List<File[]> out) {
+        File[] list = dir.listFiles();
+        if (list == null) return;
+        for (File f : list) {
+            File c = new File(copy, f.getName());
+            if (f.isDirectory()) {
+                if (c.isDirectory()) sameFiles(f, c, out);
+            }
+            else if (f.isFile() && !saveFile(f.getName()) && c.isFile() && c.length() == f.length()) out.add(new File[]{f, c});
+        }
+    }
+
+
+    static boolean gameFolder(String name) {
+        return name.equalsIgnoreCase("plugy");
+    }
+
+
+
+
+
+
+    static boolean gameFile(String name) {
+        String n = name.toLowerCase(Locale.ROOT);
+        return n.matches(".*\\.(mpq|exe|dll|ini|cfg|log|lng)") || n.matches(".*\\.exe\\.[^.]+") || n.matches("d2\\d{6}\\.txt")
+            || n.equals("patch.txt") || n.equals("bnetlog.txt") || n.equals("default.key") || n.endsWith("install log.html");
+    }
+
+
+    static boolean saveFile(String name) {
+        String n = name.toLowerCase(Locale.ROOT);
+        return !n.equals("default.key") && n.matches(".*\\.(d2s|d2x|d2~|sss|key|map|ma\\d)(~|\\.bak)?");
+    }
+
+
+    private static void pruneEmpty(File dir) {
+        File[] list = dir.listFiles();
+        if (list != null) for (File f : list) if (f.isDirectory()) pruneEmpty(f);
+        String[] left = dir.list();
+        if (left != null && left.length == 0)
+            dir.delete();
     }
 
 

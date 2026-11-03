@@ -59,8 +59,6 @@ final class D2RezeptHook {
     static final long INSERT_WAIT_MS = 3500;
 
 
-    static final int INV_RIGHT = 383, INV_Y = 316, INV_COLUMNS = 10, INV_ROWS = 4, CELL = 29;
-
     static final float SWIPE = 24;
 
     private final Host host;
@@ -302,14 +300,22 @@ final class D2RezeptHook {
     }
 
 
+
+
+
+
     private D2RezeptBestand.Stueck itemAt(float x, float y) {
-        if (items == null) return null;
+        D2ModLink link = host.link();
+        D2ModItems carried = link != null ? link.items() : null;
+        int[] grids = carried == null && link != null ? link.grids() : null;
+        boolean known = grids != null && grids[D2Points.GRIDS_INV_W] > 0 && grids[D2Points.GRIDS_INV_H] > 0;
+        int w = carried != null ? carried.gridWidth() : known ? grids[D2Points.GRIDS_INV_W] : D2ModItems.INVENTORY_WIDTH;
+        int h = carried != null ? carried.gridHeight() : known ? grids[D2Points.GRIDS_INV_H] : D2ModItems.INVENTORY_HEIGHT;
         float gx = (x - viewLeft) / scale, gy = (y - viewTop) / scale;
-        float invX = gameWidth - ox - INV_RIGHT, invY = oy + INV_Y;
-        if (gx < invX || gx >= invX + INV_COLUMNS * CELL || gy < invY || gy >= invY + INV_ROWS * CELL) return null;
-        int cx = (int) ((gx - invX) / CELL), cy = (int) ((gy - invY) / CELL);
-        for (D2RezeptBestand.Stueck s : items) if (s.place == D2RezeptBestand.PLACE_INVENTORY && s.covers(cx, cy)) return s;
-        return null;
+        D2RezeptBestand.Stueck s = D2RezeptRaster.itemAt(items, gx, gy, gameWidth, ox, oy, w, h);
+        D2Trace.log("recipes: item pick at " + Math.round(gx) + "," + Math.round(gy) + " in a " + w + " x " + h + " grid: "
+            + (s != null ? s.code : items == null ? "no stock" : "no item"));
+        return s;
     }
 
 
@@ -608,7 +614,18 @@ final class D2RezeptHook {
         if (b == null || searchDialog != null && searchDialog.isShowing()) return;
 
         if (!host.paused()) pausedByBook = true;
-        EditText field = new EditText(context);
+        EditText field = new EditText(context) {
+
+
+
+
+            @Override
+            public boolean onKeyPreIme(int keyCode, android.view.KeyEvent event) {
+                if (keyCode != android.view.KeyEvent.KEYCODE_BACK) return super.onKeyPreIme(keyCode, event);
+                if (event.getAction() == android.view.KeyEvent.ACTION_UP) endSearch(this);
+                return true;
+            }
+        };
         field.setSingleLine(true);
         field.setText(b.query());
         field.setSelection(field.getText().length());
@@ -626,7 +643,7 @@ final class D2RezeptHook {
             }
         });
         field.setOnEditorActionListener((v, actionId, event) -> {
-            if (searchDialog != null) searchDialog.dismiss();
+            endSearch(field);
             return true;
         });
         searchDialog = new AlertDialog.Builder(context).setView(field).create();
@@ -635,8 +652,25 @@ final class D2RezeptHook {
             w.setGravity(android.view.Gravity.TOP);
             w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+
+
+            w.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
         }
         searchDialog.show();
+        if (w != null) w.getDecorView().setOnTouchListener((v, e) -> {
+            if (e.getActionMasked() == android.view.MotionEvent.ACTION_OUTSIDE) endSearch(field);
+            return false;
+        });
         field.requestFocus();
+    }
+
+
+    private void endSearch(EditText field) {
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager)
+            field.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(field.getWindowToken(), 0);
+        AlertDialog d = searchDialog;
+        if (d != null && d.isShowing()) d.dismiss();
     }
 }

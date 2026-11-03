@@ -48,6 +48,9 @@ public final class D2RezeptTextNamen {
             case D2RezeptBuch.T_STALE: return "rb_stale";
             case D2RezeptBuch.T_STALE_NONE: return "rb_stale_none";
             case D2RezeptBuch.T_INSERT: return "rb_insert";
+            case D2RezeptBuch.T_ON_PAGE: return "rb_on_page";
+            case D2RezeptBuch.T_ON_PAGE_SHARED: return "rb_on_page_shared";
+            case D2RezeptBuch.T_IN_STASH: return "rb_in_stash";
             case D2RezeptKatalog.T_CAT_RUNES: return "rb_cat_runes";
             case D2RezeptKatalog.T_CAT_GEMS: return "rb_cat_gems";
             case D2RezeptKatalog.T_CAT_CRAFT: return "rb_cat_craft";

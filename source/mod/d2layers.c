@@ -174,6 +174,28 @@ static void lyrRepointed(int no) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+static void layersNewGame(void) {
+    int dropped = 0;
+    for (int i = 0; i < LYR_CELLS; i++) {
+        LyrCell* c = &lyrCells[i];
+        if (!c->used) continue;
+        HeapFree(GetProcessHeap(), 0, c->file);
+        c->used = 0;
+        dropped++;
+    }
+    lyrCellNext = 0;
+    if (dropped) logLine("layers: new game, %d own cells dropped, built again with new texture cache slots", dropped);
+}
+
 static void* lyrLoad(int no) {
     lyrRepointed(no);
     if (lyrFiles[no]) return lyrFiles[no] == (void*) 1 ? NULL : lyrFiles[no];
@@ -183,7 +205,8 @@ static void* lyrLoad(int no) {
     __asm__ volatile ("push $0\n\tcall *%2" : "=a"(result) : "a"(path), "r"(client + RVA_LoadCell)
                       : "ecx", "edx", "memory", "cc");
     lyrFiles[no] = result && readable((void*) result, 28) && RD32(result, 0) == 6 ? (void*) result : (void*) 1;
-    logLine(lyrFiles[no] != (void*) 1 ? "layers: picture %d %s loaded" : "layers: picture %d %s not loaded", no, lyrPaths[no]);
+    logLine(lyrFiles[no] != (void*) 1 ? "layers: picture %d %s loaded (%p)" : "layers: picture %d %s not loaded", no, lyrPaths[no],
+        lyrFiles[no]);
     return lyrFiles[no] == (void*) 1 ? NULL : lyrFiles[no];
 }
 

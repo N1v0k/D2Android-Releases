@@ -1389,7 +1389,7 @@ public class D2LaunchActivity extends D2Activity {
         getSharedPreferences(D2Settings.PREFS, MODE_PRIVATE).edit().remove(KEY_CLEANUP).apply();
         long bytes;
         try {
-            bytes = D2Umzug.gameFilesSize(old);
+            bytes = D2Umzug.gameFilesSize(old, D2Store.game());
         }
         catch (IOException e) {
             return;
@@ -1399,7 +1399,9 @@ public class D2LaunchActivity extends D2Activity {
             android.text.format.Formatter.formatShortFileSize(this, bytes)), getString(R.string.move_cleanup_delete), () ->
             new Thread(() -> {
                 try {
-                    long freed = D2Umzug.deleteGameFiles(old);
+
+                    long freed = D2Umzug.deleteGameFiles(old, D2Store.game(), (what, done, total) ->
+                        status(getString(R.string.move_checking, done >> 20, total >> 20)));
                     D2Trace.log("move into the app: old game files deleted, " + (freed >> 20) + " MB");
                     status(getString(R.string.move_cleanup_done, android.text.format.Formatter.formatShortFileSize(this, freed)));
                 }

@@ -316,20 +316,30 @@ public class D2GameActivity extends D2Activity {
         screen.start(command, env, null, (status) -> {
             if (gameWatch != null) gameWatch.end();
 
+            long ranMs = SystemClock.elapsedRealtime() - startedAt;
+            String tail = counted ? guestOutputTail(outputFile) : "";
+
+            String refusedChip = D2ExitText.gpuRefused(tail);
+            boolean early = counted && D2ExitText.earlyEnd(ranMs, D2GuestComponent.endReason(), backgroundMs(), exiting,
+                D2ExitText.crashed(tail) || refusedChip != null, screen.windowShown());
+
+            if (early && refusedChip != null) D2Telemetry.gpuRefused(this);
+
             D2ExitLog.gameEnded(status, backgroundMs(), D2GuestComponent.endReason(), D2GuestComponent.endSinceResumeMs());
             if (counted) D2Telemetry.gameEnded(this, status, D2GuestComponent.endReason() != null, SystemClock.elapsedRealtime() - startedAt);
             writeGuestLog("[d2] guest ended with status " + status);
 
 
             D2Trace.log("game ended with status " + status + " (Wine desktop)");
+            if (early) {
+                D2Trace.log("game ended " + ranMs + " ms after its start: early end dialog"
+                    + (refusedChip != null ? " (gpu refused by the driver, chip " + (refusedChip.isEmpty() ? "?" : refusedChip) + ")" : ""));
+                D2ExitLog.note(D2ExitText.earlyEndNote(ranMs, refusedChip != null));
+            }
             D2Diagnose.keepTraceOfEndedRun(this);
-
-            long ranMs = SystemClock.elapsedRealtime() - startedAt;
-            if (counted && D2ExitText.earlyEnd(ranMs, D2GuestComponent.endReason(), backgroundMs(), exiting,
-                    D2ExitText.crashed(guestOutputTail(outputFile)), screen.windowShown())) {
-                D2Trace.log("game ended " + ranMs + " ms after its start: early end dialog");
-                D2ExitLog.note("Spiel endete " + ranMs / 1000 + " s nach dem Start (Start fehlgeschlagen)");
-                runOnUiThread(this::showEarlyEnd);
+            if (early) {
+                String message = refusedChip != null ? gpuRefusedText(refusedChip) : D2Text.get(this, R.string.game_early_end);
+                runOnUiThread(() -> showEarlyEnd(message));
             }
             else runOnUiThread(this::exit);
         }, output);
@@ -357,7 +367,20 @@ public class D2GameActivity extends D2Activity {
     }
 
 
-    private void showEarlyEnd() {
+
+
+
+    private String gpuRefusedText(String chipId) {
+        D2DeviceProbe probe = D2DeviceProbe.basics();
+        probe.readGpu();
+        String gpu = D2ExitText.gpuLabel(probe.glRenderer);
+        if (gpu.isEmpty()) gpu = D2Text.get(this, R.string.game_early_end_gpu_unknown);
+        return chipId.isEmpty() ? D2Text.get(this, R.string.game_early_end_driver, gpu)
+            : D2Text.get(this, R.string.game_early_end_gpu, gpu, chipId);
+    }
+
+
+    private void showEarlyEnd(String text) {
         if (exiting || isFinishing()) {
             exit();
             return;
@@ -366,7 +389,7 @@ public class D2GameActivity extends D2Activity {
         TextView message = new TextView(this);
         int pad = Math.round(16 * getResources().getDisplayMetrics().density);
         message.setPadding(pad, pad, pad, 0);
-        message.setText(D2Text.get(this, R.string.game_early_end));
+        message.setText(text);
         message.setTextSize(16);
         D2Style.text(message);
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -1038,6 +1061,9 @@ public class D2GameActivity extends D2Activity {
 
         D2ExitGuard guard = D2ExitGuard.arm(D2ExitGuard.TEARDOWN_MS, this::endHungExit);
         screen.destroy(D2ExitText.BY_QUIT, guard);
+
+        guard.step("registry");
+        D2GuestComponent.saveRegistry(D2Runtime.rootDir(this), D2RegistrySave.WAIT_MS);
         D2Trace.log("exit: teardown took " + guard.done() + " ms");
         D2FolderLock.releaseAll();
         closeGuestLog();

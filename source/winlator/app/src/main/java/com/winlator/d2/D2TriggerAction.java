@@ -26,7 +26,8 @@ public final class D2TriggerAction {
 
     public static final int KEY = -1, NOTHING = -2;
 
-    public static final int[] ALL = {SKILL, ATTACK, ATTACK_OR_TAKE, HEAL, MANA, REJUV, TAKE, PORTAL, MAP, INVENTORY, NAMES};
+    public static final int[] ALL = {SKILL, ATTACK, ATTACK_OR_TAKE, HEAL, MANA, REJUV, TAKE, PORTAL, MAP, INVENTORY, NAMES,
+        WEAPON_SWAP};
 
     public static final int[] PAD = {ATTACK_OR_TAKE, ATTACK, SKILL_F1, 11, 12, 13, 14, 15, 16, SKILL_F8, HEAL, MANA, REJUV,
         TAKE, PORTAL, MAP, INVENTORY, NAMES, WEAPON_SWAP, RUN_TOGGLE, ESC_MENU, APP_MENU, NOTHING};

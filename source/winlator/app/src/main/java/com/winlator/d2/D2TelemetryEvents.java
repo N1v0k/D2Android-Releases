@@ -42,7 +42,9 @@ public final class D2TelemetryEvents {
 
     public static final String R_JAVA = "java", R_NATIVE = "native", R_ANR = "anr", R_LOW_MEMORY = "lowMemory",
         R_RESOURCES = "resources", R_SIGNALED = "signaled", R_DEPENDENCY = "dependency", R_OTHER = "other",
-        R_GAME = "gameError";
+        R_GAME = "gameError",
+
+        R_GPU_DRIVER = "gpuDriver";
 
     public static final String[] CLASSES = {"ama", "sor", "nec", "pal", "bar", "dru", "ass"};
 

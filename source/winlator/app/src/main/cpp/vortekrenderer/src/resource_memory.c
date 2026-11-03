@@ -1,11 +1,31 @@
-// Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+// Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 #include "resource_memory.h"
 #include "sysvshared_memory.h"
 #include "vulkan_helper.h"
 #include "dma_utils.h"
+#include "vortek_log.h"
 
 extern int AHardwareBuffer_getFd(AHardwareBuffer* hardwareBuffer);
 extern DeviceMemoryInfo deviceMemoryInfo;
+
+
+#define ALLOCATIONS_LOGGED 3
+#define FAILURES_LOGGED 8
+static int loggedWays[3] = {0};
+static int loggedFailures = 0;
+static const char* wayNames[3] = {"opaque fd", "dma-buf", "ahardwarebuffer"};
+
+static void logWay(int way, VkMemoryAllocateInfo* memoryInfo, int fd) {
+    if (vortekLog_few(&loggedWays[way], ALLOCATIONS_LOGGED, "allocations of this way"))
+        vortekLog("host-visible memory via %s: %llu bytes, type %u, fd %d", wayNames[way],
+                  (unsigned long long)memoryInfo->allocationSize, memoryInfo->memoryTypeIndex, fd);
+}
+
+static void logFailure(const char* step, VkResult result, VkMemoryAllocateInfo* memoryInfo) {
+    if (vortekLog_few(&loggedFailures, FAILURES_LOGGED, "allocation failures"))
+        vortekLog("host-visible memory failed at %s: result %d, %llu bytes, type %u", step, result,
+                  (unsigned long long)memoryInfo->allocationSize, memoryInfo->memoryTypeIndex);
+}
 
 static ResourceMemory* internalAllocate() {
     ResourceMemory* resourceMemory = calloc(1, sizeof(ResourceMemory));
@@ -32,7 +52,12 @@ static AHardwareBuffer* allocateHardwareBuffer(int size) {
 ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkMemoryAllocateInfo* memoryInfo) {
     uint64_t maxAllocationSize = (VkDeviceSize)context->maxDeviceMemory << 20;
     if (maxAllocationSize == 0) maxAllocationSize = deviceMemoryInfo.maxAllocationSize;
-    if ((context->totalAllocationSize + memoryInfo->allocationSize) >= maxAllocationSize) return NULL;
+    if ((context->totalAllocationSize + memoryInfo->allocationSize) >= maxAllocationSize) {
+
+        logFailure(isHostVisibleMemory(memoryInfo->memoryTypeIndex) ? "the app's limit (maxDeviceMemory)" : "the app's limit (maxDeviceMemory), not host-visible",
+                   VK_ERROR_OUT_OF_DEVICE_MEMORY, memoryInfo);
+        return NULL;
+    }
 
     VkResult result;
     ResourceMemory* resourceMemory = internalAllocate();
@@ -76,7 +101,10 @@ ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkM
             bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
             result = vulkanWrapper.vkCreateBuffer(device, &bufferInfo, NULL, &resourceMemory->buffer);
-            if (result != VK_SUCCESS) goto error;
+            if (result != VK_SUCCESS) {
+                logFailure("opaque fd: vkCreateBuffer", result, memoryInfo);
+                goto error;
+            }
 
             VkMemoryRequirements memReqs = {0};
             vulkanWrapper.vkGetBufferMemoryRequirements(device, resourceMemory->buffer, &memReqs);
@@ -94,7 +122,10 @@ ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkM
             memoryInfo->pNext = &memoryDedicatedInfo;
             memoryInfo->allocationSize = memReqs.size;
             result = vulkanWrapper.vkAllocateMemory(device, memoryInfo, NULL, &resourceMemory->memory);
-            if (result != VK_SUCCESS) goto error;
+            if (result != VK_SUCCESS) {
+                logFailure("opaque fd: vkAllocateMemory", result, memoryInfo);
+                goto error;
+            }
 
             VkMemoryGetFdInfoKHR getFdInfo = {0};
             getFdInfo.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
@@ -103,8 +134,12 @@ ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkM
 
             int fd = -1;
             result = vulkanWrapper.vkGetMemoryFd(device, &getFdInfo, &fd);
-            if (result != VK_SUCCESS || fd <= 0) goto error;
+            if (result != VK_SUCCESS || fd <= 0) {
+                logFailure("opaque fd: vkGetMemoryFd", result, memoryInfo);
+                goto error;
+            }
             resourceMemory->fd = fd;
+            logWay(0, memoryInfo, fd);
         }
         else {
             if ((getMemoryPropertyFlags(memoryInfo->memoryTypeIndex) & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)) {
@@ -125,23 +160,34 @@ ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkM
                     result = vulkanWrapper.vkAllocateMemory(device, memoryInfo, NULL, &resourceMemory->memory);
                     if (result == VK_SUCCESS) {
                         resourceMemory->fd = fd;
+                        logWay(1, memoryInfo, fd);
                     }
                     else {
+                        logFailure("dma-buf: vkAllocateMemory (import), next ahardwarebuffer", result, memoryInfo);
                         CLOSEFD(fd);
                         CLOSEFD(dupFd);
                         useExternalMemoryAHB = true;
                     }
                 }
-                else useExternalMemoryAHB = true;
+                else {
+                    logFailure("dma-buf: no buffer from /dev/dma_heap or /dev/ion, next ahardwarebuffer", VK_SUCCESS, memoryInfo);
+                    useExternalMemoryAHB = true;
+                }
             }
 
             if (useExternalMemoryAHB) {
                 AHardwareBuffer* hardwareBuffer = allocateHardwareBuffer(memoryInfo->allocationSize);
-                if (!hardwareBuffer) goto error;
+                if (!hardwareBuffer) {
+                    logFailure("ahardwarebuffer: AHardwareBuffer_allocate", VK_SUCCESS, memoryInfo);
+                    goto error;
+                }
                 resourceMemory->hardwareBuffer = hardwareBuffer;
 
                 int fd = AHardwareBuffer_getFd(hardwareBuffer);
-                if (fd <= 0) goto error;
+                if (fd <= 0) {
+                    logFailure("ahardwarebuffer: AHardwareBuffer_getFd", VK_SUCCESS, memoryInfo);
+                    goto error;
+                }
 
                 VkImportAndroidHardwareBufferInfoANDROID memoryImportInfo = {0};
                 memoryImportInfo.sType = VK_STRUCTURE_TYPE_IMPORT_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
@@ -149,10 +195,14 @@ ResourceMemory* ResourceMemory_allocate(VkContext* context, VkDevice device, VkM
 
                 memoryInfo->pNext = &memoryImportInfo;
                 result = vulkanWrapper.vkAllocateMemory(device, memoryInfo, NULL, &resourceMemory->memory);
-                if (result != VK_SUCCESS) goto error;
+                if (result != VK_SUCCESS) {
+                    logFailure("ahardwarebuffer: vkAllocateMemory (import)", result, memoryInfo);
+                    goto error;
+                }
 
 
                 resourceMemory->fd = dup(fd);
+                logWay(2, memoryInfo, resourceMemory->fd);
             }
         }
     }

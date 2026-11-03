@@ -12,9 +12,16 @@
 
 
 
+
+
+
 #define CMD_TELEPORT 27
 #define PKT_TELEPORT 11
-#define TELE_STEPS 48
+#define TELE_STEPS 80
+
+#define TELE_RING 20
+#define TELE_MARGIN 24
+#define TELE_BOTTOM 56
 #define TELE_STALE_MS 1000
 #define TELE_OK 0
 #define TELE_CORRECTED 1
@@ -59,22 +66,45 @@ static void teleportCommand(const BYTE* buf, int n) {
 }
 
 
-static void* teleportRoom(void* level, long x, long y) {
-    int i = 0;
-    for (void* r2 = RDP(level, LEVEL_ROOM2); readable(r2, 0x60) && i < 4096; r2 = RDP(r2, ROOM2_NEXT), i++) {
-        long tx = (long) RD32(r2, ROOM2_X) * 5, ty = (long) RD32(r2, ROOM2_Y) * 5;
-        long tw = (long) RD32(r2, ROOM2_W) * 5, th = (long) RD32(r2, ROOM2_H) * 5;
-        if (x < tx || y < ty || x >= tx + tw || y >= ty + th) continue;
-        void* r1 = RDP(r2, ROOM2_ROOM1);
-        return gridReadable(r1) ? r1 : NULL;
+
+typedef struct {
+    void* level;
+    void* room2;
+    void* last;
+    View view;
+    long screenW, screenH;
+} TeleRooms;
+
+static int teleportHolds(void* r2, void* level, long x, long y) {
+    if (!readable(r2, 0x60) || RDP(r2, ROOM2_LEVEL) != level) return 0;
+    long tx = (long) RD32(r2, ROOM2_X) * 5, ty = (long) RD32(r2, ROOM2_Y) * 5;
+    long tw = (long) RD32(r2, ROOM2_W) * 5, th = (long) RD32(r2, ROOM2_H) * 5;
+    return x >= tx && y >= ty && x < tx + tw && y < ty + th;
+}
+
+
+static void* teleportRoom(TeleRooms* rooms, long x, long y) {
+    void* r2 = NULL;
+    if (rooms->last && teleportHolds(rooms->last, rooms->level, x, y)) r2 = rooms->last;
+    else if (teleportHolds(rooms->room2, rooms->level, x, y)) r2 = rooms->room2;
+    else {
+        void** around = (void**) RDP(rooms->room2, ROOM2_NEAR);
+        DWORD count = RD32(rooms->room2, ROOM2_NNEAR);
+        if (!around || count == 0 || count > 64 || !readable(around, count * 4)) return NULL;
+        for (DWORD i = 0; i < count && !r2; i++) {
+            if (teleportHolds(around[i], rooms->level, x, y)) r2 = around[i];
+        }
     }
-    return NULL;
+    if (!r2) return NULL;
+    rooms->last = r2;
+    void* r1 = RDP(r2, ROOM2_ROOM1);
+    return gridReadable(r1) ? r1 : NULL;
 }
 
 
 
-static WORD teleportFlags(void* level, long x, long y) {
-    void* r1 = teleportRoom(level, x, y);
+static WORD teleportFlags(TeleRooms* rooms, long x, long y) {
+    void* r1 = teleportRoom(rooms, x, y);
     if (!r1) return 0xFFFF;
     BYTE* grid = RDP(r1, ROOM1_COLL);
     long rx = (long) RD32(r1, ROOM1_SUBX), ry = (long) RD32(r1, ROOM1_SUBX + 4);
@@ -85,8 +115,8 @@ static WORD teleportFlags(void* level, long x, long y) {
     return flags[(y - ry) * stride + (x - rx)];
 }
 
-static int teleportFree(void* level, long x, long y) {
-    WORD f = teleportFlags(level, x, y);
+static int teleportFree(TeleRooms* rooms, long x, long y) {
+    WORD f = teleportFlags(rooms, x, y);
     return f != 0xFFFF && !(f & (WORD) ~TELE_ALLOWED);
 }
 
@@ -100,15 +130,20 @@ static int teleportFits(int (*isFree)(void*, long, long), void* ctx, long x, lon
 }
 
 
+static int teleportTakes(int (*isFree)(void*, long, long), int (*clickable)(void*, long, long), void* ctx, long x, long y) {
+    return teleportFits(isFree, ctx, x, y) && clickable(ctx, x, y);
+}
 
 
 
 
-static int teleportSearch(double px, double py, double wx, double wy, int steps, int (*isFree)(void*, long, long), void* ctx,
-                          long* tx, long* ty) {
+
+
+static int teleportSearch(double px, double py, double wx, double wy, int steps, int (*isFree)(void*, long, long),
+                          int (*clickable)(void*, long, long), void* ctx, long* tx, long* ty) {
     for (int k = steps; k >= 1; k--) {
         long x = (long) (px + wx * k / steps), y = (long) (py + wy * k / steps);
-        if (teleportFits(isFree, ctx, x, y)) {
+        if (teleportTakes(isFree, clickable, ctx, x, y)) {
             *tx = x;
             *ty = y;
             return k == steps ? TELE_OK : TELE_CORRECTED;
@@ -117,8 +152,67 @@ static int teleportSearch(double px, double py, double wx, double wy, int steps,
     return TELE_NONE;
 }
 
-static int teleportFreeIn(void* level, long x, long y) {
-    return teleportFree(level, x, y);
+
+
+
+
+
+
+static int teleportRing(long cx, long cy, int maxRing, int (*isFree)(void*, long, long), int (*clickable)(void*, long, long),
+                        void* ctx, long* tx, long* ty) {
+    for (long r = 1; r <= maxRing; r++) {
+        long best = -1, bestSq = 0;
+        for (long dy = -r; dy <= r; dy++) {
+            long step = dy == -r || dy == r ? 1 : 2 * r;
+            for (long dx = -r; dx <= r; dx += step) {
+                long d = (dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy), sq = dx * dx + dy * dy;
+                if (best >= 0 && (d > best || (d == best && sq >= bestSq))) continue;
+                if (!teleportTakes(isFree, clickable, ctx, cx + dx, cy + dy)) continue;
+                best = d;
+                bestSq = sq;
+                *tx = cx + dx;
+                *ty = cy + dy;
+            }
+        }
+        if (best >= 0) return 1;
+    }
+    return 0;
+}
+
+
+
+
+
+
+static int teleportTarget(double px, double py, double wx, double wy, int steps, int maxRing,
+                          int (*isFree)(void*, long, long), int (*clickable)(void*, long, long), void* ctx,
+                          long* tx, long* ty, int* how) {
+    long cx = (long) (px + wx), cy = (long) (py + wy);
+    if (teleportTakes(isFree, clickable, ctx, cx, cy)) {
+        *tx = cx;
+        *ty = cy;
+        *how = 0;
+        return TELE_OK;
+    }
+    if (teleportRing(cx, cy, maxRing, isFree, clickable, ctx, tx, ty)) {
+        *how = 1;
+        return TELE_CORRECTED;
+    }
+    int status = teleportSearch(px, py, wx, wy, steps, isFree, clickable, ctx, tx, ty);
+    *how = status == TELE_NONE ? 3 : 2;
+    return status;
+}
+
+static int teleportFreeIn(void* rooms, long x, long y) {
+    return teleportFree((TeleRooms*) rooms, x, y);
+}
+
+
+static int teleportClickable(void* ctx, long x, long y) {
+    TeleRooms* rooms = (TeleRooms*) ctx;
+    int sx = 0, sy = 0;
+    toScreen(&rooms->view, x + 0.5, y + 0.5, &sx, &sy);
+    return sx >= TELE_MARGIN && sx < rooms->screenW - TELE_MARGIN && sy >= TELE_MARGIN && sy < rooms->screenH - TELE_BOTTOM;
 }
 
 
@@ -149,6 +243,17 @@ static void teleportTick(void* player) {
     DWORD levelNo = 0;
     void* level = playerLevel(player, &levelNo);
     if (!level) return;
+    void* path = RDP(player, U_PATH);
+    void* room1 = path ? RDP(path, PATH_ROOM1) : NULL;
+    TeleRooms rooms;
+    rooms.level = level;
+    rooms.room2 = room1 ? RDP(room1, ROOM1_ROOM2) : NULL;
+    rooms.last = NULL;
+    rooms.view.offX = (long) fGetMouseXOffset();
+    rooms.view.offY = (long) fGetMouseYOffset();
+    rooms.screenW = (long) RD32(client, RVA_ScreenSizeX);
+    rooms.screenH = (long) RD32(client, RVA_ScreenSizeY);
+    if (!readable(rooms.room2, 0x60) || rooms.screenW <= 2 * TELE_MARGIN || rooms.screenH <= TELE_MARGIN + TELE_BOTTOM) return;
     LARGE_INTEGER freq, t0, t1;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&t0);
@@ -165,15 +270,13 @@ static void teleportTick(void* player) {
     }
     if (steps < 1) steps = 1;
     long wantX = (long) (px + wx), wantY = (long) (py + wy);
-    WORD wantFlags = teleportFlags(level, wantX, wantY);
+    WORD wantFlags = teleportFlags(&rooms, wantX, wantY);
     long tx = 0, ty = 0;
-    int status = teleportSearch(px, py, wx, wy, steps, teleportFreeIn, level, &tx, &ty);
+    int how = 3;
+    int status = teleportTarget(px, py, wx, wy, steps, TELE_RING, teleportFreeIn, teleportClickable, &rooms, &tx, &ty, &how);
     int found = status != TELE_NONE;
-    View view;
-    view.offX = (long) fGetMouseXOffset();
-    view.offY = (long) fGetMouseYOffset();
     int ssx = 0, ssy = 0;
-    if (found) toScreen(&view, tx + 0.5, ty + 0.5, &ssx, &ssy);
+    if (found) toScreen(&rooms.view, tx + 0.5, ty + 0.5, &ssx, &ssy);
     teleAnsweredFound = found;
     teleAnsweredSx = ssx;
     teleAnsweredSy = ssy;
@@ -189,8 +292,9 @@ static void teleportTick(void* player) {
     long now6[6] = {status, tx, ty, pxs, pys, (teleDx * 256 + teleDy) * 2 + busy};
     if (__builtin_memcmp(now6, teleTraced, sizeof(now6)) || GetTickCount() - teleTracedAt >= 1000) {
         trace("teleport: dir %d,%d dist %d -> status %d at %ld,%ld screen %d,%d (%lu us) from %ld,%ld want %ld,%ld flags 0x%04x "
-            "mode %lu busy %d starts %u", teleDx, teleDy, teleDist, status, tx, ty, ssx, ssy, (unsigned long) micros, pxs, pys,
-            wantX, wantY, wantFlags, (unsigned long) mode, busy, (unsigned) teleBusyStarts);
+            "mode %lu busy %d starts %u by %s", teleDx, teleDy, teleDist, status, tx, ty, ssx, ssy, (unsigned long) micros, pxs, pys,
+            wantX, wantY, wantFlags, (unsigned long) mode, busy, (unsigned) teleBusyStarts,
+            how == 0 ? "wanted" : how == 1 ? "ring" : how == 2 ? "ray" : "none");
         __builtin_memcpy(teleTraced, now6, sizeof(now6));
         teleTracedAt = GetTickCount();
     }

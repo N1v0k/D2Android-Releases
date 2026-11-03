@@ -80,6 +80,12 @@ public final class D2RezeptBestand {
         public int inOtherPages, page;
         public boolean shared;
 
+
+
+
+        public int[] pageOf;
+        public boolean[] sharedOf;
+
         Lage(int status, int[] have, int[] carried, int missing, int missingCount, String chainFrom, int chainCount, int inInventory,
              int inCube, int inStashPage, int inMaterials) {
             this.status = status;
@@ -274,6 +280,13 @@ public final class D2RezeptBestand {
         Lage l = computeLage(e);
 
         l.inOtherPages = lastOnPages;
+        l.pageOf = new int[e.zutaten.size()];
+        l.sharedOf = new boolean[e.zutaten.size()];
+        for (int k = 0; k < lastFirstOf.length && k < l.pageOf.length; k++) {
+            if (lastFirstOf[k] < 0) continue;
+            l.pageOf[k] = pages.get(lastFirstOf[k]).page;
+            l.sharedOf[k] = pages.get(lastFirstOf[k]).shared;
+        }
         if (lastOnPages > 0 && lastFirst >= 0) {
             l.page = pages.get(lastFirst).page;
             l.shared = pages.get(lastFirst).shared;
@@ -283,6 +296,8 @@ public final class D2RezeptBestand {
 
     private int lastOnPages, lastFirst;
 
+    private int[] lastFirstOf = new int[0];
+
     private Lage computeLage(D2RezeptKatalog.Eintrag e) {
         int n = e.zutaten.size();
         int[] have = new int[n], carried = new int[n];
@@ -290,6 +305,8 @@ public final class D2RezeptBestand {
         int inInv = 0, inCube = 0, inStash = 0, inMat = 0;
         int[] onPages = new int[n];
         lastFirst = -1;
+        lastFirstOf = new int[n];
+        java.util.Arrays.fill(lastFirstOf, -1);
         boolean[] pageUsed = new boolean[pages.size()];
         Map<String, Integer> matLeft = new java.util.TreeMap<>(materials);
         for (int k = 0; k < n; k++) {
@@ -321,6 +338,7 @@ public final class D2RezeptBestand {
                 have[k]++;
                 onPages[k]++;
                 if (lastFirst < 0) lastFirst = i;
+                if (lastFirstOf[k] < 0) lastFirstOf[k] = i;
             }
         }
         lastOnPages = 0;

@@ -294,6 +294,22 @@ public final class D2Points {
         return gold == 0xFFFFFFFFL ? -1 : gold;
     }
 
+
+
+
+
+    static final int PLACE_WEAPON_SET = 146, LENGTH_WEAPON_SET = 148;
+    public static final int CAP3_WEAPON_SET = 0x04;
+
+
+    public static int[] parseWeaponSet(byte[] d, int length, int at) {
+        if (at < 0 || length <= at) return null;
+        int n = d[at] & 0xFF;
+        if (n < LENGTH_WEAPON_SET || length < at + 1 + n) return null;
+        if ((d[at + PLACE_CAPS3] & CAP3_WEAPON_SET) == 0) return null;
+        return new int[]{d[at + PLACE_WEAPON_SET] & 0xFF, u16(d, at + PLACE_WEAPON_SET + 1)};
+    }
+
     private static int s32(byte[] d, int at) {
         return (d[at] & 0xFF) | (d[at + 1] & 0xFF) << 8 | (d[at + 2] & 0xFF) << 16 | (d[at + 3] & 0xFF) << 24;
     }

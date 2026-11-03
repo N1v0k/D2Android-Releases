@@ -304,6 +304,17 @@ public final class D2Telemetry {
 
 
 
+    static void gpuRefused(Context context) {
+        if (!collecting(context)) return;
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("reason", D2TelemetryEvents.R_GPU_DRIVER);
+        keepCrash(context, props, System.currentTimeMillis(), true);
+    }
+
+
+
+
+
 
     public static void start(Context context, boolean playtester) {
         Context app = context.getApplicationContext();

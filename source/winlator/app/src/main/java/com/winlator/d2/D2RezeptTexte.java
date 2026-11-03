@@ -60,6 +60,7 @@ final class D2RezeptTexte implements D2RezeptKatalog.Texte {
             case D2RezeptBuch.T_MISSING_N: return R.string.rb_missing_n;
             case D2RezeptBuch.T_ON_PAGE: return R.string.rb_on_page;
             case D2RezeptBuch.T_ON_PAGE_SHARED: return R.string.rb_on_page_shared;
+            case D2RezeptBuch.T_IN_STASH: return R.string.rb_in_stash;
             case D2RezeptBuch.T_LADDER_MARK: return R.string.rb_ladder_mark;
             case D2RezeptBuch.T_STALE: return R.string.rb_stale;
             case D2RezeptBuch.T_STALE_NONE: return R.string.rb_stale_none;

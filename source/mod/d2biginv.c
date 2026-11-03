@@ -267,8 +267,11 @@ static BYTE biExtraItems(void* hero) {
 static int stashPagesKnown(void);
 
 
+static BYTE weaponSetCapabilities3(void);
+
 static void putBigInvFields(Packet* p, void* hero) {
-    putU8(p, (biBig ? CAP3_BIGINV : 0) | (stashPagesKnown() ? 0x02 : 0));
+    putU8(p, (biBig ? CAP3_BIGINV : 0) | (stashPagesKnown() ? 0x02 : 0)
+        | weaponSetCapabilities3());
     const BYTE* table = common && readable((void*) (common + RVA_InvTable), 8) ? RDP(common, RVA_InvTable) : NULL;
     int count = table ? (int) RD32(common, RVA_InvCount) : 0;
     if (!readable(table, BI_RECORDS * BI_RECORD_SIZE)) table = NULL;

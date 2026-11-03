@@ -1,4 +1,4 @@
-# Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+# Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 cmake_minimum_required(VERSION 3.22.1)
 
 project(VortekRenderer)
@@ -21,7 +21,8 @@ add_library(vortekrenderer SHARED
             src/texture_decoder.c
             src/shader_inspector.c
             src/async_pipeline_creator.c
-            src/timeline_semaphore.c)
+            src/timeline_semaphore.c
+            src/vortek_log.c)
 
 target_link_libraries(vortekrenderer
                       winlator

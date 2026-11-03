@@ -156,6 +156,26 @@ public class D2GuestComponent extends EnvironmentComponent {
         return endSinceResumeMs;
     }
 
+
+
+
+
+    public static void saveRegistry(File rootfs, long maxMs) {
+        String line = D2RegistrySave.run(new File("/proc"), rootfs, Process.myUid(), Process.myPid(), maxMs,
+            new D2RegistrySave.Signals() {
+                @Override
+                public void term(int pid) {
+                    Process.sendSignal(pid, android.system.OsConstants.SIGTERM);
+                }
+
+                @Override
+                public void cont(int pid) {
+                    Process.sendSignal(pid, android.system.OsConstants.SIGCONT);
+                }
+            });
+        if (!line.isEmpty()) D2Trace.log(line);
+    }
+
     private static void kill(String reason) {
         if (pid != -1) {
             if (runReason != null) runReason[0] = reason;

@@ -1,0 +1,73 @@
+Vortek client (brunodev85/vortek b1730c5, on top of vortek-client-b1730c5-leaks.patch): why a mapping failed,
+applied by tools/build-runtime.py.
+
+- vkMapMemory and vkMapMemory2KHR write their first 8 failures to stderr (the game's guest-stderr.log): without an fd
+  from the server the fd count and the result, after a failed mmap the fd, errno with its text, size, offset and the
+  allocation size; then one line that further failures are not logged.
+- The fd of a failed mmap is closed (it leaked before).
+
+diff -ru a/src/vulkan_calls.c b/src/vulkan_calls.c
+--- a/src/vulkan_calls.c	2026-11-02 17:43:14.433564326 +0100
++++ b/src/vulkan_calls.c	2026-11-02 17:44:04.008309544 +0100
+@@ -10,6 +10,23 @@
+ 
+ #define MSG_DEBUG_UNIMPLEMENTED_VKCALL "vortek: unimplemented call %s\n"
+ 
++// D2Android: why a mapping failed, to stderr (the game's guest-stderr.log); the first few only
++#include <errno.h>
++#include <stdio.h>
++#include <string.h>
++#define MAP_FAILURES_LOGGED 8
++static int mapFailures = 0;
++static void logMapFailure(const char* call, int numFds, int fd, int result, int mmapErrno, uint64_t size, uint64_t offset, int allocationSize) {
++    if (mapFailures >= MAP_FAILURES_LOGGED) return;
++    mapFailures++;
++    if (numFds != 1) fprintf(stderr, "vortek: %s failed: no fd from the server (fds %d, result %d), size %llu, allocation %d\n",
++                             call, numFds, result, (unsigned long long)size, allocationSize);
++    else fprintf(stderr, "vortek: %s failed: mmap of fd %d: errno %d (%s), size %llu, offset %llu, allocation %d\n",
++                 call, fd, mmapErrno, strerror(mmapErrno), (unsigned long long)size, (unsigned long long)offset, allocationSize);
++    if (mapFailures == MAP_FAILURES_LOGGED) fprintf(stderr, "vortek: further mapping failures are not logged\n");
++    fflush(stderr);
++}
++
+ struct VulkanFunc {
+     char* name;
+     void* func;
+@@ -383,9 +400,16 @@
+             mappedMemory->data = data;
+             *ppData = data;
+         }
+-        else result = VK_ERROR_MEMORY_MAP_FAILED;
++        else {
++            logMapFailure("vkMapMemory", numFds, fd, result, errno, size, offset, mappedMemory->allocationSize);
++            CLOSEFD(fd);
++            result = VK_ERROR_MEMORY_MAP_FAILED;
++        }
++    }
++    else {
++        logMapFailure("vkMapMemory", numFds, -1, result, 0, size, offset, mappedMemory->allocationSize);
++        result = VK_ERROR_MEMORY_MAP_FAILED;
+     }
+-    else result = VK_ERROR_MEMORY_MAP_FAILED;
+     
+     VT_CALL_UNLOCK();
+     return (VkResult)result;
+@@ -3149,9 +3173,16 @@
+ 
+             if (!placedAddr) *ppData = data;
+         }
+-        else result = VK_ERROR_MEMORY_MAP_FAILED;
++        else {
++            logMapFailure("vkMapMemory2KHR", numFds, fd, result, errno, mappedMemory->size, pMemoryMapInfo->offset, mappedMemory->allocationSize);
++            CLOSEFD(fd);
++            result = VK_ERROR_MEMORY_MAP_FAILED;
++        }
++    }
++    else {
++        logMapFailure("vkMapMemory2KHR", numFds, -1, result, 0, pMemoryMapInfo->size, pMemoryMapInfo->offset, mappedMemory->allocationSize);
++        result = VK_ERROR_MEMORY_MAP_FAILED;
+     }
+-    else result = VK_ERROR_MEMORY_MAP_FAILED;
+ 
+     VT_CALL_UNLOCK();
+     return (VkResult)result;

@@ -906,6 +906,7 @@ public final class D2HelpersPanel {
             case "alwaysRun": return D2Settings.alwaysRun(c);
             case "directWalk": return D2Settings.directWalk(c);
             case "tapMoves": return D2Settings.tapMoves(c);
+            case "weaponSwapButton": return D2Settings.weaponSwapButton(c);
             case "joystickVisible": return D2Settings.joystickVisible(c);
             case "padEnabled": return D2Settings.padEnabled(c);
             default: throw new IllegalArgumentException("no switch " + key);

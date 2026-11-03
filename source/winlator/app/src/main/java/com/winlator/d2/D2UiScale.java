@@ -7,6 +7,7 @@ package com.winlator.d2;
 
 
 
+
 public final class D2UiScale {
     private D2UiScale() {}
 
@@ -31,10 +32,18 @@ public final class D2UiScale {
 
 
     public static float overlay(int widthPx, int heightPx, float density, int smallestWidthDp) {
-        if (smallestWidthDp < LARGE_FROM_DP || density <= 0 || widthPx <= 0 || heightPx <= 0) return 1f;
+        if (density <= 0 || widthPx <= 0 || heightPx <= 0) return 1f;
         float longDp = Math.max(widthPx, heightPx) / density, shortDp = Math.min(widthPx, heightPx) / density;
+
+
+        if (smallestWidthDp < LARGE_FROM_DP) return longDp >= SMALL_BELOW_DP ? 1f : Math.max(SMALL_MIN, longDp / SMALL_BELOW_DP);
         return Math.max(1f, Math.min(longDp / REF_WIDTH_DP, shortDp / REF_HEIGHT_DP));
     }
+
+
+    public static final int SMALL_BELOW_DP = 600;
+
+    public static final float SMALL_MIN = 0.6f;
 
 
 

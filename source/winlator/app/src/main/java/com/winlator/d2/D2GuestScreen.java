@@ -158,6 +158,15 @@ public class D2GuestScreen implements XServerHost {
         if (vortek) {
             VortekRendererComponent.Options options = new VortekRendererComponent.Options();
             options.maxDeviceMemory = (short) D2GpuPath.tier(D2Runtime.totalMem(activity)).vortekMemoryMb;
+            options.resourceMemoryType = D2GpuPath.RESOURCE_MEMORY_TYPE;
+
+            File vortekLog = D2Runtime.logFile(activity, D2GpuPath.VORTEK_LOG);
+            File vortekPrev = D2Runtime.logFile(activity, D2GpuPath.VORTEK_LOG_PREV);
+            if (vortekLog.isFile()) {
+                vortekPrev.delete();
+                if (!vortekLog.renameTo(vortekPrev)) vortekLog.delete();
+            }
+            options.logPath = vortekLog.getPath();
             environment.addComponent(new VortekRendererComponent(xServer, UnixSocketConfig.create(rootPath,
                 UnixSocketConfig.VORTEK_SERVER_PATH), options, activity.getCacheDir().getPath()));
         }

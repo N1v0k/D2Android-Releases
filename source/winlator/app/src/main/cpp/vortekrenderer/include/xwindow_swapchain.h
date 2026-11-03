@@ -1,4 +1,4 @@
-#ifndef VORTEK_XWINDOW_SWAPCHAIN_H  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+#ifndef VORTEK_XWINDOW_SWAPCHAIN_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 #define VORTEK_XWINDOW_SWAPCHAIN_H
 
 #include <android/hardware_buffer.h>

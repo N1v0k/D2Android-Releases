@@ -14,6 +14,7 @@ public final class ALSAMute {
 
     private static volatile boolean loading;
     private static long writtenMicros;
+    private static volatile int resumes;
 
     private ALSAMute() {}
 
@@ -36,6 +37,7 @@ public final class ALSAMute {
     public static synchronized long unmute() {
         boolean was = muted;
         muted = false;
+        if (was) resumes++;
         long ms = was ? writtenMicros / 1000 : 0;
         writtenMicros = 0;
         return ms;
@@ -49,9 +51,11 @@ public final class ALSAMute {
 
     public static final class Track {
         private boolean mutedApplied;
+        private int resumesSeen = resumes;
 
 
         public float prepared(float own) {
+            resumesSeen = resumes;
             mutedApplied = isMuted();
             return mutedApplied ? 0f : own;
         }
@@ -62,6 +66,17 @@ public final class ALSAMute {
             if (now == mutedApplied) return -1f;
             mutedApplied = now;
             return now ? 0f : own;
+        }
+
+
+
+
+
+        public boolean takeResume() {
+            int now = resumes;
+            if (now == resumesSeen) return false;
+            resumesSeen = now;
+            return true;
         }
     }
 }

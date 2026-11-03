@@ -148,7 +148,7 @@ public final class D2Hud {
 
 
     private final int[] buttonBox, xpPiece, stonePiece;
-    static final int BUTTON_BOX = 33, XP_PIECE_W = 40, XP_PIECE_H = 6, STONE_W = 124, STONE_H = 6;
+    static final int BUTTON_BOX_W = D2InfoGrid.BUTTON_BOX_COLUMNS.length, BUTTON_BOX_H = D2InfoGrid.BUTTON_BOX_H, XP_PIECE_W = 40, XP_PIECE_H = 6, STONE_W = 124, STONE_H = 6;
 
     private final android.util.LongSparseArray<Bitmap> barPieces = new android.util.LongSparseArray<>();
 
@@ -200,7 +200,8 @@ public final class D2Hud {
         tinyFontWidth = tinyTbl != null ? widths(tinyTbl, 5) : null;
 
 
-        buttonBox = crop(ctrl[1], 40, 15, BUTTON_BOX, BUTTON_BOX);
+
+        buttonBox = cropColumns(ctrl[D2InfoGrid.BUTTON_BOX_FRAME], D2InfoGrid.BUTTON_BOX_COLUMNS, D2InfoGrid.BUTTON_BOX_Y, BUTTON_BOX_H);
         int[] xpLeft = crop(ctrl[1], 89, 14, 36, XP_PIECE_H), xpRight = crop(ctrl[2], 80, 14, 4, XP_PIECE_H);
         if (xpLeft != null && xpRight != null) {
             xpPiece = new int[XP_PIECE_W * XP_PIECE_H];
@@ -1089,6 +1090,18 @@ public final class D2Hud {
     }
 
 
+    private static int[] cropColumns(D2Sprites.Frame f, int[] xs, int y, int h) {
+        if (f == null || y + h > f.height) return null;
+        int w = xs.length;
+        int[] out = new int[w * h];
+        for (int i = 0; i < w; i++) {
+            if (xs[i] >= f.width) return null;
+            for (int r = 0; r < h; r++) out[r * w + i] = f.argb[(y + r) * f.width + xs[i]];
+        }
+        return out;
+    }
+
+
     public boolean hasBarPieces() {
         return buttonBox != null && xpPiece != null && stonePiece != null;
     }
@@ -1098,7 +1111,7 @@ public final class D2Hud {
 
 
     public void drawButtonBox(Canvas canvas, RectF where, float k) {
-        drawBarPiece(canvas, where, k, 1, buttonBox, BUTTON_BOX, BUTTON_BOX, 4);
+        drawBarPiece(canvas, where, k, 1, buttonBox, BUTTON_BOX_W, BUTTON_BOX_H, 4);
     }
 
 

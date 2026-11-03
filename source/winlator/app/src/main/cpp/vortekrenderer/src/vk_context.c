@@ -1,9 +1,11 @@
+// Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 #include "vk_context.h"
 #include "vulkan_helper.h"
 #include "request_handler.h"
 #include "sysvshared_memory.h"
 #include "string_utils.h"
 #include "jni_utils.h"
+#include "vortek_log.h"
 
 static void loadJMethods(JMethods* jmethods) {
     JNIEnv* env;
@@ -113,6 +115,10 @@ VkContext* createVkContext(JNIEnv* env, jobject obj, int clientFd, jobject optio
     context->imageCacheSize = getJFieldByName(env, options, "imageCacheSize", "S").s;
     context->resourceMemoryType = getJFieldByName(env, options, "resourceMemoryType", "B").b;
     context->exposedDeviceExtensions = jstringArrayToCharArray(env, exposedDeviceExtensions);
+
+    vortekLog("context for client fd %d: vkMaxVersion %d.%d.%d, maxDeviceMemory %d MB, imageCacheSize %d, resourceMemoryType %d",
+              clientFd, VK_VERSION_MAJOR(context->vkMaxVersion), VK_VERSION_MINOR(context->vkMaxVersion),
+              VK_VERSION_PATCH(context->vkMaxVersion), context->maxDeviceMemory, context->imageCacheSize, context->resourceMemoryType);
 
     pthread_mutex_init(&context->extraDataRequestsMutex, NULL);
 

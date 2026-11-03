@@ -1,0 +1,49 @@
+D2DX 0.99.529: keep the resolution the player chose in the game's video options.
+
+D2DX loads its built-in SGD2FreeRes and writes SGD2FreeRes's config
+(d2dx_sgd2freeres.json, next to the game) anew at every start, always with
+"Ingame Resolution Mode" : 2, the custom size D2DX computes. SGD2FreeRes takes the
+resolution chosen in Options > Video Options > Resolution from that file and
+writes a new choice back into it, not into the registry. So a choice of 640x480
+or 800x600 was lost at the next start.
+
+The app reads the mode of the last game from that file before it starts the game
+again. If it is 0 (640x480) or 1 (800x600), the app changes one byte in its own
+copy of glide3x.dll in the game's start folder, so that D2DX writes that mode
+instead of 2. This happens at run time on the device (class D2IngameResolution);
+the glide3x.dll files in the app stay as they are. The change is checked like
+the others in tools/binpatch.py: only these three files, the bytes around the
+place, and the hash of the result.
+
+  file      glide3x.dll
+  before    sha256 c4edd7b6d2b64373ff6f2f8b7d04437a41b14e57b582d7542f09ec1407ae6f89
+  after     sha256 a03a2484f7b97044c8f7fcb73465f1b02139c41b14812a16c1df2ef0ec935eb5  (640x480)
+  after     sha256 a816d35a5dc3f98606efd72011f4bd6389422c2cfc641461452b9ec0895af634  (800x600)
+
+  file      glide3x-atlas512.dll
+  before    sha256 53eab88060db53a34cbff59ee2a223828c862058b590e5167a48369fa631a1e6
+  after     sha256 1d38ecdfe97a5d3f534484f554b6af30ac4122fcb17276bb4d8d1bdb7f1e85cb  (640x480)
+  after     sha256 20f9b939fb992942c857294b47f5456e25b949f32e8488dbaa75733cd416e647  (800x600)
+
+  file      glide3x-atlas1024.dll
+  before    sha256 50e9a58706c2f9f87cafb975e8698d1928725f9f774a78fb954a5d683c5aa313
+  after     sha256 a519137a405b80df352b67bce7cf1c823d104581beddf7b5df744df89b4052ba  (640x480)
+  after     sha256 c58e07f1757105e0a83440d05e0f779d1ef9497be6dcef6ab6c2215d73edc2c4  (800x600)
+
+  check     file offset 0x3f78d: "Ingame Resolution Mode" : 2,
+  change    file offset 0x3f7a8: 32 -> 30 (640x480)
+  change    file offset 0x3f7a8: 32 -> 31 (800x600)
+
+The source change it corresponds to (with 0 or 1 for the mode):
+
+--- a/src/d2dx/BuiltinResMod.cpp
++++ b/src/d2dx/BuiltinResMod.cpp
+@@ -173,7 +173,7 @@
+         "           \"800x600\",\r\n"
+         "           \"%ix%i\"\r\n"
+         "       ],\r\n"
+-        "       \"Ingame Resolution Mode\" : 2,\r\n"
++        "       \"Ingame Resolution Mode\" : 0,\r\n"
+         "       \"Main Menu Resolution\" : \"800x600\",\r\n"
+         "       \"Custom MPQ File\": \"d2dx_sgd2freeres.mpq\",\r\n"
+         "       \"Enable Screen Border Frame?\" : true,\r\n"

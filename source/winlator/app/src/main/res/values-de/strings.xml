@@ -27,6 +27,9 @@
     <string name="settings_size_540">Groß (540 Zeilen, besonders scharf, ab Werk)</string>
     <string name="settings_size_600">Mittel (600 Zeilen, wie das Original)</string>
     <string name="settings_size_auto">Klein (720 Zeilen, mehr von der Welt)</string>
+    <string name="settings_size_ingame">Im Spiel gewählt: %1$s (4:3, mit Rändern)</string>
+    <string name="settings_size_ingame_hint">Ein Tipp auf eine Größe darunter stellt wieder auf Breitbild.</string>
+    <string name="settings_size_note">In den Optionen des Spiels (Auflösung) gibt es auch 640×480 und 800×600 (4:3, mit Rändern). Die App merkt sich diese Wahl. Eine Größe hier stellt wieder auf Breitbild.</string>
     <string name="settings_frame_rate">Bilder pro Sekunde</string>
     <string name="settings_frame_rate_hint">Weniger Bilder pro Sekunde schonen den Akku und halten das Handy kühler. Gilt ab dem nächsten Spielstart.</string>
     <string name="settings_frame_rate_unlimited">Unbegrenzt</string>
@@ -302,6 +305,8 @@
     <string name="helper_directWalk_info">Monster und Namen im Weg halten den Charakter nicht auf.</string>
     <string name="helper_tapMoves_label">Tipp ins Bild bewegt den Charakter</string>
     <string name="helper_tapMoves_info">Aus: Ein Tipp in die Welt tut nichts, du läufst nur mit dem Joystick.</string>
+    <string name="helper_weaponSwapButton_label">Knopf „I/II“: Waffen wechseln</string>
+    <string name="helper_weaponSwapButton_info">Ein kleiner Knopf neben „Angriff“ wechselt die Waffen wie W (z. B. Ruf zu den Waffen). Buffs bleiben nach dem Zurückwechseln. Ein Fertigkeitsknopf mit „II“ wechselt, wirkt und wechselt von selbst zurück.</string>
     <string name="helper_joystickVisible_label">Joystick anzeigen</string>
     <string name="helper_joystickVisible_info">Er funktioniert auch unsichtbar, überall in der linken Hälfte.</string>
     <string name="helper_diagnose_label">Diagnose teilen</string>
@@ -377,6 +382,8 @@
     <string name="assign_for_left">Linke Fertigkeit für %1$s antippen · hier tippen: rechte Liste</string>
     <string name="note_skill_not_for_attack">Diese Fertigkeit geht nicht auf Angriff</string>
     <string name="note_slot_free">%1$s ist frei: \"%2$s\" antippen, dann %1$s</string>
+    <string name="note_skill_set">Satz %1$d: %2$s bis %3$s</string>
+    <string name="note_swap_cast_failed">Waffenwechsel kam nicht an, nichts gewirkt</string>
 
     <string name="tree_pick_for">F-Knopf für %1$s antippen</string>
     <string name="tree_pick_skill">die Fertigkeit</string>
@@ -674,6 +681,9 @@
     <string name="check_vortek">%1$s: Diablo II läuft hier über eine eigene Grafikschicht für diesen Chip. Das ist experimentell: Das Spiel kann langsam laufen oder Grafikfehler zeigen.</string>
     <string name="game_early_end">Das Spiel hat sich gleich nach dem Start beendet. Der Grund steht im Protokoll, das du mit „Diagnose teilen“ schicken kannst.</string>
     <string name="game_early_end_ok">Schließen</string>
+    <string name="game_early_end_gpu">Der Grafiktreiber der App unterstützt diesen Grafikchip noch nicht (%1$s, Chip-ID %2$s), darum kann das Spiel nicht starten. Bitte schick uns die Diagnose mit „Diagnose teilen“, damit wir ihn mit einem Update ergänzen können.</string>
+    <string name="game_early_end_driver">Der Grafiktreiber konnte auf diesem Grafikchip (%1$s) kein Vulkan starten, darum kann das Spiel nicht starten. Der Chip oder sein Treiber wird noch nicht unterstützt. Bitte schick uns die Diagnose mit „Diagnose teilen“.</string>
+    <string name="game_early_end_gpu_unknown">unbekanntes Modell</string>
     <string name="check_start_anyway">Trotzdem starten</string>
     <string name="check_space_title">Wenig freier Speicher</string>
     <string name="check_space">Nur %1$s frei; die Ersteinrichtung braucht etwa 1 GB.</string>
@@ -1215,11 +1225,12 @@
     <string name="settings_group_spielstaende">Spielstände</string>
     <string name="settings_group_spielstaende_desc">Ordner, Installieren, Teilen, Laden</string>
     <string name="settings_group_hilfe">Hilfe und Info</string>
-    <string name="settings_group_hilfe_desc">Einführung, Hintergrund-Schutz, Fehler melden, Lizenzen</string>
+    <string name="settings_group_hilfe_desc">Hinweise, Hintergrund-Schutz, Fehler melden, Lizenzen</string>
     <string name="settings_section_gehen">Gehen</string>
     <string name="settings_section_joystick">Joystick</string>
     <string name="settings_section_zielhilfe">Zielhilfe</string>
     <string name="settings_section_schultertasten">Schultertasten</string>
+    <string name="settings_section_fertigkeiten">Fertigkeitsknöpfe</string>
     <string name="settings_section_gamepad">Gamepad</string>
     <string name="settings_section_menue">Knöpfe oben rechts</string>
     <string name="settings_section_untere_leiste">Untere Leiste</string>
@@ -1538,6 +1549,7 @@
     <string name="rb_insert_failed_stash">Nicht eingelegt: Truhe zu weit weg?</string>
     <string name="rb_on_page">vorhanden (Seite %1$d)</string>
     <string name="rb_on_page_shared">vorhanden (Seite %1$d, geteilt)</string>
+    <string name="rb_in_stash">im Lager</string>
     <string name="rb_insert_page">%1$s liegt auf Seite %2$d der eigenen Truhe, dort hinblättern</string>
     <string name="rb_insert_page_shared">%1$s liegt auf Seite %2$d der geteilten Truhe, dort hinblättern</string>
     <string name="rb_unavailable">Rezepte: nur im Spiel mit der Mod</string>
@@ -1653,7 +1665,7 @@
     <string name="settings_saves_backups">Sicherungen teilen</string>
     <string name="saves_backups_none">Noch keine Sicherungen.</string>
     <string name="move_cleanup_title">Alte Spieldateien löschen?</string>
-    <string name="move_cleanup_message">Das Spiel liegt jetzt in der App. Die alten Spieldateien in %1$s brauchst du nicht mehr (%2$s). Deine Spielstände dort bleiben liegen.</string>
+    <string name="move_cleanup_message">Das Spiel liegt jetzt in der App. Die alten Spieldateien in %1$s brauchst du nicht mehr (%2$s). Gelöscht wird nur, was zum Spiel gehört und in der App liegt. Deine Spielstände (auch in Ordnern wie save.alt), Mods und eigenen Dateien dort bleiben liegen.</string>
     <string name="move_cleanup_delete">Löschen</string>
     <string name="move_cleanup_done">Alte Spieldateien gelöscht (%1$s frei).</string>
     <string name="settings_saves_from_download">Aus Download holen</string>

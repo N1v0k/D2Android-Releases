@@ -1,0 +1,67 @@
+Turnip 26.2.0: the 2-slice Adreno 840 (chip id 0x44050A21).
+
+Retail SM8850 phones report their Adreno 840 as chip id 0x44050A21 (KGSL
+gpu_model Adreno840v2). Turnip 26.2.0 lists only 0x44050A31, finds no device
+info and refuses the GPU (VK_ERROR_INCOMPATIBLE_DRIVER), so DXVK gets no
+Vulkan instance and the game cannot start. Mesa added the id in commit
+07ea97900e735afff9bfd59805983912f72f7dfd ("freedreno: add 2 slice Adreno 840
+chip id", in 26.3.0-rc2, not on the 26.2 branch).
+
+The app ships the prebuilt usr/lib/libvulkan_freedreno.so of the
+turnip-26.2.0 package of Winlator 11.2. That build has its own changes
+(window system integration for its X server) whose source is not published
+for 26.2.0, so the driver is not rebuilt from Mesa. Instead the device table
+entry of the Adreno X2-90 (chip id 0xffff44070041, a laptop part of the
+Snapdragon X2 Elite; no Android device has it) becomes the 2-slice 840.
+Its device info (__info36) is used by no other entry; it gets the values of
+Mesa's new entry, which are the 840's (__info34) with 4 CCUs, 2 slices and a
+tile alignment of 64 x 32. Applied by tools/binpatch.py (patch
+"turnip-a840v2") when the runtime is built:
+
+  file      usr/lib/libvulkan_freedreno.so
+  before    sha256 99fd7b22666c7b0fa4e86ef675300e05115ffd05acc1a3c178d7343daa7e4584
+  after     sha256 e9e1dd73e680a5925d10c85a6f7ed3a0d8a888a9dde846ea3f92cf2ac6e34197
+  changes   (fd_dev_recs entry 84 at 0xeaec38, __info36 at 0xda6ac8, 0x318 bytes)
+  file offset 0x71060: e0 -> b8          name pointer of entry 84, addend of its R_AARCH64_RELATIVE relocation:
+                                         "Adreno (TM) X2-90" -> "Adreno (TM) 840" (the string of the 840's entry)
+  file offset 0xda6ad0: 40 -> 20         __info36 tile_align_h 64 -> 32
+  file offset 0xda6b0c: 08 -> 04         __info36 num_ccu 8 -> 4
+  file offset 0xda6b10: 04 -> 02         __info36 num_slices 4 -> 2
+  file offset 0xda6dbf: 00 -> 01         __info36 props.shading_rate_matches_vk false -> true
+  file offset 0xeaec40: 41 00 07 -> 21 0a 05   chip id of entry 84: 0xffff44070041 -> 0xffff44050a21
+  file offset 0xeaec48: e0 -> b8         name pointer of entry 84 in place (same value as the addend)
+
+Checked: Mesa 26.2.0's freedreno_devices.py with the change below, run through
+its generator, gives an info for the new entry that is byte for byte the
+patched __info36 (struct fd_dev_info of 26.2.0); Winlator's __info34 (840) is
+byte for byte upstream's. No other entry, no code and no relocation into the
+info structs changes; the X2-90 is not known any more.
+
+The source change it corresponds to (Mesa 26.2.0, the X2-90 entry replaced by
+the entry of commit 07ea9790 with the "magic_regs" argument 26.2 requires):
+
+--- a/src/freedreno/common/freedreno_devices.py
++++ b/src/freedreno/common/freedreno_devices.py
+@@ -1459,15 +1459,17 @@
+         raw_magic_regs = a8xx_base_raw_magic_regs,
+     ))
+ 
++# 2 slice configuration of a840
+ add_gpus([
+-        GPUId(chip_id=0xffff44070041, name="Adreno (TM) X2-90"),
++        GPUId(chip_id=0xffff44050A21, name="Adreno (TM) 840"),
+     ], A6xxGPUInfo(
+         CHIP.A8XX,
+-        [a7xx_base, a7xx_gen3, a8xx_base, a8xx_gen2],
+-        num_ccu = 8,
+-        num_slices = 4,
++        [a7xx_base, a7xx_gen3, a8xx_base, a8xx_gen2,
++         GPUProps(shading_rate_matches_vk = True)],
++        num_ccu = 4,
++        num_slices = 2,
+         tile_align_w = 64,
+-        tile_align_h = 64,
++        tile_align_h = 32,
+         tile_max_w = 16384,
+         tile_max_h = 16384,
+         num_vsc_pipes = 32,

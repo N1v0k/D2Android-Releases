@@ -3237,6 +3237,7 @@ static void stashTest(BYTE op, BYTE value);
 #endif
 #include "d2sharedgold.c"
 #include "d2stashpages.c"
+#include "d2weaponset.c"
 #include "d2points.c"
 #include "d2playtest.c"
 #include "d2map.c"
@@ -3866,7 +3867,7 @@ static void sendEffects(void* player) {
     lastTrack = now;
     trackEffects(player, dt, now - lastAt >= 500);
 
-    int pointsChanged = pointsTick(player) | equipReportDue() | sortReportDue(player);
+    int pointsChanged = pointsTick(player) | equipReportDue() | sortReportDue(player) | weaponSetTick(player);
     if (now - lastAt < 500 && !pointsChanged) return;
     lastAt = now;
     DWORD game = (DWORD) GetModuleHandleA("D2Game.dll");
@@ -4460,6 +4461,7 @@ static void noteGame(void* player, DWORD now) {
     gameSeed = seed;
     keepSettingsOverPause(now);
     forgetItems();
+    layersNewGame();
     selfCheckNewGame();
     memset(seenId, 0, sizeof(seenId));
     memset(seenMode, 0, sizeof(seenMode));
@@ -4665,7 +4667,8 @@ static void gameTick(void) {
     DWORD now = GetTickCount();
     STEP(noteGame(player, now));
     STEP(noteWorldFrames(now));
-    if (!player || !singlePlayerGame()) STEP(setLargeStacks(0));
+    if (!player) STEP(forgetStackRows());
+    else if (!singlePlayerGame()) STEP(setLargeStacks(0));
     STEP(spielweiseTick(player, now));
     STEP(shopNewPlayer(player));
     STEP(handleCommands(player, !player || now - lastTick > 1000));
@@ -4845,6 +4848,8 @@ static void installHighlightHook(void) {
     logLine("highlight hook installed");
 }
 
+#include "d2patchguard.c"
+
 static int installHook(void) {
     BYTE* site = (BYTE*) (client + GAMELOOP_PATCH_RVA);
     if (memcmp(site, GAMELOOP_ORIGINAL, sizeof(GAMELOOP_ORIGINAL)) != 0) {
@@ -4865,12 +4870,18 @@ static int installHook(void) {
     code[5] = 0x90;
     code[6] = 0x90;
 
+    PVOID guard = patchGuardBegin(site, 7);
     *(volatile WORD*) site = 0xFEEB;
     FlushInstructionCache(GetCurrentProcess(), site, 7);
+    patchRaceBetween(site);
     memcpy(site + 2, code + 2, 5);
     *(volatile WORD*) site = *(WORD*) code;
+    LONG again = patchGuardEnd(guard);
     VirtualProtect(site, 7, old, &old);
     FlushInstructionCache(GetCurrentProcess(), site, 7);
+    if (again)
+        logLine("game loop hook: the page was read-only again %ld time(s) while writing (another patcher), made "
+                "writable and written again", (long) again);
     return 1;
 }
 
@@ -5144,6 +5155,8 @@ static DWORD WINAPI setupThread(LPVOID arg) {
         logLine(gameLoadLibraryA ? "setup: D2Launch not loaded yet, the menu patches follow when Game.exe loads it"
                                  : "setup: D2Launch after D2Client and no LoadLibraryA hook: menus not patched");
     Sleep(500);
+    patchRaceStart();
+    patchWaitForD2DX();
     if (!resolve()) setStatus(STATUS_FAILED, "functions not found");
     else if (installHook()) setStatus(STATUS_HOOKED, "connected");
 

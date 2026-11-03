@@ -30,6 +30,9 @@
     <string name="settings_size_540">Grande (540 lignes, très nette, par défaut)</string>
     <string name="settings_size_600">Moyenne (600 lignes, comme l\'original)</string>
     <string name="settings_size_auto">Petite (720 lignes, plus du monde)</string>
+    <string name="settings_size_ingame">Choisi dans le jeu : %1$s (4:3, avec bordures)</string>
+    <string name="settings_size_ingame_hint">Touche une taille ci-dessous pour revenir à l\'image large.</string>
+    <string name="settings_size_note">Dans les options du jeu (Résolution), tu peux aussi choisir 640×480 ou 800×600 (4:3, avec bordures). L\'appli garde ce choix. Une taille ici revient à l\'image large.</string>
     <string name="settings_frame_rate">Images par seconde</string>
     <string name="settings_frame_rate_hint">Moins d\'images par seconde économise la batterie et garde le téléphone plus frais. Effectif au prochain lancement du jeu.</string>
     <string name="settings_frame_rate_unlimited">Illimité</string>
@@ -306,6 +309,8 @@
     <string name="helper_directWalk_info">Les monstres et les noms sur le chemin n\'arrêtent pas le personnage.</string>
     <string name="helper_tapMoves_label">Toucher l\'écran déplace le personnage</string>
     <string name="helper_tapMoves_info">Désactivé : toucher le monde ne fait rien, tu ne marches qu\'avec le joystick.</string>
+    <string name="helper_weaponSwapButton_label">Bouton « I/II » : changer d\'arme</string>
+    <string name="helper_weaponSwapButton_info">Un petit bouton à côté d\'« Attaque » change d\'arme comme W (p. ex. Appel aux armes). Les bonus restent après le retour. Un bouton de compétence marqué « II » change, lance et revient tout seul.</string>
     <string name="helper_joystickVisible_label">Afficher le joystick</string>
     <string name="helper_joystickVisible_info">Il marche aussi invisible, partout dans la moitié gauche.</string>
     <string name="helper_diagnose_label">Partager le diagnostic</string>
@@ -381,6 +386,8 @@
     <string name="assign_for_left">Touche l\'aptitude gauche pour %1$s · touche ici : liste droite</string>
     <string name="note_skill_not_for_attack">Cette aptitude ne peut pas aller sur Attaque</string>
     <string name="note_slot_free">%1$s est libre : touche \"%2$s\", puis %1$s</string>
+    <string name="note_skill_set">Jeu %1$d : %2$s à %3$s</string>
+    <string name="note_swap_cast_failed">Le changement d\'arme n\'a pas eu lieu, rien lancé</string>
 
     <string name="tree_pick_for">Touche le bouton F pour %1$s</string>
     <string name="tree_pick_skill">l\'aptitude</string>
@@ -678,6 +685,9 @@
     <string name="check_vortek">%1$s : ici, Diablo II passe par une couche graphique supplémentaire pour cette puce. C\'est expérimental : le jeu peut être lent ou afficher des erreurs graphiques.</string>
     <string name="game_early_end">Le jeu s\'est fermé juste après le démarrage. La raison est dans le journal, que tu peux envoyer avec « Partager le diagnostic ».</string>
     <string name="game_early_end_ok">Fermer</string>
+    <string name="game_early_end_gpu">Le pilote graphique de l\'application ne prend pas encore en charge cette puce graphique (%1$s, ID de puce %2$s), le jeu ne peut donc pas démarrer. Envoie-nous le diagnostic avec « Partager le diagnostic » pour que nous puissions l\'ajouter dans une mise à jour.</string>
+    <string name="game_early_end_driver">Le pilote graphique n\'a pas pu démarrer Vulkan sur cette puce graphique (%1$s), le jeu ne peut donc pas démarrer. Cette puce ou son pilote n\'est pas encore pris en charge. Envoie-nous le diagnostic avec « Partager le diagnostic ».</string>
+    <string name="game_early_end_gpu_unknown">modèle inconnu</string>
     <string name="check_start_anyway">Lancer quand même</string>
     <string name="check_space_title">Peu d\'espace libre</string>
     <string name="check_space">Seulement %1$s de libre ; la première installation a besoin d\'environ 1 Go.</string>
@@ -1221,11 +1231,12 @@
     <string name="settings_group_spielstaende">Sauvegardes</string>
     <string name="settings_group_spielstaende_desc">Dossier, installation, partage, chargement</string>
     <string name="settings_group_hilfe">Aide et infos</string>
-    <string name="settings_group_hilfe_desc">Visite, protection en arrière-plan, signaler un bug, licences</string>
+    <string name="settings_group_hilfe_desc">Conseils, protection en arrière-plan, signaler un bug, licences</string>
     <string name="settings_section_gehen">Marche</string>
     <string name="settings_section_joystick">Joystick</string>
     <string name="settings_section_zielhilfe">Aide à la visée</string>
     <string name="settings_section_schultertasten">Gâchettes</string>
+    <string name="settings_section_fertigkeiten">Boutons de compétences</string>
     <string name="settings_section_gamepad">Manette</string>
     <string name="settings_section_menue">Boutons en haut à droite</string>
     <string name="settings_section_untere_leiste">Barre du bas</string>
@@ -1544,6 +1555,7 @@
     <string name="rb_insert_failed_stash">Non placé : coffre trop loin ?</string>
     <string name="rb_on_page">page %1$d</string>
     <string name="rb_on_page_shared">page %1$d (partagé)</string>
+    <string name="rb_in_stash">au coffre</string>
     <string name="rb_insert_page">%1$s est à la page %2$d de votre coffre : allez à cette page</string>
     <string name="rb_insert_page_shared">%1$s est à la page %2$d du coffre partagé : allez à cette page</string>
     <string name="rb_unavailable">Recettes : seulement en jeu avec le mod</string>
@@ -1659,7 +1671,7 @@
     <string name="settings_saves_backups">Partager copies</string>
     <string name="saves_backups_none">Pas encore de copie de secours.</string>
     <string name="move_cleanup_title">Supprimer les anciens fichiers du jeu ?</string>
-    <string name="move_cleanup_message">Le jeu est maintenant dans l\'app. Tu n\'as plus besoin des anciens fichiers du jeu dans %1$s (%2$s). Tes sauvegardes y restent.</string>
+    <string name="move_cleanup_message">Le jeu est maintenant dans l\'app. Tu n\'as plus besoin des anciens fichiers du jeu dans %1$s (%2$s). Seuls les fichiers du jeu qui sont dans l\'app sont supprimés. Tes sauvegardes (aussi dans des dossiers comme save.alt), tes mods et tes propres fichiers y restent.</string>
     <string name="move_cleanup_delete">Supprimer</string>
     <string name="move_cleanup_done">Anciens fichiers du jeu supprimés (%1$s libérés).</string>
     <string name="settings_saves_from_download">Depuis Download</string>

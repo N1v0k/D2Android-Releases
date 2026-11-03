@@ -29,6 +29,26 @@ final class D2InfoGrid {
     static final int STONE_TOP = 45;
 
 
+
+
+
+
+
+
+    static final int[] BUTTON_BOX_COLUMNS = columns(new int[][]{{40, 43}, {45, 63}, {69, 72}});
+    static final int BUTTON_BOX_FRAME = 1, BUTTON_BOX_Y = 15, BUTTON_BOX_H = 33;
+
+    private static int[] columns(int[][] runs) {
+        int n = 0;
+        for (int[] r : runs) n += r[1] - r[0] + 1;
+        int[] c = new int[n];
+        int i = 0;
+        for (int[] r : runs) for (int x = r[0]; x <= r[1]; x++) c[i++] = x;
+        return c;
+    }
+
+
+
     static final int XP_HALF = 283, XP_TOP = 53, XP_BOTTOM = 47, XP_SECTIONS = 10;
 
 

@@ -61,6 +61,10 @@ public final class D2Diagnose {
                         add(out, D2Runtime.logFile(activity, name), name, D2GuestOutput.ZIP_BYTES);
                     }
 
+                    for (String name : new String[] {D2GpuPath.VORTEK_LOG, D2GpuPath.VORTEK_LOG_PREV}) {
+                        add(out, D2Runtime.logFile(activity, name), name, D2GuestOutput.ZIP_BYTES);
+                    }
+
                     File dxvk = D2Runtime.logFile(activity, D2DxvkLog.DIR);
                     for (String sub : new String[] {"", D2DxvkLog.PREVIOUS}) {
                         File[] files = new File(dxvk, sub).listFiles();
@@ -161,6 +165,9 @@ public final class D2Diagnose {
             b.append("App ?\n");
         }
         b.append(D2DeviceInfo.format(deviceFacts(context)));
+
+        b.append("\nVulkan-Treiber (System):\n").append(vulkanMemoryInfo());
+        b.append("Vortek-Speicherweg (nur ohne Adreno): ").append(D2GpuPath.resourceMemoryName(D2GpuPath.RESOURCE_MEMORY_TYPE)).append('\n');
         b.append("\nSpielhilfen und Einstellungen:\n");
         for (Map.Entry<String, ?> entry : context.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE).getAll().entrySet()) {
             b.append(entry.getKey()).append(" = ").append(entry.getValue()).append('\n');
@@ -229,6 +236,37 @@ public final class D2Diagnose {
         catch (IOException | RuntimeException e) {
             return -1;
         }
+    }
+
+
+
+
+
+    private static String vulkanMemoryInfo() {
+        if (D2DeviceProbe.basics().ruledOutEarly()) return "? (nicht abgefragt)\n";
+        String[] out = {null};
+        java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        Thread t = new Thread(() -> {
+            try {
+                out[0] = com.winlator.core.GPUHelper.vkGetMemoryInfo();
+            }
+            catch (Throwable ignored) {
+
+            }
+            finally {
+                done.countDown();
+            }
+        }, "DiagnoseVulkan");
+        t.setDaemon(true);
+        t.start();
+        try {
+            if (!done.await(2000, java.util.concurrent.TimeUnit.MILLISECONDS)) return "? (keine Antwort in 2 s)\n";
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "?\n";
+        }
+        return out[0] == null || out[0].isEmpty() ? "?\n" : out[0];
     }
 
 

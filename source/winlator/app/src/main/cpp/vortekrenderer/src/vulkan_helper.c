@@ -1,7 +1,8 @@
-#include <string.h>
+#include <string.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 
 #include "vulkan_helper.h"
 #include "dma_utils.h"
+#include "vortek_log.h"
 
 #define VK_MAKE_VERSION_STR(s, v) sprintf(s, "%d.%d.%d", VK_VERSION_MAJOR(v), VK_VERSION_MINOR(v), VK_VERSION_PATCH(v))
 
@@ -26,6 +27,51 @@ static bool isExternalMemoryHandleTypeSupported(VkPhysicalDevice physicalDevice,
 
     return (memoryProperties->externalMemoryFeatures & (VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT | VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT)) != 0 &&
            (memoryProperties->compatibleHandleTypes & handleType) != 0;
+}
+
+
+
+
+#define RESOURCE_BUFFER_USAGE (VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | \
+    VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | \
+    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | \
+    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+static void logExternalMemory(VkPhysicalDevice physicalDevice, VkExternalMemoryHandleTypeFlagBits handleType, const char* name) {
+    for (int pass = 0; pass < 2; pass++) {
+        VkPhysicalDeviceExternalBufferInfo bufferInfo = {0};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO;
+        bufferInfo.handleType = handleType;
+        bufferInfo.usage = pass == 0 ? 0 : RESOURCE_BUFFER_USAGE;
+        VkExternalBufferProperties bufferProperties = {0};
+        bufferProperties.sType = VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES;
+        vulkanWrapper.vkGetPhysicalDeviceExternalBufferProperties(physicalDevice, &bufferInfo, &bufferProperties);
+        VkExternalMemoryProperties* p = &bufferProperties.externalMemoryProperties;
+        vortekLog("external memory %s, usage 0x%x: features 0x%x (%s%s%s), compatible 0x%x, export from imported 0x%x", name,
+                  bufferInfo.usage, p->externalMemoryFeatures,
+                  (p->externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_DEDICATED_ONLY_BIT) ? "dedicated only " : "",
+                  (p->externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT) ? "exportable " : "",
+                  (p->externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT) ? "importable" : "",
+                  p->compatibleHandleTypes, p->exportFromImportedHandleTypes);
+    }
+}
+
+
+static void logDevice(VkContext* context, VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* properties,
+                      VkPhysicalDeviceDriverProperties* driverProperties) {
+    vortekLog("device '%s', vendor 0x%x, device 0x%x, api %d.%d.%d, driverVersion 0x%x, driver id %d '%s' '%s'",
+              properties->deviceName, properties->vendorID, properties->deviceID, VK_VERSION_MAJOR(properties->apiVersion),
+              VK_VERSION_MINOR(properties->apiVersion), VK_VERSION_PATCH(properties->apiVersion), properties->driverVersion,
+              driverProperties->driverID, driverProperties->driverName, driverProperties->driverInfo);
+    for (uint32_t i = 0; i < deviceMemoryInfo.memoryTypeCount; i++) {
+        vortekLog("memory type %u: flags 0x%x, heap %u", i, deviceMemoryInfo.memoryTypes[i].propertyFlags,
+                  deviceMemoryInfo.memoryTypes[i].heapIndex);
+    }
+    logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT, "opaque fd");
+    logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT, "dma-buf");
+    logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID, "ahardwarebuffer");
+    vortekLog("hasExternalMemoryFd %d, hasExternalMemoryDMABuf %d, resourceMemoryType %d (0 auto, 1 opaque fd, 2 dma-buf, 3 ahardwarebuffer), engine '%s' 0x%x",
+              context->hasExternalMemoryFd, context->hasExternalMemoryDMABuf, context->resourceMemoryType,
+              context->engineName ? context->engineName : "", context->engineVersion);
 }
 
 static void setupExposedDeviceExtensions(VkContext* context) {
@@ -106,6 +152,7 @@ void initVulkanInstance(VkContext* context, VkInstance instance, const VkApplica
     }
 
     setupExposedDeviceExtensions(context);
+    logDevice(context, physicalDevices[0], &properties2.properties, &driverProperties);
 
 #if ENABLE_VALIDATION_LAYER
     VkDebugReportCallbackCreateInfoEXT debugCreateInfo = {0};

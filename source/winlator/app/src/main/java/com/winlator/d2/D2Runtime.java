@@ -344,15 +344,14 @@ public final class D2Runtime {
 
 
 
+
+
+
     public static String screenSize(Activity activity) {
         DisplayMetrics metrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
-        int width = Math.max(metrics.widthPixels, metrics.heightPixels);
-        int height = Math.min(metrics.widthPixels, metrics.heightPixels);
-        int targetHeight = Math.min(height, 1080);
-        int targetWidth = Math.round(targetHeight * (float) width / height);
-        targetWidth -= targetWidth % 2;
-        return targetWidth + "x" + targetHeight;
+        int[] size = D2DesktopSize.of(metrics.widthPixels, metrics.heightPixels);
+        return size[0] + "x" + size[1];
     }
 
 

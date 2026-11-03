@@ -12,6 +12,8 @@ package com.winlator.d2;
 
 
 
+
+
 final class D2GameWindows {
 
     static final int BACK_APP = 0, BACK_ESC = 1, BACK_MAP = 2;
@@ -19,7 +21,10 @@ final class D2GameWindows {
 
     static final long UNDER_LIFE = 1L << D2ModState.UI_CHARACTER | 1L << D2ModState.UI_CUBE | 1L << D2ModState.UI_STASH;
 
-    static final long UNDER_MANA = 1L << D2ModState.UI_INVENTORY;
+
+
+
+    static final long UNDER_MANA = 1L << D2ModState.UI_INVENTORY | 1L << D2ModState.UI_CUBE | 1L << D2ModState.UI_STASH;
 
     private D2GameWindows() {}
 

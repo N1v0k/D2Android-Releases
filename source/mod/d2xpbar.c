@@ -34,6 +34,13 @@
 #define RVA_XpPanelCall     0x1D596
 #define RVA_XpPanelCallee   0x6F300
 #define XPB_MIDDLE_HALF 64
+
+
+
+#define RVA_BeltUnfolded    0x11CFC4
+#define RVA_BeltDrawCall    0x6F367
+#define RVA_BeltDraw        0x6EE70
+#define RVA_BeltUnfoldedUse 0x6EF0A
 #define RVA_CtrlPanelCells  0x103B70
 #define RVA_CtrlPanelLoad   0x6D512
 #define ORD_GfxDrawRect     10028
@@ -55,6 +62,7 @@ typedef void (__stdcall *GfxDrawRect_t)(int, int, int, int, DWORD, DWORD);
 static GfxDrawRect_t fGfxDrawRect;
 static int xpBarSites;
 static int xpBarPatched;
+static int xpBeltKnown;
 static DWORD xpBarUntil, xpLevelUntil, xpCompactUntil;
 static int xpPieceState;
 static short xpPiece[XPB_ROWS][XPB_PIECE_W];
@@ -94,7 +102,11 @@ static void checkXpBarSites(void) {
     }
     xpBarPatched = 1;
     layersStageL = 1;
-    logLine("xp bar sites verified, drawn after the automap and its middle after the bottom bar");
+    static const BYTE beltUse[] = {0x39, 0x3D};
+    xpBeltKnown = callAt(client, RVA_BeltDrawCall, RVA_BeltDraw) && bytesAre(client + RVA_BeltUnfoldedUse, beltUse, 2)
+        && addressAt(client, RVA_BeltUnfoldedUse + 2, RVA_BeltUnfolded);
+    logLine(xpBeltKnown ? "xp bar sites verified, drawn after the automap and its middle after the bottom bar"
+                        : "xp bar sites verified, drawn after the automap; belt flag not as expected: no middle pass");
 }
 
 
@@ -238,8 +250,14 @@ static int xpWindowOpen(void) {
 
 
 
+static int xpBeltUnfolded(void) {
+    return !xpBeltKnown || RD32(client, RVA_BeltUnfolded) != 0;
+}
+
+
+
 __attribute__((force_align_arg_pointer)) static void __cdecl xpPanelDrawn(void) {
     ((void (__cdecl *)(void)) (client + RVA_XpPanelCallee))();
-    if ((int) (GetTickCount() - xpBarUntil) < 0 && !xpWindowOpen()) drawXpBar(1);
+    if ((int) (GetTickCount() - xpBarUntil) < 0 && !xpWindowOpen() && !xpBeltUnfolded()) drawXpBar(1);
     layersDrawStage(LYR_STAGE_L);
 }

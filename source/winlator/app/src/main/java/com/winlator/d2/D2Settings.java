@@ -313,7 +313,7 @@ public final class D2Settings {
     static final String KEY_AIM_ASSIST = "aimAssist", KEY_AIM_RANGE = "aimRange", KEY_AIM_RANGE_MELEE = "aimRangeMelee", KEY_AIM_CONE = "aimCone",
         KEY_AIM_BLIND = "aimBlind",
         KEY_HIGHLIGHT = "highlight", KEY_POTIONS = "potions", KEY_ITEMS_NEED_LABELS = "itemsNeedLabels", KEY_RING_SORT = "ringSort",
-        KEY_DIRECT_WALK = "directWalk", KEY_TAP_MOVES = "tapMoves", KEY_HUD = "hud", KEY_MENU_OPEN = "menuOpen", KEY_AUTO_PAUSE = "autoPause",
+        KEY_DIRECT_WALK = "directWalk", KEY_TAP_MOVES = "tapMoves", KEY_WEAPON_SWAP_BUTTON = "weaponSwapButton", KEY_HUD = "hud", KEY_MENU_OPEN = "menuOpen", KEY_AUTO_PAUSE = "autoPause",
         KEY_LABELS = "itemLabels", KEY_ALWAYS_RUN = "alwaysRun", KEY_ORB_NUMBERS = "orbNumbers",
         KEY_HIDE_POINTER = "hidePointer", KEY_MENU_PINNED = "menuPinned", KEY_AUTO_TRADE = "autoTrade",
         KEY_SKILL_NAMES = "skillNames", KEY_STAMINA = "staminaMode", KEY_AUTO_LIFE = "autoLife", KEY_AUTO_MANA = "autoMana", KEY_AUTO_REJUV = "autoRejuv", KEY_MERC_POTIONS = "mercPotions",
@@ -451,6 +451,11 @@ public final class D2Settings {
 
     public static boolean tapMoves(Context context) {
         return prefs(context).getBoolean(KEY_TAP_MOVES, false);
+    }
+
+
+    public static boolean weaponSwapButton(Context context) {
+        return prefs(context).getBoolean(KEY_WEAPON_SWAP_BUTTON, false);
     }
 
     public static int hud(Context context) {
@@ -890,11 +895,6 @@ public final class D2Settings {
 
 
     public static String gameSize(String screenSize, int lines) {
-        if (lines == LINES_AUTO) return null;
-        String[] parts = screenSize.split("x");
-        float aspect = Integer.parseInt(parts[0]) / (float) Integer.parseInt(parts[1]);
-        int width = (int) (lines * aspect);
-        width -= width % 2;
-        return width + "x" + lines;
+        return D2DesktopSize.askedGame(screenSize, lines);
     }
 }

@@ -8,6 +8,7 @@ package com.winlator.d2;
 
 
 
+
 public final class D2MenuScale {
     private D2MenuScale() {}
 
@@ -20,7 +21,8 @@ public final class D2MenuScale {
         if (lines <= 0) lines = AUTO_LINES;
         int width = (int) (lines * (desktopWidth / (float) desktopHeight));
         width -= width % 2;
-        return new int[]{width, lines};
+
+        return D2DesktopSize.gameFor(desktopWidth, desktopHeight, width, lines);
     }
 
 

@@ -63,6 +63,7 @@ public final class D2HelperEntries {
         group(TAB_CONTROL, "Gegenstände", "itemsNeedLabels", "ringSort");
         group(TAB_CONTROL, "Menü oben rechts", "menuPinned");
         group(TAB_CONTROL, "Schultertasten", "triggers");
+        group(TAB_CONTROL, "Fertigkeitsknöpfe", "weaponSwapButton");
         group(TAB_CONTROL, "Gamepad", "padEnabled", "padMap", "padDeadzone", "padCursorSpeed");
         group(TAB_GAME, "Spiel", "players", "largeStacks", "materials", "resume");
         group(TAB_GAME, "Hilfe", "intro");
@@ -227,6 +228,10 @@ public final class D2HelperEntries {
         l.add(new Entry(Kind.CHECK, "hidePointer", "helper_hidePointer_label", s, TAB_DISPLAY, false, null, "helper_hidePointer_info"));
 
 
+        s = "Fertigkeitsknöpfe";
+        l.add(new Entry(Kind.CHECK, "weaponSwapButton", "helper_weaponSwapButton_label", s, TAB_CONTROL, false, null, "helper_weaponSwapButton_info"));
+
+
         s = "Gamepad";
         l.add(new Entry(Kind.CHECK, "padEnabled", "helper_padEnabled_label", s, TAB_CONTROL, false, null, "helper_padEnabled_info"));
         l.add(new Entry(Kind.PAD, "padMap", "helper_padMap_label", s, TAB_CONTROL, false, null, "helper_padMap_info",
@@ -321,7 +326,8 @@ public final class D2HelperEntries {
             int action = D2TriggerAction.ALL[i];
             options[2 * i] = Integer.toString(action);
 
-            options[2 * i + 1] = action == D2TriggerAction.ATTACK_OR_TAKE ? "trigger_action_attack_take" : names[action];
+            options[2 * i + 1] = action == D2TriggerAction.ATTACK_OR_TAKE ? "trigger_action_attack_take"
+                : action == D2TriggerAction.WEAPON_SWAP ? "pad_action_weapons" : names[action];
         }
         return options;
     }
@@ -371,6 +377,7 @@ public final class D2HelperEntries {
         section(SET_CONTROL, "joystick", "joystickVisible", "hidePointer");
         section(SET_CONTROL, "zielhilfe", "aimAssist", "aimRangeMelee", "aimRange", "aimCone", "aimBlind", "highlight");
         section(SET_CONTROL, "schultertasten", "triggers");
+        section(SET_CONTROL, "fertigkeiten", "weaponSwapButton");
         section(SET_CONTROL, "gamepad", "padEnabled", "padMap", "padDeadzone", "padCursorSpeed");
         section(SET_CONTROL, "menue", "menuPinned", "editButtons");
         section(SET_DISPLAY, "untere_leiste", "hud", "orbNumbers", "skillNames");
@@ -451,6 +458,7 @@ public final class D2HelperEntries {
         keywords("players", "spieler players schwierigkeit drops");
         keywords("triggers", "schultertasten trigger tasten l r redmagic");
         keywords("menuPinned", "menue knoepfe oben rechts buttons");
+        keywords("weaponSwapButton", "waffen wechseln waffenwechsel weapon swap ruf zu den waffen call to arms cta fertigkeitsknoepfe satz");
         keywords("editButtons", "knoepfe verschieben bearbeiten edit buttons move groesse");
         keywords("aimAssist", "zielhilfe aim ziel automatisch auto target");
         keywords("autoLife", "trank heiltrank leben potion life heal automatisch");

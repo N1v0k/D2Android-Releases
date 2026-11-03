@@ -157,6 +157,9 @@ public final class D2ModLink {
 
     private volatile long sharedGold = -1;
 
+
+    private volatile int[] weaponSet;
+
     private volatile boolean appDps;
 
     private volatile int xpBarBits;
@@ -301,6 +304,9 @@ public final class D2ModLink {
             drawnLayers = D2Points.parseDrawnLayers(data, length, extension);
             grids = D2Points.parseGrids(data, length, extension);
             sharedGold = D2Points.parseSharedGold(data, length, extension);
+            int[] ws = D2Points.parseWeaponSet(data, length, extension);
+
+            weaponSet = ws == null ? null : new int[]{ws[0], ws[1], D2SwapCast.availableMask(parseLevels(data, length))};
             if (points != null && (last == null || last.points == null || last.points.counter != points.counter)) {
                 android.util.Log.i(TAG, points.toString());
             }
@@ -1115,6 +1121,12 @@ public final class D2ModLink {
 
     public long sharedGold() {
         return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? sharedGold : -1;
+    }
+
+
+
+    public int[] weaponSet() {
+        return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? weaponSet : null;
     }
 
 

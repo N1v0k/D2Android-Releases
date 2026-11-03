@@ -27,6 +27,7 @@ import java.io.File;
 
 
 
+
 @SuppressLint("ViewConstructor")
 final class D2DirectLoading extends FrameLayout {
     interface Host {
@@ -171,7 +172,7 @@ final class D2DirectLoading extends FrameLayout {
         int decision = D2ResumeHint.decision();
         boolean goes = resumeExpected && decision != D2ResumeHint.DECISION_NOT;
         shown = D2LoadingSteps.next(shown, D2LoadingSteps.target(link != null, link != null && link.isAlive(), report, inGame, goes));
-        skipShown = D2LoadingSteps.skippable(shown, resumeExpected, decision);
+        skipShown = D2LoadingSteps.skippable(shown, resumeExpected, decision, D2ResumeHint.TAP.townAsked(), D2ResumeHint.TAP.arrived());
         invalidate();
         handler.postDelayed(this::poll, POLL_MS);
     }
@@ -192,11 +193,25 @@ final class D2DirectLoading extends FrameLayout {
     }
 
 
+
+
+
     private boolean resumeSettled(D2ModLink link) {
         int decision = D2ResumeHint.decision();
         if (!resumeExpected || decision == D2ResumeHint.DECISION_NOT) return true;
         D2ResumeState r = link != null ? link.resumeState() : null;
-        if (decision == D2ResumeHint.DECISION_GOES && r != null) {
+        D2ResumeTap tap = D2ResumeHint.TAP;
+        if (decision == D2ResumeHint.DECISION_GOES && r != null && tap.arrived() && tap.townAsked()
+            && tap.town() == D2ResumeTap.TOWN_SENT && r.exitState != D2ResumeState.EXIT_REFUSED) {
+
+
+            if (r.exitState != D2ResumeState.EXIT_TOWN || !D2Resume.isTown(r.level)) return waitedOut();
+            if (!arrivedDone) D2Trace.log("direct start: back in town as tapped (way out done), no arrival pause");
+            arrivedDone = true;
+            return true;
+        }
+
+        if (decision == D2ResumeHint.DECISION_GOES && r != null && tap.arrived()) {
             if (r.state == D2ResumeState.STATE_SPOT || r.state == D2ResumeState.STATE_WAYPOINT) {
                 if (!arrivedDone) {
                     D2Trace.log("direct start: resumed (state " + r.state + "), arriving paused");
@@ -207,6 +222,11 @@ final class D2DirectLoading extends FrameLayout {
             }
             if (r.state == D2ResumeState.STATE_REFUSED) return true;
         }
+        return waitedOut();
+    }
+
+
+    private boolean waitedOut() {
         if (inGameMs > RESUME_WAIT_MS) {
             if (!arrivedDone) D2Trace.log("direct start: no result of resume within " + RESUME_WAIT_MS + " ms");
             arrivedDone = true;
@@ -301,12 +321,15 @@ final class D2DirectLoading extends FrameLayout {
             else if (skipShown) {
 
                 skipShown = false;
-                if (D2ResumeHint.skipNext()) {
+                int tap = D2ResumeHint.TAP.tap();
+                if (tap == D2ResumeTap.TAP_SKIP) {
                     resumeExpected = false;
-                    D2Trace.log("direct start: resume skipped by a tap");
+                    D2Trace.log("direct start: tap on the hint before the jump: no resume, the character starts in town");
                 }
 
-                else D2Trace.log("direct start: tap too late, resume goes on");
+                else if (tap == D2ResumeTap.TAP_TOWN)
+                    D2Trace.log("direct start: tap on the hint after the jump: back to town on arrival (way out)");
+                else D2Trace.log("direct start: tap on the hint too late (arrived), at the place");
                 invalidate();
             }
         }

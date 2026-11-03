@@ -1,9 +1,11 @@
-package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+package com.winlator.alsaserver;  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 
 import android.content.Context;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.SystemClock;
 
 import com.winlator.core.KeyValueSet;
 import com.winlator.sysvshm.SysVSharedMemory;
@@ -36,6 +38,9 @@ public class ALSAClient {
     protected final Options options;
     private static int framesPerBuffer = ALSABufferSize.DEFAULT_BURST;
     private final ALSAMute.Track muteTrack = new ALSAMute.Track();
+    private final ALSATrackCheck trackCheck = new ALSATrackCheck();
+    private boolean deviceNoted;
+    private long deviceTriedAt = Long.MIN_VALUE / 2;
 
     public static class Options {
         public short latencyMillis = 16;
@@ -108,24 +113,77 @@ public class ALSAClient {
 
         if (!isValidBufferSize()) return;
 
+        audioTrack = buildTrack();
+        com.winlator.d2.D2Telemetry.audioTrack(audioTrack.getState() == AudioTrack.STATE_INITIALIZED);
+        startTrack(true);
+    }
+
+
+    private AudioTrack buildTrack() {
         AudioFormat format = new AudioFormat.Builder()
             .setEncoding(getPCMEncoding(dataType))
             .setSampleRate(sampleRate)
             .setChannelMask(getChannelConfig(channels))
             .build();
 
-        audioTrack = new AudioTrack.Builder()
+        return new AudioTrack.Builder()
             .setPerformanceMode(options.performanceMode)
             .setAudioFormat(format)
             .setBufferSizeInBytes(getBufferSizeInBytes())
             .build();
-        com.winlator.d2.D2Telemetry.audioTrack(audioTrack.getState() == AudioTrack.STATE_INITIALIZED);
+    }
 
+
+    private void startTrack(boolean play) {
+        trackCheck.remade();
+        deviceNoted = false;
         bufferCapacity = audioTrack.getBufferCapacityInFrames();
 
         float volume = muteTrack.prepared(options.volume);
         if (volume != 1.0f) audioTrack.setVolume(volume);
-        audioTrack.play();
+        if (play) audioTrack.play();
+    }
+
+
+
+
+
+    private boolean remakeTrack(String reason) {
+        AudioTrack old = audioTrack;
+        boolean playing;
+        try {
+            playing = old.getPlayState() == AudioTrack.PLAYSTATE_PLAYING;
+        }
+        catch (Exception e) {
+            playing = true;
+        }
+        AudioTrack fresh = null;
+        try {
+            fresh = buildTrack();
+        }
+        catch (Exception e) {
+
+        }
+        if (fresh == null || fresh.getState() != AudioTrack.STATE_INITIALIZED) {
+            if (fresh != null) fresh.release();
+            com.winlator.d2.D2Trace.log("audio: track remake failed (" + reason + ")");
+            return false;
+        }
+        try {
+            old.pause();
+            old.flush();
+        }
+        catch (Exception e) {
+
+        }
+        old.release();
+        audioTrack = fresh;
+        previousUnderrunCount = 0;
+        startTrack(playing);
+        com.winlator.d2.D2Telemetry.audioTrack(true);
+        com.winlator.d2.D2Trace.log("audio: track remade (" + reason + "), buffer " + bufferSize + "/" + bufferCapacity
+            + " frames, rate " + sampleRate + ", " + (playing ? "playing" : "not playing"));
+        return true;
     }
 
     public void start() {
@@ -158,28 +216,110 @@ public class ALSAClient {
         }
 
         if (audioTrack != null) {
-            int bytesWritten;
             data.position(0);
 
             float volume = muteTrack.beforeWrite(options.volume);
             if (volume >= 0f) audioTrack.setVolume(volume);
 
-            do {
-                try {
-                    bytesWritten = audioTrack.write(data, data.remaining(), AudioTrack.WRITE_BLOCKING);
-                    if (bytesWritten < 0) break;
-                    increaseBufferSizeIfUnderrunOccurs();
-                }
-                catch (Exception e) {
-                    break;
+            if (volume == 0f) trackCheck.device(routedDeviceId());
+            if (muteTrack.takeResume()) checkAfterResume();
+
+            int error = writeAll(data);
+            if (error < 0) {
+
+
+                if (trackCheck.writeFailed(error, data.remaining(), SystemClock.uptimeMillis())
+                        && remakeTrack("write error " + error)) {
+                    int again = writeAll(data);
+                    if (again < 0) trackCheck.writeFailed(again, data.remaining(), SystemClock.uptimeMillis());
                 }
             }
-            while (data.position() != data.limit());
+            else if (!deviceNoted) noteDevice();
 
-            position += data.position();
-            if (frameBytes > 0) ALSAMute.written(data.position() / frameBytes, sampleRate);
+
+
+
+            position += data.limit();
+            if (frameBytes > 0) ALSAMute.written(data.limit() / frameBytes, sampleRate);
             data.rewind();
         }
+    }
+
+
+    private int writeAll(ByteBuffer data) {
+        int bytesWritten;
+        do {
+            try {
+                bytesWritten = audioTrack.write(data, data.remaining(), AudioTrack.WRITE_BLOCKING);
+                if (bytesWritten < 0) return bytesWritten;
+                increaseBufferSizeIfUnderrunOccurs();
+            }
+            catch (Exception e) {
+                return AudioTrack.ERROR;
+            }
+        }
+        while (data.position() != data.limit());
+        return 0;
+    }
+
+
+
+
+
+
+    private void noteDevice() {
+        long now = SystemClock.uptimeMillis();
+        if (now - deviceTriedAt < 1000) return;
+        deviceTriedAt = now;
+        int id = routedDeviceId();
+        if (id == 0) return;
+        deviceNoted = true;
+        trackCheck.device(id);
+    }
+
+
+    private int routedDeviceId() {
+        try {
+            AudioDeviceInfo device = audioTrack.getRoutedDevice();
+            return device != null ? device.getId() : 0;
+        }
+        catch (Exception e) {
+            return 0;
+        }
+    }
+
+
+
+
+
+
+    private void checkAfterResume() {
+        int state, playState, underruns, size, capacity, rate, deviceType = 0, deviceId = 0, outputRate;
+        try {
+            state = audioTrack.getState();
+            playState = audioTrack.getPlayState();
+            underruns = audioTrack.getUnderrunCount();
+            size = audioTrack.getBufferSizeInFrames();
+            capacity = audioTrack.getBufferCapacityInFrames();
+            rate = audioTrack.getPlaybackRate();
+            AudioDeviceInfo device = audioTrack.getRoutedDevice();
+            if (device != null) {
+                deviceId = device.getId();
+                deviceType = device.getType();
+            }
+            outputRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
+        }
+        catch (Exception e) {
+            com.winlator.d2.D2Trace.log("audio: after resume: track check failed (" + e + ")");
+            return;
+        }
+        int before = trackCheck.deviceId();
+        String reason = trackCheck.afterResume(state == AudioTrack.STATE_INITIALIZED, deviceId);
+        com.winlator.d2.D2Trace.log("audio: after resume: track state " + state + ", play state " + playState
+            + ", device " + deviceId + " type " + deviceType + " (before " + before + "), underruns " + underruns
+            + ", buffer " + size + "/" + capacity + " frames, rate " + rate + "/" + sampleRate + " (output " + outputRate
+            + "), failed writes " + trackCheck.takeErrors() + (reason != null ? ", remaking: " + reason : ", kept"));
+        if (reason != null) remakeTrack(reason);
     }
 
     private void increaseBufferSizeIfUnderrunOccurs() {

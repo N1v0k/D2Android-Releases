@@ -1,8 +1,10 @@
-// Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+// Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 #include "request_handler.h"
 #include "vk_context.h"
 #include "vulkan_helper.h"
 #include "sysvshared_memory.h"
+#include "vortek_log.h"
+#include <errno.h>
 
 #define MSG_DEBUG_UNIMPLEMENTED_FUNC "%s not implemented yet\n"
 
@@ -322,7 +324,13 @@ void vt_handle_vkMapMemory(VkContext* context) {
     ResourceMemory* resourceMemory = VkObject_fromId(memoryId);
 
     VkResult result = resourceMemory->fd != -1 ? VK_SUCCESS : VK_ERROR_MEMORY_MAP_FAILED;
-    send_fds(context->clientFd, &resourceMemory->fd, 1, &result, sizeof(VkResult));
+
+    static int loggedNoFd = 0, loggedSend = 0;
+    if (resourceMemory->fd == -1 && vortekLog_few(&loggedNoFd, 8, "mappings without fd"))
+        vortekLog("vkMapMemory: no fd for this memory (%llu bytes)", (unsigned long long)resourceMemory->allocationSize);
+    int sent = send_fds(context->clientFd, &resourceMemory->fd, 1, &result, sizeof(VkResult));
+    if (sent < 0 && vortekLog_few(&loggedSend, 8, "failed sends of an fd"))
+        vortekLog("vkMapMemory: sending fd %d failed: errno %d (%s)", resourceMemory->fd, errno, strerror(errno));
 }
 
 void vt_handle_vkUnmapMemory(VkContext* context) {

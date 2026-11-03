@@ -29,6 +29,21 @@ public final class D2GpuPath {
         D2DeviceCheck.Reason.XCLIPSE, D2DeviceCheck.Reason.POWERVR);
 
 
+
+
+
+
+    public static final byte RESOURCE_MEMORY_TYPE = 0;
+    static final String[] RESOURCE_MEMORY_NAMES = {"auto", "opaque fd", "dma-buf", "ahardwarebuffer"};
+
+    public static final String VORTEK_LOG = "vortek.log", VORTEK_LOG_PREV = "vortek.prev.log";
+
+
+    public static String resourceMemoryName(int type) {
+        return (type >= 0 && type < RESOURCE_MEMORY_NAMES.length ? RESOURCE_MEMORY_NAMES[type] : "?") + " (" + type + ")";
+    }
+
+
     static final EnumSet<D2DeviceCheck.Reason> FAMILIES = EnumSet.of(D2DeviceCheck.Reason.MALI,
         D2DeviceCheck.Reason.XCLIPSE, D2DeviceCheck.Reason.POWERVR, D2DeviceCheck.Reason.OTHER_GPU);
 

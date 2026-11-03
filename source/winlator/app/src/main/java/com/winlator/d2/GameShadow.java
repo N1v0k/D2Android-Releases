@@ -35,6 +35,11 @@ public final class GameShadow {
         return atlasLayers >= 2048 ? D2DX_ASSET : "d2/d2dx/glide3x-atlas" + atlasLayers + ".dll";
     }
 
+
+    static File dir(Context context) {
+        return new File(D2Runtime.driveC(context), DIR_NAME);
+    }
+
     public static boolean isD2DXBundled(Context context) {
         try (java.io.InputStream ignored = context.getAssets().open(D2DX_ASSET)) {
             return true;
@@ -111,10 +116,14 @@ public final class GameShadow {
 
         File glide = new File(shadowDir, "glide3x.dll");
 
+        int ingame = D2IngameResolution.read(shadowDir);
+
 
         FileUtils.copy(context, D2Settings.vortek(context)
             ? d2dxAsset(D2GpuPath.tier(D2Runtime.totalMem(context)).atlasLayers) : D2DX_ASSET, glide);
         if (!glide.isFile()) throw new IOException("D2DX fehlt in dieser App-Version");
+
+        if (ingame != D2IngameResolution.MODE_WIDE) D2Trace.log(D2IngameResolution.apply(glide, ingame));
 
 
         if (isModBundled(context)) {
@@ -122,7 +131,7 @@ public final class GameShadow {
         }
 
         boolean plugy = isModBundled(context) && D2Settings.modEnabled(context) && D2Settings.plugy(context);
-        D2PlugY.install(context, shadowDir, plugy);
+        D2PlugY.install(context, shadowDir, saveDir, plugy);
         if (plugy) plugyStatsHint(context, new File(new File(shadowDir, "PlugY"), D2PlugYTexts.STRINGS_FILE));
 
 

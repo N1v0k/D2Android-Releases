@@ -351,6 +351,9 @@ def main():
     print("rootfs_patches: %d entries" % extract(inputs["rootfs_patches"], root, patches))
     print("box64: %d" % extract(inputs["box64"], root, lambda p: p if p == "usr/local/bin/box64" else None))
     print("turnip: %d" % extract(inputs["turnip"], root, lambda p: p or None))
+
+    subprocess.check_call([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpatch.py"),
+                           "turnip-a840v2", os.path.join(root, "usr/lib/libvulkan_freedreno.so")])
     dxvk = {"syswow64/d3d11.dll", "syswow64/dxgi.dll"}
     print("dxvk: %d" % extract(inputs["dxvk"], root, lambda p: "opt/d2/" + p if p in dxvk else None))
 

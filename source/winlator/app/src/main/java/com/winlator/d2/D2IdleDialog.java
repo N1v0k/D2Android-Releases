@@ -27,6 +27,8 @@ final class D2IdleDialog {
     static final String KEY_DURATION = "idleDurationMin", KEY_RETREAT = "idleRetreat";
 
     static final int[] DURATIONS = {15, 30, 60, 0};
+
+    static final int COLUMNS = 2;
     static final int RETREAT_MIN = 10, RETREAT_MAX = 60, RETREAT_DEFAULT = D2Idle.RETREAT_PERCENT;
 
 
@@ -62,18 +64,32 @@ final class D2IdleDialog {
         root.addView(hint(activity, D2Text.get(activity, quest != null ? R.string.idle_goal_quest_hint : R.string.idle_goal_hint)));
 
         root.addView(heading(activity, D2Text.get(activity, R.string.idle_duration)));
-        RadioGroup duration = new RadioGroup(activity);
-        duration.setOrientation(RadioGroup.HORIZONTAL);
+
+
+
         int lastMinutes = prefs.getInt(KEY_DURATION, DURATIONS[0]);
-        for (int minutes : DURATIONS) {
+        int chosen = contains(DURATIONS, lastMinutes) ? lastMinutes : DURATIONS[0];
+        RadioButton[] durations = new RadioButton[DURATIONS.length];
+        LinearLayout row = null;
+        for (int i = 0; i < DURATIONS.length; i++) {
+            int minutes = DURATIONS[i];
+            if (i % COLUMNS == 0) {
+                row = new LinearLayout(activity);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                root.addView(row);
+            }
             RadioButton button = new RadioButton(activity);
             button.setId(1000 + minutes);
             button.setText(minutes == 0 ? D2Text.get(activity, R.string.idle_duration_unlimited) : minutes + " min");
+            button.setSingleLine(true);
             D2Style.control(button);
-            duration.addView(button);
+            button.setChecked(minutes == chosen);
+            button.setOnCheckedChangeListener((b, on) -> {
+                if (on) for (RadioButton other : durations) if (other != b) other.setChecked(false);
+            });
+            durations[i] = button;
+            row.addView(button, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         }
-        duration.check(1000 + (contains(DURATIONS, lastMinutes) ? lastMinutes : DURATIONS[0]));
-        root.addView(duration);
         root.addView(hint(activity, D2Text.get(activity, R.string.idle_duration_hint)));
 
         root.addView(heading(activity, D2Text.get(activity, R.string.idle_retreat)));
@@ -113,7 +129,7 @@ final class D2IdleDialog {
 
             .setView(scrolling(activity, root))
             .setPositiveButton(D2Text.get(activity, R.string.idle_start), (d, which) -> {
-                int minutes = duration.getCheckedRadioButtonId() - 1000;
+                int minutes = checkedMinutes(durations);
                 int percent = RETREAT_MIN + bar.getProgress() * 5;
                 prefs.edit().putInt(KEY_DURATION, minutes).putInt(KEY_RETREAT, percent).apply();
                 onStart.start(minutes, percent);
@@ -139,6 +155,12 @@ final class D2IdleDialog {
 
     private static String retreatText(Activity activity, int percent) {
         return D2Text.get(activity, R.string.idle_retreat_label, percent);
+    }
+
+
+    private static int checkedMinutes(RadioButton[] buttons) {
+        for (int i = 0; i < buttons.length; i++) if (buttons[i].isChecked()) return DURATIONS[i];
+        return DURATIONS[0];
     }
 
     private static boolean contains(int[] values, int value) {

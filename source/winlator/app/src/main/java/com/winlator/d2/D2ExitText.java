@@ -53,6 +53,42 @@ final class D2ExitText {
     }
 
 
+    static String earlyEndNote(long runMs, boolean gpuRefused) {
+        return "Spiel endete " + runMs / 1000 + " s nach dem Start (Start fehlgeschlagen"
+            + (gpuRefused ? ", Grafiktreiber lehnt den Grafikchip ab" : "") + ")";
+    }
+
+
+    private static final java.util.regex.Pattern TURNIP_UNSUPPORTED = java.util.regex.Pattern.compile(
+        "chip_id = ([0-9A-Fa-f]{1,16})[^\\n]*is unsupported \\(VK_ERROR_INCOMPATIBLE_DRIVER\\)");
+
+
+
+
+
+
+
+    static String gpuRefused(String output) {
+        if (output == null) return null;
+        java.util.regex.Matcher m = TURNIP_UNSUPPORTED.matcher(output);
+        String chip = null;
+        while (m.find()) chip = "0x" + m.group(1).toUpperCase(java.util.Locale.ROOT);
+        if (chip != null) return chip;
+        return output.contains("is unsupported (VK_ERROR_INCOMPATIBLE_DRIVER)")
+            || output.contains("Failed to create Vulkan 1.1 instance") ? "" : null;
+    }
+
+
+
+
+
+    static String gpuLabel(String renderer) {
+        if (renderer == null) return "";
+        int adreno = D2DeviceCheck.adrenoModel(renderer);
+        return adreno > 0 ? "Adreno " + adreno : renderer.trim();
+    }
+
+
     static final long RESUME_WORTH_NOTING_MS = 60_000;
 
 

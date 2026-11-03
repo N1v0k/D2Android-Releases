@@ -122,17 +122,25 @@ final class D2InfoLayer {
         }
 
         static Piece crop(int frame, int x, int y, int w, int h) {
-            int[] f = new int[w], sx = new int[w], sy = new int[h];
-            for (int i = 0; i < w; i++) {
-                f[i] = frame;
-                sx[i] = x + i;
-            }
+            int[] xs = new int[w];
+            for (int i = 0; i < w; i++) xs[i] = x + i;
+            return columns(frame, xs, y, h);
+        }
+
+
+        static Piece columns(int frame, int[] xs, int y, int h) {
+            int[] f = new int[xs.length], sy = new int[h];
+            java.util.Arrays.fill(f, frame);
             for (int i = 0; i < h; i++) sy[i] = y + i;
-            return new Piece(f, sx, sy);
+            return new Piece(f, xs.clone(), sy);
         }
     }
 
-    static final Piece STONE = Piece.crop(3, 0, 9, 124, 6), BUTTON_BOX = Piece.crop(1, 40, 15, 33, 33), THIN_BOX = thinBox();
+
+    static final Piece STONE = Piece.crop(3, 0, 9, 124, 6),
+        BUTTON_BOX = Piece.columns(D2InfoGrid.BUTTON_BOX_FRAME, D2InfoGrid.BUTTON_BOX_COLUMNS, D2InfoGrid.BUTTON_BOX_Y,
+            D2InfoGrid.BUTTON_BOX_H),
+        THIN_BOX = thinBox();
 
     private static Piece thinBox() {
         int[] f = new int[40], sx = new int[40], sy = new int[6];

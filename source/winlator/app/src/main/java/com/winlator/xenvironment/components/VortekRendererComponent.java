@@ -1,4 +1,4 @@
-package com.winlator.xenvironment.components;  // Modified by D2Android (changes 2026-10-09 to 2026-10-30).
+package com.winlator.xenvironment.components;  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
 
 import androidx.annotation.Keep;
 
@@ -46,6 +46,8 @@ public class VortekRendererComponent extends EnvironmentComponent implements Con
         public short imageCacheSize = IMAGE_CACHE_SIZE;
         public byte resourceMemoryType = 0;
         public String[] exposedDeviceExtensions = null;
+
+        public String logPath = null;
     }
 
 
@@ -53,6 +55,7 @@ public class VortekRendererComponent extends EnvironmentComponent implements Con
         this.xServer = xServer;
         this.socketConfig = socketConfig;
         this.options = options;
+        openLog(options.logPath);
         initVulkanWrapper(cacheDir);
     }
 
@@ -146,6 +149,9 @@ public class VortekRendererComponent extends EnvironmentComponent implements Con
     private native void destroyVkContext(long contextPtr);
 
     private native void initVulkanWrapper(String cacheDir);
+
+
+    private static native void openLog(String path);
 
     private native boolean handleExtraDataRequest(long contextPtr, int requestCode, int requestLength);
 }

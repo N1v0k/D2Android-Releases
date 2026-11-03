@@ -150,6 +150,7 @@ public class D2KeepAliveService extends Service {
         D2ExitLog.note(D2ExitText.taskRemoved(D2GuestComponent.running()));
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
+        D2GuestComponent.saveRegistry(D2Runtime.rootDir(this), D2RegistrySave.WAIT_MS);
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 

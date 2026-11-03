@@ -310,6 +310,10 @@ static void sendItems(void* player, void** units, int count) {
 
 
 
+
+
+
+
 #define CMD_STACKS     20
 #define ITXT_MAXSTACK  0xE8
 #define ITXT_STACKABLE 0x132
@@ -318,11 +322,21 @@ static const struct { char code[4]; DWORD original, large; } stackRows[] = {
 };
 #define STACK_ROWS 3
 static BYTE* stackTxt[STACK_ROWS];
+static DWORD stackRowNo[STACK_ROWS];
 static int stackRowsState;
 static int stacksLarge;
 
+
+static void forgetStackRows(void) {
+    if (stackRowsState == 0 && !stacksLarge) return;
+    memset(stackTxt, 0, sizeof(stackTxt));
+    stackRowsState = 0;
+    stacksLarge = 0;
+}
+
 static void findStackRows(void) {
     stackRowsState = -1;
+    memset(stackTxt, 0, sizeof(stackTxt));
     int found = 0;
     for (DWORD no = 0; no < 4096 && found < STACK_ROWS; no++) {
         BYTE* txt = (BYTE*) fGetItemText(no);
@@ -331,6 +345,7 @@ static void findStackRows(void) {
         for (int i = 0; i < STACK_ROWS; i++) {
             if (!stackTxt[i] && memcmp(txt + ITXT_CODE, stackRows[i].code, 4) == 0) {
                 stackTxt[i] = txt;
+                stackRowNo[i] = no;
                 found++;
             }
         }
@@ -344,14 +359,32 @@ static void findStackRows(void) {
         }
     }
     stackRowsState = 1;
-    logLine("stack rows verified: tbk %lu, ibk %lu, key %lu", (unsigned long) *(DWORD*) (stackTxt[0] + ITXT_MAXSTACK),
-        (unsigned long) *(DWORD*) (stackTxt[1] + ITXT_MAXSTACK), (unsigned long) *(DWORD*) (stackTxt[2] + ITXT_MAXSTACK));
+    stacksLarge = *(DWORD*) (stackTxt[0] + ITXT_MAXSTACK) == stackRows[0].large;
+    logLine("stack rows verified: tbk %lu, ibk %lu, key %lu (table %p)", (unsigned long) *(DWORD*) (stackTxt[0] + ITXT_MAXSTACK),
+        (unsigned long) *(DWORD*) (stackTxt[1] + ITXT_MAXSTACK), (unsigned long) *(DWORD*) (stackTxt[2] + ITXT_MAXSTACK),
+        (void*) stackTxt[0]);
 }
 
-static void setLargeStacks(int large) {
-    if (large == stacksLarge) return;
+
+static int stackRowsCurrent(void) {
+    if (stackRowsState == 1) {
+        for (int i = 0; i < STACK_ROWS; i++) {
+            if ((BYTE*) fGetItemText(stackRowNo[i]) != stackTxt[i]) {
+                logLine("stack rows: the game has loaded its tables anew, looking for the rows again");
+                forgetStackRows();
+                break;
+            }
+        }
+    }
     if (stackRowsState == 0) findStackRows();
-    if (stackRowsState != 1) return;
+    return stackRowsState == 1;
+}
+
+
+static void setLargeStacks(int large) {
+    if (!large && !stacksLarge) return;
+    if (!stackRowsCurrent()) return;
+    if (large == stacksLarge) return;
     for (int i = 0; i < STACK_ROWS; i++) {
         DWORD* max = (DWORD*) (stackTxt[i] + ITXT_MAXSTACK);
         DWORD from = large ? stackRows[i].original : stackRows[i].large;
@@ -364,8 +397,7 @@ static void setLargeStacks(int large) {
 
 
 static BYTE stackMax(int row) {
-    if (stackRowsState == 0) findStackRows();
-    if (stackRowsState != 1) return 0;
+    if (!stackRowsCurrent()) return 0;
     DWORD max = *(DWORD*) (stackTxt[row] + ITXT_MAXSTACK);
     return (BYTE) (max > 254 ? 254 : max);
 }

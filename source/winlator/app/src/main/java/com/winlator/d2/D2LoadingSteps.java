@@ -69,7 +69,8 @@ final class D2LoadingSteps {
 
 
 
-    static boolean skippable(int shown, boolean resumeExpected, int decision) {
-        return resumeExpected && world(shown) && decision == DECISION_NONE;
+
+    static boolean skippable(int shown, boolean resumeExpected, int decision, boolean townAsked, boolean arrived) {
+        return resumeExpected && world(shown) && decision != DECISION_NOT && !townAsked && !arrived;
     }
 }

@@ -464,7 +464,16 @@ final class D2StartPage extends FrameLayout {
     void setPadActive(boolean on) {
         if (on == padOn) return;
         padOn = on;
-        if (on) updatePadHint();
+        if (on) {
+
+
+            View focused = findFocus();
+            if (menu == null && !(focused instanceof Card) && !(focused instanceof DeletedCard)) {
+                View first = padFirstFocus();
+                if (first != null) first.requestFocus();
+            }
+            updatePadHint();
+        }
         else {
             padHint = null;
             backdropView.invalidate();

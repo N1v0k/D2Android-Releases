@@ -44,30 +44,10 @@ final class D2ResumeHint {
 
     static final int DECISION_NONE = D2LoadingSteps.DECISION_NONE, DECISION_GOES = D2LoadingSteps.DECISION_GOES,
         DECISION_NOT = D2LoadingSteps.DECISION_NOT;
-    private static volatile int decision;
-    private static volatile boolean skipNext;
+    static final D2ResumeTap TAP = new D2ResumeTap();
 
     static int decision() {
-        return decision;
-    }
-
-
-
-
-
-    static synchronized boolean skipNext() {
-        if (decision != DECISION_NONE) return false;
-        skipNext = true;
-        return true;
-    }
-
-
-    private static synchronized int decide(boolean goes) {
-        int d = goes && !skipNext ? DECISION_GOES : DECISION_NOT;
-        if (goes && skipNext) D2Trace.log("resume: skipped by a tap on the loading picture");
-        skipNext = false;
-        decision = d;
-        return d;
+        return TAP.decision();
     }
 
 
@@ -207,7 +187,7 @@ final class D2ResumeHint {
             exitSaveAt = 0;
             exit.hide();
             resume.forget();
-            decision = DECISION_NONE;
+            TAP.reset();
         }
         D2ResumeState r = link.resumeState();
 
@@ -224,7 +204,9 @@ final class D2ResumeHint {
                 f != null ? f.length() : -1, f != null ? f.lastModified() : -1, D2SaveHeader.hardcore(saveDir, name));
             D2Trace.log("resume: " + why + (r != null ? " · " + r : ""));
 
-            if (decide(why == D2Resume.Why.OK) != DECISION_GOES) return;
+            int d = TAP.decide(why == D2Resume.Why.OK);
+            if (TAP.skipped()) D2Trace.log("resume: skipped by a tap on the loading picture before the jump, the character starts in town");
+            if (d != DECISION_GOES) return;
 
 
             sending = true;
@@ -255,6 +237,9 @@ final class D2ResumeHint {
             reported = true;
             String level = levelName(resume.entry != null ? resume.entry.level : r.level);
             D2Trace.log("resume: done, state " + r.state + " reason " + r.reason);
+
+
+            if (TAP.arrive() && arriveToTown(r, now)) return;
             if (r.state == D2ResumeState.STATE_SPOT) host.note(host.text(R.string.resume_spot, level), 2500);
 
             else if (r.state == D2ResumeState.STATE_WAYPOINT) host.note(host.text(R.string.resume_waypoint,
@@ -280,7 +265,14 @@ final class D2ResumeHint {
                 exitSaveAt = now + EXIT_SAVE_MS;
                 exitToTown = r.exitState == D2ResumeState.EXIT_TOWN;
             }
-            else if (r.exitState == D2ResumeState.EXIT_REFUSED) D2Trace.log("resume: way out refused by the mod");
+            else if (r.exitState == D2ResumeState.EXIT_REFUSED) {
+                D2Trace.log("resume: way out refused by the mod");
+
+                if (TAP.town() == D2ResumeTap.TOWN_SENT) {
+                    D2Trace.log("resume: back to town as tapped did not go, the arrival pause at the place");
+                    host.arrivalPause();
+                }
+            }
         }
 
         if (exitSaveAt != 0 && r != null && now >= exitSaveAt
@@ -288,6 +280,24 @@ final class D2ResumeHint {
             exitSaveAt = 0;
             host.saveNow();
         }
+    }
+
+
+
+
+
+
+    private boolean arriveToTown(D2ResumeState r, long now) {
+        exit.show(r.exitKnown ? r.offer : 0, now);
+        boolean sent = exit.active() && exit.take(D2ResumeExit.TOWN, "tap on the loading picture");
+        TAP.town(sent);
+        if (sent) D2Trace.log("resume: arrived (state " + r.state + "), back to town as tapped on the loading picture");
+        else {
+            D2Trace.log("resume: arrived (state " + r.state + "), tapped for town but no way out offered ("
+                + (r.exitKnown ? "offer " + r.offer : "older mod") + "): as without the tap");
+            exit.hide();
+        }
+        return sent;
     }
 
 

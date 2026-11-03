@@ -30,6 +30,9 @@
     <string name="settings_size_540">Grande (540 righe, extra nitida, predefinita)</string>
     <string name="settings_size_600">Media (600 righe, come l\'originale)</string>
     <string name="settings_size_auto">Piccola (720 righe, più mondo)</string>
+    <string name="settings_size_ingame">Scelta nel gioco: %1$s (4:3, con bordi)</string>
+    <string name="settings_size_ingame_hint">Tocca una dimensione qui sotto per tornare all\'immagine larga.</string>
+    <string name="settings_size_note">Nelle opzioni del gioco (Risoluzione) puoi scegliere anche 640×480 o 800×600 (4:3, con bordi). L\'app ricorda questa scelta. Una dimensione qui torna all\'immagine larga.</string>
     <string name="settings_frame_rate">Fotogrammi al secondo</string>
     <string name="settings_frame_rate_hint">Meno fotogrammi al secondo risparmiano batteria e tengono il telefono più fresco. Vale dal prossimo avvio del gioco.</string>
     <string name="settings_frame_rate_unlimited">Illimitati</string>
@@ -306,6 +309,8 @@
     <string name="helper_directWalk_info">Mostri e nomi sulla strada non fermano il personaggio.</string>
     <string name="helper_tapMoves_label">Un tocco sullo schermo muove il personaggio</string>
     <string name="helper_tapMoves_info">Disattivato: un tocco nel mondo non fa nulla, cammini solo con il joystick.</string>
+    <string name="helper_weaponSwapButton_label">Pulsante «I/II»: cambia arma</string>
+    <string name="helper_weaponSwapButton_info">Un piccolo pulsante accanto ad «Attacca» cambia arma come W (es. Chiamata alle armi). I potenziamenti restano dopo il ritorno. Un pulsante abilità con «II» cambia, lancia e torna da solo.</string>
     <string name="helper_joystickVisible_label">Mostra il joystick</string>
     <string name="helper_joystickVisible_info">Funziona anche invisibile, ovunque nella metà sinistra.</string>
     <string name="helper_diagnose_label">Condividi diagnosi</string>
@@ -381,6 +386,8 @@
     <string name="assign_for_left">Tocca l\'abilità sinistra per %1$s · tocca qui: elenco destro</string>
     <string name="note_skill_not_for_attack">Questa abilità non può andare su Attacca</string>
     <string name="note_slot_free">%1$s è libero: tocca \"%2$s\", poi %1$s</string>
+    <string name="note_skill_set">Set %1$d: da %2$s a %3$s</string>
+    <string name="note_swap_cast_failed">Il cambio d\'arma non è arrivato, nulla lanciato</string>
 
     <string name="tree_pick_for">Tocca il pulsante F per %1$s</string>
     <string name="tree_pick_skill">l\'abilità</string>
@@ -678,6 +685,9 @@
     <string name="check_vortek">%1$s: qui Diablo II passa per un livello grafico aggiuntivo per questo chip. È sperimentale: il gioco può essere lento o mostrare errori grafici.</string>
     <string name="game_early_end">Il gioco si è chiuso subito dopo l\'avvio. Il motivo è nel registro, che puoi inviare con «Condividi diagnosi».</string>
     <string name="game_early_end_ok">Chiudi</string>
+    <string name="game_early_end_gpu">Il driver grafico dell\'app non supporta ancora questo chip grafico (%1$s, ID chip %2$s), quindi il gioco non può avviarsi. Inviaci la diagnosi con «Condividi diagnosi» così possiamo aggiungerlo in un aggiornamento.</string>
+    <string name="game_early_end_driver">Il driver grafico non è riuscito ad avviare Vulkan su questo chip grafico (%1$s), quindi il gioco non può avviarsi. Questo chip o il suo driver non è ancora supportato. Inviaci la diagnosi con «Condividi diagnosi».</string>
+    <string name="game_early_end_gpu_unknown">modello sconosciuto</string>
     <string name="check_start_anyway">Avvia comunque</string>
     <string name="check_space_title">Poco spazio libero</string>
     <string name="check_space">Solo %1$s liberi; la prima configurazione richiede circa 1 GB.</string>
@@ -1221,11 +1231,12 @@
     <string name="settings_group_spielstaende">Salvataggi</string>
     <string name="settings_group_spielstaende_desc">Cartella, installazione, invio, caricamento</string>
     <string name="settings_group_hilfe">Aiuto e info</string>
-    <string name="settings_group_hilfe_desc">Tour, anti-chiusura, segnalare un errore, licenze</string>
+    <string name="settings_group_hilfe_desc">Consigli, anti-chiusura, segnalare un errore, licenze</string>
     <string name="settings_section_gehen">Camminare</string>
     <string name="settings_section_joystick">Joystick</string>
     <string name="settings_section_zielhilfe">Mira assistita</string>
     <string name="settings_section_schultertasten">Tasti dorsali</string>
+    <string name="settings_section_fertigkeiten">Pulsanti abilità</string>
     <string name="settings_section_gamepad">Gamepad</string>
     <string name="settings_section_menue">Pulsanti in alto a destra</string>
     <string name="settings_section_untere_leiste">Barra inferiore</string>
@@ -1544,6 +1555,7 @@
     <string name="rb_insert_failed_stash">Non inserito: forziere troppo lontano?</string>
     <string name="rb_on_page">a pagina %1$d</string>
     <string name="rb_on_page_shared">a pagina %1$d (condiviso)</string>
+    <string name="rb_in_stash">nel forziere</string>
     <string name="rb_insert_page">%1$s è a pagina %2$d del tuo forziere: vai a quella pagina</string>
     <string name="rb_insert_page_shared">%1$s è a pagina %2$d del forziere condiviso: vai a quella pagina</string>
     <string name="rb_unavailable">Ricette: solo in partita con la mod</string>
@@ -1659,7 +1671,7 @@
     <string name="settings_saves_backups">Invia backup</string>
     <string name="saves_backups_none">Ancora nessun backup.</string>
     <string name="move_cleanup_title">Cancellare i vecchi file del gioco?</string>
-    <string name="move_cleanup_message">Il gioco ora è nell\'app. Non ti servono più i vecchi file del gioco in %1$s (%2$s). I tuoi salvataggi lì restano.</string>
+    <string name="move_cleanup_message">Il gioco ora è nell\'app. Non ti servono più i vecchi file del gioco in %1$s (%2$s). Si cancellano solo i file del gioco che sono nell\'app. I tuoi salvataggi (anche in cartelle come save.alt), le mod e i tuoi file lì restano.</string>
     <string name="move_cleanup_delete">Cancella</string>
     <string name="move_cleanup_done">Vecchi file del gioco cancellati (%1$s liberati).</string>
     <string name="settings_saves_from_download">Prendi da Download</string>

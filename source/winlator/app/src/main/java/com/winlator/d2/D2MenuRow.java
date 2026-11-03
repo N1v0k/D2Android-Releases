@@ -48,8 +48,19 @@ public final class D2MenuRow {
 
     public static float[] rightEdges(String[] ids, float[] halfWidths, int toggle, Set<String> pinned, boolean open,
                                      float right, float gap) {
+        return rightEdges(ids, halfWidths, toggle, pinned, open, right, gap, -Float.MAX_VALUE, new int[ids.length]);
+    }
+
+
+
+
+
+
+    public static float[] rightEdges(String[] ids, float[] halfWidths, int toggle, Set<String> pinned, boolean open,
+                                     float right, float gap, float left, int[] lines) {
         float[] edges = new float[ids.length];
         float x = right;
+        int line = 0;
         int quests = -1;
         for (int i = 0; i < ids.length; i++) {
             boolean placed = open || i == toggle || pinned.contains(ids[i]);
@@ -57,10 +68,22 @@ public final class D2MenuRow {
                 quests = i;
                 continue;
             }
+            if (placed && x < right && x - 2 * halfWidths[i] < left) {
+                line++;
+                x = right;
+            }
             edges[i] = x;
+            lines[i] = line;
             if (placed) x -= 2 * halfWidths[i] + gap;
         }
-        if (quests >= 0) edges[quests] = x;
+        if (quests >= 0) {
+            if (x < right && x - 2 * halfWidths[quests] < left) {
+                line++;
+                x = right;
+            }
+            edges[quests] = x;
+            lines[quests] = line;
+        }
         return edges;
     }
 }
