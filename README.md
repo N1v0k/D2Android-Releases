@@ -67,9 +67,9 @@ playable on a phone, not to change the game.
 - **Two sets of skill buttons**: the small "1/2" button at the top of the arc switches the four skill buttons between
   F1–F4 and F5–F8. A skill that only comes from your second weapon (e.g. Call to Arms) is marked "II" and swaps weapons,
   casts and swaps back with one tap. An optional "I/II" button next to Attack swaps weapons.
-- **Teleport**: while you hold its button, the character teleports again and again in the joystick's direction (or the direction you drag the button); a ring on the ground shows where it lands next. It only jumps to a spot you can really reach. In front of walls and
+- **Teleport**: hold its button and a ring on the ground shows where you will land; the character stands still. Aim with the joystick or by dragging the button, then let go to jump once. Drag back to where your finger came down to call it off: the ring goes and letting go does nothing. It only jumps to a spot you can really reach. In front of walls and
   cliffs the ring moves to the nearest free spot; a red cross means there is nowhere to jump. How far follows how far you push the joystick: a light push is a short jump, a full push reaches the edge of the screen, without the joystick it is three quarters of that. Like on the PC it goes through thick walls and across gaps when the point lies behind them.
-  With a gamepad: hold the Teleport button, aim with the left stick (the ring shows the target, the character stands still), let go to jump once.
+  With a gamepad the same: hold the Teleport button, aim with the left stick, let go to jump once.
 - **Take**: one button picks up the next item, opens chests, enters portals and waypoints, talks to people. The item's
   name is shown under the button in its quality colour, and your character walks up to people even around tents and
   walls. Hold **Take** for a ring of all targets around in the middle of the screen: push your thumb towards one and

@@ -3,6 +3,10 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.5.3 (2026-11-04)
+
+- Teleport by touch now works like on the gamepad: hold the Teleport button to aim (your character stands still and a ring shows where you land), let go to jump once. Without aiming it jumps 3/4 of the way to the screen edge. To cancel, slide back to where your finger started.
+
 ## 1.5.2 (2026-11-03)
 
 - Skill buttons: a second set of four. The small "1/2" button at the top of the arc switches between F1–F4 and F5–F8; every game starts with set 1. A skill that only comes from your second weapon (e.g. Call to Arms) is marked "II": one tap swaps weapons, casts and swaps back. An optional "I/II" button next to Attack swaps weapons (Game helpers › Controls › Skill buttons), and a shoulder trigger can do it too.
