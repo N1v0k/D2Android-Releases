@@ -1,4 +1,4 @@
-#include <jni.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
+#include <jni.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
 #include <malloc.h>
 #include <android/log.h>
 #include <stdlib.h>

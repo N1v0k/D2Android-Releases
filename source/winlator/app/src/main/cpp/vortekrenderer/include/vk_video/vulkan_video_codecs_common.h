@@ -1,4 +1,4 @@
-#ifndef VULKAN_VIDEO_CODECS_COMMON_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
+#ifndef VULKAN_VIDEO_CODECS_COMMON_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
 #define VULKAN_VIDEO_CODECS_COMMON_H_ 1
 
 /*

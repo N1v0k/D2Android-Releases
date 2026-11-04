@@ -127,6 +127,13 @@ public class D2TouchOverlay extends View {
         float shiftX, shiftY;
 
         boolean saved;
+
+
+
+
+
+        Touch lifted;
+        long liftedAt;
         boolean pressed;
 
         int icon = ICON_TEXT;
@@ -161,6 +168,8 @@ public class D2TouchOverlay extends View {
         Button button;
         float downX, downY, x, y;
         boolean moved, longPressed, hoverOnly;
+
+        boolean wentOut;
 
         boolean cancelled;
 
@@ -2138,6 +2147,16 @@ public class D2TouchOverlay extends View {
     }
 
 
+
+
+
+    private void swapCastLetGo(Button button) {
+        endSkill(button, false);
+        if (teleportReleased && skillOwner == button) swapCastReleaseWaits = true;
+        else swapCast.released(SystemClock.uptimeMillis());
+    }
+
+
     private void abortSwapCast(String why) {
         if (!swapCast.active()) return;
         D2Trace.log("swap cast: aborted (" + why + "), only the swap back follows");
@@ -2162,13 +2181,17 @@ public class D2TouchOverlay extends View {
                 D2Trace.log("swap cast: the skill is there, cast once (the finger is up)");
                 if (button != null) {
                     startSkill(button.vk, button);
-                    swapCastTapEnd = () -> endSkill(button, false);
+
+                    boolean teleport = teleportHeld && skillOwner == button;
+                    if (teleport) swapCast.castHeld(SystemClock.uptimeMillis());
+                    swapCastTapEnd = teleport ? () -> swapCastLetGo(button) : () -> endSkill(button, false);
                     handler.postDelayed(swapCastTapEnd, D2SwapCast.TAP_MS);
                 }
                 break;
             case D2SwapCast.END_CAST:
                 D2Trace.log("swap cast: held too long on the other weapons, the cast ends");
-                if (button != null) endSkill(button, false);
+
+                if (button != null) endSkill(button, teleportHeld && skillOwner == button);
                 break;
             case D2SwapCast.DONE:
                 D2Trace.log("swap cast: back on the first weapons");
@@ -3281,9 +3304,17 @@ public class D2TouchOverlay extends View {
                 for (int i = 0; i < event.getPointerCount(); i++) onMove(event.getPointerId(i), event.getX(i), event.getY(i), event.getEventTime());
                 break;
             case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_POINTER_UP: {
+
+
+                Touch lifted = touches.get(event.getPointerId(index));
+                if (lifted != null && lifted.role == ROLE_BUTTON
+                    && (lifted.button.kind == KIND_SKILL || lifted.button.kind == KIND_ATTACK)) {
+                    onMove(event.getPointerId(index), event.getX(index), event.getY(index), event.getEventTime());
+                }
                 onUp(event.getPointerId(index), false);
                 break;
+            }
             case MotionEvent.ACTION_CANCEL:
                 if (debug) logEvent("Abbruch (CANCEL)", device);
                 for (int i = touches.size() - 1; i >= 0; i--) onUp(touches.keyAt(i), true);
@@ -3565,6 +3596,9 @@ public class D2TouchOverlay extends View {
         touch.x = x;
         touch.y = y;
         if (!touch.moved && Math.hypot(x - touch.downX, y - touch.downY) > 12 * dp) touch.moved = true;
+        if (!touch.wentOut && touch.role == ROLE_BUTTON && Math.hypot(x - touch.downX, y - touch.downY) > D2TeleportHold.CANCEL_DP * dp) {
+            touch.wentOut = true;
+        }
 
         if (touch.role == ROLE_EFFECT && touch.moved && controlsVisible && inJoystickZone(touch.downX, touch.downY)) {
 
@@ -3621,17 +3655,21 @@ public class D2TouchOverlay extends View {
                 touch.stepY = y;
             }
         }
-        else if (touch.role == ROLE_BUTTON && touch.button.kind == KIND_SKILL && touch.moved) {
+
+        else if (touch.role == ROLE_BUTTON && touch.moved && (touch.button.kind == KIND_SKILL
+            || (touch.button.kind == KIND_ATTACK && action == ACTION_SKILL && skillOwner == touch.button && teleportHeld))) {
             float dx = x - touch.downX, dy = y - touch.downY;
             float len = (float) Math.hypot(dx, dy);
+            if (action == ACTION_SKILL && skillOwner == touch.button && teleportHeld && !teleportReleased) {
 
-            if (len <= 20 * dp && teleportDragged && action == ACTION_SKILL && skillOwner == touch.button && teleportHeld) teleportDragPush = 0;
-            if (len > 20 * dp && action == ACTION_SKILL && skillOwner == touch.button && teleportHeld) {
 
-                teleportDragX = dx / len;
-                teleportDragY = dy / len;
-                teleportDragPush = D2TeleportReach.joystickPush(len, 20 * dp, 20 * dp + joystickRadius);
-                teleportDragged = true;
+                boolean wasOff = teleportHold.calledOff();
+                if (teleportHold.drag(dx, dy, dp, joystickRadius)) {
+                    D2Trace.log("teleport: called off (dragged back to the middle)");
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                }
+                else if (wasOff && !teleportHold.calledOff()) D2Trace.log("teleport: aims again");
+                invalidate();
             }
             else if (len > 20 * dp && action == ACTION_SKILL && skillOwner == touch.button && !directAttack && !teleportHeld) {
                 skillAimedByDrag = true;
@@ -3721,12 +3759,18 @@ public class D2TouchOverlay extends View {
         }
         else if (touch.role == ROLE_JOYSTICK) {
 
-            if (joystickOwner == D2Gamepad.OWNER_FINGER) joystickReleased();
+            if (joystickOwner == D2Gamepad.OWNER_FINGER) {
+
+                if (joystickActive && hasDirection) teleportHold.joystickUp(dirX, dirY, joystickPush, SystemClock.uptimeMillis());
+                joystickReleased();
+            }
         }
         else if (touch.role == ROLE_BUTTON) {
             touch.button.pressed = false;
             boolean inside = touch.button.contains(touch.x, touch.y, 12 * dp);
             touch.cancelled = cancelled;
+            touch.button.lifted = touch;
+            touch.button.liftedAt = SystemClock.uptimeMillis();
             onButtonUp(touch.button, touch, !cancelled && inside);
         }
         else if (touch.role == ROLE_DIRECT) {
@@ -4452,7 +4496,10 @@ public class D2TouchOverlay extends View {
             case KIND_SKILL:
                 if (button == swapCastButton && swapCast.active()) {
                     if (touch.cancelled) abortSwapCast("touch cancelled");
-                    else swapCast.released(SystemClock.uptimeMillis());
+                    else {
+                        swapCastLetGo(button);
+                        return;
+                    }
                 }
                 endSkill(button, touch.cancelled);
                 return;
@@ -4787,10 +4834,27 @@ public class D2TouchOverlay extends View {
             teleportBlocked = null;
             teleportAim = null;
             teleportPressedAt = 0;
-            teleportDragged = false;
+            teleportHold.start();
+
+
+            Touch finger = null;
+            for (int i = 0; i < touches.size(); i++) {
+                Touch t = touches.valueAt(i);
+                if (t.role == ROLE_BUTTON && t.button == owner) finger = t;
+            }
+            if (finger == null && owner instanceof Button) {
+                Button b = (Button) owner;
+                if (b.lifted != null && SystemClock.uptimeMillis() - b.liftedAt <= TELEPORT_LIFT_MS) finger = b.lifted;
+                b.lifted = null;
+            }
+            if (finger != null) {
+                teleportHold.resume(finger.wentOut, finger.x - finger.downX, finger.y - finger.downY, dp, joystickRadius);
+                if (teleportHold.calledOff()) D2Trace.log("teleport: called off (dragged back to the middle before it began)");
+            }
             teleportAskedAt = 0;
             teleportSince = SystemClock.uptimeMillis();
-            teleportByPad = isPadOwner(owner);
+
+            teleportOnLetGo = true;
             teleportReleased = false;
             skillTargetId = 0;
             D2Trace.log("skill " + skill + ": teleport with the DLL's target");
@@ -6172,7 +6236,14 @@ public class D2TouchOverlay extends View {
 
 
 
-    private boolean teleportByPad, teleportReleased;
+
+    private boolean teleportOnLetGo, teleportReleased;
+
+    private final D2TeleportHold teleportHold = new D2TeleportHold();
+
+    private boolean swapCastReleaseWaits;
+
+    private static final long TELEPORT_LIFT_MS = 1500;
     private long teleportReleasedAt;
     private float teleportFrozenX, teleportFrozenY, teleportFrozenPush;
 
@@ -6181,6 +6252,7 @@ public class D2TouchOverlay extends View {
     private static final long TELEPORT_TAKEN_MS = 400;
 
     private static final long TELEPORT_LETGO_FRESH_MS = 50;
+
 
 
 
@@ -6207,7 +6279,7 @@ public class D2TouchOverlay extends View {
             D2TeleportAim.Answer last = modLink.teleportAnswer();
             boolean taken = last != null && last.receivedAt > teleportPressedAt && last.busyStarts != teleportPressed.busyStarts;
             if (taken || now - teleportPressedAt >= TELEPORT_TAKEN_MS) {
-                D2Trace.log("teleport: pad jump " + (taken ? "taken" : "not seen taken") + " after " + (now - teleportPressedAt) + " ms, done");
+                D2Trace.log("teleport: jump " + (taken ? "taken" : "not seen taken") + " after " + (now - teleportPressedAt) + " ms, done");
                 teleportFinish();
             }
             return;
@@ -6232,7 +6304,7 @@ public class D2TouchOverlay extends View {
             follow(p);
             teleportAim = a;
         }
-        if (teleportByPad && !teleportReleased) return;
+        if (teleportOnLetGo && !teleportReleased) return;
         if (!a.samePoint(teleportAim) || !D2TeleportAim.press(a, now, since, teleportPressed, teleportPressedAt)) return;
 
 
@@ -6266,21 +6338,32 @@ public class D2TouchOverlay extends View {
 
 
 
+
+
     private boolean teleportLetGo(boolean cancelled) {
-        if (!teleportHeld || !teleportByPad || teleportReleased || cancelled) return false;
+        if (!teleportHeld || !teleportOnLetGo || teleportReleased) return false;
         D2ModState s = mod;
         long now = SystemClock.uptimeMillis();
         if (s == null) return false;
-        boolean graced = !padStickPushed() && padAimPush > 0 && now - padAimAt <= D2TeleportReach.STICK_GRACE_MS;
-        float[] want = graced ? new float[]{padAimX, padAimY, padAimPush} : teleportStick(s);
+        boolean padGraced = !padStickPushed() && padAimPush > 0 && now - padAimAt <= D2TeleportReach.STICK_GRACE_MS;
+        float[] graced = padGraced ? new float[]{padAimX, padAimY, padAimPush}
+            : (!joystickActive ? teleportHold.joystickGrace(now) : null);
+        float[] want = teleportHold.letGo(cancelled, teleportStick(s), graced);
+        if (want == null) {
+            D2Trace.log("teleport: let go " + (cancelled ? "(touch cancelled)" : "in the middle (called off)") + ", nothing cast");
+            teleportOnLetGo = false;
+            return false;
+        }
         teleportFrozenX = want[0];
         teleportFrozenY = want[1];
         teleportFrozenPush = want[2];
         teleportReleased = true;
         teleportReleasedAt = now;
         teleportAskedAt = 0;
-        D2Trace.log("teleport: pad let go, jumps " + (teleportFrozenPush < 0 ? "without the stick (3/4 to the edge)"
-            : "with the stick pushed " + Math.round(teleportFrozenPush * 100) + " %") + (graced ? " (it sprang back just before)" : ""));
+        D2Trace.log("teleport: let go, jumps " + (teleportHold.dragged() ? "as dragged " + Math.round(teleportFrozenPush * 100) + " %"
+            : teleportFrozenPush < 0 ? "without the stick (3/4 to the edge)"
+            : "with the stick pushed " + Math.round(teleportFrozenPush * 100) + " %")
+            + (graced != null && !teleportHold.dragged() ? " (it sprang back just before)" : ""));
         teleportTick(now);
         return true;
     }
@@ -6288,17 +6371,18 @@ public class D2TouchOverlay extends View {
 
     private void teleportFinish() {
         Object owner = skillOwner;
-        teleportByPad = false;
+        teleportOnLetGo = false;
         teleportReleased = false;
         endSkill(owner, false);
+        if (swapCastReleaseWaits) {
+            swapCastReleaseWaits = false;
+            if (swapCast.active()) swapCast.released(SystemClock.uptimeMillis());
+        }
     }
 
 
     private D2TeleportAim.Answer teleportAim;
     private static final long TELEPORT_CLICK_MS = 100;
-
-    private float teleportDragX, teleportDragY, teleportDragPush;
-    private boolean teleportDragged;
 
     private float joystickPush;
 
@@ -6326,7 +6410,7 @@ public class D2TouchOverlay extends View {
 
 
     private float[] teleportStick(D2ModState s) {
-        if (teleportDragged) return new float[]{teleportDragX, teleportDragY, teleportDragPush};
+        if (teleportHold.dragged()) return teleportHold.dragAim();
         if (padStickPushed() && SystemClock.uptimeMillis() - padAimAt <= 200) return new float[]{padAimX, padAimY, padAimPush};
         if (joystickActive && hasDirection && joystickOwner != D2Gamepad.OWNER_PAD) return new float[]{dirX, dirY, joystickPush};
         return new float[]{dirX, dirY, -1};
@@ -6349,6 +6433,7 @@ public class D2TouchOverlay extends View {
     private void drawTeleportMarker(Canvas canvas) {
         D2ModState s = mod;
         if (action != ACTION_SKILL || skillOwner == null || s == null) return;
+        if (teleportHold.calledOff()) return;
         long now = SystemClock.uptimeMillis();
         D2TeleportAim.Answer a = modLink.teleportAnswer();
         int status = D2TeleportAim.marker(a, now, teleportSince);
@@ -7944,12 +8029,6 @@ public class D2TouchOverlay extends View {
             if (m.isTownNpc() || idleIgnored.contains(m.id)) continue;
             if (isoDistance(m.x - s.playerX, m.y - s.playerY) <= range) return true;
         }
-        return false;
-    }
-
-
-    private boolean isPadOwner(Object owner) {
-        for (Button b : padOwners) if (b != null && b == owner) return true;
         return false;
     }
 

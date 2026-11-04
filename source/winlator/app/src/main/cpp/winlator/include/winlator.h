@@ -1,4 +1,4 @@
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array)[0])  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array)[0])  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
 #define MIN(a, b) (((a)<(b))?(a):(b))
 #define MAX(a, b) (((a)>(b))?(a):(b))
 #define CLAMP(x, low, high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))

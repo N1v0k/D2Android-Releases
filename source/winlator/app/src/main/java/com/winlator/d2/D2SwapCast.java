@@ -98,6 +98,16 @@ public final class D2SwapCast {
 
 
 
+    public void castHeld(long now) {
+        if (phase != Phase.WAIT_END) return;
+        phase = Phase.CAST;
+        since = now;
+    }
+
+
+
+
+
     public void abort(long now) {
         held = false;
         castWanted = false;

@@ -1,4 +1,4 @@
-package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-11-03).
+package com.winlator.xserver;  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
 
 import com.winlator.core.Bitmask;
 import com.winlator.xconnector.XInputStream;
