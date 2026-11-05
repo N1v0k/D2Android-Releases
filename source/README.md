@@ -50,6 +50,11 @@ runtime gets another version (the build says so, it works the same). To use the 
 timestamps inside the build and the signature differ. The code is the same: this archive is made from the commit
 the release was built from, with nothing changed but the comments.
 
+## Device investigation notes
+
+- [MediaTek Mali-G76 hardware-buffer descriptor selection](docs/mali-g76-gralloc-fd.md):
+  reproducible startup failure, diagnostic evidence and a tested device-specific experiment.
+
 ## Licences
 
 | Path | Licence |

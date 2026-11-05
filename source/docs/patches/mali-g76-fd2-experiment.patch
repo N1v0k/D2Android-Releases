@@ -1,0 +1,17 @@
+--- a/winlator/app/src/main/cpp/winlator/src/gpu_image.c
++++ b/winlator/app/src/main/cpp/winlator/src/gpu_image.c
+@@ -24,4 +24,4 @@
+ int AHardwareBuffer_getFd(AHardwareBuffer* hardwareBuffer) {
+     const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(hardwareBuffer);
+-    return nativeHandle->numFds > 0 ? nativeHandle->data[0] : -1;
++    return nativeHandle->numFds > 1 ? nativeHandle->data[1] : -1;
+ }
+--- a/winlator/app/src/main/java/com/winlator/xenvironment/components/VortekRendererComponent.java
++++ b/winlator/app/src/main/java/com/winlator/xenvironment/components/VortekRendererComponent.java
+@@ -45,5 +45,5 @@
+         public short maxDeviceMemory = 0;
+         public short imageCacheSize = IMAGE_CACHE_SIZE;
+-        public byte resourceMemoryType = 0;
++        public byte resourceMemoryType = 3;
+         public String[] exposedDeviceExtensions = null;
+     }
