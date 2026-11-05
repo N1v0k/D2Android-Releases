@@ -288,6 +288,17 @@ public class D2GameActivity extends D2Activity {
         String wineDebug = getIntent().getStringExtra(EXTRA_WINEDEBUG);
         if (wineDebug != null && !wineDebug.isEmpty()) env.put("WINEDEBUG", wineDebug);
 
+
+
+        int appPort = overlay.modLink().open();
+        if (appPort > 0) {
+            env.put("D2MOD_APP_PORT", String.valueOf(appPort));
+            env.put("D2MOD_CMD_PORT", "0");
+        }
+
+        java.util.List<String> left = D2GuestProcs.leftovers(new File("/proc"), android.os.Process.myUid(), android.os.Process.myPid());
+        D2Trace.log("before the start: " + (left.isEmpty() ? "no other process of the app" : "still running: " + String.join(", ", left)));
+
         String dir = getIntent().getStringExtra(EXTRA_DIR);
         String program = getIntent().getStringExtra(EXTRA_PROGRAM);
         String args = getIntent().getStringExtra(EXTRA_ARGS);
@@ -1062,8 +1073,9 @@ public class D2GameActivity extends D2Activity {
         D2ExitGuard guard = D2ExitGuard.arm(D2ExitGuard.TEARDOWN_MS, this::endHungExit);
         screen.destroy(D2ExitText.BY_QUIT, guard);
 
-        guard.step("registry");
-        D2GuestComponent.saveRegistry(D2Runtime.rootDir(this), D2RegistrySave.WAIT_MS);
+
+        guard.step("guests");
+        D2GuestComponent.endGuests(D2Runtime.rootDir(this), "exit: ");
         D2Trace.log("exit: teardown took " + guard.done() + " ms");
         D2FolderLock.releaseAll();
         closeGuestLog();
@@ -1094,10 +1106,9 @@ public class D2GameActivity extends D2Activity {
         D2Trace.log("exit: teardown hangs for " + ms + " ms in " + step + ": guests and app process are ended");
         D2ExitLog.note("Beenden: Abbau hing " + ms + " ms bei " + step + ", Spiel und App hart beendet");
         int self = android.os.Process.myPid();
-        java.util.List<D2GuestProcs.Proc> guests = D2GuestProcs.find(new File("/proc"), D2Runtime.rootDir(this),
-            android.os.Process.myUid(), self, null);
-        for (D2GuestProcs.Proc p : guests) android.os.Process.killProcess(p.pid);
-        D2Trace.log("exit: " + guests.size() + " guest processes killed " + guests);
+
+
+        D2GuestComponent.endGuests(D2Runtime.rootDir(this), D2GuestEnd.HUNG_GONE_MS, D2GuestEnd.HUNG_SAVE_MS, "exit: ");
         D2Diagnose.keepTraceOfEndedRun(this);
         D2KeepAliveService.stop(this);
         try {
@@ -1364,6 +1375,9 @@ public class D2GameActivity extends D2Activity {
             return;
         }
         screen.destroy(D2ExitText.BY_WINDOW_CLOSED);
+
+
+        D2GuestComponent.endGuests(D2Runtime.rootDir(this), "window closed: ");
         D2FolderLock.releaseAll();
         D2KeepAliveService.stop(this);
         closeGuestLog();

@@ -456,6 +456,17 @@ public final class D2ModState {
 
 
 
+    public static int parseCommandPort(byte[] data, int length, int legacyPort) {
+        if (packetType(data, length) != PKT_STATUS || length < 10) return -1;
+        int end = 10 + (data[9] & 0xFF);
+        if (length < end + 2) return legacyPort;
+        return (data[end] & 0xFF) | (data[end + 1] & 0xFF) << 8;
+    }
+
+
+
+
+
     public static int[] parseMenuField(byte[] data, int length) {
         if (packetType(data, length) != PKT_MENU || length < 17 || (data[8] & 1) == 0) return null;
         int[] field = new int[4];

@@ -18,7 +18,10 @@ import java.util.concurrent.Executors;
 
 
 
+
+
 public final class D2ModLink {
+
     public static final int APP_PORT = 7958, MOD_PORT = 7959;
     public static final int CMD_DRINK = 1, CMD_UNIT = 2, CMD_HIGHLIGHT = 3, CMD_WALK = 4, CMD_HUD = 5, CMD_PAUSE = 6, CMD_PORTAL = 7, CMD_NPC = 8, CMD_PLAYERS = 9, CMD_PLUGY = 10, CMD_BELT = 11, CMD_LABELS = 12, CMD_SELECT_SKILL = 13, CMD_TAKE = 15, CMD_STACKS = 20, CMD_EQUIP = 22, CMD_SORT = 24, CMD_RESUME = 25, CMD_VALUE = 26;
     public static final int BUTTON_LEFT = 0, BUTTON_RIGHT = 1;
@@ -198,8 +201,36 @@ public final class D2ModLink {
         this.listener = listener;
     }
 
+
+
+
+
+
+
+    public synchronized int open() {
+        DatagramSocket s = socket;
+        if (s != null) return s.getLocalPort();
+        try {
+            s = new DatagramSocket(null);
+            s.setReuseAddress(false);
+            s.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0));
+            s.setSoTimeout(1000);
+        }
+        catch (IOException e) {
+            if (s != null) s.close();
+            Status last = status;
+            status = new Status(last.code, "no receiving port: " + e.getMessage(), last.time);
+            D2Trace.log("mod link: no receiving port: " + e.getMessage());
+            return -1;
+        }
+        socket = s;
+        D2Trace.log("mod link: receiving on port " + s.getLocalPort());
+        return s.getLocalPort();
+    }
+
     public synchronized void start() {
         if (thread != null) return;
+        open();
         thread = new Thread(this::run, "D2ModLink");
         thread.setDaemon(true);
         thread.start();
@@ -209,19 +240,16 @@ public final class D2ModLink {
         Thread current = thread;
         thread = null;
         DatagramSocket current2 = socket;
+        socket = null;
         if (current2 != null) current2.close();
         if (current != null) current.interrupt();
     }
 
     private void run() {
         byte[] buffer = new byte[8192];
-        DatagramSocket mine = null;
-        try (DatagramSocket s = new DatagramSocket(null)) {
-            mine = s;
-            s.setReuseAddress(true);
-            s.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), APP_PORT));
-            s.setSoTimeout(1000);
-            socket = s;
+        DatagramSocket s = socket;
+        if (s == null) return;
+        try {
             while (thread == Thread.currentThread()) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 try {
@@ -233,12 +261,8 @@ public final class D2ModLink {
                 handle(packet.getData(), packet.getLength());
             }
         }
-        catch (IOException e) {
-            Status last = status;
-            status = new Status(last.code, "port " + APP_PORT + " in use: " + e.getMessage(), last.time);
-        }
-        finally {
-            if (socket == mine) socket = null;
+        catch (IOException ignored) {
+
         }
     }
 
@@ -261,6 +285,7 @@ public final class D2ModLink {
 
                 if (last != null && now - last.time > GAME_GAP_MS) gameGapAt = now;
                 if (last == null || now - last.time > GAME_GAP_MS) spielSeit = now;
+                watchCommands(parsed.commandsReceived, now, last == null || now - last.time > STATE_TIMEOUT_MS);
                 state = new Stamped<>(parsed, now);
                 statusesSinceState = 0;
                 received++;
@@ -387,6 +412,7 @@ public final class D2ModLink {
         else if (type == D2ModState.PKT_STATUS) {
             Object[] parsed = D2ModState.parseStatus(data, length);
             if (parsed != null) {
+                commandPort(D2ModState.parseCommandPort(data, length, MOD_PORT));
                 status = new Status((Integer) parsed[0], (String) parsed[1], SystemClock.uptimeMillis());
                 statusesSinceState++;
                 if (D2SpieltestPort.active()) D2SpieltestPort.state(null, this);
@@ -791,7 +817,62 @@ public final class D2ModLink {
         Status current = status;
         if (current.code < 0) return "Mod: no connection" + (current.text.isEmpty() ? "" : " (" + current.text + ")");
         String age = SystemClock.uptimeMillis() - current.time < 3000 ? "" : " (stale)";
-        return "Mod: " + current.text + age + ", packets " + received;
+        int port = commandPort;
+        return "Mod: " + current.text + age + ", packets " + received
+            + (port > 0 ? ", commands to port " + port : port == 0 ? ", no command port" : ", command port not reported");
+    }
+
+
+
+
+
+    private volatile int commandPort = -1;
+
+    private volatile int commandPortChanges;
+
+    private volatile int commandTroubles;
+    private volatile String commandTroubleText = "";
+    private final D2CommandWatch commandWatch = new D2CommandWatch();
+
+    private void commandPort(int port) {
+        if (port < 0 || port == commandPort) return;
+        int before = commandPort;
+        commandPort = port;
+        commandWatch.reset();
+        commandPortChanges++;
+        if (port > 0) D2Trace.log("mod: commands to port " + port + (before > 0 ? " (was " + before + ")" : ""));
+        else commandTrouble("mod: no command socket (status port 0)");
+    }
+
+
+    private void watchCommands(int counter, long now, boolean afterGap) {
+        int result = commandWatch.state(counter, now, afterGap);
+        if (result == D2CommandWatch.STALLED) {
+            commandTrouble("mod: " + commandWatch.pending() + " commands to port " + commandPort + " not counted by the mod in "
+                + D2CommandWatch.WINDOW_MS + " ms");
+        }
+        else if (result == D2CommandWatch.RECOVERED) D2Trace.log("mod: commands arrive again (port " + commandPort + ")");
+    }
+
+    private void commandTrouble(String text) {
+        D2Trace.log(text);
+        commandTroubleText = text;
+        commandTroubles++;
+    }
+
+
+    public int commandPortChanges() {
+        return commandPortChanges;
+    }
+
+
+    public int commandTroubles() {
+        return commandTroubles;
+    }
+
+
+    public String commandTroubleText() {
+        return commandTroubleText;
     }
 
 
@@ -1231,11 +1312,17 @@ public final class D2ModLink {
 
     private void send(final ByteBuffer buffer) {
         final DatagramSocket s = socket;
-        if (s == null) return;
+
+        final int port = commandPort, changes = commandPortChanges;
+        if (s == null || port <= 0) return;
+        Stamped<D2ModState> current = state;
+        long now = SystemClock.uptimeMillis();
+        if (current != null && now - current.time < STATE_TIMEOUT_MS) commandWatch.sent(now);
         final byte[] data = buffer.array();
         sender.execute(() -> {
+            if (changes != commandPortChanges) return;
             try {
-                s.send(new DatagramPacket(data, data.length, InetAddress.getByName("127.0.0.1"), MOD_PORT));
+                s.send(new DatagramPacket(data, data.length, InetAddress.getByName("127.0.0.1"), port));
             }
             catch (IOException ignored) {}
         });

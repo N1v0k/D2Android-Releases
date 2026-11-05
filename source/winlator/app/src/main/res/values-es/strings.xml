@@ -526,6 +526,7 @@
     <string name="idle_board_travel">Idle: por punto de viaje a la zona %1$d - toca para terminar</string>
     <string name="idle_board_unlimited">Idle: limpiar la zona - %1$d min - %2$d muertes - toca para terminar</string>
     <string name="note_right_needs_mod">Derecha necesita un mod más nuevo</string>
+    <string name="note_commands_lost">Los controles táctiles no llegan al juego. Cierra el juego y vuelve a iniciarlo.</string>
     <string name="strip_only_game_saves">Solo \"Guardar y salir\" guarda</string>
     <string name="strip_saved_ago">Guardado hace %1$s</string>
     <string name="strip_players">Jugadores %1$d</string>

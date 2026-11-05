@@ -1,4 +1,4 @@
-#ifndef VORTEK_SHADER_INSPECTOR_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
+#ifndef VORTEK_SHADER_INSPECTOR_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-05).
 #define VORTEK_SHADER_INSPECTOR_H
 
 #include "vortek.h"

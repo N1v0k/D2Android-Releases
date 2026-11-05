@@ -526,6 +526,7 @@
     <string name="idle_board_travel">Idle : par point de passage vers la zone %1$d - touche pour arrêter</string>
     <string name="idle_board_unlimited">Idle : nettoyer la zone - %1$d min - %2$d tués - touche pour arrêter</string>
     <string name="note_right_needs_mod">Droite demande un mod plus récent</string>
+    <string name="note_commands_lost">Les commandes tactiles n\'atteignent pas le jeu. Quitte le jeu et relance-le.</string>
     <string name="strip_only_game_saves">Seul \"Sauvegarder et quitter\" sauvegarde</string>
     <string name="strip_saved_ago">Sauvegardé il y a %1$s</string>
     <string name="strip_players">Joueurs %1$d</string>

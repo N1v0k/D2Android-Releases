@@ -1,4 +1,4 @@
-#include <limits.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-04).
+#include <limits.h>  // Modified by D2Android (changes 2026-10-09 to 2026-11-05).
 #include <jni.h>
 #include <libgen.h>
 #include <sys/stat.h>

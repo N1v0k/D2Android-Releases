@@ -3,6 +3,10 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.5.4 (2026-11-05)
+
+- Movement, tapping people, chests and the stash, Take, pause and item names on the ground could stop working, often after leaving and re-entering a game or after restarting the app. The app now talks to the game over free ports, and it fully ends old game processes when you quit or start again.
+
 ## 1.5.3 (2026-11-04)
 
 - Teleport by touch now works like on the gamepad: hold the Teleport button to aim (your character stands still and a ring shows where you land), let go to jump once. Without aiming it jumps 3/4 of the way to the screen edge. To cancel, slide back to where your finger started.

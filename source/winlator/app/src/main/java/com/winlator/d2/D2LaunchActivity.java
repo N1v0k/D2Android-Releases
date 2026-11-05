@@ -1502,6 +1502,13 @@ public class D2LaunchActivity extends D2Activity {
             }
             try {
 
+
+
+                File rootfs = D2Runtime.rootDir(this);
+                java.util.List<String> left = D2GuestProcs.leftovers(new File("/proc"), android.os.Process.myUid(), android.os.Process.myPid());
+                if (!left.isEmpty()) D2Trace.log("launch: still running before the start: " + String.join(", ", left));
+                D2GuestComponent.endGuests(rootfs, "launch: ");
+
                 if (!D2Runtime.isInstalled(this) || !D2Runtime.isPrefixReady(this)) D2Telemetry.phase(this, D2TelemetryEvents.PHASE_INSTALL);
                 if (!D2Runtime.isInstalled(this)) D2Runtime.install(this, this::status);
                 if (!D2Runtime.isPrefixReady(this)) D2Runtime.setupPrefix(this, this::status);

@@ -17,6 +17,7 @@
 
 
 
+
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <windows.h>
@@ -418,6 +419,11 @@ static SOCKET sock = INVALID_SOCKET, cmdSock = INVALID_SOCKET;
 static struct sockaddr_in appAddr;
 
 static int appPort = APP_PORT, modPort = MOD_PORT, portsRead;
+
+
+static volatile LONG cmdPortBound;
+static CRITICAL_SECTION cmdLock;
+static int cmdLockReady;
 static volatile LONG status = STATUS_WAITING;
 static char statusText[96] = "startet";
 static DWORD lastSend, lastTick, seq;
@@ -3263,11 +3269,19 @@ static void damageCommand(int numbers, int dps, int element, int appDps, DWORD n
 static void selfCheckCommand(const BYTE* buf, int n);
 static void xpBarCommand(const BYTE* buf, int n, DWORD now);
 
+
+static int recvCommand(BYTE* buf, int size) {
+    if (!cmdLockReady) return -1;
+    EnterCriticalSection(&cmdLock);
+    int n = cmdSock != INVALID_SOCKET ? recv(cmdSock, (char*) buf, size, 0) : -1;
+    LeaveCriticalSection(&cmdLock);
+    return n;
+}
+
 static void handleCommands(void* player, int stale) {
-    if (cmdSock == INVALID_SOCKET) return;
     BYTE buf[256];
     for (int i = 0; i < 64; i++) {
-        int n = recv(cmdSock, (char*) buf, sizeof(buf), 0);
+        int n = recvCommand(buf, sizeof(buf));
         if (n <= 0) return;
         if (stale) continue;
         commandsReceived++;
@@ -4888,7 +4902,7 @@ static int installHook(void) {
 
 
 
-static int portFromEnv(const char* name, int fallback) {
+static int portFromEnv(const char* name, int fallback, int allowZero) {
     char value[16] = "";
     SetLastError(0);
     DWORD n = GetEnvironmentVariableA(name, value, sizeof(value));
@@ -4898,7 +4912,7 @@ static int portFromEnv(const char* name, int fallback) {
         if (value[i] < '0' || value[i] > '9') ok = 0;
         else if ((port = port * 10 + (value[i] - '0')) > 65535) ok = 0;
     }
-    if (!ok || port < 1) {
+    if (!ok || port < (allowZero ? 0 : 1)) {
         if (n >= sizeof(value)) value[0] = 0;
         logLine("%s=\"%s\" invalid, port %d", name, value, fallback);
         return fallback;
@@ -4910,8 +4924,8 @@ static int portFromEnv(const char* name, int fallback) {
 static void readPorts(void) {
     if (portsRead) return;
     portsRead = 1;
-    appPort = portFromEnv("D2MOD_APP_PORT", APP_PORT);
-    modPort = portFromEnv("D2MOD_CMD_PORT", MOD_PORT);
+    appPort = portFromEnv("D2MOD_APP_PORT", APP_PORT, 0);
+    modPort = portFromEnv("D2MOD_CMD_PORT", MOD_PORT, 1);
     if (appPort == modPort) {
 
         logLine("D2MOD_APP_PORT and D2MOD_CMD_PORT both %d: ports %d/%d", appPort, APP_PORT, MOD_PORT);
@@ -4920,8 +4934,49 @@ static void readPorts(void) {
     }
 }
 
+
+
+
+
+
+
+static void openCommandSocket(void) {
+    static int failedLogged;
+    SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    local.sin_family = AF_INET;
+    local.sin_port = htons((u_short) modPort);
+    local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    u_long nonBlocking = 1;
+    int len = sizeof(local);
+    if (s == INVALID_SOCKET || bind(s, (struct sockaddr*) &local, sizeof(local)) != 0
+        || ioctlsocket(s, FIONBIO, &nonBlocking) != 0 || getsockname(s, (struct sockaddr*) &local, &len) != 0) {
+        if (!failedLogged) logLine("command socket failed: %d (port %d), trying again every second", WSAGetLastError(), modPort);
+        failedLogged = 1;
+        if (s != INVALID_SOCKET) closesocket(s);
+        return;
+    }
+    EnterCriticalSection(&cmdLock);
+    cmdSock = s;
+    LeaveCriticalSection(&cmdLock);
+    InterlockedExchange(&cmdPortBound, ntohs(local.sin_port));
+    if (failedLogged) logLine("command socket ready on port %ld", (long) cmdPortBound);
+    failedLogged = 0;
+}
+
 static void openSockets(void) {
     readPorts();
+    if (!cmdLockReady) {
+        InitializeCriticalSection(&cmdLock);
+        cmdLockReady = 1;
+    }
+
+
+    EnterCriticalSection(&cmdLock);
+    cmdSock = INVALID_SOCKET;
+    LeaveCriticalSection(&cmdLock);
+    InterlockedExchange(&cmdPortBound, 0);
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         logLine("WSAStartup failed");
@@ -4933,20 +4988,13 @@ static void openSockets(void) {
     appAddr.sin_port = htons((u_short) appPort);
     appAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-    cmdSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    struct sockaddr_in local;
-    memset(&local, 0, sizeof(local));
-    local.sin_family = AF_INET;
-    local.sin_port = htons((u_short) modPort);
-    local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    u_long nonBlocking = 1;
-    if (cmdSock == INVALID_SOCKET || bind(cmdSock, (struct sockaddr*) &local, sizeof(local)) != 0
-        || ioctlsocket(cmdSock, FIONBIO, &nonBlocking) != 0) {
-        logLine("command socket failed: %d", WSAGetLastError());
-        if (cmdSock != INVALID_SOCKET) closesocket(cmdSock);
-        cmdSock = INVALID_SOCKET;
-    }
-    logLine("sockets ready (app %d, commands %d)", appPort, cmdSock != INVALID_SOCKET ? modPort : -1);
+    openCommandSocket();
+    logLine("sockets ready (app %d, commands %ld)", appPort, cmdPortBound ? (long) cmdPortBound : -1L);
+}
+
+
+static void retryCommandSocket(void) {
+    if (cmdLockReady && !cmdPortBound && sock != INVALID_SOCKET) openCommandSocket();
 }
 
 static void sendStatus(void) {
@@ -4956,6 +5004,7 @@ static void sendStatus(void) {
     int len = (int) strlen(statusText);
     putU8(&p, len);
     for (int i = 0; i < len; i++) putU8(&p, (BYTE) statusText[i]);
+    putU16(&p, (unsigned) cmdPortBound);
     sendPacket(&p);
 }
 
@@ -5141,7 +5190,10 @@ static DWORD WINAPI setupThread(LPVOID arg) {
         unbindMainMenuEsc();
         client = (DWORD) GetModuleHandleA("D2Client.dll");
         if (!client) {
-            if (i % 5 == 0) sendStatus();
+            if (i % 5 == 0) {
+                retryCommandSocket();
+                sendStatus();
+            }
             Sleep(200);
             flushLog();
             keepCrashFilter();
@@ -5167,6 +5219,7 @@ static DWORD WINAPI setupThread(LPVOID arg) {
     DWORD lastBeat = 0;
     int heroWithoutTick = 0;
     for (;;) {
+        retryCommandSocket();
         sendStatus();
         DWORD beat = GetTickCount();
         if (lastTick && beat - lastTick > 1000 && lastBeat) {

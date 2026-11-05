@@ -526,6 +526,7 @@
     <string name="idle_board_travel">Idle: con il waypoint verso la zona %1$d - tocca per terminare</string>
     <string name="idle_board_unlimited">Idle: ripulisci la zona - %1$d min - %2$d uccisioni - tocca per terminare</string>
     <string name="note_right_needs_mod">Destra richiede una mod più recente</string>
+    <string name="note_commands_lost">I comandi touch non arrivano al gioco. Chiudi il gioco e riavvialo.</string>
     <string name="strip_only_game_saves">Salva solo \"Salva ed esci\"</string>
     <string name="strip_saved_ago">Salvato %1$s fa</string>
     <string name="strip_players">Giocatori %1$d</string>

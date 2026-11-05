@@ -20,6 +20,9 @@ import java.util.Set;
 
 
 
+
+
+
 public final class D2GuestProcs {
     private D2GuestProcs() {}
 
@@ -46,6 +49,7 @@ public final class D2GuestProcs {
         List<Proc> out = new ArrayList<>();
         String[] names = procDir.list();
         if (names == null) return out;
+        java.util.Arrays.sort(names);
         Set<String> roots = prefixes(rootfs);
 
         String tail = "/" + (rootfs.getParentFile() == null ? "" : rootfs.getParentFile().getName() + "/") + rootfs.getName() + "/";
@@ -65,14 +69,116 @@ public final class D2GuestProcs {
             if (stat == null) continue;
             int open = stat.indexOf('('), close = stat.lastIndexOf(')');
             if (open < 0 || close < open) continue;
-            if (close + 2 < stat.length() && stat.charAt(close + 2) == 'Z') continue;
-            String cmd = read(new File(dir, "cmdline"));
+
+            File look = dir;
+            if (close + 2 < stat.length() && stat.charAt(close + 2) == 'Z') {
+                look = livingThread(dir, pid);
+                if (look == null) continue;
+            }
+            String cmd = read(new File(look, "cmdline"));
             cmd = cmd == null ? "" : cmd.replace('\0', ' ');
-            if (!under(exe(dir), roots) && !environInRoot(dir, roots) && !inCommand(cmd, roots, tail)) continue;
+            if (!under(exe(look), roots) && !environInRoot(look, roots) && !inCommand(cmd, roots, tail)) continue;
             String comm = stat.substring(open + 1, close);
             out.add(new Proc(pid, comm, cmd.contains("wineserver") || "wineserver".equals(comm)));
         }
         return out;
+    }
+
+
+
+
+
+
+    public static List<String> leftovers(File procDir, int uid, int selfPid) {
+        List<String> out = new ArrayList<>();
+        String[] names = procDir.list();
+        if (names == null) return out;
+        java.util.Arrays.sort(names);
+        for (String name : names) {
+            if (!name.matches("\\d+") || name.equals(String.valueOf(selfPid))) continue;
+            File dir = new File(procDir, name);
+            if (uid(dir) != uid) continue;
+            String stat = read(new File(dir, "stat"));
+            if (stat == null) continue;
+            int open = stat.indexOf('('), close = stat.lastIndexOf(')');
+            if (open < 0 || close < open || close + 2 >= stat.length()) continue;
+            char state = stat.charAt(close + 2);
+            int threads = threads(dir);
+            String exe = exe(dir);
+            if (exe == null && state == 'Z') {
+                File thread = livingThread(dir, Integer.parseInt(name));
+                if (thread != null) exe = exe(thread);
+            }
+            String states = state == 'Z' || threads > 1 ? threadStates(dir, name) : "";
+            out.add(stat.substring(open + 1, close) + " " + name + " " + state + ", " + threads + " threads" + states
+                + (exe != null ? ", " + exe : ""));
+        }
+        return out;
+    }
+
+
+
+
+
+    public static boolean alive(File procDir, int pid) {
+        File dir = new File(procDir, String.valueOf(pid));
+        char state = state(read(new File(dir, "stat")));
+        if (state == 0) return false;
+        return state != 'Z' && state != 'X' || livingThread(dir, pid) != null;
+    }
+
+
+    private static File livingThread(File dir, int leader) {
+        File task = new File(dir, "task");
+        String[] tids = task.list();
+        if (tids == null) return null;
+        java.util.Arrays.sort(tids);
+        for (String tid : tids) {
+            if (tid.equals(String.valueOf(leader))) continue;
+            File t = new File(task, tid);
+            char state = state(read(new File(t, "stat")));
+            if (state != 0 && state != 'Z' && state != 'X') return t;
+        }
+        return null;
+    }
+
+
+    private static String threadStates(File dir, String leader) {
+        String[] tids = new File(dir, "task").list();
+        if (tids == null) return "";
+        java.util.Map<Character, Integer> counts = new java.util.TreeMap<>();
+        for (String tid : tids) {
+            if (tid.equals(leader)) continue;
+            char state = state(read(new File(new File(new File(dir, "task"), tid), "stat")));
+            if (state != 0) counts.merge(state, 1, Integer::sum);
+        }
+        if (counts.isEmpty()) return "";
+        List<String> parts = new ArrayList<>();
+        for (java.util.Map.Entry<Character, Integer> e : counts.entrySet()) parts.add(e.getKey() + " " + e.getValue());
+        return " (" + String.join(", ", parts) + ")";
+    }
+
+
+    private static char state(String stat) {
+        if (stat == null) return 0;
+        int close = stat.lastIndexOf(')');
+        return close < 0 || close + 2 >= stat.length() ? 0 : stat.charAt(close + 2);
+    }
+
+
+    private static int threads(File dir) {
+        String status = read(new File(dir, "status"));
+        if (status == null) return -1;
+        for (String line : status.split("\n")) {
+            if (!line.regionMatches(true, 0, "threads:", 0, 8)) continue;
+            try {
+                return Integer.parseInt(line.substring(8).trim());
+            }
+            catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return -1;
     }
 
 

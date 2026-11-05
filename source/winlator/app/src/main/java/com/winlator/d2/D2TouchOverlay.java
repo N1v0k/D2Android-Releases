@@ -5746,6 +5746,37 @@ public class D2TouchOverlay extends View {
         }
     }
 
+
+    private int commandPortSeen, commandTroublesSeen;
+
+
+
+
+
+
+
+    private void checkCommandPort() {
+        int changes = modLink.commandPortChanges();
+        if (changes != commandPortSeen) {
+            commandPortSeen = changes;
+            hudSentAt = 0;
+            labelFilterSentAt = 0;
+            valueSentAt = 0;
+            diffSentAt = 0;
+            pauseSentAt = 0;
+            playersSentAt = 0;
+            stacksSentAt = 0;
+            playersSent = false;
+            if (lootMaskSent == 0) lootMaskSent = -1;
+        }
+        int troubles = modLink.commandTroubles();
+        if (troubles != commandTroublesSeen) {
+            commandTroublesSeen = troubles;
+            D2ExitLog.note("Steuerung erreicht das Spiel nicht (" + modLink.commandTroubleText() + ")");
+            showNote(text(R.string.note_commands_lost), 8000);
+        }
+    }
+
     private void onModUpdate() {
         modUpdatePosted = false;
         D2FrameCounts.modStates.incrementAndGet();
@@ -5759,6 +5790,7 @@ public class D2TouchOverlay extends View {
         }
         pad.playtesterCheck();
         idle.step();
+        checkCommandPort();
         D2ModState s = modLink.state();
         boolean had = mod != null;
         mod = s;

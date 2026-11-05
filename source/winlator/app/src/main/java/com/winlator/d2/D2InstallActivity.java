@@ -1641,81 +1641,18 @@ public class D2InstallActivity extends D2Activity {
 
 
 
+
     private void killGuests() {
         killGuests(true);
     }
 
 
     private void killGuests(boolean saveRegistry) {
-        File proc = new File("/proc"), rootfs = D2Runtime.rootDir(this);
-        int uid = android.os.Process.myUid(), self = android.os.Process.myPid();
-        java.util.List<D2GuestProcs.Proc> found = D2GuestProcs.find(proc, rootfs, uid, self, null);
-        if (found.isEmpty()) return;
-        java.util.List<Integer> servers = new java.util.ArrayList<>(), others = new java.util.ArrayList<>();
-        for (D2GuestProcs.Proc p : found) (p.server ? servers : others).add(p.pid);
-        if (saveRegistry) {
-            for (int pid : servers) {
-                try {
-                    android.system.Os.kill(pid, android.system.OsConstants.SIGTERM);
-                }
-                catch (android.system.ErrnoException ignored) {
-
-                }
-            }
-        }
-        long end = System.currentTimeMillis() + (saveRegistry ? WINESERVER_SAVE_MS : 0);
-        for (int pid : servers) {
-            while (isAlive(pid) && System.currentTimeMillis() < end) {
-                try {
-                    Thread.sleep(100);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-            if (saveRegistry && isAlive(pid)) D2Trace.log("install: wineserver " + pid + " did not end on SIGTERM");
-        }
-        for (int pid : servers) android.os.Process.killProcess(pid);
-        for (int pid : others) android.os.Process.killProcess(pid);
-
-        java.util.Set<Integer> ended = new java.util.HashSet<>(servers);
-        ended.addAll(others);
-        long gone = System.currentTimeMillis() + GUESTS_GONE_MS;
-        for (int pid : ended) {
-            while (isAlive(pid) && System.currentTimeMillis() < gone) {
-                try {
-                    Thread.sleep(50);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }
-        java.util.List<D2GuestProcs.Proc> late = D2GuestProcs.find(proc, rootfs, uid, self, ended);
-        for (D2GuestProcs.Proc p : late) android.os.Process.killProcess(p.pid);
-        int alive = 0;
-        for (int pid : ended) if (isAlive(pid)) alive++;
-        D2Trace.log("install: ended " + found + (late.isEmpty() ? "" : ", then " + late)
-            + (alive == 0 ? "" : ", " + alive + " still alive after " + GUESTS_GONE_MS + " ms"));
+        D2GuestComponent.endGuests(D2Runtime.rootDir(this), GUESTS_GONE_MS, saveRegistry ? WINESERVER_SAVE_MS : 0, "install: ");
     }
 
 
     private static final long GUESTS_GONE_MS = 2000;
-
-
-    private static boolean isAlive(int pid) {
-        try {
-            String stat = new String(java.nio.file.Files.readAllBytes(new File("/proc/" + pid + "/stat").toPath()),
-                java.nio.charset.StandardCharsets.ISO_8859_1);
-            int close = stat.lastIndexOf(')');
-            return close < 0 || close + 2 >= stat.length() || stat.charAt(close + 2) != 'Z';
-        }
-        catch (IOException | RuntimeException e) {
-            return false;
-        }
-    }
 
 
     private static final long WINESERVER_SAVE_MS = 8000;

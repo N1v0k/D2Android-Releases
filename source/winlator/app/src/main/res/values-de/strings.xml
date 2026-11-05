@@ -522,6 +522,7 @@
     <string name="idle_board_travel">Idle: per Wegpunkt nach Gebiet %1$d - antippen beendet</string>
     <string name="idle_board_unlimited">Idle: Gebiet leeren - %1$d min - %2$d Kills - antippen beendet</string>
     <string name="note_right_needs_mod">Rechts braucht eine neuere Mod</string>
+    <string name="note_commands_lost">Die Steuerung erreicht das Spiel nicht. Bitte das Spiel beenden und neu starten.</string>
     <string name="strip_only_game_saves">Nur "Speichern und Beenden" speichert</string>
     <string name="strip_saved_ago">Gespeichert vor %1$s</string>
     <string name="strip_players">Spieler %1$d</string>

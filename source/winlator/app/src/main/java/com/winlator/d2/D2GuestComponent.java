@@ -160,9 +160,16 @@ public class D2GuestComponent extends EnvironmentComponent {
 
 
 
-    public static void saveRegistry(File rootfs, long maxMs) {
-        String line = D2RegistrySave.run(new File("/proc"), rootfs, Process.myUid(), Process.myPid(), maxMs,
-            new D2RegistrySave.Signals() {
+
+
+    public static void endGuests(File rootfs, long goneMs, long saveMs, String tracePrefix) {
+        String line = D2GuestEnd.run(new File("/proc"), rootfs, Process.myUid(), Process.myPid(), goneMs, saveMs,
+            new D2GuestEnd.Signals() {
+                @Override
+                public void kill(int pid) {
+                    Process.sendSignal(pid, android.system.OsConstants.SIGKILL);
+                }
+
                 @Override
                 public void term(int pid) {
                     Process.sendSignal(pid, android.system.OsConstants.SIGTERM);
@@ -173,7 +180,12 @@ public class D2GuestComponent extends EnvironmentComponent {
                     Process.sendSignal(pid, android.system.OsConstants.SIGCONT);
                 }
             });
-        if (!line.isEmpty()) D2Trace.log(line);
+        if (!line.isEmpty()) D2Trace.log(tracePrefix + line);
+    }
+
+
+    public static void endGuests(File rootfs, String tracePrefix) {
+        endGuests(rootfs, D2GuestEnd.GONE_MS, D2GuestEnd.SAVE_MS, tracePrefix);
     }
 
     private static void kill(String reason) {
