@@ -219,6 +219,17 @@ public class D2TouchOverlay extends View {
     private int joystickOwner = D2Gamepad.OWNER_NONE;
     private float idleX, idleY, baseX, baseY, knobX, knobY, joystickRadius;
     private final D2JoystickFollow joystickFollow = new D2JoystickFollow();
+
+    private int joystickMode = D2Settings.JOYSTICK_FOLLOW, joystickDeadzonePct = D2Settings.JOYSTICK_DEADZONE_DEFAULT;
+
+    private long joystickTraceAt;
+
+    private int buttonAlpha = 255;
+
+
+    private int opaque(int alpha) {
+        return alpha * buttonAlpha / 255;
+    }
     private float dirX = 1, dirY = 0;
     private boolean hasDirection;
 
@@ -275,7 +286,16 @@ public class D2TouchOverlay extends View {
 
     private boolean assignRight;
 
-    private final RectF assignHint = new RectF();
+    private final D2AssignBar assignBar = new D2AssignBar();
+    private boolean assignBarShown;
+
+    private D2SkillSlots skillSlots;
+    private String skillSlotsKey;
+    private long slotsSentAt, attackSkillCheckedAt;
+
+
+    private static final long SELECT_MAX_MS = 600;
+    private long selectSeq, selectDepartedAt, selectFailed = -1, selectPassed = -1, lastSelectTicket;
 
     private static final Set<Integer> AURA_SKILLS = new HashSet<>(java.util.Arrays.asList(98, 99, 100, 102, 103, 104,
         105, 108, 109, 110, 113, 114, 115, 118, 119, 120, 122, 123, 124, 125));
@@ -329,6 +349,14 @@ public class D2TouchOverlay extends View {
     private final Button rightTrigger = new Button("triggerR", "R", KIND_SKILL, VK_F1 + 7, GROUP_GAME, false);
     private final Paint roundIconPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private static final android.graphics.ColorFilter PRESSED_FILTER = new android.graphics.LightingColorFilter(0xFFB0B0B0, 0);
+
+    private static final android.graphics.ColorFilter GREY_FILTER;
+    static {
+        android.graphics.ColorMatrix grey = new android.graphics.ColorMatrix();
+        grey.setSaturation(0);
+        grey.postConcat(new android.graphics.ColorMatrix(new float[]{0.6f, 0, 0, 0, 0, 0, 0.6f, 0, 0, 0, 0, 0, 0.6f, 0, 0, 0, 0, 0, 1, 0}));
+        GREY_FILTER = new android.graphics.ColorMatrixColorFilter(grey);
+    }
     private final android.graphics.Matrix iconMatrix = new android.graphics.Matrix();
     private final Map<android.graphics.Bitmap, android.graphics.BitmapShader> iconShaders = new HashMap<>();
     private long pauseSentAt;
@@ -365,11 +393,12 @@ public class D2TouchOverlay extends View {
 
     private int targetX = -1, targetY = -1;
     private long atTargetSince;
-    private int lastSentFromX = Integer.MIN_VALUE, lastSentFromY = Integer.MIN_VALUE;
-    private long lastSendTime;
-    private int lastDx, lastDy, stalls;
 
-    private float gainX = 1, gainY = 1;
+    private final D2CursorSteer steer = new D2CursorSteer();
+
+    private boolean targetGivenUp;
+
+    private long cursorWaitLoggedAt, cursorGiveUpLoggedAt;
     private int clickErrorX, clickErrorY;
     private boolean clickMeasured;
 
@@ -597,6 +626,8 @@ public class D2TouchOverlay extends View {
     private final Runnable keepAlive = this::keepAlive;
 
     private Object highlighted;
+
+    private String padHoverSeen;
     private long highlightSentAt;
     private String lastPotion = "–";
 
@@ -668,9 +699,7 @@ public class D2TouchOverlay extends View {
             @Override public void ignoreTargets(java.util.Set<Long> ids) { D2TouchOverlay.this.ignoreTargets(ids); }
 
             @Override public boolean pressHotkey(int index) {
-                if (index < 0 || index >= 16) return false;
-                pressKey(VK_F1 + index);
-                return true;
+                return false;
             }
             @Override public java.util.Set<Long> leftOutObjects() { return D2TouchOverlay.this.leftOutObjects(); }
             @Override public D2PointPlan.Build build(int cls, String name) { return pointHighlight.build(cls, name); }
@@ -728,6 +757,9 @@ public class D2TouchOverlay extends View {
         padMap = D2Gamepad.parseMap(D2Settings.padMap(context));
         if (!padEnabled) padUsed(false);
         joystickVisible = D2Settings.joystickVisible(context);
+        joystickMode = D2Settings.joystickMode(context);
+        joystickDeadzonePct = D2Settings.joystickDeadzone(context);
+        buttonAlpha = Math.round(255f * D2Settings.buttonOpacity(context) / 100f);
         hints.decode(D2Settings.hintsSeen(context));
         int oldPlayers = players;
         players = D2Settings.players(context);
@@ -776,6 +808,7 @@ public class D2TouchOverlay extends View {
         if (pinsChanged && getWidth() > 0) layoutButtons(getWidth(), getHeight());
         tapMoves = D2Settings.tapMoves(context);
         weaponSwapWanted = D2Settings.weaponSwapButton(context);
+        teleportInstant = D2Settings.teleportInstant(context);
         boolean wasDirect = directWalk;
         directWalk = D2Settings.directWalk(context);
         if (wasDirect && !directWalk && action == ACTION_WALK && walkDirect) {
@@ -1349,7 +1382,7 @@ public class D2TouchOverlay extends View {
         D2ModState s = mod;
         if (button.kind != KIND_SKILL || s == null || s.characterClass < 0) return false;
         int index = button.vk - VK_F1;
-        return index >= 0 && index < 16 && s.hotkeySkill[index] < 0;
+        return index >= 0 && index < 16 && (skillSlots == null || skillSlots.skill(index) < 0);
     }
 
 
@@ -1572,8 +1605,8 @@ public class D2TouchOverlay extends View {
             float bx = shown ? baseX : idleX, by = shown ? baseY : idleY;
 
             if ((!materialsByMod || !materialsWindow.covers(bx, by, materialsOn(), layerNow)) && !recipes.covers(bx, by)) {
-                drawCircle(canvas, bx, by, joystickRadius, shown ? 40 : 18, shown ? 110 : 60, Color.WHITE);
-                drawCircle(canvas, shown ? knobX : bx, shown ? knobY : by, 28 * dp, shown ? 120 : 45, 150, Color.WHITE);
+                drawCircle(canvas, bx, by, joystickRadius, opaque(shown ? 40 : 18), opaque(shown ? 110 : 60), Color.WHITE);
+                drawCircle(canvas, shown ? knobX : bx, shown ? knobY : by, 28 * dp, opaque(shown ? 120 : 45), opaque(150), Color.WHITE);
             }
         }
         if (mod != null && !editMode && controlsVisible) drawModMarkers(canvas);
@@ -1595,7 +1628,14 @@ public class D2TouchOverlay extends View {
             textPaint.setTextSize(12 * dp);
             canvas.drawText(text(R.string.edit_size, Math.round(scale * 100)), getWidth() / 2f, getHeight() * 0.4f + 22 * dp, textPaint);
         }
+
+
+        int gameLayer = buttonAlpha < 255 && !editMode ? canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), buttonAlpha) : -1;
         for (Button button : buttons) {
+            if (gameLayer >= 0 && button.group != GROUP_GAME) {
+                canvas.restoreToCount(gameLayer);
+                gameLayer = -1;
+            }
             if (!isVisible(button)) continue;
 
             if (materialsByMod && materialsWindow.covers(button.cx, button.cy, materialsOn(), layerNow)) continue;
@@ -1658,6 +1698,7 @@ public class D2TouchOverlay extends View {
             canvas.drawText(button.label, button.cx, button.cy + textPaint.getTextSize() / 3, textPaint);
             if (button.kind == KIND_INTERACT) drawInteractHint(canvas, button);
         }
+        if (gameLayer >= 0) canvas.restoreToCount(gameLayer);
         if (!editMode) {
 
 
@@ -1672,14 +1713,16 @@ public class D2TouchOverlay extends View {
         drawRing(canvas);
         drawZeroLifeNote(canvas);
         boolean treePick = treePicking();
-        if (assignButton != null || treePick || (noteText != null && SystemClock.uptimeMillis() < noteUntil)) {
-            boolean noteShown = noteText != null && SystemClock.uptimeMillis() < noteUntil;
+        boolean noteNow = noteText != null && SystemClock.uptimeMillis() < noteUntil;
 
-            String text = noteShown ? noteText
-                : assignButton == null ? text(R.string.tree_pick_for, treePickName(treePickSkill))
-                : (assignButton.kind == KIND_ATTACK
-                    ? text(assignRight ? R.string.assign_right : R.string.assign_left)
-                    : text(assignRight ? R.string.assign_for_right : R.string.assign_for_left, assignButton.label));
+        assignBarShown = assignButton != null && !noteNow;
+        if (assignBarShown) {
+            drawAssignBar(canvas);
+            noteRectShown = false;
+        }
+        else if (assignButton != null || treePick || noteNow) {
+            boolean noteShown = noteNow;
+            String text = noteShown ? noteText : text(R.string.tree_pick_for, treePickName(treePickSkill));
             textPaint.setTextSize(15 * dp);
 
             int budget = (int) Math.max(120 * dp, Math.min(getWidth() - 64 * dp, 640 * dp));
@@ -1699,9 +1742,6 @@ public class D2TouchOverlay extends View {
             if (noteShown) resumeHint.shown(rect);
             noteRect.set(rect);
             noteRectShown = noteShown;
-
-
-            if (assignButton != null) assignHint.set(rect);
         }
         else noteRectShown = false;
         if (debug) drawDiagnostics(canvas);
@@ -1967,11 +2007,16 @@ public class D2TouchOverlay extends View {
         int skill;
         boolean active = false;
         int attackRight = button.kind == KIND_ATTACK ? attackRightSkill() : -1;
-        if (button.kind == KIND_ATTACK) skill = attackRight >= 0 ? attackRight : s.leftSkill;
+        boolean unusable = false;
+        if (button.kind == KIND_ATTACK) skill = skillSlots != null ? skillSlots.attack() : s.leftSkill;
         else if (button.kind == KIND_SKILL && button.vk >= VK_F1 && button.vk < VK_F1 + 16) {
             int index = button.vk - VK_F1;
-            skill = s.hotkeySkill[index];
-            active = skill >= 0 && (s.hotkeyLeft[index] ? skill == s.leftSkill : skill == s.rightSkill);
+            skill = skillSlots != null ? skillSlots.skill(index) : -1;
+
+
+            active = skill >= 0 && !D2SkillSlots.left(skill) && skill == s.rightSkill;
+            int[] levels = modLink.hotkeyLevels();
+            unusable = skill >= 0 && levels != null && index < levels.length && levels[index] == 0 && !swapMarked(index);
         }
         else return false;
         android.graphics.Bitmap icon = graphics.skillIcon(skill);
@@ -2002,7 +2047,7 @@ public class D2TouchOverlay extends View {
         iconMatrix.postTranslate(button.cx - icon.getWidth() * k / 2, button.cy - icon.getHeight() * k / 2);
         shader.setLocalMatrix(iconMatrix);
         roundIconPaint.setShader(shader);
-        roundIconPaint.setColorFilter(pressed ? PRESSED_FILTER : null);
+        roundIconPaint.setColorFilter(pressed ? PRESSED_FILTER : unusable ? GREY_FILTER : null);
         canvas.drawCircle(button.cx, button.cy, iconR, roundIconPaint);
         if (gameRing) graphics.drawRing(canvas, button.cx, button.cy, button.r, menuTextScale());
         else {
@@ -2026,8 +2071,6 @@ public class D2TouchOverlay extends View {
         if (ammo >= 0 && AMMO_SKILLS.contains(skill)) drawTab(canvas, Integer.toString(ammo), button.cx + button.r * 0.6f, button.cy - button.r * 0.95f);
 
         if (attackRight >= 0) drawTab(canvas, "R", button.cx + button.r * 0.75f, button.cy + button.r * 0.7f);
-
-        if (button.kind == KIND_SKILL && s.hotkeyLeft[button.vk - VK_F1]) drawTab(canvas, "L", button.cx + button.r * 0.75f, button.cy + button.r * 0.7f);
 
         if (button.kind == KIND_SKILL && swapMarked(button.vk - VK_F1)) drawTab(canvas, "II", button.cx + button.r * 0.72f, button.cy - button.r);
         return true;
@@ -2082,8 +2125,6 @@ public class D2TouchOverlay extends View {
         applySkillSet();
         performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         D2Trace.log("skill set " + (set + 1));
-        showNote(text(R.string.note_skill_set, set + 1, "F" + (D2SkillSets.keyIndex(0, set) + 1),
-            "F" + (D2SkillSets.keyIndex(D2SkillSets.PLACES - 1, set) + 1)), 1500);
         invalidate();
     }
 
@@ -3248,7 +3289,8 @@ public class D2TouchOverlay extends View {
         }
         lines.add(String.format(Locale.ROOT, "Zeiger %d,%d  Ziel %d,%d  Klick-Abweichung %s  Verstärkung %.2f/%.2f  abgeglichen %d",
             xServer.pointer.getX(), xServer.pointer.getY(), targetX, targetY,
-            clickMeasured ? clickErrorX + "," + clickErrorY : "–", gainX, gainY, syncCount));
+            clickMeasured ? clickErrorX + "," + clickErrorY : "–", steer.gainX, steer.gainY, syncCount)
+            + "  offen " + winHandler.moves.open() + (steer.locked() ? "  gesperrt" : ""));
         lines.add("Finger: " + names(fingerDevices) + "   Schultertaste: " + names(triggerDevices)
             + "   gefiltert: " + names(triggerTouchDevices) + " (" + ignoredTriggerTouches + ")");
         lines.addAll(events);
@@ -3462,13 +3504,7 @@ public class D2TouchOverlay extends View {
         }
         else if (controlsVisible && inJoystickZone(x, y)) {
             touch.role = ROLE_JOYSTICK;
-            if (joystickOwner == D2Gamepad.OWNER_PAD) joystickReleased();
-            joystickOwner = D2Gamepad.OWNER_FINGER;
-            joystickActive = true;
-            hasDirection = false;
-            baseX = knobX = x;
-            baseY = knobY = y;
-            joystickFollow.start(x, y, SystemClock.uptimeMillis());
+            startJoystick(x, y, touch.downTime, false);
         }
         else if (!worldTapToGame(touch)) {
 
@@ -3574,6 +3610,45 @@ public class D2TouchOverlay extends View {
 
 
 
+
+    private float[] joystickZone() {
+        D2ModState s = mod;
+        if (s == null || s.gameHeight <= 0) return new float[]{0, getHeight() * 0.1f, getWidth() * 0.4f, getHeight() * 0.92f};
+        return new float[]{0, 0, getWidth() * 0.4f, gameToView(0, s.gameHeight - D2Hud.STRIP)[1]};
+    }
+
+
+    private float joystickDeadZone() {
+        return joystickRadius * joystickDeadzonePct / 100f;
+    }
+
+
+
+
+
+
+    private void startJoystick(float x, float y, long time, boolean fromEffect) {
+        if (joystickOwner == D2Gamepad.OWNER_PAD) joystickReleased();
+        joystickOwner = D2Gamepad.OWNER_FINGER;
+        joystickActive = true;
+        hasDirection = false;
+        float[] z = joystickZone();
+        float r = joystickRadius;
+        boolean fixed = joystickMode == D2Settings.JOYSTICK_FIXED;
+
+        joystickFollow.start(x, y, time, z[0] + r, z[1] + r, z[2] - r, z[3] - r, fixed);
+        baseX = knobX = x;
+        baseY = knobY = y;
+        joystickTraceAt = time;
+        D2Trace.log("joystick: down at " + Math.round(x) + "," + Math.round(y) + (fromEffect ? " (effect wipe)" : "") + ", "
+            + (fixed ? "fixed" : "follow") + ", dead zone " + Math.round(joystickDeadZone()) + " px, zone " + Math.round(z[0]) + ","
+            + Math.round(z[1]) + "-" + Math.round(z[2]) + "," + Math.round(z[3]));
+    }
+
+
+
+
+
     private boolean inJoystickZone(float x, float y) {
         if (x >= getWidth() * 0.4f) return false;
         D2ModState s = mod;
@@ -3602,12 +3677,9 @@ public class D2TouchOverlay extends View {
 
         if (touch.role == ROLE_EFFECT && touch.moved && controlsVisible && inJoystickZone(touch.downX, touch.downY)) {
 
+
             touch.role = ROLE_JOYSTICK;
-            joystickActive = true;
-            hasDirection = false;
-            baseX = knobX = touch.downX;
-            baseY = knobY = touch.downY;
-            joystickFollow.start(touch.downX, touch.downY, time);
+            startJoystick(touch.downX, touch.downY, time, true);
         }
         if (touch.role == ROLE_DRAG) {
             touch.button.cx = Math.max(touch.button.r, Math.min(getWidth() - touch.button.r, x));
@@ -3616,20 +3688,33 @@ public class D2TouchOverlay extends View {
         }
         else if (touch.role == ROLE_JOYSTICK) {
 
+
+            int edgeBefore = joystickFollow.edgeHits;
             joystickFollow.move(x, y, time, joystickRadius, dp);
             baseX = joystickFollow.baseX;
             baseY = joystickFollow.baseY;
             float dx = x - baseX, dy = y - baseY;
             float len = (float) Math.hypot(dx, dy);
-            knobX = x;
-            knobY = y;
 
-            joystickPush = D2TeleportReach.joystickPush(len, 10 * dp, joystickRadius);
-            if (len > 10 * dp) {
+            float k = len > joystickRadius ? joystickRadius / len : 1;
+            knobX = baseX + dx * k;
+            knobY = baseY + dy * k;
+            float deadZone = joystickDeadZone();
+
+            joystickPush = D2TeleportReach.joystickPush(len, deadZone, joystickRadius);
+            if (len > deadZone) {
                 dirX = dx / len;
                 dirY = dy / len;
                 hasDirection = true;
                 onDirectionChanged();
+            }
+            if (edgeBefore == 0 && joystickFollow.edgeHits > 0) {
+                D2Trace.log("joystick: following held at the zone's edge, thumb at " + Math.round(x) + "," + Math.round(y));
+            }
+            if (time - joystickTraceAt >= 250) {
+                joystickTraceAt = time;
+                D2Trace.log("joystick: base " + Math.round(baseX) + "," + Math.round(baseY) + " thumb " + Math.round(x) + ","
+                    + Math.round(y) + " push " + Math.round(joystickPush * 100) + "%");
             }
         }
         else if (touch.role == ROLE_BUTTON && touch.button.kind == KIND_INTERACT && ringTouch == touch) {
@@ -3708,7 +3793,9 @@ public class D2TouchOverlay extends View {
         else if (touch.role == ROLE_ASSIGN) {
 
             if (cancelled) { }
-            else if (assignButton != null && assignHint.contains(touch.x, touch.y)) switchAssignList();
+            else if (assignButton != null && assignBarShown && assignBar.inside(touch.x, touch.y)) {
+                if (assignBar.hit(touch.x, touch.y) == D2AssignBar.CLEAR) clearAssignedKey();
+            }
             else assignAt(touch.x, touch.y);
         }
         else if (touch.role == ROLE_RESUME) {
@@ -3760,6 +3847,12 @@ public class D2TouchOverlay extends View {
         else if (touch.role == ROLE_JOYSTICK) {
 
             if (joystickOwner == D2Gamepad.OWNER_FINGER) {
+
+                D2Trace.log("joystick: up, " + (joystickFollow.fixed ? "fixed" : "follow") + ", base " + Math.round(baseX) + ","
+                    + Math.round(baseY) + " moved " + Math.round(baseX - joystickFollow.startX) + "," + Math.round(baseY - joystickFollow.startY)
+                    + ", thumb " + Math.round(touch.x) + "," + Math.round(touch.y) + ", reversals " + joystickFollow.jumps
+                    + ", at the edge " + joystickFollow.edgeHits + ", direction "
+                    + (hasDirection ? String.format(java.util.Locale.ROOT, "%.2f,%.2f", dirX, dirY) : "none"));
 
                 if (joystickActive && hasDirection) teleportHold.joystickUp(dirX, dirY, joystickPush, SystemClock.uptimeMillis());
                 joystickReleased();
@@ -3868,8 +3961,11 @@ public class D2TouchOverlay extends View {
         releaseCurrent();
         assignButton = button;
         assignSince = SystemClock.uptimeMillis();
-        assignRight = button.kind != KIND_ATTACK;
-        clickSkillButton(s, button.kind == KIND_ATTACK);
+
+
+        assignRight = D2SkillSlots.ASSIGN_RIGHT;
+        clickSkillButton(s, !assignRight);
+        D2Trace.log("assign: " + button.label + " in the " + (assignRight ? "right" : "left") + " list");
         handler.postDelayed(() -> {
             if (assignButton == button && SystemClock.uptimeMillis() - assignSince >= 15000) {
                 assignButton = null;
@@ -3882,8 +3978,8 @@ public class D2TouchOverlay extends View {
 
     private void clickSkillButton(D2ModState s, boolean left) {
 
-        float gx = left ? 141 : s.gameWidth - 141, gy = s.gameHeight - 24;
-        int[] p = gameToDesktop(gx - positionShiftX, gy - positionShiftY);
+        float[] g = D2SkillButton.center(left, s.gameWidth, s.gameHeight);
+        int[] p = gameToDesktop(g[0] - positionShiftX, g[1] - positionShiftY);
         enqueue(moveTo(p[0], p[1]), settle(60));
         setLmb(true);
         enqueue(waitMs(60));
@@ -3894,26 +3990,165 @@ public class D2TouchOverlay extends View {
 
 
 
-    private void switchAssignList() {
-        D2ModState s = mod;
-        if (s == null || s.gameWidth <= 0) return;
-        if (assignButton != null && assignButton.kind == KIND_ATTACK && !assignRight && modLink.characterName() == null) {
-            showNote(text(R.string.note_right_needs_mod));
-            return;
+    private void drawAssignBar(Canvas canvas) {
+        Button button = assignButton;
+        if (button == null) return;
+        D2Hud graphics = hud;
+        float k = menuTextScale();
+        textPaint.setTextSize(15 * dp);
+        String title = text(R.string.assign_bar_title, button.label);
+        String clear = button.kind == KIND_SKILL ? text(R.string.assign_bar_clear) : null;
+        float clearWidth = clear != null ? Math.max(96 * dp, assignTextWidth(graphics, clear, k) + 32 * dp) : 0;
+        float[] bar = assignBar.layout(getWidth() / 2f, 64 * dp, 8 * dp, 36 * dp, 8 * dp, assignTextWidth(graphics, title, k), clearWidth);
+        rect.set(bar[0], bar[1], bar[2], bar[3]);
+        if (!drawGameFrame(canvas, rect, Color.argb(225, 10, 8, 6))) {
+            fillPaint.setColor(Color.argb(225, 10, 8, 6));
+            canvas.drawRoundRect(rect, 8 * dp, 8 * dp, fillPaint);
+            strokePaint.setColor(Color.rgb(148, 126, 74));
+            canvas.drawRoundRect(rect, 8 * dp, 8 * dp, strokePaint);
         }
+        float[] at = assignBar.titleCenter();
+        drawAssignText(canvas, graphics, title, at[0], at[1], k);
+        if (clear == null) return;
+        float[] c = assignBar.clearButton();
+        rect.set(c[0], c[1], c[2], c[3]);
+        fillPaint.setColor(Color.argb(235, 24, 20, 14));
+        canvas.drawRoundRect(rect, 4 * dp, 4 * dp, fillPaint);
+        strokePaint.setColor(Color.rgb(148, 126, 74));
+        canvas.drawRoundRect(rect, 4 * dp, 4 * dp, strokePaint);
+        drawAssignText(canvas, graphics, clear, rect.centerX(), rect.centerY(), k);
+    }
+
+
+    private float assignTextWidth(D2Hud graphics, String text, float k) {
+        return graphics != null ? graphics.textWidth(text) * k : textPaint.measureText(text);
+    }
+
+
+    private void drawAssignText(Canvas canvas, D2Hud graphics, String text, float cx, float cy, float k) {
+        if (graphics != null) graphics.drawText(canvas, text, cx, cy, k, 0xECD696);
+        else canvas.drawText(text, cx, cy + textPaint.getTextSize() / 3, textPaint);
+    }
+
+
+    private void clearAssignedKey() {
+        Button button = assignButton;
+        D2ModState s = mod;
+        if (button == null || button.kind != KIND_SKILL || s == null) return;
+        final int place = button.vk - VK_F1;
+        if (place < 0 || place >= D2SkillSlots.PLACES) return;
+        assignButton = null;
         clickSkillButton(s, !assignRight);
-        assignRight = !assignRight;
-        clickSkillButton(s, !assignRight);
-        final long since = assignSince = SystemClock.uptimeMillis();
-        final Button button = assignButton;
-        handler.postDelayed(() -> {
-            if (assignButton == button && assignSince == since) {
-                assignButton = null;
-                invalidate();
-            }
-        }, 15000);
-        D2Trace.log("assign: " + (assignButton != null ? assignButton.label : "?") + " from the " + (assignRight ? "right" : "left") + " list");
+        if (skillSlots == null || skillSlots.skill(place) < 0) {
+            D2Trace.log("assign: " + button.label + " is free already");
+            showNote(text(R.string.assign_clear_free, button.label));
+        }
+        else {
+            setSlot(place, -1);
+            D2Trace.log("assign: " + button.label + " cleared");
+            showNote(text(R.string.assign_cleared, button.label));
+        }
         invalidate();
+    }
+
+
+    private void updateSkillSlots(D2ModState s) {
+        String name = modLink.currentCharacterName();
+        String key = D2SkillSlots.key(s.characterClass, name);
+        if (key == null || key.equals(skillSlotsKey)) return;
+        D2SkillSlots loaded = D2SkillSlots.parse(prefs.getString(key, null));
+        if (loaded == null) {
+            String old = "attackRight." + s.characterClass + "." + name;
+            loaded = D2SkillSlots.takeOver(s.hotkeySkill, prefs.getInt(old, -1), s.leftSkill);
+            prefs.edit().putString(key, loaded.format()).apply();
+            D2Trace.log("skill slots: taken over from the game's hotkeys: " + loaded.format());
+        }
+        else D2Trace.log("skill slots: " + loaded.format());
+        skillSlots = loaded;
+        skillSlotsKey = key;
+        slotsSentAt = 0;
+        invalidate();
+    }
+
+
+    private void setSlot(int place, int skill) {
+        if (skillSlots == null || skillSlotsKey == null) return;
+        skillSlots.set(place, skill);
+        prefs.edit().putString(skillSlotsKey, skillSlots.format()).apply();
+        slotsSentAt = 0;
+        D2Trace.log("skill slots: F" + (place + 1) + " = " + skill);
+        invalidate();
+    }
+
+
+    private boolean setAttackSlot(int skill) {
+        if (skillSlots == null || skillSlotsKey == null || !skillSlots.setAttack(skill)) return false;
+        prefs.edit().putString(skillSlotsKey, skillSlots.format()).apply();
+        D2Trace.log("skill slots: Angriff = " + skill);
+        invalidate();
+        return true;
+    }
+
+
+    private void sendSlots(long now) {
+        if (skillSlots == null || (slotsSentAt != 0 && now - slotsSentAt < 2000)) return;
+        slotsSentAt = now;
+        modLink.slots(skillSlots.skills());
+    }
+
+
+
+
+
+    private void selectSkillFor(int skill, boolean left) {
+        final long ticket = ++selectSeq;
+        lastSelectTicket = ticket;
+        modLink.holdPresses(SystemClock.uptimeMillis() + SELECT_MAX_MS + 2000);
+        enqueue((now) -> {
+            selectDepartedAt = now;
+            modLink.selectSkill(left, skill);
+            return true;
+        }, (now) -> selectShown(ticket, skill, left, now));
+    }
+
+
+
+
+
+
+
+    private boolean selectShown(long ticket, int skill, boolean left, long now) {
+        D2ModState s = mod;
+        int hand = s == null ? -1 : left ? s.leftSkill : s.rightSkill;
+        if (hand == skill) {
+            D2Trace.log("select: skill " + skill + (left ? " left" : " right") + " shown after " + (now - selectDepartedAt) + " ms");
+            selectPassed = ticket;
+            if (ticket == selectSeq) modLink.holdPresses(0);
+            return true;
+        }
+        if (now - selectDepartedAt < SELECT_MAX_MS) return false;
+        D2Trace.log("select: skill " + skill + " not shown in " + SELECT_MAX_MS + " ms, nothing cast");
+        selectFailed = ticket;
+        modLink.holdPresses(0);
+        steps.clear();
+        lmbDown = false;
+        rmbDown = false;
+        shiftDown = false;
+        winHandler.mouseEvent(MouseEventFlags.LEFTUP, 0, 0, 0);
+        winHandler.mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
+        winHandler.keyboardEvent((byte) VK_SHIFT, KEYEVENTF_KEYUP);
+        handler.post(this::releaseCurrent);
+        return true;
+    }
+
+
+    private void stepAttackSkill(D2ModState s, long now) {
+        int want = skillSlots != null ? skillSlots.attack() : -1;
+        if (want < 0 || action != ACTION_ATTACK || s.leftSkill == want || now - attackSkillCheckedAt < 300) return;
+        if (!steps.isEmpty()) return;
+        attackSkillCheckedAt = now;
+        D2Trace.log("attack: left skill " + s.leftSkill + " is not " + want + ", selected again");
+        selectSkillFor(want, true);
     }
 
 
@@ -3944,8 +4179,7 @@ public class D2TouchOverlay extends View {
 
 
     private int attackRightSkill() {
-        String key = attackRightKey();
-        return key == null ? -1 : prefs.getInt(key, -1);
+        return -1;
     }
 
     private void setAttackRightSkill(int skill) {
@@ -3995,34 +4229,49 @@ public class D2TouchOverlay extends View {
     }
 
 
+
+
+
+
     private void assignAtScreen(int[] p) {
         Button button = assignButton;
         assignButton = null;
         if (button == null) return;
+        D2ModState s = mod;
+        final boolean right = assignRight;
+        final int before = s != null ? (right ? s.rightSkill : s.leftSkill) : -1;
+        final long since = SystemClock.uptimeMillis();
         enqueue(moveTo(p[0], p[1]), settle(HOVER_SETTLE_MS));
-        if (button.kind == KIND_SKILL) {
-            pressKey(button.vk);
-            enqueue(waitMs(60));
-        }
         setLmb(true);
         enqueue(waitMs(60));
         setLmb(false);
-        if (button.kind == KIND_SKILL && !assignRight && mod != null) {
+        handler.postDelayed(() -> takeAssigned(button, right, before, since), 150);
+        invalidate();
+    }
 
-            leftRestore.pressed(-1, mod.leftSkill);
-            queueLeftRestore(false);
+
+    private void takeAssigned(Button button, boolean right, int before, long since) {
+        D2ModState s = mod;
+        int now = s != null ? (right ? s.rightSkill : s.leftSkill) : -1;
+        if (now == before && SystemClock.uptimeMillis() - since < 900) {
+            handler.postDelayed(() -> takeAssigned(button, right, before, since), 50);
+            return;
+        }
+        if (now < 0 || now == before) {
+
+            D2Trace.log("assign: " + button.label + ": no new skill in the hand (" + now + ")");
+            showNote(text(R.string.assign_no_change));
+            return;
         }
         if (button.kind == KIND_ATTACK) {
-            android.util.Log.i("D2Android", "assign: Angriff tap in the " + (assignRight ? "right" : "left") + " list");
-            if (assignRight) {
-                D2ModState s = mod;
-                final int before = s != null ? s.rightSkill : -1;
-                final long since = SystemClock.uptimeMillis();
-                handler.postDelayed(() -> takeRightSkill(before, since), 150);
+            if (!setAttackSlot(now)) {
+                D2Trace.log("assign: aura " + now + " refused for Angriff");
+                showNote(text(R.string.note_skill_not_for_attack));
             }
-            else setAttackRightSkill(-1);
-            assignRight = false;
         }
+        else if (button.vk >= VK_F1 && button.vk < VK_F1 + D2SkillSlots.PLACES) setSlot(button.vk - VK_F1, now);
+        D2Trace.log("assign: " + button.label + " = skill " + now + ", the hand gets " + before + " back");
+        if (before >= 0) selectSkillFor(before, !right);
         invalidate();
     }
 
@@ -4331,16 +4580,26 @@ public class D2TouchOverlay extends View {
             return;
         }
         releaseCurrent();
-        int restoring = leftRestore.saved();
-        if (restoring >= 0) {
 
 
-            restoreLeftNow();
-            D2ModState now = mod;
-            if (!steps.isEmpty() || !keyWait.allTaken(SystemClock.uptimeMillis()) || now == null || now.leftSkill != restoring) {
-                waitLeftThenAttack(owner, restoring);
-                return;
-            }
+
+        D2ModState now = mod;
+        int want = skillSlots != null ? skillSlots.attack() : -1;
+        D2Hud townHud = hud;
+        if (want >= 0 && now != null && townHud != null && townHud.skillWalksInTown(now.inTown, want)) {
+            D2Trace.log("attack: skill " + want + " not usable in town, nothing cast");
+            resumeAfterAction();
+            return;
+        }
+        if (want == D2GroundSkills.TELEPORT || CORPSE_SKILLS.contains(want)) {
+            startSkill(-1, owner, want);
+            return;
+        }
+        if (want >= 0 && now != null && (now.leftSkill != want || !steps.isEmpty())) {
+            D2Trace.log("attack: select " + want + " left");
+            selectSkillFor(want, true);
+            waitLeftThenAttack(owner, want);
+            return;
         }
         attackNow(owner);
     }
@@ -4377,10 +4636,11 @@ public class D2TouchOverlay extends View {
                     handler.postDelayed(this, 40);
                     return;
                 }
-                D2Trace.log("attack: left skill " + skill + (back ? " back after " + waited + " ms" : " not back in 600 ms, attacking anyway"));
+                D2Trace.log("attack: left skill " + skill + (back ? " back after " + waited + " ms" : " not there in 600 ms, nothing cast"));
                 boolean held = attackRightHeld;
                 attackRightOwner = null;
                 action = ACTION_NONE;
+                if (!back) return;
                 attackNow(owner);
                 if (!held) releaseAttack(owner, false);
             }
@@ -4703,15 +4963,10 @@ public class D2TouchOverlay extends View {
             return;
         }
         D2Trace.log("tree pick: skill " + skill + " onto " + label);
-        modLink.points(D2Points.KIND_KEY, skill, key, true);
+        setSlot(key, skill);
         performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        showNote(text(R.string.tree_pick_done, name, label));
         invalidate();
-        handler.postDelayed(() -> {
-            D2ModState s = mod;
-            boolean ok = s != null && s.hotkeySkill[key] == skill;
-            D2Trace.log("tree pick: skill " + skill + " on " + label + (ok ? "" : " not confirmed"));
-            showNote(text(ok ? R.string.tree_pick_done : R.string.tree_pick_failed, name, label));
-        }, TREE_PICK_CHECK_MS);
     }
 
 
@@ -4799,19 +5054,43 @@ public class D2TouchOverlay extends View {
 
         final boolean selecting = false;
         if (rightSkill >= 0) {
+
             skill = rightSkill;
-            skillLeft = false;
+            skillLeft = D2SkillSlots.left(skill);
         }
         else {
-            pressKey(vk);
-            skill = state != null && index >= 0 && index < 16 ? state.hotkeySkill[index] : -1;
 
-            skillLeft = state != null && index >= 0 && index < 16 && skill >= 0 && state.hotkeyLeft[index];
 
-            if (!skillLeft) rightSelect.rightKey(SystemClock.uptimeMillis());
-            else leftRestore.pressed(skill, state.leftSkill);
+
+            skill = skillSlots != null && index >= 0 && index < D2SkillSlots.PLACES ? skillSlots.skill(index) : -1;
+            skillLeft = D2SkillSlots.left(skill);
         }
-        if (skillLeft) D2Trace.log("skill F" + (index + 1) + " is bound left: left button");
+        D2Trace.log("skill F" + (index + 1) + ": " + skill + (skill < 0 ? " (free)" : skillLeft ? " left" : " right (aura)"));
+        if (skill < 0) {
+            action = ACTION_NONE;
+            return;
+        }
+
+
+        D2Hud townHud = hud;
+        if (state != null && townHud != null && townHud.skillWalksInTown(state.inTown, skill)) {
+            D2Trace.log("skill " + skill + ": not usable in town, nothing cast" + (skillLeft ? " (left skill restored)" : ""));
+            releaseCurrent();
+
+
+            resumeAfterAction();
+            return;
+        }
+
+
+        selectSkillFor(skill, skillLeft);
+        if (!skillLeft) {
+
+
+            D2Trace.log("aura " + skill + " on, the held stick keeps walking");
+            resumeAfterAction();
+            return;
+        }
         if (CORPSE_SKILLS.contains(skill) && state != null && state.canActOnUnits() && state.portals >= 0) {
 
             skillOnCorpses = true;
@@ -4827,7 +5106,7 @@ public class D2TouchOverlay extends View {
         }
 
         teleportHeld = false;
-        if (skill == D2GroundSkills.TELEPORT && !skillLeft) {
+        if (skill == D2GroundSkills.TELEPORT) {
 
             teleportHeld = true;
             teleportPressed = null;
@@ -4854,10 +5133,22 @@ public class D2TouchOverlay extends View {
             teleportAskedAt = 0;
             teleportSince = SystemClock.uptimeMillis();
 
-            teleportOnLetGo = true;
+
+            teleportInstantNow = teleportInstant;
+            teleportOnLetGo = !teleportInstantNow;
             teleportReleased = false;
+
+            teleportHold.skillGate(true);
+            teleportWrongSkillLogged = false;
+            teleportKeyTicket = lastFKeyTicket;
+            teleportKeyAt = lastFKeyAt;
+            teleportAskedReq = null;
+            teleportAskedId = -1;
+            teleportClickedSinceAsk = false;
+            teleportFrozenReq = null;
+            teleportFrozenId = -1;
             skillTargetId = 0;
-            D2Trace.log("skill " + skill + ": teleport with the DLL's target");
+            D2Trace.log("skill " + skill + ": teleport with the DLL's target" + (teleportInstantNow ? " (instant)" : ""));
             teleportTick(SystemClock.uptimeMillis());
             return;
         }
@@ -4987,7 +5278,7 @@ public class D2TouchOverlay extends View {
 
 
     private void afterSelect(long token, int rightSkill, boolean selecting, int keySkill, Runnable cast) {
-        if (rightSkill < 0) {
+        if (true) {
             waitForKey(token, keySkill, cast);
             return;
         }
@@ -5026,19 +5317,25 @@ public class D2TouchOverlay extends View {
 
 
 
+
+
+
     private void waitForKey(long token, int keySkill, Runnable cast) {
-        final long ticket = lastFKeyTicket, since = lastFKeyAt;
+        final long ticket = lastSelectTicket, since = SystemClock.uptimeMillis();
         Runnable poll = new Runnable() {
             @Override
             public void run() {
                 if (skillToken != token || !skillFirstPending) return;
-                D2ModState s = mod;
                 long now = SystemClock.uptimeMillis();
-                if (s != null) keyWait.state(s.leftSkill, s.rightSkill, now);
+                D2ModState s = mod;
                 int current = s == null ? -1 : (skillLeft ? s.leftSkill : s.rightSkill);
-                int how = keyWait.castNow(ticket, keySkill, current, since, now);
-                if (how != D2KeyWait.WAIT) {
-                    if (keySkill >= 0) D2Trace.log("skill " + keySkill + ": first cast after " + (now - since) + " ms" + (how == D2KeyWait.SHOWN ? "" : current == keySkill ? " (order not shown)" : " (not shown)"));
+                if (selectFailed == ticket || now - since >= SELECT_MAX_MS + 2000) {
+                    D2Trace.log("skill " + keySkill + ": not selected, nothing cast");
+                    skillFirstPending = false;
+                    skillEarlyTarget = -1;
+                }
+                else if (selectPassed == ticket && current == keySkill) {
+                    D2Trace.log("skill " + keySkill + ": first cast after the gate, " + (now - since) + " ms");
                     cast.run();
                 }
                 else handler.postDelayed(this, D2KeyWait.POLL_MS);
@@ -5707,6 +6004,12 @@ public class D2TouchOverlay extends View {
                 .put("pauseGewollt", pauseWanted).put("joystickAktiv", joystickActive).put("aktion", action)
                 .put("joystick", new org.json.JSONArray().put(Math.round(idleX + at[0])).put(Math.round(idleY + at[1])).put(Math.round(joystickRadius)));
 
+            float[] jz = joystickZone();
+            o.put("joystickModus", joystickMode).put("joystickTot", Math.round(joystickDeadZone()))
+                .put("joystickZone", new org.json.JSONArray().put(Math.round(jz[0] + at[0])).put(Math.round(jz[1] + at[1]))
+                    .put(Math.round(jz[2] + at[0])).put(Math.round(jz[3] + at[1])));
+            o.put("knopfDeckkraft", Math.round(buttonAlpha * 100f / 255));
+
 
 
             D2ModState aimState = mod;
@@ -5720,7 +6023,7 @@ public class D2TouchOverlay extends View {
 
             int attackRight = attackRightSkill();
             D2ModState s = mod;
-            int attackSkill = attackRight >= 0 ? attackRight : s != null ? s.leftSkill : -1;
+            int attackSkill = attackSkillNow();
             D2Hud graphics = hud;
             String attackName = graphics != null ? graphics.skillName(attackSkill) : null;
             o.put("angriff", new org.json.JSONObject().put("seite", attackRight >= 0 ? "rechts" : "links")
@@ -5739,6 +6042,20 @@ public class D2TouchOverlay extends View {
                     .put(Math.round(button.hw)).put(Math.round(button.r)).put(button.group).put(isVisible(button) ? 1 : 0));
             }
             o.put("knoepfe", b);
+
+            if (assignButton != null && assignBarShown) {
+                org.json.JSONObject bar = new org.json.JSONObject().put("knopf", assignButton.id).put("liste", assignRight ? "rechts" : "links");
+                if (assignBar.hasClear()) {
+                    float[] c = assignBar.clearButton();
+                    bar.put("leeren", new org.json.JSONArray().put(Math.round((c[0] + c[2]) / 2 + at[0])).put(Math.round((c[1] + c[3]) / 2 + at[1])));
+                }
+                o.put("belegen", bar);
+            }
+            if (skillSlots != null) {
+                org.json.JSONArray places = new org.json.JSONArray();
+                for (int i = 0; i < D2SkillSlots.PLACES; i++) places.put(skillSlots.skill(i));
+                o.put("plaetze", places).put("angriffFertigkeit", skillSlots.attack());
+            }
             return o.toString();
         }
         catch (Exception e) {
@@ -5794,6 +6111,18 @@ public class D2TouchOverlay extends View {
         D2ModState s = modLink.state();
         boolean had = mod != null;
         mod = s;
+
+
+        if (s != null && padPointerMode()) {
+            String seen = s.hoverType + " " + s.hoverId + " " + s.npcTalking + " " + (highlighted != null ? thingId(highlighted) : -1);
+            if (!seen.equals(padHoverSeen)) {
+                padHoverSeen = seen;
+                D2Trace.log("pad pointer at " + xServer.pointer.getX() + "," + xServer.pointer.getY() + " (game mouse "
+                    + s.mouseX + "," + s.mouseY + "): hover " + (s.hoverType == 0xFF ? "none" : s.hoverType + " " + s.hoverId)
+                    + ", npc talking " + s.npcTalking + ", highlighted " + (highlighted != null ? thingId(highlighted) : -1));
+            }
+        }
+        else padHoverSeen = null;
 
         if (uiFactor != 1f && s != null && s.gameWidth > 0 && s.gameHeight > 0 && getWidth() > 0 && !editMode
             && (s.gameWidth != clearedGameW || s.gameHeight != clearedGameH)) layoutButtons(getWidth(), getHeight());
@@ -5904,6 +6233,7 @@ public class D2TouchOverlay extends View {
 
         D2ModItems carried = modLink.items();
         updateLootScope(s);
+        updateSkillSlots(s);
         boolean filter = carried != null && carried.labelFilterPossible && s.itemNamesWithoutAlt && labelFilter.any();
         if (filter && hudNow - labelFilterSentAt > 500) {
             labelFilterSentAt = hudNow;
@@ -5975,7 +6305,7 @@ public class D2TouchOverlay extends View {
         if (diff && s.characterClass >= 0 && s.characterClass < D2Breakpoints.CLASS_CODES.length && hudNow - diffSentAt > 1000) {
             diffSentAt = hudNow;
             int attackRight = attackRightSkill();
-            int flags = D2Breakpoints.framesFlags(attackRight >= 0 ? attackRight : s.leftSkill);
+            int flags = D2Breakpoints.framesFlags(attackSkillNow());
             int forms = s.characterClass == 5 ? 3 : 1;
             for (int form = 0; form < forms; form++) {
                 byte[] payload = D2Breakpoints.frames28(tables.animationen, s.characterClass, form, flags);
@@ -6016,7 +6346,9 @@ public class D2TouchOverlay extends View {
         }
         autoDrink(s, hudNow);
         stepLeftRestore(s, hudNow);
-        pointHighlight.stepKeys(s, modLink, hud, pauseWanted, hudNow);
+        pointHighlight.stepKeys(s, modLink, hud, pauseWanted, hudNow, skillSlots, this::setSlot);
+        sendSlots(hudNow);
+        stepAttackSkill(s, hudNow);
         stepRespecSpend(s, hudNow);
 
         handler.postDelayed(modWatchdog, 600);
@@ -6271,6 +6603,16 @@ public class D2TouchOverlay extends View {
 
     private boolean teleportOnLetGo, teleportReleased;
 
+    private boolean teleportInstant, teleportInstantNow;
+
+    private long teleportKeyTicket, teleportKeyAt;
+    private boolean teleportWrongSkillLogged;
+
+    private int teleportReqSeq, teleportAskedId = -1, teleportFrozenId = -1;
+    private byte[] teleportAskedReq, teleportFrozenReq;
+
+    private boolean teleportClickedSinceAsk;
+
     private final D2TeleportHold teleportHold = new D2TeleportHold();
 
     private boolean swapCastReleaseWaits;
@@ -6282,8 +6624,6 @@ public class D2TouchOverlay extends View {
     private static final long TELEPORT_LETGO_MS = 1000;
 
     private static final long TELEPORT_TAKEN_MS = 400;
-
-    private static final long TELEPORT_LETGO_FRESH_MS = 50;
 
 
 
@@ -6324,10 +6664,32 @@ public class D2TouchOverlay extends View {
         float[] want = teleportWant(s);
         if (now - teleportAskedAt >= D2TeleportAim.ASK_MS && modLink.teleportAvailable()) {
             teleportAskedAt = now;
-            modLink.teleport(D2TeleportAim.request(want[0], want[1], Math.round(want[2])));
+
+
+            byte[] req;
+            int id;
+            if (teleportReleased && teleportFrozenReq != null) {
+                req = teleportFrozenReq;
+                if (teleportFrozenId < 0) teleportFrozenId = nextTeleportId();
+                id = teleportFrozenId;
+            }
+            else {
+                req = D2TeleportAim.request(want[0], want[1], Math.round(want[2]));
+
+
+                id = D2TeleportAim.needsNewNumber(teleportAskedReq, req, teleportClickedSinceAsk) ? nextTeleportId() : teleportAskedId;
+                teleportClickedSinceAsk = false;
+            }
+            teleportAskedReq = req;
+            teleportAskedId = id;
+            modLink.teleport(req, id);
         }
         D2TeleportAim.Answer a = modLink.teleportAnswer();
-        long since = teleportReleased ? teleportReleasedAt + TELEPORT_LETGO_FRESH_MS : teleportSince;
+
+
+
+
+        long since = D2TeleportAim.letGoSince(a, teleportReleased ? teleportFrozenId : teleportAskedId, teleportSince);
         if (!D2TeleportAim.aimable(a, now, since)) return;
 
 
@@ -6337,7 +6699,9 @@ public class D2TouchOverlay extends View {
             teleportAim = a;
         }
         if (teleportOnLetGo && !teleportReleased) return;
+        if (!teleportReleased && teleportHold.calledOff()) return;
         if (!a.samePoint(teleportAim) || !D2TeleportAim.press(a, now, since, teleportPressed, teleportPressedAt)) return;
+        if (!teleportSkillReady(s, now)) return;
 
 
         if (!isAtTarget() || atTargetSince == 0 || now - atTargetSince < HOVER_SETTLE_MS) return;
@@ -6355,14 +6719,45 @@ public class D2TouchOverlay extends View {
         teleportBlocked = null;
         teleportPressed = a;
         teleportPressedAt = now;
+        teleportClickedSinceAsk = true;
         D2Trace.log("teleport: press on " + a.tileX + "," + a.tileY + " from " + a.fromX + "," + a.fromY + " (status " + a.status
             + ", busy spells " + a.busyStarts + ", distance " + Math.round(want[2]) + " of " + Math.round(want[3]) + ")"
             + (s.hoverType != 0xFF ? ", unit type " + s.hoverType + " under the cursor" : "")
             + (teleportReleased ? ", " + (now - teleportReleasedAt) + " ms after the let-go" : ""));
+        if (skillLeft) setShift(true);
         setSkillMouse(true);
         enqueue(waitMs(60));
         setSkillMouse(false);
+        if (skillLeft) setShift(false);
         invalidate();
+    }
+
+
+    private int nextTeleportId() {
+        teleportReqSeq = (teleportReqSeq + 1) & 0xFFFF;
+        return teleportReqSeq;
+    }
+
+
+
+
+
+    private boolean teleportSkillReady(D2ModState s, long now) {
+
+        int hand = skillLeft ? s.leftSkill : s.rightSkill;
+        boolean waiting = false;
+        if (!teleportHold.keyTaken()) {
+            keyWait.state(s.leftSkill, s.rightSkill, now);
+            waiting = keyWait.castNow(teleportKeyTicket, D2GroundSkills.TELEPORT, hand, teleportKeyAt, now) == D2KeyWait.WAIT;
+        }
+        boolean before = teleportHold.keyTaken();
+        boolean ok = teleportHold.clickAllowed(waiting, hand);
+        if (!before && teleportHold.keyTaken()) D2Trace.log("teleport: key taken after " + (now - teleportKeyAt) + " ms");
+        if (!ok && teleportHold.keyTaken() && !teleportWrongSkillLogged) {
+            teleportWrongSkillLogged = true;
+            D2Trace.log("teleport: the skill in its hand is " + hand + ", not Teleport: no click");
+        }
+        return ok;
     }
 
 
@@ -6373,10 +6768,30 @@ public class D2TouchOverlay extends View {
 
 
     private boolean teleportLetGo(boolean cancelled) {
-        if (!teleportHeld || !teleportOnLetGo || teleportReleased) return false;
+        if (!teleportHeld || teleportReleased || !(teleportOnLetGo || teleportInstantNow)) return false;
         D2ModState s = mod;
         long now = SystemClock.uptimeMillis();
         if (s == null) return false;
+
+        int kind = D2TeleportHold.letGoKind(teleportInstantNow, teleportPressed != null, cancelled, teleportHold.calledOff());
+        if (kind == D2TeleportHold.LETGO_FINISH) {
+
+            float[] aim = teleportStick(s);
+            teleportFrozenX = aim[0];
+            teleportFrozenY = aim[1];
+            teleportFrozenPush = aim[2];
+            teleportReleased = true;
+            teleportReleasedAt = now;
+            D2Trace.log("teleport: let go after jumping while held, no jump more");
+            teleportTick(now);
+            return true;
+        }
+        if (kind == D2TeleportHold.LETGO_NONE) {
+            D2Trace.log("teleport: let go " + (cancelled ? "(touch cancelled)" : "in the middle (called off)") + ", nothing cast");
+            teleportOnLetGo = false;
+            teleportInstantNow = false;
+            return false;
+        }
         boolean padGraced = !padStickPushed() && padAimPush > 0 && now - padAimAt <= D2TeleportReach.STICK_GRACE_MS;
         float[] graced = padGraced ? new float[]{padAimX, padAimY, padAimPush}
             : (!joystickActive ? teleportHold.joystickGrace(now) : null);
@@ -6384,6 +6799,7 @@ public class D2TouchOverlay extends View {
         if (want == null) {
             D2Trace.log("teleport: let go " + (cancelled ? "(touch cancelled)" : "in the middle (called off)") + ", nothing cast");
             teleportOnLetGo = false;
+            teleportInstantNow = false;
             return false;
         }
         teleportFrozenX = want[0];
@@ -6391,6 +6807,11 @@ public class D2TouchOverlay extends View {
         teleportFrozenPush = want[2];
         teleportReleased = true;
         teleportReleasedAt = now;
+
+
+        float[] fw = teleportWant(s);
+        teleportFrozenReq = D2TeleportAim.letGoRequest(D2TeleportAim.request(fw[0], fw[1], Math.round(fw[2])), teleportAskedReq);
+        teleportFrozenId = teleportFrozenReq != null && teleportFrozenReq == teleportAskedReq ? teleportAskedId : -1;
         teleportAskedAt = 0;
         D2Trace.log("teleport: let go, jumps " + (teleportHold.dragged() ? "as dragged " + Math.round(teleportFrozenPush * 100) + " %"
             : teleportFrozenPush < 0 ? "without the stick (3/4 to the edge)"
@@ -6404,6 +6825,7 @@ public class D2TouchOverlay extends View {
     private void teleportFinish() {
         Object owner = skillOwner;
         teleportOnLetGo = false;
+        teleportInstantNow = false;
         teleportReleased = false;
         endSkill(owner, false);
         if (swapCastReleaseWaits) {
@@ -6724,7 +7146,7 @@ public class D2TouchOverlay extends View {
 
     private int pressSkill(boolean attack) {
         D2ModState s = mod;
-        return attack ? (s != null ? s.leftSkill : -1) : skillNow;
+        return attack ? (skillSlots != null ? skillSlots.attack() : s != null ? s.leftSkill : -1) : skillNow;
     }
 
 
@@ -7446,24 +7868,27 @@ public class D2TouchOverlay extends View {
 
 
     private Step hoverSearch(final long id, final float gx, final float gy, final int[] offsets) {
-        final int[] index = {0};
-        final long[] since = {0};
+
+        final D2CursorSteer.Search search = new D2CursorSteer.Search(offsets.length);
         return (now) -> {
             D2ModState s = mod;
             if (s == null) return true;
-            if (since[0] == 0) since[0] = now;
-            if (s.isHovered(id) && isAtTarget()) {
+            int code = search.tick(now, s.isHovered(id) && isAtTarget(), cursorKnown(), cursorBlocked());
+            if (code == D2CursorSteer.Search.WAIT) return false;
+            if (code == D2CursorSteer.Search.HIT) {
                 hoverHits++;
                 return true;
             }
-            if (now - since[0] < 120) return false;
-            if (++index[0] >= offsets.length) {
+            if (code == D2CursorSteer.Search.MISS) {
                 hoverMisses++;
                 return true;
             }
-            int[] p = gameToDesktop(gx, gy + offsets[index[0]]);
+            if (code == D2CursorSteer.Search.ABORT) {
+                abortCursorAction("hover search");
+                return true;
+            }
+            int[] p = gameToDesktop(gx, gy + offsets[search.index()]);
             setTarget(p[0], p[1]);
-            since[0] = now;
             return false;
         };
     }
@@ -7880,12 +8305,19 @@ public class D2TouchOverlay extends View {
             }
             return;
         }
-        int act = D2TriggerAction.resolve(set, controlsVisible, D2SpieltestPort.playing());
+        int act = D2TriggerAction.resolve(set, controlsVisible, D2SpieltestPort.playing(), mod != null && mod.isOpen(D2ModState.UI_MINISKILL));
 
         int vk = D2TriggerAction.isSkillKey(set) ? VK_F1 + D2TriggerAction.skillKeyIndex(set) : owner.vk;
         owner.heldAction = D2TriggerAction.held(act) ? act : D2TriggerAction.NOTHING;
         owner.heldVk = vk;
-        if (act == D2TriggerAction.KEY) sendKey(vk, false);
+        if (act == D2TriggerAction.KEY) {
+
+
+            int place = vk - VK_F1, skill = skillSlots != null ? skillSlots.skill(place) : -1;
+            if (skill >= 0) selectSkillFor(skill, D2SkillSlots.left(skill));
+            D2Trace.log("place F" + (place + 1) + " over a window: select " + skill);
+            owner.heldAction = D2TriggerAction.NOTHING;
+        }
         else if (act == D2TriggerAction.SKILL || D2TriggerAction.isSkillKey(act)) {
             Button slot = D2TriggerAction.isSkillKey(act) ? skillKeyButton(D2TriggerAction.skillKeyIndex(act)) : owner;
             if (slot != null && isFreeSlot(slot)) {
@@ -8581,7 +9013,9 @@ public class D2TouchOverlay extends View {
 
 
     private void padClick(Button owner, int click) {
-        D2Trace.log("pad " + owner.label + ": click " + click + " at " + xServer.pointer.getX() + "," + xServer.pointer.getY());
+        D2ModState hs = mod;
+        D2Trace.log("pad " + owner.label + ": click " + click + " at " + xServer.pointer.getX() + "," + xServer.pointer.getY()
+            + (hs != null ? ", hover " + (hs.hoverType == 0xFF ? "none" : hs.hoverType + " " + hs.hoverId) : ""));
         owner.heldAction = D2TriggerAction.NOTHING;
         D2ModState s = mod;
         if (click == D2Gamepad.CLICK_LEFT && s != null && s.npcTalking) {
@@ -8593,6 +9027,16 @@ public class D2TouchOverlay extends View {
             return;
         }
         if (click == D2Gamepad.CLICK_LEFT && assignButton != null) {
+
+
+            float[] barPoint = padPointerView();
+            if (assignBarShown && assignBar.inside(barPoint[0], barPoint[1])) {
+                boolean clear = assignBar.hit(barPoint[0], barPoint[1]) == D2AssignBar.CLEAR;
+                D2Trace.log("pad A: " + (clear ? "on Leeren" : "on the assign bar") + " at "
+                    + Math.round(barPoint[0]) + "," + Math.round(barPoint[1]) + (clear ? ", clearing" : ", nothing to the game"));
+                if (clear) clearAssignedKey();
+                return;
+            }
             assignAtScreen(new int[]{xServer.pointer.getX(), xServer.pointer.getY()});
             return;
         }
@@ -8932,13 +9376,13 @@ public class D2TouchOverlay extends View {
             return;
         }
         targetX = targetY = -1;
-        padRestX += vx * dt / 1000f / gainX;
-        padRestY += vy * dt / 1000f / gainY;
+        padRestX += vx * dt / 1000f / steer.gainX;
+        padRestY += vy * dt / 1000f / steer.gainY;
         int mx = (int) padRestX, my = (int) padRestY;
         padRestX -= mx;
         padRestY -= my;
         if (mx == 0 && my == 0) return;
-        lastSentFromX = lastSentFromY = Integer.MIN_VALUE;
+        steer.forget();
         winHandler.mouseEvent(MouseEventFlags.MOVE, mx, my, 0);
 
         if (padHandShown || padOverOwn(padPointerView())) postInvalidateDelayed(20);
@@ -9368,13 +9812,6 @@ public class D2TouchOverlay extends View {
 
 
     private void pressKey(int vk) {
-        if (vk >= VK_F1 && vk < VK_F1 + 16) {
-
-            D2ModState s = mod;
-            int index = vk - VK_F1;
-            lastFKeyAt = SystemClock.uptimeMillis();
-            lastFKeyTicket = keyWait.sent(s != null ? s.hotkeySkill[index] : -1, s != null && s.hotkeyLeft[index], lastFKeyAt);
-        }
         if (altDown) sendKey(VK_MENU, true);
         sendKey(vk, false);
         sendKey(vk, true);
@@ -9434,29 +9871,89 @@ public class D2TouchOverlay extends View {
     }
 
 
+
+
+
+
     private Step moveTo(final int x, final int y) {
-        final long[] start = {0};
+        final D2CursorSteer.Arrival arrival = new D2CursorSteer.Arrival(400);
+        final boolean[] set = {false};
         return (now) -> {
-            if (start[0] == 0) {
-                start[0] = now;
+            if (!set[0]) {
+                set[0] = true;
                 setTarget(x, y);
             }
-            return isAtTarget() || now - start[0] > 400;
+            return arrived(arrival.tick(now, isAtTarget(), false, cursorKnown(), cursorBlocked()), "move to " + x + "," + y);
         };
     }
 
 
+
+
+
     private Step settle(final long ms) {
-        final long[] start = {0};
+        final D2CursorSteer.Arrival arrival = new D2CursorSteer.Arrival(600);
         return (now) -> {
-            if (start[0] == 0) start[0] = now;
-            if (targetX < 0) return true;
-            if (isAtTarget()) {
-                if (atTargetSince == 0) atTargetSince = now;
-                return now - atTargetSince >= ms;
-            }
-            return now - start[0] > 600;
+            if (targetX < 0 && !cursorBlocked()) return true;
+            boolean at = isAtTarget();
+            if (at && atTargetSince == 0) atTargetSince = now;
+            return arrived(arrival.tick(now, at && now - atTargetSince >= ms, at, cursorKnown(), cursorBlocked()), "settle");
         };
+    }
+
+
+    private boolean arrived(int code, String what) {
+        if (code == D2CursorSteer.Arrival.WAIT) return false;
+        if (code == D2CursorSteer.Arrival.ABORT) abortCursorAction(what);
+        return true;
+    }
+
+
+
+
+
+
+    private void abortCursorAction(String what) {
+        String why = targetGivenUp ? "target given up" : steer.locked() ? "steering locked after lost answers"
+            : "no known place for " + D2CursorSteer.ARRIVE_MAX_MS + " ms (" + winHandler.moves.open() + " answers open)";
+        D2Trace.log("cursor: " + what + ": " + why + ", the action ends without its click");
+        steps.clear();
+        targetX = targetY = -1;
+        targetGivenUp = false;
+        teleportAim = null;
+        heldReleasesPending = 0;
+        lmbDown = false;
+        rmbDown = false;
+        shiftDown = false;
+        winHandler.mouseEvent(MouseEventFlags.LEFTUP, 0, 0, 0);
+        winHandler.mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
+        winHandler.keyboardEvent((byte) VK_SHIFT, KEYEVENTF_KEYUP);
+        winHandler.keyboardEvent((byte) VK_MENU, altDown ? 0 : KEYEVENTF_KEYUP);
+        handler.post(this::releaseCurrent);
+    }
+
+
+
+
+
+
+    private void watchCursor(long now) {
+        if (steer.watch(now, winHandler.moves.last()) != D2CursorSteer.W_LOCKED) return;
+        D2Trace.log("cursor: an answer near the excused place came, the order of answers is not sure: steering locked until it is");
+        if (targetX >= 0 || !steps.isEmpty()) abortCursorAction("move to " + targetX + "," + targetY);
+    }
+
+
+    private void recoverCursor(long now) {
+        if (!steer.locked()) return;
+        D2MoveLedger moves = winHandler.moves;
+        D2MoveLedger.Answer answer = moves.last();
+        int r = steer.recover(now, answer, moves.open(answer));
+        if (r == D2CursorSteer.R_PROBE) {
+            moves.forget();
+            winHandler.mouseEvent(MouseEventFlags.MOVE, 0, 0, 0);
+        }
+        else if (r == D2CursorSteer.R_FREE) D2Trace.log("cursor: answers in order again at " + answer.x + "," + answer.y + ", steering free");
     }
 
 
@@ -9466,25 +9963,28 @@ public class D2TouchOverlay extends View {
 
 
     private Step aimGround() {
-        final long[] start = {0}, arrived = {0};
+
+        final D2CursorSteer.Arrival arrival = new D2CursorSteer.Arrival(D2SkillAim.GROUND_MAX_MS);
+        final long[] arrivedAt = {0};
         final int[] at = new int[2];
         return (now) -> {
-            if (start[0] == 0) start[0] = now;
 
-            if (arrived[0] != 0 && (targetX != at[0] || targetY != at[1])) arrived[0] = 0;
-            if (arrived[0] == 0) {
+
+            if (arrivedAt[0] != 0 && (targetX != at[0] || targetY != at[1] || !isAtTarget())) arrivedAt[0] = 0;
+            if (arrivedAt[0] == 0) {
 
                 if (!skillAimedByDrag) {
                     int[] p = aimPoint(dirX, dirY, 0.26f);
                     setTarget(p[0], p[1]);
                 }
                 if (targetX >= 0 && isAtTarget()) {
-                    arrived[0] = now;
+                    arrivedAt[0] = now;
                     at[0] = targetX;
                     at[1] = targetY;
                 }
             }
-            return D2SkillAim.groundAimDone(now - start[0], arrived[0] == 0 ? -1 : now - arrived[0]);
+            boolean rested = arrivedAt[0] != 0 && now - arrivedAt[0] >= D2SkillAim.GROUND_REST_MS;
+            return arrived(arrival.tick(now, rested, arrivedAt[0] != 0, cursorKnown(), cursorBlocked()), "aim on the ground");
         };
     }
 
@@ -9499,7 +9999,8 @@ public class D2TouchOverlay extends View {
         targetX = x;
         targetY = y;
         atTargetSince = 0;
-        stalls = 0;
+        targetGivenUp = false;
+        steer.newTarget();
     }
 
     private void enqueue(Step... newSteps) {
@@ -9516,6 +10017,8 @@ public class D2TouchOverlay extends View {
     private void pump() {
         pumpScheduled = false;
         long now = SystemClock.uptimeMillis();
+        watchCursor(now);
+        recoverCursor(now);
         driveCursor(now);
         if (targetX >= 0 && isAtTarget()) {
             if (atTargetSince == 0) atTargetSince = now;
@@ -9529,12 +10032,31 @@ public class D2TouchOverlay extends View {
             steps.poll();
         }
         if (targetX >= 0 && !isAtTarget()) schedulePump(8);
+        if (steer.locked() || winHandler.moves.excusePending()) schedulePump(50);
         if (debug) invalidate();
     }
 
     private boolean isAtTarget() {
-        if (syncPending(SystemClock.uptimeMillis())) return false;
-        return Math.abs(targetX - xServer.pointer.getX()) <= 2 && Math.abs(targetY - xServer.pointer.getY()) <= 2;
+        long now = SystemClock.uptimeMillis();
+        if (syncPending(now)) return false;
+
+
+
+        D2MoveLedger.Answer answer = winHandler.moves.last();
+        if (!steer.known(now, answer, winHandler.moves.open(answer))) return false;
+
+        return Math.abs(targetX - steer.placeX(answer)) <= 2 && Math.abs(targetY - steer.placeY(answer)) <= 2;
+    }
+
+
+    private boolean cursorKnown() {
+        D2MoveLedger.Answer answer = winHandler.moves.last();
+        return steer.known(SystemClock.uptimeMillis(), answer, winHandler.moves.open(answer));
+    }
+
+
+    private boolean cursorBlocked() {
+        return targetGivenUp || steer.locked();
     }
 
 
@@ -9543,7 +10065,7 @@ public class D2TouchOverlay extends View {
         syncFeedbacks = winHandler.getCursorFeedbacks();
         syncCount++;
 
-        lastSentFromX = lastSentFromY = Integer.MIN_VALUE;
+        steer.forget();
         stableUpdates = 0;
         D2Trace.log("cursor resync (" + why + ") pointer " + xServer.pointer.getX() + "," + xServer.pointer.getY());
         winHandler.mouseEvent(MouseEventFlags.MOVE, 0, 0, 0);
@@ -9590,39 +10112,53 @@ public class D2TouchOverlay extends View {
         if (targetX < 0) return;
 
         if (syncPending(now)) return;
-        if (isAtTarget()) {
-            stalls = 0;
-            return;
-        }
-        int cx = xServer.pointer.getX(), cy = xServer.pointer.getY();
-        boolean feedback = cx != lastSentFromX || cy != lastSentFromY;
-        if (!feedback && now - lastSendTime < 50) return;
-        if (feedback) {
-            if (Math.abs(lastDx) > 8 && lastSentFromX != Integer.MIN_VALUE) gainX = learnGain(gainX, cx - lastSentFromX, lastDx);
-            if (Math.abs(lastDy) > 8 && lastSentFromY != Integer.MIN_VALUE) gainY = learnGain(gainY, cy - lastSentFromY, lastDy);
-            stalls = 0;
-        }
-        else if (++stalls > 6) {
-            targetX = targetY = -1;
-            stalls = 0;
-            return;
-        }
-        int ex = targetX - cx, ey = targetY - cy;
-        int dx = Math.abs(ex) <= 6 ? ex : Math.round(ex / gainX);
-        int dy = Math.abs(ey) <= 6 ? ey : Math.round(ey / gainY);
-        dx = Math.max(-2000, Math.min(2000, dx));
-        dy = Math.max(-2000, Math.min(2000, dy));
-        winHandler.mouseEvent(MouseEventFlags.MOVE, dx, dy, 0);
-        lastSentFromX = cx;
-        lastSentFromY = cy;
-        lastDx = dx;
-        lastDy = dy;
-        lastSendTime = now;
-    }
+        if (isAtTarget()) return;
+        D2MoveLedger moves = winHandler.moves;
+        D2MoveLedger.Answer answer = moves.last();
 
-    private static float learnGain(float current, int moved, int sent) {
-        float gain = moved / (float) sent;
-        return gain >= 0.25f && gain <= 4f ? gain : current;
+        D2ModState gs = modLink.state();
+        boolean game = gs != null && gs.gameWidth > 0 && gs.gameHeight > 0;
+        int[] g = game ? gameToDesktop(gs.mouseX - positionShiftX, gs.mouseY - positionShiftY) : new int[2];
+        int code = steer.drive(now, targetX, targetY, answer, moves.open(answer), game, game ? gs.sequence : -1, g[0], g[1]);
+        switch (code) {
+            case D2CursorSteer.STEP:
+            case D2CursorSteer.ASK:
+                winHandler.mouseEvent(MouseEventFlags.MOVE, steer.out[0], steer.out[1], 0);
+                break;
+            case D2CursorSteer.WAIT:
+                if (steer.waiting(now) >= 200 && now - cursorWaitLoggedAt >= 1000) {
+                    cursorWaitLoggedAt = now;
+                    D2Trace.log("cursor: waiting " + steer.waiting(now) + " ms for " + moves.open() + " answers of winhandler");
+                }
+                break;
+            case D2CursorSteer.EXCUSE:
+                if (moves.excuse(steer.excuseCount(), steer.landX(), steer.landY(), D2CursorSteer.NEAR)) {
+                    steer.excused(answer);
+                    D2Trace.log("cursor: no answer of winhandler to the game's first step, the game shows the cursor at "
+                        + g[0] + "," + g[1] + ": excused");
+                }
+                break;
+            case D2CursorSteer.LOST:
+                D2Trace.log("cursor: " + moves.open(answer) + " answers of winhandler missing for " + D2CursorSteer.LOST_MS
+                    + " ms, steering locked until they are in order again");
+                abortCursorAction("move to " + targetX + "," + targetY);
+                break;
+            case D2CursorSteer.GIVE_UP:
+                abortCursorAction("move to " + targetX + "," + targetY);
+                break;
+            case D2CursorSteer.UNREACHABLE:
+                if (now - cursorGiveUpLoggedAt >= 1000) {
+                    cursorGiveUpLoggedAt = now;
+                    D2Trace.log("cursor: " + targetX + "," + targetY + " not reachable (the step did not move it from "
+                        + answer.x + "," + answer.y + "), given up");
+                }
+                targetX = targetY = -1;
+                targetGivenUp = true;
+                teleportAim = null;
+                break;
+            default:
+                break;
+        }
     }
 
 

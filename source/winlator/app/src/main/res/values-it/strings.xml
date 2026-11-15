@@ -311,8 +311,18 @@
     <string name="helper_tapMoves_info">Disattivato: un tocco nel mondo non fa nulla, cammini solo con il joystick.</string>
     <string name="helper_weaponSwapButton_label">Pulsante «I/II»: cambia arma</string>
     <string name="helper_weaponSwapButton_info">Un piccolo pulsante accanto ad «Attacca» cambia arma come W (es. Chiamata alle armi). I potenziamenti restano dopo il ritorno. Un pulsante abilità con «II» cambia, lancia e torna da solo.</string>
+    <string name="helper_teleportInstant_label">Teletrasporto immediato</string>
+    <string name="helper_teleportInstant_info">Attivato: un tocco salta subito, tenere premuto salta di continuo, anche con il controller. Disattivato: tenere premuto mira con l\'anello, rilasciare salta una volta.</string>
     <string name="helper_joystickVisible_label">Mostra il joystick</string>
     <string name="helper_joystickVisible_info">Funziona anche invisibile, ovunque nella metà sinistra.</string>
+    <string name="helper_joystickMode_label">Joystick quando tiri oltre</string>
+    <string name="helper_joystickMode_opt0">Resta dove appoggi il pollice</string>
+    <string name="helper_joystickMode_opt1">Segue il pollice, senza uscire dalla zona sinistra</string>
+    <string name="helper_joystickMode_info">Resta: l\'anello resta al suo posto finché non sollevi il pollice. Segue: se il pollice va oltre l\'anello, l\'anello lo segue, ma non viene trascinato oltre la zona sinistra, e un rapido ritorno gira subito.</string>
+    <string name="helper_joystickDeadzone_label">Quanto deve muoversi il joystick</string>
+    <string name="helper_joystickDeadzone_info">Alzalo se il personaggio parte quando il pollice è solo appoggiato.</string>
+    <string name="helper_buttonOpacity_label">Opacità dei pulsanti di gioco</string>
+    <string name="helper_buttonOpacity_info">Joystick, attacco, abilità, pozioni e Prendi. Il menu in alto a destra resta com\'è.</string>
     <string name="helper_diagnose_label">Condividi diagnosi</string>
     <string name="helper_diagnose_lead">Qualcosa è andato storto? Tocca qui subito dopo e invia il file. Non contiene file del gioco.</string>
     <string name="helper_report_label">Segnala un errore</string>
@@ -380,13 +390,13 @@
     <string name="edit_drag">Trascina i pulsanti per spostarli</string>
     <string name="edit_assign">Premi un pulsante F, Attacca o un tasto dorsale: scegli la sua abilità</string>
     <string name="edit_size">Dimensione %1$d %%</string>
-    <string name="assign_right">Tocca l\'abilità destra · tocca qui: lista sinistra</string>
-    <string name="assign_left">Tocca l\'abilità sinistra · tocca qui: lista destra</string>
-    <string name="assign_for_right">Tocca l\'abilità destra per %1$s · tocca qui: elenco sinistro</string>
-    <string name="assign_for_left">Tocca l\'abilità sinistra per %1$s · tocca qui: elenco destro</string>
+    <string name="assign_bar_title">Tocca un\'abilità per %1$s</string>
+    <string name="assign_bar_clear">Svuota</string>
+    <string name="assign_cleared">%1$s ora è libero</string>
+    <string name="assign_clear_free">%1$s è già libero</string>
+    <string name="assign_no_change">Nessuna nuova abilità vista. Quella già scelta va sul pulsante dall\'albero delle abilità (tieni premuto).</string>
     <string name="note_skill_not_for_attack">Questa abilità non può andare su Attacca</string>
     <string name="note_slot_free">%1$s è libero: tocca \"%2$s\", poi %1$s</string>
-    <string name="note_skill_set">Set %1$d: da %2$s a %3$s</string>
     <string name="note_swap_cast_failed">Il cambio d\'arma non è arrivato, nulla lanciato</string>
 
     <string name="tree_pick_for">Tocca il pulsante F per %1$s</string>
@@ -851,7 +861,7 @@
     <string name="hint_points_title">Punti da assegnare</string>
     <string name="hint_points_text">Menu &gt; Build mostra dove vanno i punti per la tua build.</string>
     <string name="hint_skill_title">Nuova abilità</string>
-    <string name="hint_skill_text">Mettila su un pulsante: Assegna tasti, poi tocca un cerchio. In alto passi alla lista sinistra.</string>
+    <string name="hint_skill_text">Mettila su un pulsante: Assegna tasti, poi tocca un cerchio. In alto \"Svuota\" libera il pulsante.</string>
     <string name="hint_take_title">Prendere</string>
     <string name="hint_take_text">Tocca: prendi il più vicino. Tieni premuto: ruota con tutti i bersagli e gli argomenti delle persone.</string>
     <string name="hint_recipes_title">Ricette</string>
@@ -1235,6 +1245,7 @@
     <string name="settings_group_hilfe_desc">Consigli, anti-chiusura, segnalare un errore, licenze</string>
     <string name="settings_section_gehen">Camminare</string>
     <string name="settings_section_joystick">Joystick</string>
+    <string name="settings_section_knoepfe">Pulsanti di gioco</string>
     <string name="settings_section_zielhilfe">Mira assistita</string>
     <string name="settings_section_schultertasten">Tasti dorsali</string>
     <string name="settings_section_fertigkeiten">Pulsanti abilità</string>

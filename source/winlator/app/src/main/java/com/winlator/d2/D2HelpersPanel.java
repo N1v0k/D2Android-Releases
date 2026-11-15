@@ -907,6 +907,7 @@ public final class D2HelpersPanel {
             case "directWalk": return D2Settings.directWalk(c);
             case "tapMoves": return D2Settings.tapMoves(c);
             case "weaponSwapButton": return D2Settings.weaponSwapButton(c);
+            case "teleportInstant": return D2Settings.teleportInstant(c);
             case "joystickVisible": return D2Settings.joystickVisible(c);
             case "padEnabled": return D2Settings.padEnabled(c);
             default: throw new IllegalArgumentException("no switch " + key);
@@ -922,6 +923,7 @@ public final class D2HelpersPanel {
             case "ringSort": return new int[]{D2Settings.RING_SORT_RANK, D2Settings.RING_SORT_NEAR};
             case "lootFilter": return new int[]{D2LabelFilter.LOOT_OFF, D2LabelFilter.LOOT_LOOSE, D2LabelFilter.LOOT_STRICT, D2LabelFilter.LOOT_OWN};
             case "damageStyle": return new int[]{D2DamageStyle.OFF, D2DamageStyle.SIMPLE, D2DamageStyle.ELEMENT};
+            case "joystickMode": return new int[]{D2Settings.JOYSTICK_FIXED, D2Settings.JOYSTICK_FOLLOW};
             case "gridSlot1": case "gridSlot2": case "gridSlot3": case "gridSlot4":
                 return new int[]{D2InfoGrid.EMPTY, D2InfoGrid.FPS, D2InfoGrid.BATTERY, D2InfoGrid.PLAYERS, D2InfoGrid.CLOCK, D2InfoGrid.LEVEL,
                     D2InfoGrid.DPS, D2InfoGrid.GOLD};
@@ -940,6 +942,7 @@ public final class D2HelpersPanel {
             case "ringSort": return D2Settings.ringSort(c);
             case "lootFilter": return D2LabelFilter.preset(c.getSharedPreferences(D2Settings.PREFS, Context.MODE_PRIVATE), lootScope);
             case "damageStyle": return D2Settings.damageStyle(c);
+            case "joystickMode": return D2Settings.joystickMode(c);
             case "gridSlot1": case "gridSlot2": case "gridSlot3": case "gridSlot4": {
                 int place = key.charAt(key.length() - 1) - '1';
                 return D2InfoGrid.slot(D2Settings.gridSlot(c, place), place);
@@ -968,6 +971,7 @@ public final class D2HelpersPanel {
             case "boxSlot1": return OPTION_ID + 100;
             case "boxSlot2": return OPTION_ID + 110;
             case "boxSlot3": return OPTION_ID + 120;
+            case "joystickMode": return OPTION_ID + 130;
             default: throw new IllegalArgumentException("no choice " + key);
         }
     }
@@ -1271,6 +1275,12 @@ public final class D2HelpersPanel {
             case "padDeadzone":
                 return slider(context, e.label, v -> v + " %", D2Gamepad.DEADZONE_MIN, D2Gamepad.DEADZONE_MAX, 5,
                     D2Settings.padDeadzone(context), e.key, onChange, null);
+            case "joystickDeadzone":
+                return slider(context, e.label, v -> v + " %", D2Settings.JOYSTICK_DEADZONE_MIN, D2Settings.JOYSTICK_DEADZONE_MAX, 5,
+                    D2Settings.joystickDeadzone(context), e.key, onChange, null);
+            case "buttonOpacity":
+                return slider(context, e.label, v -> v + " %", D2Settings.BUTTON_OPACITY_MIN, D2Settings.BUTTON_OPACITY_MAX, 10,
+                    D2Settings.buttonOpacity(context), e.key, onChange, null);
             case "mapFightDelay":
                 return slider(context, e.label, v -> v + " s", D2Settings.MAP_FIGHT_DELAY_MIN, D2Settings.MAP_FIGHT_DELAY_MAX, 1,
                     D2Settings.mapFightDelay(context), e.key, onChange, null);

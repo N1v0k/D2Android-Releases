@@ -313,11 +313,11 @@ public final class D2Settings {
     static final String KEY_AIM_ASSIST = "aimAssist", KEY_AIM_RANGE = "aimRange", KEY_AIM_RANGE_MELEE = "aimRangeMelee", KEY_AIM_CONE = "aimCone",
         KEY_AIM_BLIND = "aimBlind",
         KEY_HIGHLIGHT = "highlight", KEY_POTIONS = "potions", KEY_ITEMS_NEED_LABELS = "itemsNeedLabels", KEY_RING_SORT = "ringSort",
-        KEY_DIRECT_WALK = "directWalk", KEY_TAP_MOVES = "tapMoves", KEY_WEAPON_SWAP_BUTTON = "weaponSwapButton", KEY_HUD = "hud", KEY_MENU_OPEN = "menuOpen", KEY_AUTO_PAUSE = "autoPause",
+        KEY_DIRECT_WALK = "directWalk", KEY_TAP_MOVES = "tapMoves", KEY_WEAPON_SWAP_BUTTON = "weaponSwapButton", KEY_TELEPORT_INSTANT = "teleportInstant", KEY_HUD = "hud", KEY_MENU_OPEN = "menuOpen", KEY_AUTO_PAUSE = "autoPause",
         KEY_LABELS = "itemLabels", KEY_ALWAYS_RUN = "alwaysRun", KEY_ORB_NUMBERS = "orbNumbers",
         KEY_HIDE_POINTER = "hidePointer", KEY_MENU_PINNED = "menuPinned", KEY_AUTO_TRADE = "autoTrade",
         KEY_SKILL_NAMES = "skillNames", KEY_STAMINA = "staminaMode", KEY_AUTO_LIFE = "autoLife", KEY_AUTO_MANA = "autoMana", KEY_AUTO_REJUV = "autoRejuv", KEY_MERC_POTIONS = "mercPotions",
-        KEY_JOYSTICK_VISIBLE = "joystickVisible", KEY_PLAYERS = "players", KEY_AUTOSAVE = "autosave", KEY_RESPEC = "respec",
+        KEY_JOYSTICK_VISIBLE = "joystickVisible", KEY_JOYSTICK_MODE = "joystickMode", KEY_JOYSTICK_DEADZONE = "joystickDeadzone", KEY_BUTTON_OPACITY = "buttonOpacity", KEY_PLAYERS = "players", KEY_AUTOSAVE = "autosave", KEY_RESPEC = "respec",
         KEY_MAP_HACK = "mapHack", KEY_LARGE_STACKS = "largeStacks", KEY_INFO_GRID = "infoGrid", KEY_CLOCK_TOP = "clockTop", KEY_GRID_SLOT = "gridSlot",
         KEY_COMPARE_EQUIPPED = "compareEquipped", KEY_WINDOW_INFO = "windowInfo", KEY_COMPARE_CAPABLE = "compareCapable", KEY_LOOT_CAPABLE = "lootCapable",
         KEY_TRIGGER_LEFT = "triggerLeft", KEY_TRIGGER_RIGHT = "triggerRight",
@@ -456,6 +456,11 @@ public final class D2Settings {
 
     public static boolean weaponSwapButton(Context context) {
         return prefs(context).getBoolean(KEY_WEAPON_SWAP_BUTTON, false);
+    }
+
+
+    public static boolean teleportInstant(Context context) {
+        return prefs(context).getBoolean(KEY_TELEPORT_INSTANT, true);
     }
 
     public static int hud(Context context) {
@@ -651,6 +656,30 @@ public final class D2Settings {
 
     public static boolean joystickVisible(Context context) {
         return prefs(context).getBoolean(KEY_JOYSTICK_VISIBLE, true);
+    }
+
+
+
+
+
+    public static final int JOYSTICK_FOLLOW = 0, JOYSTICK_FIXED = 1;
+
+    public static int joystickMode(Context context) {
+        return prefs(context).getInt(KEY_JOYSTICK_MODE, JOYSTICK_FIXED) == JOYSTICK_FOLLOW ? JOYSTICK_FOLLOW : JOYSTICK_FIXED;
+    }
+
+
+    public static final int JOYSTICK_DEADZONE_MIN = 5, JOYSTICK_DEADZONE_MAX = 40, JOYSTICK_DEADZONE_DEFAULT = 15;
+
+    public static int joystickDeadzone(Context context) {
+        return clamp(prefs(context).getInt(KEY_JOYSTICK_DEADZONE, JOYSTICK_DEADZONE_DEFAULT), JOYSTICK_DEADZONE_MIN, JOYSTICK_DEADZONE_MAX);
+    }
+
+
+    public static final int BUTTON_OPACITY_MIN = 20, BUTTON_OPACITY_MAX = 100, BUTTON_OPACITY_DEFAULT = 100;
+
+    public static int buttonOpacity(Context context) {
+        return clamp(prefs(context).getInt(KEY_BUTTON_OPACITY, BUTTON_OPACITY_DEFAULT), BUTTON_OPACITY_MIN, BUTTON_OPACITY_MAX);
     }
 
 

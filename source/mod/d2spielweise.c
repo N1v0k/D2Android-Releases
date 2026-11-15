@@ -17,6 +17,8 @@
 #define DT_EXPERIENCE      0xC78
 #define DT_DIFFICULTY      0xC7C
 #define DT_TREASURE        0x9BC
+#define DT_SKILLS          0xB98
+#define DT_SKILLS_COUNT    0xBA0
 
 
 
@@ -29,6 +31,7 @@ static int swRead;
 static DWORD swLast;
 static void* swFailed[SW_REGULATORS];
 static void* swDone[SW_REGULATORS];
+static void* swHandsBad;
 
 
 
@@ -175,6 +178,16 @@ static void swReadFile(void) {
 }
 
 
+static BYTE* swSkills(int* count) {
+    if (!common || !readable((void*) (common + RVA_DataTables), 4)) return NULL;
+    BYTE* tables = RDP(common, RVA_DataTables);
+    if (!readable(tables, DT_SKILLS_COUNT + 4)) return NULL;
+    BYTE* skills = RDP(tables, DT_SKILLS);
+    *count = (int) RD32(tables, DT_SKILLS_COUNT);
+    return *count > 36 && *count < 1000 && readable(skills, *count * SW_SKILL_SIZE) ? skills : NULL;
+}
+
+
 static void swNote(int n, const char* name, void* table, int result) {
     if (result < 0) {
         if (swFailed[n] != table) logLine("spielweise: %s NOT as expected (another mod or version?), left as is", name);
@@ -235,5 +248,16 @@ static void spielweiseTick(void* player, DWORD now) {
             swNote(SW_LADDER, "ladder uniques", uniques, swApplyLadder(uniques, uniqueCount, swStage[SW_LADDER]));
         if (swFailed[SW_UNIQUES] != uniques)
             swNote(SW_UNIQUES, "uniques more than once", uniques, swApplyNolimit(uniques, uniqueCount, swStage[SW_UNIQUES]));
+    }
+
+    int skillCount = 0;
+    BYTE* skills = swSkills(&skillCount);
+    if (skills) {
+        int changed = swSkillsLeft(skills, skillCount);
+        if (changed > 0) logLine("spielweise: both hands written (%d skills)", changed);
+        else if (changed < 0 && swHandsBad != skills) {
+            swHandsBad = skills;
+            logLine("spielweise: both hands NOT as expected (another mod or version?), left as is");
+        }
     }
 }

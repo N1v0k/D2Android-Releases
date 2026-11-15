@@ -66,6 +66,29 @@ public final class D2SkillTargets {
         return passive[WARMTH] && !passive[FIRE_BOLT] ? passive : null;
     }
 
+
+    static final int IN_TOWN = 1 << 8;
+
+    static final int FROZEN_ARMOR = 40;
+
+
+
+
+
+    public static boolean[] townSkills(byte[] bin) {
+        if (bin == null || bin.length < 4) return null;
+        int count = s32(bin, 0);
+        if (count <= FROZEN_ARMOR || (long) count * RECORD + 4 != bin.length) return null;
+        boolean[] town = new boolean[count];
+        for (int id = 0; id < count; id++) town[id] = (s32(bin, 4 + id * RECORD + FLAGS) & IN_TOWN) != 0;
+        return town[FROZEN_ARMOR] && !town[FIRE_BOLT] ? town : null;
+    }
+
+
+    public static boolean walksInTown(boolean inTown, int skill, boolean[] town) {
+        return inTown && town != null && skill >= 0 && skill < town.length && !town[skill];
+    }
+
     private static int s32(byte[] b, int at) {
         return (b[at] & 0xFF) | (b[at + 1] & 0xFF) << 8 | (b[at + 2] & 0xFF) << 16 | (b[at + 3] & 0xFF) << 24;
     }

@@ -1,4 +1,4 @@
-# Modified by D2Android (changes 2026-10-09 to 2026-11-05).
+# Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 cmake_minimum_required(VERSION 3.22.1)
 
 project(VortekRenderer)
@@ -28,3 +28,8 @@ target_link_libraries(vortekrenderer
                       winlator
                       log
                       android)
+
+
+
+
+target_link_options(vortekrenderer PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,-z,common-page-size=16384")

@@ -311,8 +311,18 @@
     <string name="helper_tapMoves_info">Desactivado: un toque en el mundo no hace nada, solo andas con el joystick.</string>
     <string name="helper_weaponSwapButton_label">Botón «I/II»: cambiar de arma</string>
     <string name="helper_weaponSwapButton_info">Un botón pequeño junto a «Atacar» cambia de arma como W (p. ej. Llamada a las armas). Los beneficios se mantienen al volver. Un botón de habilidad con «II» cambia, lanza y vuelve solo.</string>
+    <string name="helper_teleportInstant_label">Teletransporte inmediato</string>
+    <string name="helper_teleportInstant_info">Activado: un toque salta al instante, mantener pulsado salta una y otra vez, también con mando. Desactivado: mantener apunta con el anillo, soltar salta una vez.</string>
     <string name="helper_joystickVisible_label">Mostrar el joystick</string>
     <string name="helper_joystickVisible_info">También funciona invisible, en cualquier punto de la mitad izquierda.</string>
+    <string name="helper_joystickMode_label">Joystick al seguir tirando</string>
+    <string name="helper_joystickMode_opt0">Se queda donde se apoya el pulgar</string>
+    <string name="helper_joystickMode_opt1">Sigue al pulgar, sin pasar de la zona izquierda</string>
+    <string name="helper_joystickMode_info">Se queda: el anillo no se mueve hasta que levantas el pulgar. Sigue: si el pulgar pasa del anillo, el anillo lo acompaña, pero no se arrastra más allá de la zona izquierda, y un tirón rápido hacia atrás gira al instante.</string>
+    <string name="helper_joystickDeadzone_label">Cuánto hay que mover el joystick</string>
+    <string name="helper_joystickDeadzone_info">Súbelo si el personaje echa a andar cuando el pulgar solo descansa encima.</string>
+    <string name="helper_buttonOpacity_label">Opacidad de los botones de juego</string>
+    <string name="helper_buttonOpacity_info">Joystick, ataque, habilidades, pociones y Coger. El menú de arriba a la derecha no cambia.</string>
     <string name="helper_diagnose_label">Compartir diagnóstico</string>
     <string name="helper_diagnose_lead">¿Algo ha fallado? Toca aquí justo después y envía el archivo. No contiene archivos del juego.</string>
     <string name="helper_report_label">Informar de un error</string>
@@ -380,13 +390,13 @@
     <string name="edit_drag">Arrastra los botones para moverlos</string>
     <string name="edit_assign">Pulsa un botón F, Atacar o un gatillo: elige su habilidad</string>
     <string name="edit_size">Tamaño %1$d %%</string>
-    <string name="assign_right">Toca la habilidad derecha · toca aquí: lista izquierda</string>
-    <string name="assign_left">Toca la habilidad izquierda · toca aquí: lista derecha</string>
-    <string name="assign_for_right">Toca la habilidad derecha para %1$s · toca aquí: lista izquierda</string>
-    <string name="assign_for_left">Toca la habilidad izquierda para %1$s · toca aquí: lista derecha</string>
+    <string name="assign_bar_title">Toca una habilidad para %1$s</string>
+    <string name="assign_bar_clear">Vaciar</string>
+    <string name="assign_cleared">%1$s está libre ahora</string>
+    <string name="assign_clear_free">%1$s ya está libre</string>
+    <string name="assign_no_change">No se vio ninguna habilidad nueva. La ya elegida se pone en el botón desde el árbol de habilidades (mantén pulsado).</string>
     <string name="note_skill_not_for_attack">Esta habilidad no puede ir en Atacar</string>
     <string name="note_slot_free">%1$s está libre: toca \"%2$s\" y luego %1$s</string>
-    <string name="note_skill_set">Juego %1$d: %2$s a %3$s</string>
     <string name="note_swap_cast_failed">El cambio de arma no llegó, no se lanzó nada</string>
 
     <string name="tree_pick_for">Toca el botón F para %1$s</string>
@@ -851,7 +861,7 @@
     <string name="hint_points_title">Puntos por repartir</string>
     <string name="hint_points_text">Menú &gt; Build muestra adónde van los puntos en tu build.</string>
     <string name="hint_skill_title">Nueva habilidad</string>
-    <string name="hint_skill_text">Ponla en un botón: Asignar teclas y toca un círculo. Arriba cambias a la lista izquierda.</string>
+    <string name="hint_skill_text">Ponla en un botón: Asignar teclas y toca un círculo. Arriba, \"Vaciar\" deja el botón libre.</string>
     <string name="hint_take_title">Coger</string>
     <string name="hint_take_text">Tocar coge lo más cercano. Mantén: una rueda con todos los objetivos, con personas también sus temas.</string>
     <string name="hint_recipes_title">Recetas</string>
@@ -1235,6 +1245,7 @@
     <string name="settings_group_hilfe_desc">Consejos, segundo plano, informar de un error, licencias</string>
     <string name="settings_section_gehen">Andar</string>
     <string name="settings_section_joystick">Joystick</string>
+    <string name="settings_section_knoepfe">Botones de juego</string>
     <string name="settings_section_zielhilfe">Ayuda de puntería</string>
     <string name="settings_section_schultertasten">Gatillos</string>
     <string name="settings_section_fertigkeiten">Botones de habilidad</string>

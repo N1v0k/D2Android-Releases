@@ -311,8 +311,18 @@
     <string name="helper_tapMoves_info">Désactivé : toucher le monde ne fait rien, tu ne marches qu\'avec le joystick.</string>
     <string name="helper_weaponSwapButton_label">Bouton « I/II » : changer d\'arme</string>
     <string name="helper_weaponSwapButton_info">Un petit bouton à côté d\'« Attaque » change d\'arme comme W (p. ex. Appel aux armes). Les bonus restent après le retour. Un bouton de compétence marqué « II » change, lance et revient tout seul.</string>
+    <string name="helper_teleportInstant_label">Téléportation immédiate</string>
+    <string name="helper_teleportInstant_info">Activé : un appui saute tout de suite, maintenir le bouton saute encore et encore, aussi à la manette. Désactivé : maintenir vise avec l\'anneau, relâcher saute une fois.</string>
     <string name="helper_joystickVisible_label">Afficher le joystick</string>
     <string name="helper_joystickVisible_info">Il marche aussi invisible, partout dans la moitié gauche.</string>
+    <string name="helper_joystickMode_label">Joystick quand on tire plus loin</string>
+    <string name="helper_joystickMode_opt0">Reste là où le pouce se pose</string>
+    <string name="helper_joystickMode_opt1">Suit le pouce, sans dépasser la zone gauche</string>
+    <string name="helper_joystickMode_info">Reste : l\'anneau garde sa place jusqu\'à ce que tu lèves le pouce. Suit : si le pouce dépasse l\'anneau, l\'anneau suit, mais il n\'est pas tiré au-delà de la zone gauche, et un retour rapide tourne tout de suite.</string>
+    <string name="helper_joystickDeadzone_label">Course du joystick avant réaction</string>
+    <string name="helper_joystickDeadzone_info">Augmente-la si le personnage part alors que le pouce ne fait que reposer dessus.</string>
+    <string name="helper_buttonOpacity_label">Opacité des boutons de jeu</string>
+    <string name="helper_buttonOpacity_info">Joystick, attaque, compétences, potions et Prendre. Le menu en haut à droite ne change pas.</string>
     <string name="helper_diagnose_label">Partager le diagnostic</string>
     <string name="helper_diagnose_lead">Quelque chose n\'a pas marché ? Touche ici juste après et envoie le fichier. Il ne contient aucun fichier du jeu.</string>
     <string name="helper_report_label">Signaler un bug</string>
@@ -380,13 +390,13 @@
     <string name="edit_drag">Fais glisser les boutons pour les déplacer</string>
     <string name="edit_assign">Appuie sur un bouton F, Attaque ou une gâchette : choisis son aptitude</string>
     <string name="edit_size">Taille %1$d %%</string>
-    <string name="assign_right">Touche l\'aptitude droite · touche ici : liste gauche</string>
-    <string name="assign_left">Touche l\'aptitude gauche · touche ici : liste droite</string>
-    <string name="assign_for_right">Touche l\'aptitude droite pour %1$s · touche ici : liste gauche</string>
-    <string name="assign_for_left">Touche l\'aptitude gauche pour %1$s · touche ici : liste droite</string>
+    <string name="assign_bar_title">Touche une aptitude pour %1$s</string>
+    <string name="assign_bar_clear">Vider</string>
+    <string name="assign_cleared">%1$s est libre maintenant</string>
+    <string name="assign_clear_free">%1$s est déjà libre</string>
+    <string name="assign_no_change">Aucune nouvelle aptitude vue. Celle déjà choisie se met sur le bouton depuis l\'arbre des aptitudes (appui long).</string>
     <string name="note_skill_not_for_attack">Cette aptitude ne peut pas aller sur Attaque</string>
     <string name="note_slot_free">%1$s est libre : touche \"%2$s\", puis %1$s</string>
-    <string name="note_skill_set">Jeu %1$d : %2$s à %3$s</string>
     <string name="note_swap_cast_failed">Le changement d\'arme n\'a pas eu lieu, rien lancé</string>
 
     <string name="tree_pick_for">Touche le bouton F pour %1$s</string>
@@ -851,7 +861,7 @@
     <string name="hint_points_title">Points à répartir</string>
     <string name="hint_points_text">Menu &gt; Build montre où vont les points pour ton build.</string>
     <string name="hint_skill_title">Nouvelle aptitude</string>
-    <string name="hint_skill_text">Sur un bouton : Assigner touches, puis touche un cercle. En haut, tu passes à la liste gauche.</string>
+    <string name="hint_skill_text">Sur un bouton : Assigner touches, puis touche un cercle. En haut, \"Vider\" libère le bouton.</string>
     <string name="hint_take_title">Prendre</string>
     <string name="hint_take_text">Toucher prend le plus proche. Maintenir : une roue avec toutes les cibles, et les sujets des gens.</string>
     <string name="hint_recipes_title">Recettes</string>
@@ -1235,6 +1245,7 @@
     <string name="settings_group_hilfe_desc">Conseils, protection en arrière-plan, signaler un bug, licences</string>
     <string name="settings_section_gehen">Marche</string>
     <string name="settings_section_joystick">Joystick</string>
+    <string name="settings_section_knoepfe">Boutons de jeu</string>
     <string name="settings_section_zielhilfe">Aide à la visée</string>
     <string name="settings_section_schultertasten">Gâchettes</string>
     <string name="settings_section_fertigkeiten">Boutons de compétences</string>

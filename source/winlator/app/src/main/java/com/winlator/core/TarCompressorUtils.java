@@ -1,4 +1,4 @@
-package com.winlator.core;
+package com.winlator.core;  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 
 import android.content.Context;
 import android.net.Uri;
@@ -11,8 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
-import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
-import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,7 +25,8 @@ import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class TarCompressorUtils {
-    public enum Type {XZ, ZSTD}
+
+    public enum Type {XZ}
 
     public interface OnExtractFileListener {
         File onExtractFile(File destination, long size);
@@ -231,18 +230,12 @@ public abstract class TarCompressorUtils {
         if (type == Type.XZ) {
             return new XZCompressorInputStream(source);
         }
-        else if (type == Type.ZSTD) {
-            return new ZstdCompressorInputStream(source);
-        }
         return null;
     }
 
     private static OutputStream getCompressorOutputStream(Type type, File destination, int level) throws IOException {
         if (type == Type.XZ) {
             return new XZCompressorOutputStream(new BufferedOutputStream(new FileOutputStream(destination), StreamUtils.BUFFER_SIZE), level);
-        }
-        else if (type == Type.ZSTD) {
-            return new ZstdCompressorOutputStream(new BufferedOutputStream(new FileOutputStream(destination), StreamUtils.BUFFER_SIZE), level);
         }
         return null;
     }

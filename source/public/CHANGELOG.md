@@ -3,6 +3,22 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.6.0 (2026-11-15)
+
+- Skill buttons: every button casts its own skill, there is no left or right any more. Put skills on the buttons with **Assign Keys**: tap a button and pick its skill from the list, **Clear** empties it. The buttons are kept per character and taken over once from your game's hotkeys; your saved game is not changed. An aura's button switches the aura on, and it keeps running while you attack.
+- Skills from items work on the buttons too, such as Teleport from Enigma or a staff, and charges.
+- Teleport at once is now on by default: a tap jumps right away, holding keeps jumping, like Diablo II: Resurrected on a controller. Switched off (Settings › Controls › Skill buttons) you aim with the ring and jump when you let go, now without a pause.
+- Joystick: it now stays where your thumb comes down. "Follows the thumb" is still there and no longer wanders off to the right; its dead zone can be set.
+- Opacity: the joystick and the game buttons can be made see-through, from 20 to 100 %.
+- Taps on the game's own buttons, such as its skill buttons at the bottom, land where you tap. The pointer no longer ends up in a corner of the screen.
+- Switching between skill button set 1 and 2 no longer shows a message.
+- Start: a rare PlugY error ("Write access missing") when starting the game is fixed.
+- Graphics: Adreno 850, 845 and 753 are now known.
+
+### Known issue
+
+- Rarely the very first tap right after the game starts does nothing. Tap again after a moment.
+
 ## 1.5.4 (2026-11-05)
 
 - Movement, tapping people, chests and the stash, Take, pause and item names on the ground could stop working, often after leaving and re-entering a game or after restarting the app. The app now talks to the game over free ports, and it fully ends old game processes when you quit or start again.

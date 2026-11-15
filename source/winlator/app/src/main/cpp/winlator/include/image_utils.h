@@ -1,4 +1,4 @@
-#ifndef WINLATOR_IMAGE_UTILS_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-05).
+#ifndef WINLATOR_IMAGE_UTILS_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 #define WINLATOR_IMAGE_UTILS_H
 
 #include <math.h>

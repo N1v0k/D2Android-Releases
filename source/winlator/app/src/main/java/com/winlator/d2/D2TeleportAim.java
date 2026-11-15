@@ -20,6 +20,8 @@ public final class D2TeleportAim {
     public static final long RETRY_MS = 600;
     public static final int PKT_TELEPORT = 11, CMD_TELEPORT = 27;
 
+    public static final int ANSWER_LENGTH = 27;
+
     private D2TeleportAim() {}
 
 
@@ -30,8 +32,16 @@ public final class D2TeleportAim {
         public final int busyStarts;
         public final long receivedAt;
 
+
+        public final int reqId;
+
         public Answer(int status, int screenX, int screenY, int tileX, int tileY, int fromX, int fromY, boolean busy,
                       int busyStarts, long receivedAt) {
+            this(status, screenX, screenY, tileX, tileY, fromX, fromY, busy, busyStarts, receivedAt, -1);
+        }
+
+        public Answer(int status, int screenX, int screenY, int tileX, int tileY, int fromX, int fromY, boolean busy,
+                      int busyStarts, long receivedAt, int reqId) {
             this.status = status;
             this.screenX = screenX;
             this.screenY = screenY;
@@ -42,6 +52,7 @@ public final class D2TeleportAim {
             this.busy = busy;
             this.busyStarts = busyStarts;
             this.receivedAt = receivedAt;
+            this.reqId = reqId;
         }
 
 
@@ -66,12 +77,51 @@ public final class D2TeleportAim {
     }
 
 
+    public static final int REQ_DIR = 3, REQ_DIST = 12;
+
+
+    public static boolean closeRequest(byte[] a, byte[] b) {
+        if (a == null || b == null) return a == b;
+        int da = (a[2] & 0xFF) | (a[3] & 0xFF) << 8, db = (b[2] & 0xFF) | (b[3] & 0xFF) << 8;
+        return Math.abs(a[0] - b[0]) <= REQ_DIR && Math.abs(a[1] - b[1]) <= REQ_DIR && Math.abs(da - db) <= REQ_DIST;
+    }
+
+
+
+
+
+    public static byte[] letGoRequest(byte[] letGo, byte[] lastAsked) {
+        return lastAsked != null && letGo != null && closeRequest(letGo, lastAsked) ? lastAsked : letGo;
+    }
+
+
+
+
+
+
+
+
+    public static boolean needsNewNumber(byte[] lastAsked, byte[] next, boolean clickedSinceAsked) {
+        return clickedSinceAsked || lastAsked == null || !java.util.Arrays.equals(lastAsked, next);
+    }
+
+
+
+
+
+
+
+    public static long letGoSince(Answer a, int frozenId, long heldSince) {
+        return a != null && frozenId >= 0 && a.reqId == frozenId ? heldSince : Long.MAX_VALUE;
+    }
+
+
     public static Answer parse(byte[] d, int length, long now) {
-        if (d == null || length < 25 || length > d.length || (d[5] & 0xFF) != PKT_TELEPORT) return null;
+        if (d == null || length != ANSWER_LENGTH || length > d.length || (d[5] & 0xFF) != PKT_TELEPORT) return null;
         int status = d[8] & 0xFF;
         if (status > NONE) return null;
         return new Answer(status, (short) u16(d, 9), (short) u16(d, 11), u16(d, 13), u16(d, 15), u16(d, 17), u16(d, 19),
-            d[23] != 0, d[24] & 0xFF, now);
+            d[23] != 0, d[24] & 0xFF, now, u16(d, 25));
     }
 
     private static int u16(byte[] d, int at) {

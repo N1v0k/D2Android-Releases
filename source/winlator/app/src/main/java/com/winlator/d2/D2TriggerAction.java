@@ -66,10 +66,19 @@ public final class D2TriggerAction {
 
 
     public static int resolve(int action, boolean controlsVisible, boolean playtest) {
+        return resolve(action, controlsVisible, playtest, false);
+    }
+
+
+
+
+
+
+    public static int resolve(int action, boolean controlsVisible, boolean playtest, boolean skillListOpen) {
         int a = playtest ? SKILL : (action == NOTHING ? NOTHING : ofPad(action, of(action)));
         if (a == NOTHING) return NOTHING;
         if (controlsVisible) return a;
-        if (a == SKILL || isSkillKey(a)) return KEY;
+        if (a == SKILL || isSkillKey(a)) return skillListOpen ? NOTHING : KEY;
         if (a == TAKE || a == ATTACK || a == ATTACK_OR_TAKE) return NOTHING;
         return a;
     }

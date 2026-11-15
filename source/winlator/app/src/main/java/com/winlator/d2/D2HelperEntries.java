@@ -57,13 +57,13 @@ public final class D2HelperEntries {
         group(TAB_DISPLAY, "Gegenstände", "compareEquipped", "valueLine", "diffLines", "windowInfo");
         group(TAB_DISPLAY, "Schaden", "damageStyle");
         group(TAB_DISPLAY, "Karte", "mapHack", "mapFightHide", "mapFightDelay");
-        group(TAB_DISPLAY, "Sonst", "hidePointer", "joystickVisible");
+        group(TAB_DISPLAY, "Sonst", "hidePointer", "joystickVisible", "buttonOpacity");
         group(TAB_CONTROL, "Zielhilfe", "aimAssist", "aimRangeMelee", "aimRange", "aimCone", "aimBlind", "highlight");
-        group(TAB_CONTROL, "Gehen und Laufen", "alwaysRun", "directWalk", "tapMoves");
+        group(TAB_CONTROL, "Gehen und Laufen", "alwaysRun", "directWalk", "tapMoves", "joystickMode", "joystickDeadzone");
         group(TAB_CONTROL, "Gegenstände", "itemsNeedLabels", "ringSort");
         group(TAB_CONTROL, "Menü oben rechts", "menuPinned");
         group(TAB_CONTROL, "Schultertasten", "triggers");
-        group(TAB_CONTROL, "Fertigkeitsknöpfe", "weaponSwapButton");
+        group(TAB_CONTROL, "Fertigkeitsknöpfe", "weaponSwapButton", "teleportInstant");
         group(TAB_CONTROL, "Gamepad", "padEnabled", "padMap", "padDeadzone", "padCursorSpeed");
         group(TAB_GAME, "Spiel", "players", "largeStacks", "materials", "resume");
         group(TAB_GAME, "Hilfe", "intro");
@@ -230,6 +230,7 @@ public final class D2HelperEntries {
 
         s = "Fertigkeitsknöpfe";
         l.add(new Entry(Kind.CHECK, "weaponSwapButton", "helper_weaponSwapButton_label", s, TAB_CONTROL, false, null, "helper_weaponSwapButton_info"));
+        l.add(new Entry(Kind.CHECK, "teleportInstant", "helper_teleportInstant_label", s, TAB_CONTROL, false, null, "helper_teleportInstant_info"));
 
 
         s = "Gamepad";
@@ -306,6 +307,10 @@ public final class D2HelperEntries {
         l.add(new Entry(Kind.CHECK, "directWalk", "helper_directWalk_label", s, TAB_CONTROL, false, null, "helper_directWalk_info"));
         l.add(new Entry(Kind.CHECK, "tapMoves", "helper_tapMoves_label", s, TAB_CONTROL, false, null, "helper_tapMoves_info"));
         l.add(new Entry(Kind.CHECK, "joystickVisible", "helper_joystickVisible_label", s, TAB_DISPLAY, false, null, "helper_joystickVisible_info"));
+        l.add(new Entry(Kind.CHOICE, "joystickMode", "helper_joystickMode_label", s, TAB_CONTROL, false, null, "helper_joystickMode_info",
+            "helper_joystickMode_opt0", "helper_joystickMode_opt1"));
+        l.add(new Entry(Kind.SLIDER, "joystickDeadzone", "helper_joystickDeadzone_label", s, TAB_CONTROL, false, null, "helper_joystickDeadzone_info"));
+        l.add(new Entry(Kind.SLIDER, "buttonOpacity", "helper_buttonOpacity_label", s, TAB_DISPLAY, false, null, "helper_buttonOpacity_info"));
 
         s = "Hilfe";
         l.add(new Entry(Kind.BUTTON, null, "helper_intro_label", s, TAB_GAME, false, "helper_intro_lead", null));
@@ -374,10 +379,11 @@ public final class D2HelperEntries {
 
     static {
         section(SET_CONTROL, "gehen", "alwaysRun", "directWalk", "tapMoves", "staminaMode");
-        section(SET_CONTROL, "joystick", "joystickVisible", "hidePointer");
+        section(SET_CONTROL, "joystick", "joystickVisible", "joystickMode", "joystickDeadzone", "hidePointer");
+        section(SET_CONTROL, "knoepfe", "buttonOpacity");
         section(SET_CONTROL, "zielhilfe", "aimAssist", "aimRangeMelee", "aimRange", "aimCone", "aimBlind", "highlight");
         section(SET_CONTROL, "schultertasten", "triggers");
-        section(SET_CONTROL, "fertigkeiten", "weaponSwapButton");
+        section(SET_CONTROL, "fertigkeiten", "weaponSwapButton", "teleportInstant");
         section(SET_CONTROL, "gamepad", "padEnabled", "padMap", "padDeadzone", "padCursorSpeed");
         section(SET_CONTROL, "menue", "menuPinned", "editButtons");
         section(SET_DISPLAY, "untere_leiste", "hud", "orbNumbers", "skillNames");
@@ -459,6 +465,10 @@ public final class D2HelperEntries {
         keywords("triggers", "schultertasten trigger tasten l r redmagic");
         keywords("menuPinned", "menue knoepfe oben rechts buttons");
         keywords("weaponSwapButton", "waffen wechseln waffenwechsel weapon swap ruf zu den waffen call to arms cta fertigkeitsknoepfe satz");
+        keywords("teleportInstant", "teleport sofort tippen halten springen dauer instant hold switch d2r zauberin fertigkeitsknoepfe gamepad");
+        keywords("joystickMode", "joystick fest fixed schwebend floating folgt follow mitte wandert drift links zone");
+        keywords("joystickDeadzone", "joystick totzone deadzone dead zone empfindlich sensitivity loslaufen");
+        keywords("buttonOpacity", "deckkraft transparenz transparent durchsichtig opacity alpha knoepfe buttons joystick");
         keywords("editButtons", "knoepfe verschieben bearbeiten edit buttons move groesse");
         keywords("aimAssist", "zielhilfe aim ziel automatisch auto target");
         keywords("autoLife", "trank heiltrank leben potion life heal automatisch");

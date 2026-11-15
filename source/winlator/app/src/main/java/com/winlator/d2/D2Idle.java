@@ -433,7 +433,7 @@ final class D2Idle {
                 rueckzug.stadtgang.beute = gehirn.beuteAntwort;
                 weiter = new com.winlator.d2.test.Weiterziehen();
                 clearedLevels = 0;
-                right.remember(s.rightSkill, s.characterClass, link.characterName(), s.hotkeySkill, s.hotkeyLeft);
+                right.remember(s.rightSkill, s.characterClass, link.characterName(), D2SkillSlots.NONE, D2SkillSlots.NO_LEFT);
                 trace("active in level " + level + ", seq " + s.sequence + ", right skill " + s.rightSkill);
                 rolesBuild = null;
                 tellBuild(s, link);
@@ -990,7 +990,7 @@ final class D2Idle {
             @Override public java.util.Set<Long> getoetet() { return counted; }
             @Override public void beenden() { questBeendet = true; }
         });
-        right.remember(s.rightSkill, s.characterClass, link.characterName(), s.hotkeySkill, s.hotkeyLeft);
+        right.remember(s.rightSkill, s.characterClass, link.characterName(), D2SkillSlots.NONE, D2SkillSlots.NO_LEFT);
         trace("quest mode active: " + questZeile + ", seq " + s.sequence);
         rolesBuild = null;
         tellBuild(s, link);
@@ -1292,7 +1292,7 @@ final class D2Idle {
         if (!right.pending()) return;
         D2ModState s = host.state();
         D2IdleRight.Result r = s != null
-            ? right.step(now, focused, true, s.rightSkill, s.characterClass, host.link().characterName(), s.hotkeySkill, s.hotkeyLeft, rightActions)
+            ? right.step(now, focused, true, s.rightSkill, s.characterClass, host.link().characterName(), D2SkillSlots.NONE, D2SkillSlots.NO_LEFT, rightActions)
             : right.step(now, focused, false, -1, -1, null, null, null, rightActions);
         if (r == D2IdleRight.Result.FAILED) host.message(host.text(R.string.idle_skill_not_restored));
     }

@@ -93,6 +93,8 @@ public final class D2Hud {
 
     private final boolean[] passiveSkills;
 
+    private final boolean[] townSkills;
+
     public final D2Tabellen tabellen;
 
 
@@ -270,6 +272,7 @@ public final class D2Hud {
         fertigkeiten = com.winlator.d2.test.Fertigkeiten.lesen(skills);
         aimingSkills = D2SkillTargets.read(skills);
         passiveSkills = D2SkillTargets.passives(skills);
+        townSkills = D2SkillTargets.townSkills(skills);
         tabellen = D2Tabellen.lesen(s.read("data\\global\\excel\\weapons.bin"), s.read("data\\global\\excel\\itemtypes.bin"));
         byte[] runes = s.read("data\\global\\excel\\runes.bin");
         wertBasen = D2Wertklasse.basen(runes, false);
@@ -573,6 +576,11 @@ public final class D2Hud {
 
     public boolean skillAims(int skillId) {
         return aimingSkills != null && skillId >= 0 && skillId < aimingSkills.length && aimingSkills[skillId];
+    }
+
+
+    public boolean skillWalksInTown(boolean inTown, int skillId) {
+        return D2SkillTargets.walksInTown(inTown, skillId, townSkills);
     }
 
     public boolean hasFrame() {

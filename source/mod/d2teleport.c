@@ -36,6 +36,7 @@
 #define TELE_ALLOWED (0x0010 | 0x8000)
 static int teleWanted, teleActive;
 static int teleDx, teleDy, teleDist;
+static unsigned teleReqId;
 static DWORD teleAskedAt, teleChecks, teleMicrosMax, teleMicrosSum;
 static long teleAnsweredX = -1, teleAnsweredY = -1;
 static long teleAnsweredSx, teleAnsweredSy;
@@ -55,8 +56,13 @@ static long teleTraced[6] = {-1, -1, -1, -1, -1, -1};
 static DWORD teleTracedAt;
 
 
+
 static void teleportCommand(const BYTE* buf, int n) {
-    if (n < 12) return;
+    if (n != 14) {
+        logLine("teleport: command 27 of %d bytes dropped (want 14)", n);
+        return;
+    }
+    teleReqId = buf[12] | buf[13] << 8;
     teleDx = (signed char) buf[8];
     teleDy = (signed char) buf[9];
     teleDist = buf[10] | buf[11] << 8;
@@ -292,9 +298,9 @@ static void teleportTick(void* player) {
     long now6[6] = {status, tx, ty, pxs, pys, (teleDx * 256 + teleDy) * 2 + busy};
     if (__builtin_memcmp(now6, teleTraced, sizeof(now6)) || GetTickCount() - teleTracedAt >= 1000) {
         trace("teleport: dir %d,%d dist %d -> status %d at %ld,%ld screen %d,%d (%lu us) from %ld,%ld want %ld,%ld flags 0x%04x "
-            "mode %lu busy %d starts %u by %s", teleDx, teleDy, teleDist, status, tx, ty, ssx, ssy, (unsigned long) micros, pxs, pys,
+            "mode %lu busy %d starts %u by %s id %u", teleDx, teleDy, teleDist, status, tx, ty, ssx, ssy, (unsigned long) micros, pxs, pys,
             wantX, wantY, wantFlags, (unsigned long) mode, busy, (unsigned) teleBusyStarts,
-            how == 0 ? "wanted" : how == 1 ? "ring" : how == 2 ? "ray" : "none");
+            how == 0 ? "wanted" : how == 1 ? "ring" : how == 2 ? "ray" : "none", teleReqId);
         __builtin_memcpy(teleTraced, now6, sizeof(now6));
         teleTracedAt = GetTickCount();
     }
@@ -313,6 +319,7 @@ static void teleportTick(void* player) {
     putU16(&p, (WORD) (micros > 0xFFFF ? 0xFFFF : micros));
     putU8(&p, busy);
     putU8(&p, teleBusyStarts);
+    putU16(&p, teleReqId);
     sendPacket(&p);
 }
 

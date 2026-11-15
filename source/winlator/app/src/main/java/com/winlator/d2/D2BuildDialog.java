@@ -98,7 +98,7 @@ final class D2BuildDialog {
                     int index = group.indexOfChild(group.findViewById(id));
                     if (index < 0 || index >= list.size()) return;
                     builds.choose(cls, name, list.get(index).id);
-                    fill(activity, details, hud, s, points, list.get(index));
+                    fill(activity, details, hud, s, points, list.get(index), builds);
                 });
                 root.addView(choice);
                 D2ModLink link = builds.link();
@@ -107,7 +107,7 @@ final class D2BuildDialog {
                 if (respec) root.addView(respecButton(activity, link, spendAfterRespec), new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
                 root.addView(details);
-                fill(activity, details, hud, s, points, current);
+                fill(activity, details, hud, s, points, current, builds);
             }
         }
         ScrollView scroll = new ScrollView(activity);
@@ -136,7 +136,8 @@ final class D2BuildDialog {
     }
 
 
-    private static void fill(Activity a, LinearLayout box, D2Hud hud, D2ModState s, D2Points points, D2PointPlan.Build b) {
+    private static void fill(Activity a, LinearLayout box, D2Hud hud, D2ModState s, D2Points points, D2PointPlan.Build b,
+                             D2PointHighlight builds) {
         box.removeAllViews();
         int[] t = texts(a, b.id);
         com.winlator.d2.test.Fertigkeiten table = hud != null ? hud.fertigkeiten : null;
@@ -192,7 +193,7 @@ final class D2BuildDialog {
 
         box.addView(heading(a, D2Text.get(a, R.string.build_keys)));
         for (int k = 0; k < 4; k++) {
-            int skill = s != null ? s.hotkeySkill[k] : -1;
+            int skill = builds != null && builds.slots() != null ? builds.slots().skill(k) : -1;
             TextView row = text(a, "F" + (k + 1) + ": " + (skill >= 0 ? skillName(hud, skill) : D2Text.get(a, R.string.build_key_free)));
             box.addView(iconRow(a, hud, skill, row));
         }

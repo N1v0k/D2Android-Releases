@@ -1,4 +1,4 @@
-#ifndef VULKAN_VIDEO_CODEC_H264STD_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-05).
+#ifndef VULKAN_VIDEO_CODEC_H264STD_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 #define VULKAN_VIDEO_CODEC_H264STD_H_ 1
 
 /*

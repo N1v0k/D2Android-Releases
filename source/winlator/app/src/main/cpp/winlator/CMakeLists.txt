@@ -1,3 +1,4 @@
+# Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 cmake_minimum_required(VERSION 3.22.1)
 
 Project(Winlator)
@@ -25,3 +26,8 @@ target_link_libraries(winlator
                       EGL
                       GLESv2
                       GLESv3)
+
+
+
+
+target_link_options(winlator PRIVATE "-Wl,-z,max-page-size=16384" "-Wl,-z,common-page-size=16384")

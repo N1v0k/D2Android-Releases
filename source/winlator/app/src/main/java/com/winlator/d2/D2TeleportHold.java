@@ -97,4 +97,45 @@ public final class D2TeleportHold {
         if (dragged) return dragAim();
         return graced != null ? graced : live;
     }
+
+
+    public static final int LETGO_NONE = 0, LETGO_JUMP = 1, LETGO_FINISH = 2;
+
+
+
+
+
+
+
+    public static int letGoKind(boolean instant, boolean pressedBefore, boolean touchCancelled, boolean calledOff) {
+        if (instant && pressedBefore) return LETGO_FINISH;
+        if (touchCancelled || calledOff) return LETGO_NONE;
+        return LETGO_JUMP;
+    }
+
+
+    private boolean keyTaken;
+
+
+    public void skillGate(boolean confirmed) {
+        keyTaken = confirmed;
+    }
+
+
+    public boolean keyTaken() {
+        return keyTaken;
+    }
+
+
+
+
+
+
+    public boolean clickAllowed(boolean keyWaiting, int rightSkill) {
+        if (!keyTaken) {
+            if (keyWaiting) return false;
+            keyTaken = true;
+        }
+        return rightSkill < 0 || rightSkill == 54;
+    }
 }

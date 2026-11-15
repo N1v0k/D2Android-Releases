@@ -307,8 +307,18 @@
     <string name="helper_tapMoves_info">Aus: Ein Tipp in die Welt tut nichts, du läufst nur mit dem Joystick.</string>
     <string name="helper_weaponSwapButton_label">Knopf „I/II“: Waffen wechseln</string>
     <string name="helper_weaponSwapButton_info">Ein kleiner Knopf neben „Angriff“ wechselt die Waffen wie W (z. B. Ruf zu den Waffen). Buffs bleiben nach dem Zurückwechseln. Ein Fertigkeitsknopf mit „II“ wechselt, wirkt und wechselt von selbst zurück.</string>
+    <string name="helper_teleportInstant_label">Teleport sofort</string>
+    <string name="helper_teleportInstant_info">An: Antippen springt sofort, Halten springt immer wieder, auch am Gamepad. Aus: Halten zielt mit dem Ring, Loslassen springt einmal.</string>
     <string name="helper_joystickVisible_label">Joystick anzeigen</string>
     <string name="helper_joystickVisible_info">Er funktioniert auch unsichtbar, überall in der linken Hälfte.</string>
+    <string name="helper_joystickMode_label">Joystick beim Weiterziehen</string>
+    <string name="helper_joystickMode_opt0">bleibt, wo der Daumen aufsetzt</string>
+    <string name="helper_joystickMode_opt1">folgt dem Daumen, nicht über die linke Zone hinaus</string>
+    <string name="helper_joystickMode_info">Bleibt: Der Ring bleibt an seinem Platz, bis du den Daumen hebst. Folgt: Zieht der Daumen über den Ring hinaus, kommt der Ring mit, wird aber nicht über die linke Zone hinaus gezogen, und ein schneller Zug zurück dreht sofort.</string>
+    <string name="helper_joystickDeadzone_label">Wie weit der Joystick sich bewegen muss</string>
+    <string name="helper_joystickDeadzone_info">Höher stellen, wenn der Charakter schon losläuft, während der Daumen nur aufliegt.</string>
+    <string name="helper_buttonOpacity_label">Deckkraft der Spielknöpfe</string>
+    <string name="helper_buttonOpacity_info">Joystick, Angriff, Fertigkeiten, Tränke und Nehmen. Das Menü oben rechts bleibt, wie es ist.</string>
     <string name="helper_diagnose_label">Diagnose teilen</string>
     <string name="helper_diagnose_lead">Klappt etwas nicht? Gleich danach hier tippen und die Datei mitschicken. Sie enthält keine Spieldateien.</string>
     <string name="helper_report_label">Fehler melden</string>
@@ -376,13 +386,13 @@
     <string name="edit_drag">Knöpfe ziehen, um sie zu verschieben</string>
     <string name="edit_assign">F-Knopf, Angriff oder Schultertaste drücken: Fertigkeit wählen</string>
     <string name="edit_size">Größe %1$d %%</string>
-    <string name="assign_right">Rechte Fertigkeit antippen · hier tippen: linke Liste</string>
-    <string name="assign_left">Linke Fertigkeit antippen · hier tippen: rechte Liste</string>
-    <string name="assign_for_right">Rechte Fertigkeit für %1$s antippen · hier tippen: linke Liste</string>
-    <string name="assign_for_left">Linke Fertigkeit für %1$s antippen · hier tippen: rechte Liste</string>
+    <string name="assign_bar_title">Fertigkeit für %1$s antippen</string>
+    <string name="assign_bar_clear">Leeren</string>
+    <string name="assign_cleared">%1$s ist jetzt frei</string>
+    <string name="assign_clear_free">%1$s ist schon frei</string>
+    <string name="assign_no_change">Keine neue Fertigkeit erkannt. Die schon gewählte legst du über den Fertigkeitenbaum auf den Knopf (lange drücken).</string>
     <string name="note_skill_not_for_attack">Diese Fertigkeit geht nicht auf Angriff</string>
     <string name="note_slot_free">%1$s ist frei: \"%2$s\" antippen, dann %1$s</string>
-    <string name="note_skill_set">Satz %1$d: %2$s bis %3$s</string>
     <string name="note_swap_cast_failed">Waffenwechsel kam nicht an, nichts gewirkt</string>
 
     <string name="tree_pick_for">F-Knopf für %1$s antippen</string>
@@ -848,7 +858,7 @@
     <string name="hint_points_title">Punkte verteilen</string>
     <string name="hint_points_text">Menü &gt; Build zeigt, wohin die Punkte bei deinem Build gehen.</string>
     <string name="hint_skill_title">Neue Fertigkeit</string>
-    <string name="hint_skill_text">Auf einen Knopf legen: Tasten belegen, dann einen Kreis antippen. Oben wechselst du zur linken Liste.</string>
+    <string name="hint_skill_text">Auf einen Knopf legen: Tasten belegen, dann einen Kreis antippen. Oben leert „Leeren“ den Knopf.</string>
     <string name="hint_take_title">Nehmen</string>
     <string name="hint_take_text">Tippen nimmt das Nächste. Halten öffnet ein Rad mit allen Zielen, bei Personen auch ihre Themen.</string>
     <string name="hint_recipes_title">Rezepte</string>
@@ -1229,6 +1239,7 @@
     <string name="settings_group_hilfe_desc">Hinweise, Hintergrund-Schutz, Fehler melden, Lizenzen</string>
     <string name="settings_section_gehen">Gehen</string>
     <string name="settings_section_joystick">Joystick</string>
+    <string name="settings_section_knoepfe">Spielknöpfe</string>
     <string name="settings_section_zielhilfe">Zielhilfe</string>
     <string name="settings_section_schultertasten">Schultertasten</string>
     <string name="settings_section_fertigkeiten">Fertigkeitsknöpfe</string>

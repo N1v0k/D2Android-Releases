@@ -84,7 +84,7 @@ static int weaponSetTick(void* player) {
     maskAt = now;
     WORD mask = 0, have = 0;
     for (int i = 0; i < WS_KEYS; i++) {
-        DWORD skill = RD32(client, RVA_HotkeySkill + i * 4);
+        DWORD skill = slotSkill(i);
         if (skill >= 0xFFFF) continue;
         if (wsHasSkill(player, (WORD) skill)) {
             have |= (WORD) (1u << i);

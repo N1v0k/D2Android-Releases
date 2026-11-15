@@ -375,6 +375,10 @@ public final class D2ModLink {
 
             D2TeleportAim.Answer answer = D2TeleportAim.parse(data, length, SystemClock.uptimeMillis());
             if (answer != null) teleportAnswer = answer;
+            else if (!teleportBadLogged) {
+                teleportBadLogged = true;
+                D2Trace.log("teleport: type 11 of " + length + " bytes dropped (want " + D2TeleportAim.ANSWER_LENGTH + ")");
+            }
         }
         else if (type == D2Materials.PKT_MATERIALS) {
 
@@ -612,6 +616,7 @@ public final class D2ModLink {
 
 
     private volatile D2TeleportAim.Answer teleportAnswer;
+    private boolean teleportBadLogged;
 
     public D2TeleportAim.Answer teleportAnswer() {
         return teleportAnswer;
@@ -665,9 +670,9 @@ public final class D2ModLink {
     }
 
 
-    public void teleport(byte[] args) {
+    public void teleport(byte[] args, int id) {
         if (args == null || args.length != 4) return;
-        send(command(D2TeleportAim.CMD_TELEPORT, 4).put(args));
+        send(command(D2TeleportAim.CMD_TELEPORT, 6).put(args).putShort((short) id));
     }
 
 
@@ -991,7 +996,8 @@ public final class D2ModLink {
 
     public void selectSkill(boolean left, int skill) {
         D2Trace.log("-> select skill " + skill + (left ? " left" : " right"));
-        send(command(CMD_SELECT_SKILL, 3).put((byte) (left ? 0 : 1)).putShort((short) skill));
+
+        send(command(CMD_SELECT_SKILL, 4).put((byte) (left ? 0 : 1)).putShort((short) skill).put((byte) 1));
     }
 
 
@@ -1007,6 +1013,25 @@ public final class D2ModLink {
         D2Trace.log("-> points kind " + kind + " " + what + (kind == D2Points.KIND_KEY ? " key F" + (key + 1) : "")
             + (move ? " move" : ""));
         send(ByteBuffer.wrap(D2Points.command(kind, what, key, move)));
+    }
+
+
+
+
+
+    private volatile long holdPressesUntil;
+
+    public void holdPresses(long untilUptime) {
+        holdPressesUntil = untilUptime;
+    }
+
+
+    private static final int CMD_SLOTS = 38;
+
+    public void slots(int[] skills) {
+        ByteBuffer b = command(CMD_SLOTS, 32);
+        for (int i = 0; i < 16; i++) b.putShort((short) (skills != null && i < skills.length && skills[i] >= 0 ? skills[i] : 0xFFFF));
+        send(b);
     }
 
 
@@ -1047,6 +1072,10 @@ public final class D2ModLink {
 
 
     public void unit(int button, int phase, int type, long id) {
+        if (phase != PHASE_UP && type == D2ModState.UNIT_MONSTER && SystemClock.uptimeMillis() < holdPressesUntil) {
+            if (phase != PHASE_HOLD) D2Trace.log("-> unit " + phaseName(phase) + " type " + type + " id " + id + " held back: selection not shown yet");
+            return;
+        }
         if (phase != PHASE_HOLD) D2Trace.log("-> unit " + (button == BUTTON_RIGHT ? "right " : "left ") + phaseName(phase) + " type " + type + " id " + id);
         send(command(CMD_UNIT, 12).put((byte) button).put((byte) phase).put((byte) 0).put((byte) 0)
             .putInt(type).putInt((int) id));

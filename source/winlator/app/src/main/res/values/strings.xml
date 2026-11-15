@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-11-05). -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-11-15). -->
 
 
 <resources>
@@ -310,8 +310,18 @@
     <string name="helper_tapMoves_info">Off: a tap into the world does nothing, you only walk with the joystick.</string>
     <string name="helper_weaponSwapButton_label">Button \"I/II\": swap weapons</string>
     <string name="helper_weaponSwapButton_info">A small button beside \"Attack\" swaps the weapons like W (e.g. Call to Arms). Buffs stay after swapping back. A skill button marked \"II\" swaps, casts and swaps back by itself.</string>
+    <string name="helper_teleportInstant_label">Teleport at once</string>
+    <string name="helper_teleportInstant_info">On: a tap jumps right away, holding the button jumps again and again, also on a gamepad. Off: holding aims with the ring, letting go jumps once.</string>
     <string name="helper_joystickVisible_label">Show the joystick</string>
     <string name="helper_joystickVisible_info">It works invisible too, anywhere in the left half.</string>
+    <string name="helper_joystickMode_label">Joystick when you pull further</string>
+    <string name="helper_joystickMode_opt0">Stays where the thumb came down</string>
+    <string name="helper_joystickMode_opt1">Follows the thumb, not past the left zone</string>
+    <string name="helper_joystickMode_info">Stays: the ring keeps its place until you lift the thumb. Follows: when the thumb goes past the ring, the ring comes along, but it is not pulled past the left zone, and a quick pull back turns at once.</string>
+    <string name="helper_joystickDeadzone_label">How far the joystick has to move</string>
+    <string name="helper_joystickDeadzone_info">Turn it up if the character walks off while your thumb only rests on it.</string>
+    <string name="helper_buttonOpacity_label">Opacity of the game buttons</string>
+    <string name="helper_buttonOpacity_info">Joystick, attack, skills, potions and Take. The menu at the top right stays as it is.</string>
     <string name="helper_diagnose_label">Share diagnosis</string>
     <string name="helper_diagnose_lead">Something went wrong? Tap here right after it and send the file along. It holds no game files.</string>
     <string name="helper_report_label">Report a bug</string>
@@ -379,13 +389,13 @@
     <string name="edit_drag">Drag buttons to move them</string>
     <string name="edit_assign">Press an F button, Attack or a shoulder key: choose its skill</string>
     <string name="edit_size">Size %1$d %%</string>
-    <string name="assign_right">Tap the right skill · tap here: left list</string>
-    <string name="assign_left">Tap the left skill · tap here: right list</string>
-    <string name="assign_for_right">Tap the right skill for %1$s · tap here: left list</string>
-    <string name="assign_for_left">Tap the left skill for %1$s · tap here: right list</string>
+    <string name="assign_bar_title">Tap a skill for %1$s</string>
+    <string name="assign_bar_clear">Clear</string>
+    <string name="assign_cleared">%1$s is free now</string>
+    <string name="assign_clear_free">%1$s is free already</string>
+    <string name="assign_no_change">No new skill seen. The one already chosen goes on the button from the skill tree (hold it).</string>
     <string name="note_skill_not_for_attack">This skill cannot go on Attack</string>
     <string name="note_slot_free">%1$s is free: tap \"%2$s\", then %1$s</string>
-    <string name="note_skill_set">Set %1$d: %2$s to %3$s</string>
     <string name="note_swap_cast_failed">Weapon swap did not come through, nothing cast</string>
 
     <string name="tree_pick_for">Tap the F button for %1$s</string>
@@ -852,7 +862,7 @@
     <string name="hint_points_title">Points to spend</string>
     <string name="hint_points_text">Menu &gt; Build shows where the points go for your build.</string>
     <string name="hint_skill_title">New skill</string>
-    <string name="hint_skill_text">Put it on a button: Assign keys, then tap a circle. At the top you switch to the left list.</string>
+    <string name="hint_skill_text">Put it on a button: Assign keys, then tap a circle. \"Clear\" at the top empties the button.</string>
     <string name="hint_take_title">Taking</string>
     <string name="hint_take_text">Tap takes the closest. Hold for a wheel with every target, with people also their topics.</string>
     <string name="hint_recipes_title">Recipes</string>
@@ -1234,6 +1244,7 @@
     <string name="settings_group_hilfe_desc">Hints, background protection, reporting a bug, licenses</string>
     <string name="settings_section_gehen">Walking</string>
     <string name="settings_section_joystick">Joystick</string>
+    <string name="settings_section_knoepfe">Game buttons</string>
     <string name="settings_section_zielhilfe">Aim assist</string>
     <string name="settings_section_schultertasten">Shoulder keys</string>
     <string name="settings_section_fertigkeiten">Skill buttons</string>

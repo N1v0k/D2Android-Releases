@@ -26,7 +26,6 @@ vortek/LICENSE|20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331|
 mesa/license.rst|0d1a0472ecc81830e75c20d59b0ea02841e3db21255e0ebad97ab682c54d6615|https://gitlab.freedesktop.org/mesa/mesa/-/raw/mesa-26.2.0/docs/license.rst
 wine/COPYING.LIB|e237fa56668030e928551ddd60f05df5fe957f75eab874bbd017e085ed722e7c|https://gitlab.winehq.org/wine/wine/-/raw/wine-9.2/COPYING.LIB
 wine/LICENSE|51433d87540ee2f30e3cff986e00e1477880002bf993106a13775ed60d4e0af4|https://gitlab.winehq.org/wine/wine/-/raw/wine-9.2/LICENSE
-zstd-jni/LICENSE|c6a6a8926f2f1732603e4b75779a5f6ce79238eb79bc36dcc5b7feb509bc6cd9|https://raw.githubusercontent.com/luben/zstd-jni/v1.5.2-3/LICENSE
 commons-compress/NOTICE.txt|964f986652d38e0e250cff9ba0e63e933f48dd6fdb3afecade167ab9f7cde9af|https://raw.githubusercontent.com/apache/commons-compress/rel/1.20/NOTICE.txt
 xz-java/COPYING|ab6169735486872e2cebd634522ae2487e48af180b116d517cb2d357c23b6bd5|https://raw.githubusercontent.com/tukaani-project/xz-java/v1.7/COPYING
 alsa-plugin/LICENSE|20c17d8b8c48a600800dfd14f95d5cb9ff47066a9641ddeab48dc54aec96e331|https://raw.githubusercontent.com/brunodev85/winlator/b6b2259158cf38d06067c34430d840d56b46d220/LICENSE

@@ -354,6 +354,9 @@ def main():
 
     subprocess.check_call([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpatch.py"),
                            "turnip-a840v2", os.path.join(root, "usr/lib/libvulkan_freedreno.so")])
+
+    subprocess.check_call([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpatch.py"),
+                           "turnip-chip-ids", os.path.join(root, "usr/lib/libvulkan_freedreno.so")])
     dxvk = {"syswow64/d3d11.dll", "syswow64/dxgi.dll"}
     print("dxvk: %d" % extract(inputs["dxvk"], root, lambda p: "opt/d2/" + p if p in dxvk else None))
 

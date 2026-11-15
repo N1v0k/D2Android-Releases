@@ -233,14 +233,26 @@ final class D2PointHighlight {
 
 
 
-    void stepKeys(D2ModState s, D2ModLink link, D2Hud hud, boolean paused, long now) {
+
+    private D2SkillSlots keySlots;
+    private java.util.function.BiConsumer<Integer, Integer> keySetSlot;
+
+
+    D2SkillSlots slots() {
+        return keySlots;
+    }
+
+    void stepKeys(D2ModState s, D2ModLink link, D2Hud hud, boolean paused, long now, D2SkillSlots slots,
+                  java.util.function.BiConsumer<Integer, Integer> setSlot) {
+        keySlots = slots;
+        keySetSlot = setSlot;
         String name = link.characterName();
         boolean known = s != null && name != null && s.characterClass >= 0;
         boolean ready = known && link.singlePlayer() && !paused && !s.isOpen(D2ModState.UI_ESCMENU);
         keyLink = link;
         keyHud = hud;
         keyAuto.step(known ? build(s.characterClass, name) : null, link.points(1500), known ? s.characterClass : -1,
-            known ? name : null, s != null ? s.hotkeySkill : null, ready, now, keys);
+            known ? name : null, slots != null ? slots.skills() : null, ready, now, keys);
     }
 
 
@@ -255,7 +267,7 @@ final class D2PointHighlight {
     private final D2PointAuto.Out keys = new D2PointAuto.Out() {
         @Override
         public void bind(int skill, int key) {
-            keyLink.points(D2Points.KIND_KEY, skill, key);
+            if (keySetSlot != null) keySetSlot.accept(key, skill);
         }
 
         @Override

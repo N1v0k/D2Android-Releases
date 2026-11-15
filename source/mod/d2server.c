@@ -444,6 +444,84 @@ static LONG srvInvulnerable(void* unit, int on, LONG* count) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#define SRV_CODE_SELECT        0xA0D21286u
+#define SRV_CODE_LEVELS        0xA0D21287u
+#define RVA_GameSelectSkillPkt 0x6B1E0
+#define SRV_SEL_LEFT           0x80000000u
+#define SRV_SEL_FORCE          0x40000000u
+static const BYTE selectStart[] = {0x83, 0x7C, 0x24, 0x08, 0x09, 0x55, 0x8B, 0xEA, 0x74, 0x09, 0xB8, 0x03, 0x00, 0x00,
+    0x00, 0x5D, 0xC2, 0x08, 0x00, 0x8B, 0x4C, 0x24, 0x08, 0x8B, 0x41, 0x01, 0x53, 0x8B, 0x59, 0x05, 0x56, 0x8B, 0xF0, 0xC1,
+    0xEE, 0x1F, 0x25, 0xFF, 0xFF, 0xFF, 0x7F, 0x57, 0x8B, 0xF8, 0x7C, 0x2A};
+
+static const BYTE selectCheck[] = {0x53, 0x8B, 0xD7, 0x8B, 0xCD, 0xE8, 0x3F, 0xF2, 0xF9, 0xFF, 0x85, 0xC0, 0x74, 0x0D,
+    0x6A, 0x01, 0x50, 0x55, 0xE8, 0xF4, 0xF3, 0xF9, 0xFF, 0x85, 0xC0, 0x75, 0x0C};
+
+
+static PacketHandler_t srvSelectHandler(void) {
+    BYTE* fn = srvGame ? (BYTE*) (srvGame + RVA_GameSelectSkillPkt) : NULL;
+    DWORD* entry = srvGame ? (DWORD*) (srvGame + RVA_GamePacketTable + 0x3C * 8) : NULL;
+    if (!readable(entry, 4) || *entry != (DWORD) fn || !readable(fn, 0x3D + sizeof(selectCheck))
+        || memcmp(fn, selectStart, sizeof(selectStart)) != 0 || memcmp(fn + 0x3D, selectCheck, sizeof(selectCheck)) != 0)
+        return NULL;
+    return (PacketHandler_t) fn;
+}
+
+
+
+static LONG srvSelect(void* game, void* unit, LONG arg, LONG* owner) {
+    PacketHandler_t handler = srvSelectHandler();
+    WORD skill = (WORD) ((DWORD) arg & 0xFFFF);
+    *owner = -1;
+    if (!handler) return 4;
+    if (!readable(unit, U_INFO + 4) || RD32(unit, U_TYPE) != 0) return 2;
+    int own = 1;
+#ifdef D2MOD_TESTCMDS
+    if ((DWORD) arg & SRV_SEL_FORCE) own = 0;
+#endif
+    if (own) {
+        void* entry = usableSkillEntry(unit, skill);
+        if (!entry) return 2;
+        *owner = (LONG) RD32(entry, SKILL_ITEM);
+    }
+    BYTE packet[9];
+    buildSelectPacket(packet, skill, ((DWORD) arg & SRV_SEL_LEFT) != 0, (DWORD) *owner);
+    return handler(game, unit, packet, 9) == 0 ? 1 : 3;
+}
+
+
+
+
+static LONG srvLevels(void* unit, SrvSlot* s) {
+    s->count = -1;
+    if (!readable(unit, U_INFO + 4) || RD32(unit, U_TYPE) != 0) return -1;
+    const LONG arg[4] = {s->arg, s->arg2, s->arg3, s->arg4};
+    WORD skill[8];
+    int level[8];
+    unpackSkills8(arg, skill);
+    for (int i = 0; i < 8; i++) {
+        void* e = skill[i] != 0xFFFF ? usableSkillEntry(unit, skill[i]) : NULL;
+        level[i] = e && fGetSkillLevel ? fGetSkillLevel(unit, e, TRUE) : 0;
+    }
+    s->count = packLevels4(level + 4);
+    return packLevels4(level);
+}
+
+
 #define SRV_CODE_STASH_DEPOSIT  0xA0D20871u
 #define SRV_CODE_STASH_WITHDRAW 0xA0D20872u
 #define SRV_CODE_STASH_ALL      0xA0D20873u
@@ -472,6 +550,8 @@ static LONG srvRun(SrvSlot* s, void* game, void* unit) {
     case SRV_CODE_INVUL_ON: return srvInvulnerable(unit, 1, &s->count);
     case SRV_CODE_INVUL_OFF: return srvInvulnerable(unit, 0, &s->count);
     case SRV_CODE_DIRECT: return srvDirect(game, unit, s, &s->count);
+    case SRV_CODE_SELECT: return srvSelect(game, unit, s->arg, &s->count);
+    case SRV_CODE_LEVELS: return srvLevels(unit, s);
 #ifdef D2MOD_TESTCMDS
     case SRV_CODE_DIRECT_TEST: return srvDirectTest(game, unit, s->arg, s->arg2, &s->count);
 #endif
@@ -615,6 +695,143 @@ static void updateServerEffects(void* player, DWORD now) {
     pending = srvSubmit(SRV_CODE_EFFECTS, 0, 0);
     if (pending) askedAt = now;
 }
+
+
+
+static int srvSelectKnown(void) {
+    static DWORD checked;
+    static int known;
+    if (srvState == 0 || (srvState == 1 && srvGame != (DWORD) GetModuleHandleA("D2Game.dll"))) srvCheck();
+    if (srvState != 1) return 0;
+    if (checked != srvGame) {
+        checked = srvGame;
+        known = srvSelectHandler() != NULL;
+        logLine(known ? "server: handler of 0x3C verified, command 13 and the levels per place by the server's hero"
+                      : "server: handler of 0x3C NOT as expected, command 13 with any source sends nothing, the levels per place from the client's list");
+    }
+    return known;
+}
+
+#define SEL_WAIT 4
+static LONG selSeq[SEL_WAIT];
+static DWORD selAt[SEL_WAIT];
+static WORD selSkill[SEL_WAIT];
+static BYTE selLeft[SEL_WAIT];
+
+
+
+static int srvSelectAsk(WORD skill, int left, int force) {
+#ifndef D2MOD_TESTCMDS
+    force = 0;
+#endif
+    if (!srvSelectKnown()) return 0;
+    const char* side = left ? "left" : "right";
+    int i = 0;
+    while (i < SEL_WAIT && selSeq[i]) i++;
+    if (i == SEL_WAIT) {
+        logLine("select: skill %u %s: %d selections wait for the server, nothing sent", skill, side, SEL_WAIT);
+        return 1;
+    }
+    LONG seq = srvSubmit(SRV_CODE_SELECT, (LONG) ((DWORD) skill | (left ? SRV_SEL_LEFT : 0) | (force ? SRV_SEL_FORCE : 0)), 0);
+    if (!seq) {
+        logLine("select: skill %u %s: server queue full, nothing sent", skill, side);
+        return 1;
+    }
+    selSeq[i] = seq;
+    selAt[i] = GetTickCount();
+    selSkill[i] = skill;
+    selLeft[i] = (BYTE) (left != 0);
+    logLine("select: skill %u %s: asked the server (request %ld)%s", skill, side, (long) seq, force ? ", without the own check" : "");
+    return 1;
+}
+
+
+static void updateServerSelects(DWORD now) {
+    static DWORD resets;
+    if (srvResets != resets) {
+        resets = srvResets;
+        memset(selSeq, 0, sizeof(selSeq));
+    }
+    for (int i = 0; i < SEL_WAIT; i++) {
+        LONG answer, owner;
+        if (!selSeq[i]) continue;
+        const char* side = selLeft[i] ? "left" : "right";
+        if (srvTake(selSeq[i], &answer, &owner)) {
+            logLine("select: skill %u %s: server %ld %s (owner 0x%08lX)", selSkill[i], side, (long) answer,
+                answer == 1 ? "selected" : answer == 2 ? "no usable source" : answer == 3 ? "refused" : "handler not as expected",
+                (unsigned long) owner);
+            selSeq[i] = 0;
+        }
+        else if ((int) (now - selAt[i]) > 2000 && srvCancel(selSeq[i])) {
+            logLine("select: skill %u %s: request %ld not served in 2000 ms (hero dead or uninterruptible), nothing selected",
+                selSkill[i], side, (long) selSeq[i]);
+            selSeq[i] = 0;
+        }
+    }
+}
+
+
+
+
+
+
+
+static void updateServerLevels(void* player, DWORD now) {
+    static LONG pending[2];
+    static int answered[2];
+    static DWORD askedAt, resets;
+    static WORD asked[16];
+    static BYTE askedCounter, got[16];
+    if (srvResets != resets) {
+        resets = srvResets;
+        pending[0] = pending[1] = 0;
+        answered[0] = answered[1] = 0;
+        srvSlotValid = 0;
+    }
+    for (int h = 0; h < 2; h++) {
+        LONG answer, count;
+        if (pending[h] && srvTake(pending[h], &answer, &count)) {
+            pending[h] = 0;
+            answered[h] = unpackLevels8(answer, count, got + 8 * h);
+        }
+    }
+    if (answered[0] && answered[1]) {
+        answered[0] = answered[1] = 0;
+        int changed = !srvSlotValid;
+        for (int i = 0; i < 16; i++) {
+            if (srvSlotLevel[i] != got[i] || srvSlotSkill[i] != asked[i]) changed = 1;
+            srvSlotLevel[i] = got[i];
+            srvSlotSkill[i] = asked[i];
+        }
+        srvSlotValid = 1;
+        if (changed)
+            logLine("levels: server %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u", srvSlotLevel[0], srvSlotLevel[1],
+                srvSlotLevel[2], srvSlotLevel[3], srvSlotLevel[4], srvSlotLevel[5], srvSlotLevel[6], srvSlotLevel[7],
+                srvSlotLevel[8], srvSlotLevel[9], srvSlotLevel[10], srvSlotLevel[11], srvSlotLevel[12], srvSlotLevel[13],
+                srvSlotLevel[14], srvSlotLevel[15]);
+    }
+    if (!player || !appSlotsSet || !singlePlayerGame() || worldPaused()) return;
+    if (pending[0] || pending[1]) {
+        if (now - askedAt < 2000) return;
+        for (int h = 0; h < 2; h++) {
+            if (pending[h] && !srvCancel(pending[h])) return;
+            pending[h] = 0;
+        }
+    }
+    int change = memcmp(asked, appSlots, sizeof(asked)) != 0 || askedCounter != wsCounter;
+    if (!change && now - askedAt < 500) return;
+    if (!srvSelectKnown()) return;
+    memcpy(asked, appSlots, sizeof(asked));
+    askedCounter = wsCounter;
+    answered[0] = answered[1] = 0;
+    for (int h = 0; h < 2; h++) {
+        LONG arg[4];
+        packSkills8(asked + 8 * h, arg);
+        pending[h] = srvSubmitEx(SRV_CODE_LEVELS, arg[0], arg[1], arg[2], arg[3]);
+    }
+    askedAt = now;
+}
+
 
 #ifdef D2MOD_TESTCMDS
 

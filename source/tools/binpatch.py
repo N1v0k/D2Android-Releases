@@ -34,6 +34,10 @@
 
 
 
+
+
+
+
 import hashlib
 import os
 import sys
@@ -108,6 +112,62 @@ PATCHES = {
             {"check_at": 0xEAEC40, "check": "41000744ffff0000e0b1550000000000c86ada0000000000", "at": 0xEAEC48, "old": "e0", "new": "b8"},
         ],
         "doc": "tools/patches/turnip-26.2.0-a840-2slice.patch",
+    },
+    "turnip-chip-ids": {
+        "file": "usr/lib/libvulkan_freedreno.so (turnip-26.2.0 with turnip-a840v2)",
+        "before": "e9e1dd73e680a5925d10c85a6f7ed3a0d8a888a9dde846ea3f92cf2ac6e34197",
+        "after": "5fc794d274685eeaadb249757ceae31584aab99ca20375b4b0ac033d0e05ee1f",
+        "runs": [
+
+            {"check_at": 0x55B1CC, "check": "6e6f2028544d292058322d38350000000000000041647265", "at": 0x55B1D4, "old": "58322d3835", "new": "3835300000"},
+
+            {"check_at": 0x55B1E4, "check": "6e6f2028544d292058322d3930000000000000002f746d70", "at": 0x55B1EC, "old": "58322d3930", "new": "3834350000"},
+
+            {"check_at": 0xEAEC19, "check": "0000000000000031000744ffff0000c8b1550000000000e0", "at": 0xEAEC21, "old": "0007", "new": "1405"},
+
+            {"check_at": 0xEAEA18, "check": "0000000000000000010c0543ffff000040b1550000000000", "at": 0xEAEA20, "old": "010c0543", "new": "30140444"},
+
+            {"check_at": 0x70D28, "check": "030400000000000040b155000000000030eaea0000000000", "at": 0x70D30, "old": "40", "new": "e0"},
+
+            {"check_at": 0xEAEA20, "check": "010c0543ffff000040b1550000000000b889da0000000000", "at": 0xEAEA28, "old": "40", "new": "e0"},
+
+            {"check_at": 0x70D40, "check": "0304000000000000b889da000000000048eaea0000000000", "at": 0x70D48, "old": "b889", "new": "e06d"},
+
+            {"check_at": 0xEAEA28, "check": "40b1550000000000b889da00000000000000000000000000", "at": 0xEAEA30, "old": "b889", "new": "e06d"},
+
+            {"check_at": 0xEAE978, "check": "0000000000000000000c0343ffff000020b1550000000000", "at": 0xEAE980, "old": "000c", "new": "010e"},
+
+            {"check_at": 0x70C38, "check": "030400000000000020b155000000000090e9ea0000000000", "at": 0x70C40, "old": "20", "new": "30"},
+
+            {"check_at": 0xEAE980, "check": "000c0343ffff000020b1550000000000d08cda0000000000", "at": 0xEAE988, "old": "20", "new": "30"},
+
+            {"check_at": 0xEAE1B0, "check": "50a4550000000000c800000000000000ff00000200000000", "at": 0xEAE1B8, "old": "c8", "new": "00"},
+
+            {"check_at": 0xEAE1B8, "check": "c800000000000000ff0000020000000040af550000000000", "at": 0xEAE1C0, "old": "ff0000020000", "new": "01170543ffff"},
+
+            {"check_at": 0x70098, "check": "030400000000000040af550000000000d0e1ea0000000000", "at": 0x700A0, "old": "40af", "new": "60b1"},
+
+            {"check_at": 0xEAE1C0, "check": "ff0000020000000040af55000000000028dada0000000000", "at": 0xEAE1C8, "old": "40af", "new": "60b1"},
+
+            {"check_at": 0x700B0, "check": "030400000000000028dada0000000000e8e1ea0000000000", "at": 0x700B8, "old": "28da", "new": "7080"},
+
+            {"check_at": 0xEAE1C8, "check": "40af55000000000028dada0000000000c900000000000000", "at": 0xEAE1D0, "old": "28da", "new": "7080"},
+
+            {"check_at": 0xDA70CF, "check": "010101010101010100000001010001010101010101400000", "at": 0xDA70D7, "old": "00", "new": "01"},
+
+            {"check_at": 0xDA6EE0, "check": "009b0000003f000000000000000000000000000000000000", "at": 0xDA6EE8, "old": "0000", "new": "6089"},
+
+            {"check_at": 0xDA6EE8, "check": "000000000000000000000000000000000000000000000000", "at": 0xDA6EF0, "old": "0000", "new": "6189"},
+
+            {"check_at": 0xDA6EF0, "check": "000000000000000000000000000000000000000000000000", "at": 0xDA6EF8, "old": "0000", "new": "6289"},
+
+            {"check_at": 0xDA6EF8, "check": "000000000000000000000000000000000000000000000000", "at": 0xDA6F00, "old": "0000", "new": "6389"},
+
+            {"check_at": 0xDA6F00, "check": "000000000000000000000000000000000000000000000000", "at": 0xDA6F08, "old": "0000", "new": "6489"},
+
+            {"check_at": 0xDA6F08, "check": "000000000000000000000000000000000000000000000000", "at": 0xDA6F10, "old": "0000", "new": "6589"},
+        ],
+        "doc": "tools/patches/turnip-26.2.0-chip-ids.patch",
     },
     "d2dx-glide3x-atlas1024": {
         "file": "glide3x-atlas1024.dll (D2DX 0.99.529 with d2dx-glide3x and d2dx-glide3x-frametime)",

@@ -541,3 +541,32 @@ static int swDensityRegion(unsigned char* region, int level, int diff, int stage
     region[SW_REGION_UMAX] = (unsigned char) swDensityValue(level, 6 + diff, stage);
     return 1;
 }
+
+
+
+
+
+#define SW_SKILL_SIZE 0x23C
+#define SW_SKILL_COUNT 357
+#define SW_LEFT_DWORD 0
+#define SW_LEFT_BIT 0x40000000u
+#define SW_AURA_BIT 0x20u
+static int swSkillsLeft(unsigned char* records, int count) {
+    if (!records || count != SW_SKILL_COUNT || *(unsigned short*) (records + 36 * SW_SKILL_SIZE) != 36) return -1;
+    int changed = 0;
+    for (int i = 0; i < count; i++) {
+        unsigned int* flags = (unsigned int*) (records + i * SW_SKILL_SIZE + 4);
+        if (flags[0] & SW_AURA_BIT) continue;
+        if (!(flags[SW_LEFT_DWORD] & SW_LEFT_BIT)) {
+            flags[SW_LEFT_DWORD] |= SW_LEFT_BIT;
+            changed++;
+        }
+    }
+    return changed;
+}
+
+
+static int swSkillLeft(const unsigned char* records, int count, int skill) {
+    if (!records || count != SW_SKILL_COUNT || skill < 0 || skill >= count) return 0;
+    return (((const unsigned int*) (records + skill * SW_SKILL_SIZE + 4))[SW_LEFT_DWORD] & SW_LEFT_BIT) != 0;
+}

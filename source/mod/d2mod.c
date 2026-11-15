@@ -329,6 +329,16 @@ typedef void (__stdcall *SendPacket_t)(size_t, DWORD, BYTE*);
 
 static HMODULE hSelf;
 static DWORD client, common, net;
+
+
+
+#define CMD_SLOTS 38
+static WORD appSlots[16];
+static volatile LONG appSlotsSet;
+static DWORD slotSkill(int i) {
+    if (appSlotsSet) return appSlots[i] == 0xFFFF ? 0xFFFFFFFF : appSlots[i];
+    return RD32(client, RVA_HotkeySkill + i * 4);
+}
 static GetPlayerUnit_t fGetPlayerUnit;
 static GetPlayerUnit_t fGetSelectedUnit;
 static DwordVoid_t fGetMouseXOffset, fGetMouseYOffset;
@@ -409,6 +419,15 @@ static int pauseOverOwnMenu;
 static int menuHandedOver;
 
 static volatile int plugyLoaded;
+
+
+
+
+
+
+
+
+static volatile LONG plugyInitPending;
 static DWORD pauseRefreshedAt;
 static GetUnitStat_t fGetUnitStat;
 static GetItemText_t fGetItemText;
@@ -1028,6 +1047,15 @@ static void* __cdecl selectedUnitHighlight(void) {
 }
 
 
+static void clickHover(long* type, long* id, long* highlight) {
+    void* real = originalSelectedUnit();
+    *type = real ? (long) RD32(real, U_TYPE) : -1L;
+    *id = real ? (long) RD32(real, U_ID) : -1L;
+    *highlight = highlightId != 0xFFFFFFFF && (int) (GetTickCount() - highlightUntil) < 0
+        && findUnit(highlightId, highlightType) ? (long) highlightId : -1L;
+}
+
+
 
 
 
@@ -1421,6 +1449,9 @@ static int clickBlocked(void) {
 
 
 static void replayClick(int clickType, long x, long y, DWORD flags) {
+    long ht, hi, hl;
+    clickHover(&ht, &hi, &hl);
+    trace("click: replay (%d) at %ld,%ld, hover %ld %ld, highlight %ld", clickType, x, y, ht, hi, hl);
     replaying = 1;
     fClickMap(clickType, x, y, flags);
     replaying = 0;
@@ -1445,9 +1476,11 @@ static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
     if (forcing || replaying || !clickFlagKnown || clickBlocked() || clickType > 5) return;
     int bit = clickType >= 3 ? 2 : 1;
     if (clickType == 0 || clickType == 3) {
+        long ht, hi, hl;
+        clickHover(&ht, &hi, &hl);
         if (clickTakenNow() && (x || y) && modHoldsButton(bit)) {
             trace("click: the game's %s press (%lu) at %lu,%lu dropped, the mod holds a unit with that button: not pressed "
-                "again", bit == 2 ? "right" : "left", (unsigned long) clickType, (unsigned long) x, (unsigned long) y);
+                "again, hover %ld %ld, highlight %ld", bit == 2 ? "right" : "left", (unsigned long) clickType, (unsigned long) x, (unsigned long) y, ht, hi, hl);
             if ((gameLost.type >= 3 ? 2 : 1) == bit) gameLost.active = gameLost.releaseDue = 0;
         }
         else if (clickTakenNow() && (x || y)) {
@@ -1459,12 +1492,12 @@ static void noteGameClick(DWORD clickType, DWORD x, DWORD y, DWORD flags) {
             gameLost.released = gameLost.releaseDue = 0;
             gameLost.since = GetTickCount();
             gameLost.wait = 0;
-            trace("click: the game's %s press (%lu) at %lu,%lu dropped, the frame was taken",
-                bit == 2 ? "right" : "left", (unsigned long) clickType, (unsigned long) x, (unsigned long) y);
+            trace("click: the game's %s press (%lu) at %lu,%lu dropped, the frame was taken, hover %ld %ld, highlight %ld",
+                bit == 2 ? "right" : "left", (unsigned long) clickType, (unsigned long) x, (unsigned long) y, ht, hi, hl);
         }
         else {
-            trace("click: the game's %s press (%lu) at %lu,%lu", bit == 2 ? "right" : "left",
-                (unsigned long) clickType, (unsigned long) x, (unsigned long) y);
+            trace("click: the game's %s press (%lu) at %lu,%lu, hover %ld %ld, highlight %ld", bit == 2 ? "right" : "left",
+                (unsigned long) clickType, (unsigned long) x, (unsigned long) y, ht, hi, hl);
             realHeld |= bit;
 
             if ((gameLost.type >= 3 ? 2 : 1) == bit) gameLost.active = gameLost.releaseDue = 0;
@@ -3149,29 +3182,39 @@ static int classSkill(DWORD cls, WORD skill) {
     return skill == 0 || skill == 2 || skill == 4 || skill == 5 || (cls < 7 && skill >= first[cls] && skill < first[cls] + 30);
 }
 
-static void selectSkill(void* player, int left, WORD skill) {
-    void* info = RDP(player, U_INFO);
-    if (!readable(info, 0x10)) return;
+
+static void* usableSkillEntry(void* player, WORD skill);
+#define SKILL_CHARGES 0x38
+#define SKILL_CHARGED 0x3C
+static int srvSelectAsk(WORD skill, int left, int force);
+
+static void selectSkill(void* player, int left, WORD skill, int anySource, int force) {
 
 
-    if (!classSkill(RD32(player, U_TXTNO), skill)) {
+
+    if (!classSkill(RD32(player, U_TXTNO), skill) && !(anySource && (skill < 217 || skill > 220))) {
         logLine("select: skill %u not in the class's tree, nothing sent", skill);
         return;
     }
-    int own = 0, guard = 0;
-    for (void* s = RDP(info, INFO_FIRST); readable(s, SKILL_ITEM + 4) && guard < 400; s = RDP(s, SKILL_NEXT), guard++) {
-        if (skillId(s) != skill) continue;
-        DWORD item = RD32(s, SKILL_ITEM);
-        logLine("select: skill %u in the list, item 0x%08lX", skill, (unsigned long) item);
-        if (item == 0xFFFFFFFF) own = 1;
-    }
-    if (!own) {
-        logLine("select: skill %u not own, nothing sent", skill);
+
+
+
+    if (anySource) {
+        if (!singlePlayerGame() || !srvSelectAsk(skill, left, force))
+            logLine("select: skill %u: any source only through the server's hero, nothing sent", skill);
         return;
     }
-    BYTE packet[9] = {0x3C, (BYTE) skill, (BYTE) (skill >> 8), 0x00, left ? 0x80 : 0x00, 0xFF, 0xFF, 0xFF, 0xFF};
+    void* entry = usableSkillEntry(player, skill);
+    DWORD source = entry ? RD32(entry, SKILL_ITEM) : 0xFFFFFFFF;
+    if (!entry || (!anySource && source != 0xFFFFFFFF)) {
+        logLine("select: skill %u: no usable source, nothing sent", skill);
+        return;
+    }
+    BYTE packet[9] = {0x3C, (BYTE) skill, (BYTE) (skill >> 8), 0x00, left ? 0x80 : 0x00, 0, 0, 0, 0};
+    *(DWORD*) (packet + 5) = source;
     fSendPacket(9, 1, packet);
-    logLine("select: skill %u %s", skill, left ? "left" : "right");
+    logLine("select: skill %u %s%s (charged %lu, charges %ld)", skill, left ? "left" : "right",
+        source == 0xFFFFFFFF ? "" : " (from an item)", (unsigned long) RD32(entry, SKILL_CHARGED), (long) (int) RD32(entry, SKILL_CHARGES));
 }
 
 
@@ -3306,7 +3349,20 @@ static void handleCommands(void* player, int stale) {
         if (cmd == CMD_PORTAL && player) openPortal(player);
         if (cmd == CMD_PLAYERS && n >= 9 && player && buf[8] >= 1 && buf[8] <= 8) setPlayers(buf[8]);
         if (cmd == CMD_PLUGY && n >= 9 && player) plugyCommand(buf[8]);
-        if (cmd == CMD_SELECT_SKILL && n >= 11 && player && !pauseApplied) selectSkill(player, buf[8] == 0, *(WORD*) (buf + 9));
+        if (cmd == CMD_SELECT_SKILL && n >= 11 && player && !pauseApplied) selectSkill(player, buf[8] == 0, *(WORD*) (buf + 9), n >= 12 && buf[11] == 1, n >= 13 && buf[12] == 1);
+        if (cmd == CMD_SLOTS && n >= 8 + 32) {
+            int changed = !appSlotsSet;
+            for (int i = 0; i < 16; i++) {
+                WORD v = *(const WORD*) (buf + 8 + 2 * i);
+                if (appSlots[i] != v) changed = 1;
+                appSlots[i] = v;
+            }
+            InterlockedExchange(&appSlotsSet, 1);
+            if (changed)
+                logLine("slots: %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u", appSlots[0], appSlots[1], appSlots[2],
+                    appSlots[3], appSlots[4], appSlots[5], appSlots[6], appSlots[7], appSlots[8], appSlots[9], appSlots[10],
+                    appSlots[11], appSlots[12], appSlots[13], appSlots[14], appSlots[15]);
+        }
         if (cmd == CMD_NPC && n >= 9 && player) chooseNpcEntry(buf[8]);
         if (cmd == CMD_BELT && n >= 9 && player && buf[8] <= 2) moveToBelt(player, buf[8] + 1);
         if (cmd == CMD_STACKS && n >= 9 && player && buf[8] <= 1) setLargeStacks(buf[8] && singlePlayerGame());
@@ -4734,6 +4790,8 @@ static void gameTick(void) {
     STEP(updatePlugYPages());
     STEP(updateServerRepairs(player, now));
     STEP(updateServerEffects(player, now));
+    STEP(updateServerSelects(now));
+    STEP(updateServerLevels(player, now));
     STEP(updateResume(player, now));
     STEP(updateDamage(player, now));
 #ifdef D2MOD_TESTCMDS
@@ -5185,10 +5243,17 @@ static DWORD WINAPI setupThread(LPVOID arg) {
     openSockets();
     setStatus(STATUS_WAITING, "waiting for D2Client.dll");
     directBegin();
+    int plugyWaitLogged = 0;
     for (int i = 0; !client; i++) {
-        lockMultiplayerMenu();
-        unbindMainMenuEsc();
-        client = (DWORD) GetModuleHandleA("D2Client.dll");
+        if (!plugyInitPending) {
+            lockMultiplayerMenu();
+            unbindMainMenuEsc();
+            client = (DWORD) GetModuleHandleA("D2Client.dll");
+        }
+        else if (!plugyWaitLogged && GetModuleHandleA("D2Client.dll")) {
+            plugyWaitLogged = 1;
+            logLine("setup: D2Client there, waiting for PlugY's init on the game's thread");
+        }
         if (!client) {
             if (i % 5 == 0) {
                 retryCommandSocket();
@@ -5295,6 +5360,16 @@ static HMODULE WINAPI loadRendererThenPlugY(LPCSTR name) {
     if (!once) {
         once = 1;
         loadPlugY();
+
+
+
+
+
+        lockMultiplayerMenu();
+        unbindMainMenuEsc();
+        biInstallPanel((DWORD) GetModuleHandleA("D2Client.dll"));
+        logLine("setup: PlugY's init over (%s), mod patches from now on", plugyLoaded ? "loaded" : "not loaded");
+        InterlockedExchange(&plugyInitPending, 0);
     }
     return renderer;
 }
@@ -5327,6 +5402,7 @@ static void installPlugYHook(void) {
     *(DWORD*) (at + 2) = (DWORD) loadRendererThenPlugY - ((DWORD) at + 6);
     VirtualProtect(at, 6, old, &old);
     FlushInstructionCache(GetCurrentProcess(), at, 6);
+    InterlockedExchange(&plugyInitPending, 1);
     logLine("PlugY: D2gfx renderer load hooked");
 }
 

@@ -1,4 +1,4 @@
-package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-11-05).
+package com.winlator.winhandler;  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -7,6 +7,7 @@ import com.winlator.XServerHost;
 import com.winlator.core.Callback;
 import com.winlator.core.FileUtils;
 import com.winlator.core.StringUtils;
+import com.winlator.d2.D2MoveLedger;
 import com.winlator.xserver.XServer;
 
 import java.io.IOException;
@@ -163,8 +164,14 @@ public class WinHandler {
         return cursorFeedbacks;
     }
 
+
+
+    public final D2MoveLedger moves = new D2MoveLedger();
+
     public void mouseEvent(int flags, int dx, int dy, int wheelDelta) {
         if (!initReceived) return;
+
+        if ((flags & MouseEventFlags.MOVE) != 0) moves.asked(dx == 0 && dy == 0);
         addAction(() -> {
             sendData.rewind();
             sendData.put(RequestCodes.MOUSE_EVENT);
@@ -312,6 +319,7 @@ public class WinHandler {
         switch (requestCode) {
             case RequestCodes.INIT: {
                 initReceived = true;
+                moves.restart();
 
                 synchronized (actions) {
                     actions.notify();
@@ -354,6 +362,7 @@ public class WinHandler {
                 xServer.pointer.setX(x);
                 xServer.pointer.setY(y);
                 cursorFeedbacks++;
+                moves.answered(x, y);
 
 
                 activity.getXServerView().getRenderer().onPointerMove(x, y);
