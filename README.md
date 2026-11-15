@@ -1,6 +1,6 @@
 # D2Android
 
-**Diablo II: Lord of Destruction 1.13d on Android – with touch and gamepad controls and comfort features built for a
+**Diablo II: Lord of Destruction 1.13d on Android, with touch and gamepad controls and comfort features built for a
 phone.**
 
 D2Android is not just "the PC game running on Android". It aims for modern UX and quality-of-life standards for a
@@ -41,7 +41,7 @@ not work with D2Android.
 
 <table align="center">
 <tr><td align="center" width="50%"><img src="screenshots/03-combat.png" alt="Fighting with the touch controls, damage numbers and the effect column" width="410"><br><sub>Joystick, attack and skill buttons, damage numbers, effect column and the bottom bar</sub></td><td align="center" width="50%"><img src="screenshots/04-target-ring.png" alt="The ring of targets in the middle of the screen" width="410"><br><sub>"Take": the ring of targets, chosen with a short swipe</sub></td></tr>
-<tr><td align="center" width="50%"><img src="screenshots/05-npc-wheel.png" alt="The options of a townsperson as a ring" width="410"><br><sub>Holding "Take" on a townsperson shows their options</sub></td><td align="center" width="50%"><img src="screenshots/06-settings.png" alt="The settings in the look of the game's options menu" width="410"><br><sub>Settings: seven groups with a search</sub></td></tr>
+<tr><td align="center" width="50%"><img src="screenshots/05-npc-wheel.png" alt="The options of a townsperson as a ring" width="410"><br><sub>Holding "Take" on a townsperson shows their options</sub></td><td align="center" width="50%"><img src="screenshots/06-settings.png" alt="The settings in the look of the game's options menu" width="410"><br><sub>Settings: groups by theme, with a search</sub></td></tr>
 <tr><td align="center" width="50%"><img src="screenshots/07-effects.png" alt="The effect column at the top left with a shrine and an aura" width="410"><br><sub>Effect column (top left): shrines with their own picture, auras, remaining time</sub></td><td align="center" width="50%"><img src="screenshots/08-builds.png" alt="The build page with the builds of a class" width="410"><br><sub>Builds for every class: pick one, the app shows where the points go</sub></td></tr>
 <tr><td align="center" colspan="2"><img src="screenshots/09-aim-preview.png" alt="The aim assist settings with a live preview of the reach and the blind spot" width="410"><br><sub>Aim assist: reach, cone and blind spot, with a live preview while you set them</sub></td></tr>
 </table>
@@ -50,7 +50,7 @@ not work with D2Android.
 
 <table align="center">
 <tr><td align="center" width="50%"><img src="media/clip-1-start.webp" alt="From the start page straight into the game" width="410"><br><sub>From the start page straight into the game</sub></td><td align="center" width="50%"><img src="media/clip-2-combat.webp" alt="Fighting with the joystick, attack and skill buttons" width="410"><br><sub>Fighting with the joystick, attack and skill buttons</sub></td></tr>
-<tr><td align="center" width="50%"><img src="media/clip-3-teleport.webp" alt="Teleport with the ring on the ground where the sorceress will land" width="410"><br><sub>Teleport: hold the button, the ring shows where you land</sub></td><td align="center" width="50%"><img src="media/clip-4-save-exit.webp" alt="Save and exit, back to the start page" width="410"><br><sub>"Save and Exit" leads back to the start page</sub></td></tr>
+<tr><td align="center" width="50%"><img src="media/clip-3-teleport.webp" alt="Teleport with the ring on the ground where the sorceress will land" width="410"><br><sub>Teleport: the ring shows where you land</sub></td><td align="center" width="50%"><img src="media/clip-4-save-exit.webp" alt="Save and exit, back to the start page" width="410"><br><sub>"Save and Exit" leads back to the start page</sub></td></tr>
 </table>
 
 ## Features
@@ -60,30 +60,46 @@ playable on a phone, not to change the game.
 
 ### Touch controls (UI)
 
-- Joystick in the left half of the screen (can be hidden, works the same), attack button and skill buttons on the right.
-- Skills on the F buttons, the attack button and the shoulder triggers: assign them in the game, buttons can be moved
-  and resized. A shoulder trigger can also do something other than cast a skill: attack, drink a healing potion, take,
-  show item names, open the map or inventory, open a town portal and more.
+- Joystick in the left half of the screen (can be hidden, works the same), attack button and skill buttons on the
+  right. The joystick stays where your thumb came down; under **Settings → Controls → Joystick** it can follow the
+  thumb instead (not past the left zone), and you set how far it has to move before the character walks. **Opacity
+  of the game buttons** (Settings → Controls → Game buttons, 20 to 100 %) makes the joystick and the game buttons
+  see-through.
+- Skills on the F buttons, the attack button and the shoulder triggers: each button casts its own skill, there is no
+  left or right skill to think about. The app keeps the buttons per character; on the first game of a character it
+  takes them over once from your hotkeys in the game, your saved game is not changed. Skills from items work on a
+  button too, for example Teleport from Enigma or a staff, or charges. Buttons can be moved and resized. A shoulder
+  trigger can also do something other than cast a skill: attack, drink a healing potion, take, show item names, open
+  the map or inventory, open a town portal and more.
 - **Two sets of skill buttons**: the small "1/2" button at the top of the arc switches the four skill buttons between
   F1–F4 and F5–F8. A skill that only comes from your second weapon (e.g. Call to Arms) is marked "II" and swaps weapons,
   casts and swaps back with one tap. An optional "I/II" button next to Attack swaps weapons.
-- **Teleport**: hold its button and a ring on the ground shows where you will land; the character stands still. Aim with the joystick or by dragging the button, then let go to jump once. Drag back to where your finger came down to call it off: the ring goes and letting go does nothing. It only jumps to a spot you can really reach. In front of walls and
-  cliffs the ring moves to the nearest free spot; a red cross means there is nowhere to jump. How far follows how far you push the joystick: a light push is a short jump, a full push reaches the edge of the screen, without the joystick it is three quarters of that. Like on the PC it goes through thick walls and across gaps when the point lies behind them.
-  With a gamepad the same: hold the Teleport button, aim with the left stick, let go to jump once.
+- **Teleport**: a tap jumps right away, holding the button keeps jumping; drag back to where your finger came down to
+  stop. How far follows how far you push the joystick: a light push is a short jump, a full push reaches the edge of
+  the screen, without the joystick it is three quarters of that. It only jumps to a spot you can really reach: in
+  front of walls and cliffs the ring moves to the nearest free spot, a red cross means there is nowhere to jump. Like
+  on the PC it goes through thick walls and across gaps when the point lies behind them. The same on a gamepad with
+  the left stick.
+  To aim first, switch off **Teleport at once** (Settings → Controls → Skill buttons): then holding the button shows a
+  ring where you will land while the character stands still, you aim with the joystick or by dragging the button and
+  let go to jump once. Dragging back to where your finger came down calls it off.
 - **Take**: one button picks up the next item, opens chests, enters portals and waypoints, talks to people. The item's
   name is shown under the button in its quality colour, and your character walks up to people even around tents and
   walls. Hold **Take** for a ring of all targets around in the middle of the screen: push your thumb towards one and
   let go. Holding **Take** on a townsperson shows their options as a ring.
-- Menu row at the top right with the game windows (inventory, character, skills, quests, map), town portal, pause,
-  **Show Items** (item names), walk/run and **Assign Keys**; you choose which buttons stay visible when the row is
-  folded. The quests button also shows in the folded row when there is quest news.
-- **Assign Keys** opens the editing mode: put skills on the buttons, move them and change their size. In the skill tree,
-  hold a skill and tap an F button to put it there.
-- The **≡** menu holds the settings, the build page, the tour, the keyboard, switching character and quitting.
+- Menu row at the top right with the game windows (inventory, character, skills, quests, map), **Recipes**, town
+  portal, pause, **Show Items** (item names), walk/run and **Assign Keys**; you choose which buttons stay visible when
+  the row is folded. The quests button also shows in the folded row when there is quest news.
+- **Assign Keys** opens the editing mode: press an F button, Attack or a shoulder trigger and tap its skill in the
+  list (**Clear** empties the button), move the buttons and change their size. An aura's button switches the aura on.
+  In the skill tree, hold a skill and tap an F button to put it there.
+- The **≡** menu holds the settings, the build page, the hints, the keyboard, switching character and quitting.
 - A crisper look: the menu icons are scaled up sharply, round buttons have a gold ring like the frames of the game,
   buttons and the settings are drawn in the game's style, the buttons only appear once you are in the game, and they
   stay clear of camera cut-outs.
-- A short tour through the buttons on your first game; replay it any time from the ≡ menu (**Tour**).
+- **Hints:** short how-to lines come at the right moment, for example at a vendor, at the mercenary or with a new
+  skill, and a "?" at the stash, cube and inventory explains what they do. **Hints** in the ≡ menu brings them all
+  back, each when it fits.
 - Bottom bar drawn with graphics from your own game files: compact (orbs outside) or as in the game, life and mana as
   numbers, skill names under the buttons.
 - **Info grid** in the bottom bar in place of the run button and stamina: four values of your choice (FPS, battery, players, clock,
@@ -105,8 +121,8 @@ playable on a phone, not to change the game.
 - The left stick walks, the buttons attack, take and cast skills; holding **LT** gives a second row of buttons. The
   D-pad drinks from the belt.
 - Each button can be given a job: a skill on F1–F8, attack, take, a potion, town portal, the map, the inventory, swap
-  weapons, run/walk and more. Skills go on the F keys in the editing mode: press the pad button, point at the skill
-  with the stick, press A.
+  weapons, run/walk and more. A pad button on F1–F8 casts the same skill as that touch button. Skills go on the
+  buttons in the editing mode (**Assign Keys**): press the pad button, point at the skill with the stick, press A.
 - In the inventory, stash, shops and menus the stick moves a pointer: A clicks, Y closes, holding R3 in the inventory
   sorts it.
 - **Start** opens the game menu (hold: the app's ≡ menu). **View** opens the inventory by default; held, it shows a
@@ -118,9 +134,19 @@ playable on a phone, not to change the game.
 
 - **Start page** in the game's look: your characters in their equipment, with the area and time of their last save.
   A tap starts the character straight into the game, without the game's menus and with its loading animation; a long
-  press picks the difficulty. **New character** leads straight to the class choice, **Classic start (the game's
+  press opens a menu with the difficulty and **Delete character** (a deleted character stays greyed out for 3 days, a
+  double tap brings it back). **New character** leads straight to the class choice, **Classic start (the game's
   menus)** shows the game's own menus. **Save and Exit** in the game's Esc menu brings you back to the start page,
   and **Switch character** in the ≡ menu does the same.
+- **Classic or Enhanced:** on the first start you choose how you want to play, with a table of all differences.
+  **Classic** plays like the original game. **Enhanced** brings better loot (fewer empty drops, more high runes,
+  bosses never empty), better gambling, less grinding from level 70, ladder content offline, a large inventory of
+  10 × 8 and 110 % monster density. Change it any time under **Settings → Play style**; there you can also set single
+  things, such as monster density at 125, 150 or 200 %.
+- **Mods:** **Settings → Mods** installs data mods from a zip or 7z file. Each mod keeps its own saved games, the
+  original stays as it is.
+- The app turns with the device: its pages work in portrait and landscape, the game runs in both landscape directions
+  and follows the rotation lock.
 - Diablo II's title music plays on the app pages, and taps there click like in the game; **Music** at the top switches
   both off.
 - Widescreen picture that fills the whole display, in three sizes: **Large (540 lines, extra sharp)**, the default,
@@ -135,7 +161,7 @@ playable on a phone, not to change the game.
   completely written, and a cut-off stash or character is restored from the last PlugY backup (Hardcore characters
   are never replaced automatically). If Android rebuilds the game window, the app saves first and then closes. A
   character saved at 0 life loads with a full life globe.
-- **Go on where I was** (a test, off by default, single player): after loading, the app brings the character back
+- **Go on where I was** (on by default, single player): after loading, the app brings the character back
   to the place of the last save, in areas with their own waypoint; if that place cannot be reached safely, to the
   area's waypoint. The character is protected for a few seconds after arriving or until the first attack. A tap on
   the loading picture starts in town instead.
@@ -147,12 +173,12 @@ playable on a phone, not to change the game.
 - **Effect column** with every status effect and its remaining time: shrines with their own picture, potions, auras
   shown as active while they are on, and the remaining protection of Bone Armor. A tap shows what an effect does.
 - Intro videos at the start can be skipped (on by default); the cut scenes in the game stay.
-- **Settings** in the look of the game's options menu: seven groups (Controls, Display, Loot, Potions and shops, Game,
-  Saved games, Help and info) with a search. In the game they open from **≡ → Settings**.
+- **Settings** in the look of the game's options menu: nine groups (Controls, Display, Loot & filter, Potions and
+  shops, Game, Play style, Mods, Saved games, Help and info) with a search. In the game they open from **≡ → Settings**.
 - Background protection page that walks you through what keeps Android from ending the game.
 - App in English or German; the installation without a PC also installs the German version of the game.
 
-### Quality of life (QOL) – all optional
+### Quality of life (QOL), all optional
 
 - **Map:** reveal the map with exits and waypoints labelled; hide it while fighting and bring it back afterwards.
 - **Pick up:** gold nearby automatically (also while attacking, not when the purse is full); potions up to a reserve;
@@ -160,21 +186,26 @@ playable on a phone, not to change the game.
 - **Potions:** refill the belt from the inventory; drink life and mana potions automatically below a threshold
   (outside town); rejuvenation in an emergency; potions for your mercenary.
 
-  > **Note:** this does not refill your life for you – you still manage your potions yourself. It only makes up for
+  > **Note:** this does not refill your life for you, you still manage your potions yourself. It only makes up for
   > the handicap of playing on a touchscreen.
 
 - **Item names:** always show them (like Alt), label new loot for a few seconds, or only near the character.
 - **Running:** start every game running; stamina as in the game, by stamina potion, or unlimited in single player.
 - **Merchants:** talking to a merchant opens "Trade" right away. A **Refill potions** button buys healing and mana
-  potions for belt and reserve with one tap.
+  potions for belt and reserve with one tap. In a shop a double tap buys, holding asks for the amount.
 - **Inventory:** a long press on the inventory button sorts the inventory without opening it (the open inventory has a
-  **Sort** button); sorting leaves the largest free block. A double tap on a potion puts it on the belt.
-- **Stash:** the gold amount to withdraw is filled in.
+  **Sort** button); sorting leaves the largest free block. A double tap on a potion puts it on the belt; at a vendor a
+  double tap sells an item, at the stash it moves it between inventory and stash. **Take** also works with the
+  inventory open.
+- **Stash:** the gold amount to withdraw is filled in, and the shared gold is shown above the gold field.
 - **Materials:** a storage for runes, gems and skulls that keeps them as counts (68 kinds, separate for Hardcore). Open
-  it at the stash: **Deposit all** clears the inventory, a tap takes one back. It lives in its own file, your saved
-  games stay untouched.
+  it at the stash with the anvil: **Deposit all** clears the inventory, a tap takes one back. It lives in its own
+  file, your saved games stay untouched.
+- **Recipe book:** Horadric Cube recipes and runewords read from your game files, with what you can make right now, a
+  search and a preview. It puts the ingredients into the cube for you, also from the materials and other stash pages.
+  Open it with **Recipes** in the menu row or with the button above the cube.
 - **Larger stacks** (optional): tomes hold 80 scrolls, keys stack up to 50.
-- **Loot filter:** hide the ground names of junk – **Off**, **Mild**, **Strict**, or **Own** with a tick for each kind
+- **Loot filter:** hide the ground names of junk: **Off**, **Mild**, **Strict**, or **Own** with a tick for each kind
   (for example **Normal**, **Inferior** and **Superior** items). Only the names are hidden: **Take** skips hidden items, a
   tap right on one still picks it up. Runes, better gems, uniques, sets and the like always stay visible. The filter is kept per character.
 - **Item tooltips:** a rating from 0 to 10 at the end of the tooltip, the item you wear in the same place next to the
@@ -202,10 +233,11 @@ playable on a phone, not to change the game.
 
 ## Requirements
 
-- An Android phone or tablet (64-bit, Android 8 or newer) with **Adreno graphics (Snapdragon)** or, from 1.5.1,
-  **Mali, Samsung Xclipse or PowerVR DXT graphics** (e.g. Pixel 10). Tested on RedMagic 8 Pro and RedMagic 10 Pro
-  (Adreno), on tablets with Mali-G52 and Mali-G57, and on Xclipse 940 and PowerVR DXT. Other devices with these chips
-  may work: **best effort, not officially supported.** PowerVR BXM and older PowerVR chips are not supported yet.
+- An Android phone or tablet (64-bit, Android 8 or newer) with **Adreno (Snapdragon), Mali, Samsung Xclipse or
+  PowerVR DXT graphics** (e.g. Pixel 10). Tested on RedMagic 10 Pro (Adreno 830), Lenovo Tab TB328FU (Mali-G52) and
+  Doogee Tab E3 Max (Mali-G57); Xclipse 940 and PowerVR DXT were checked once on cloud test devices, and newer Adreno
+  chips such as the 850 are known to the graphics driver. Everything else may work: **best effort, not officially
+  supported.** PowerVR BXM and older PowerVR chips are not supported.
 - About **5 GB free space** for the installation without a PC (less once installed). The update from 1.5.0 or older
   moves the game into the app once and needs about as much free space as your game folder (about 1.4 GB).
 - **Your own Diablo II and Lord of Destruction:** two CD keys (Classic and LoD), or a game folder at version 1.13d.
@@ -240,7 +272,7 @@ step with its progress:
 4. Blizzard's installer installs the game into the app's own storage (about 4 minutes), then the app applies
    **Blizzard's official 1.13d patch** and checks the result. If the patch stops (for example without network), it
    goes on with the next start; the keys are not needed again.
-5. The app asks **Use the new installation?** Tap **Use it** (you can also delete the installer files, about 2 GB) –
+5. The app asks **Use the new installation?** Tap **Use it** (you can also delete the installer files, about 2 GB),
    the start page comes up. Tap **New character** for your first character.
 
 If something goes wrong, the page says what happened and what to do: mostly **Try again** goes on where it stood; after a failed installer it asks for the keys again.
@@ -266,11 +298,12 @@ stay).
 - **PlugY:** the shared stash lives in its own file (`_LOD_SharedStashSave.sss`) next to your characters. Copy it too,
   or the shared stash starts empty. Before the first start with PlugY the app backs up your saves.
 
-### Where your game and saves live (from 1.5.1)
+### Where your game and saves live
 
-The game and your saved games are inside the app. On the first start after the update the app copies them once from
-`Download/D2Android` (with progress); after that it only uses its own copy, which makes saving smooth. The old files
-in `Download` are no longer used and stay until you delete them; the app offers to delete the old game files for you.
+The game and your saved games are inside the app. When you update from 1.5.0 or older, the app copies them once from
+`Download/D2Android` on the first start (with progress); after that it only uses its own copy, which makes saving
+smooth. The old files in `Download` are no longer used and stay until you delete them; the app offers to delete the
+old game files for you.
 
 - **Keep a copy:** Settings → Saved games → **Save to a file** (a place you choose, e.g. Drive or a folder) or
   **Share saved games**. Do this now and then, especially before switching phones.
@@ -289,14 +322,14 @@ Updates install over the old version; the game and your saved games stay in the 
 ## Feedback
 
 D2Android is a hobby project. Bug reports and ideas are welcome as
-[issues](https://github.com/N1v0k/D2Android-Releases/issues/new/choose) – please use the templates.
+[issues](https://github.com/N1v0k/D2Android-Releases/issues/new/choose), please use the templates.
 
 - Bugs: phone model, Android version, app version and what you did. In the game, the menu
   **≡ → Settings → Help and info → Share diagnosis** right after the problem creates a file (what the app did in the
   last minutes, no game files) that helps a lot. **Report a bug** right below it opens the bug form with phone model,
   Android version and app version already filled in.
-- Tested on RedMagic 8 Pro and 10 Pro, two tablets with Mali graphics, Xclipse 940 and PowerVR DXT. Everything else
-  is best effort and not officially supported.
+- Tested on RedMagic 10 Pro (Adreno 830), Lenovo Tab TB328FU (Mali-G52) and Doogee Tab E3 Max (Mali-G57). Everything
+  else is best effort and not officially supported.
 - Please do not post CD keys, game files or saved games of other people.
 
 ## FAQ
@@ -318,7 +351,7 @@ Yes, you need your own purchased copy. The app ships no Blizzard files: the inst
 own downloaders and your keys, the alternative uses your own game folder.
 
 **Where are my saved games? Do they survive an update or reinstall?**
-Inside the app (from 1.5.1). They stay when you update the app. Uninstalling removes them: Android asks whether to
+Inside the app. They stay when you update the app. Uninstalling removes them: Android asks whether to
 keep the app's data, and **Share saved games** gives you a copy to keep anywhere you like.
 
 **How about battery and heat?**
@@ -328,6 +361,11 @@ background help.
 
 **Does it work with a controller?**
 Yes. Connect a gamepad over Bluetooth or USB; it is set up like Diablo II: Resurrected. See [Gamepad](#gamepad).
+
+**The game closes by itself after a minute or two (often TECNO, Infinix, itel)?**
+Android on these phones closes programs that an app starts in the background, and the game counts as one. Turn on the
+developer options (tap the build number in Settings → About phone seven times), then enable **Disable child process
+restrictions** there and restart the app.
 
 **Does the app collect data?**
 Only anonymous statistics, and only if you say yes when the app asks on the first start; before that nothing is sent.
@@ -340,15 +378,19 @@ Blizzard during the installation and the daily version check (one request to Git
 
 ## Roadmap
 
-Planned, without a fixed order or date:
+Next, without a fixed date:
+
+- **Gamepad and PC:** the whole app with a gamepad, a mouse and keyboard mode like on the PC, and playing together
+  between devices. Alongside: the installation and more languages, items and the stash.
+- **Build guides and game helpers.** Alongside: small UI work, and taking items out of sockets.
+
+Later, without a fixed order:
 
 - Picking up items by your own list (the loot filter already hides the names of junk), and bringing loot to the stash by
   town portal when the inventory is full.
 - Continuing where you left off in more places than areas with their own waypoint.
 - Even closer to the game: more of the remaining menus in the look of the game, and text of the game never covered by
   the buttons at the top.
-- A larger inventory and stash with more touch gestures (sorting and the double tap on potions are already in).
-- More languages for the app and the installation.
 - Syncing saved games with cloud storage.
 
 ## Licenses and source code
