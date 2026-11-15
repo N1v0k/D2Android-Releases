@@ -175,6 +175,7 @@ void destroyVkContext(JNIEnv* env, VkContext* context) {
 
     MEMFREE(context->memoryPool.data);
     MEMFREE(context->engineName);
+    MEMFREE(context->dmaBufSource);
     free(context);
 }
 

@@ -174,6 +174,9 @@ public abstract class GPUHelper {
 
     public static native String vkGetMemoryInfo();
 
+
+    public static native String dmaBufSourcesInfo();
+
     public static native void setGlobalEGLContext();
 
     public static native long createOffscreenEGLContext(boolean sharedContext);

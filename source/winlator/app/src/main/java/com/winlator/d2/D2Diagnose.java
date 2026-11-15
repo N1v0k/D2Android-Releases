@@ -242,13 +242,19 @@ public final class D2Diagnose {
 
 
 
+
     private static String vulkanMemoryInfo() {
         if (D2DeviceProbe.basics().ruledOutEarly()) return "? (nicht abgefragt)\n";
+        return nativeInfo(com.winlator.core.GPUHelper::vkGetMemoryInfo, "DiagnoseVulkan", 2000, "? (keine Antwort in 2 s)\n")
+            + nativeInfo(com.winlator.core.GPUHelper::dmaBufSourcesInfo, "DiagnoseDmaBuf", 5000, "dma-buf sources: ? (keine Antwort in 5 s)\n");
+    }
+
+    private static String nativeInfo(java.util.concurrent.Callable<String> call, String name, long millis, String noAnswer) {
         String[] out = {null};
         java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
         Thread t = new Thread(() -> {
             try {
-                out[0] = com.winlator.core.GPUHelper.vkGetMemoryInfo();
+                out[0] = call.call();
             }
             catch (Throwable ignored) {
 
@@ -256,11 +262,11 @@ public final class D2Diagnose {
             finally {
                 done.countDown();
             }
-        }, "DiagnoseVulkan");
+        }, name);
         t.setDaemon(true);
         t.start();
         try {
-            if (!done.await(2000, java.util.concurrent.TimeUnit.MILLISECONDS)) return "? (keine Antwort in 2 s)\n";
+            if (!done.await(millis, java.util.concurrent.TimeUnit.MILLISECONDS)) return noAnswer;
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();

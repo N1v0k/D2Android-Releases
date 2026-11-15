@@ -14,6 +14,8 @@
 
 #include "winlator.h"
 #include "file_utils.h"
+#include "dma_utils.h"
+#include <time.h>
 
 EGLContext globalEGLContext = EGL_NO_CONTEXT;
 
@@ -216,9 +218,13 @@ static int appendExternalMemory(char* out, int size, int used, PFN_vkGetPhysical
 
 
 
+
+
 JNIEXPORT jstring JNICALL
 Java_com_winlator_core_GPUHelper_vkGetMemoryInfo(JNIEnv *env, jclass obj) {
-    char out[2048] = {0};
+    char out[8192] = {0};
+    char extensionList[4096] = {0};
+    uint32_t extensionCount = 0;
     int used = 0;
     VkInstance instance = VK_NULL_HANDLE;
     VkExtensionProperties* extensions = NULL;
@@ -263,15 +269,27 @@ Java_com_winlator_core_GPUHelper_vkGetMemoryInfo(JNIEnv *env, jclass obj) {
 
 
     bool driverProperties = properties.apiVersion >= VK_MAKE_VERSION(1, 2, 0);
-    uint32_t extensionCount = 0;
-    if (!driverProperties && vkEnumerateDeviceExtensionProperties
+
+    if (vkEnumerateDeviceExtensionProperties
         && vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &extensionCount, NULL) == VK_SUCCESS && extensionCount > 0) {
         extensions = calloc(extensionCount, sizeof(VkExtensionProperties));
         if (extensions && vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &extensionCount, extensions) == VK_SUCCESS) {
+            bool externalMemoryHost = false;
+            int listUsed = 0;
             for (uint32_t i = 0; i < extensionCount; i++) {
                 if (strcmp(extensions[i].extensionName, "VK_KHR_driver_properties") == 0) driverProperties = true;
+                if (strcmp(extensions[i].extensionName, "VK_EXT_external_memory_host") == 0) externalMemoryHost = true;
+                if (listUsed < (int)sizeof(extensionList))
+                    listUsed += snprintf(extensionList + listUsed, sizeof(extensionList) - listUsed, "%s%s", i ? " " : "",
+                                         extensions[i].extensionName);
             }
+            if (listUsed < (int)sizeof(extensionList))
+                snprintf(extensionList + listUsed, sizeof(extensionList) - listUsed, "\nVK_EXT_external_memory_host: %s\n",
+                         externalMemoryHost ? "yes" : "no");
+            else snprintf(extensionList + sizeof(extensionList) - 48, 48, " ...\nVK_EXT_external_memory_host: %s\n",
+                          externalMemoryHost ? "yes" : "no");
         }
+        else extensionCount = 0;
     }
     if (driverProperties && vkGetPhysicalDeviceProperties2 && used < (int)sizeof(out)) {
         VkPhysicalDeviceDriverProperties driver = {0};
@@ -299,6 +317,8 @@ done:
                          access("/dev/dma_heap/system", R_OK) == 0 ? "yes" : "no",
                          access("/dev/ion", R_OK) == 0 ? "yes" : "no");
     }
+    if (extensionList[0] && used < (int)sizeof(out))
+        used += snprintf(out + used, sizeof(out) - used, "device extensions (%u): %s", extensionCount, extensionList);
     if (extensions) free(extensions);
     if (instance && vkDestroyInstance) vkDestroyInstance(instance, NULL);
     if (libvulkan) dlclose(libvulkan);
@@ -348,4 +368,57 @@ Java_com_winlator_core_GPUHelper_destroyOffscreenEGLContext(JNIEnv *env, jclass 
     EGLDisplay eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(eglDisplay, (EGLContext)contextPtr);
+}
+
+
+
+
+
+
+#define DMABUF_PROBE_MS 3000
+static long long elapsedMs(const struct timespec* start) {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (now.tv_sec - start->tv_sec) * 1000LL + (now.tv_nsec - start->tv_nsec) / 1000000;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_winlator_core_GPUHelper_dmaBufSourcesInfo(JNIEnv *env, jclass obj) {
+    char out[4096] = {0};
+    int used = 0;
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    DmaBufSource sources[DMABUF_MAX_SOURCES];
+    char ionInfo[96] = "";
+    int count = dmabuf_list_sources(sources, ionInfo, sizeof(ionInfo));
+    used += snprintf(out + used, sizeof(out) - used, "ion: %s\ndma-buf sources (4 KB, buffer + mmap):", ionInfo);
+    char failed[768] = "";
+    int failedUsed = 0;
+    int i = 0;
+    for (; i < count && used < (int)sizeof(out); i++) {
+        if (elapsedMs(&start) > DMABUF_PROBE_MS) break;
+        const char* kind = sources[i].kind == DMABUF_KIND_HEAP ? "dma_heap" : "ion";
+        struct timespec one;
+        clock_gettime(CLOCK_MONOTONIC, &one);
+        int fd = dmabuf_alloc_from(&sources[i], 4096);
+        long long ms = elapsedMs(&one);
+        if (fd < 0) {
+            if (failedUsed < (int)sizeof(failed))
+                failedUsed += snprintf(failed + failedUsed, sizeof(failed) - failedUsed, "%s%s %s (%d%s)", failedUsed ? ", " : "",
+                                       kind, sources[i].name, -fd, ms >= 100 ? ", slow" : "");
+            continue;
+        }
+        int mapError = dmabuf_test_mmap(fd, 4096);
+        close(fd);
+        if (mapError) used += snprintf(out + used, sizeof(out) - used, " %s %s: mmap errno %d;", kind, sources[i].name, mapError);
+        else used += snprintf(out + used, sizeof(out) - used, " %s %s: ok;", kind, sources[i].name);
+        if (ms >= 100 && used < (int)sizeof(out)) used += snprintf(out + used, sizeof(out) - used, " (%lld ms)", ms);
+    }
+    if (used < (int)sizeof(out))
+        used += snprintf(out + used, sizeof(out) - used, "%s%s%s\n", count == 0 ? " none" : "",
+                         failedUsed ? " no buffer (errno): " : "", failed);
+    if (i < count && used < (int)sizeof(out))
+        snprintf(out + used, sizeof(out) - used, "dma-buf sources: stopped after %lld ms at candidate %d of %d\n",
+                 elapsedMs(&start), i + 1, count);
+    return (*env)->NewStringUTF(env, out);
 }

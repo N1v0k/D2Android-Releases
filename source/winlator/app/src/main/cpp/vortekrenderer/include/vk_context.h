@@ -1,4 +1,4 @@
-#ifndef VORTEK_CONTEXT_H
+#ifndef VORTEK_CONTEXT_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
 #define VORTEK_CONTEXT_H
 
 #include "vortek.h"
@@ -19,6 +19,10 @@ typedef struct VkContext {
 
     bool hasExternalMemoryFd;
     bool hasExternalMemoryDMABuf;
+
+
+    bool dmaBufSourceChosen;
+    struct DmaBufSource* dmaBufSource;
 
 #if ENABLE_VALIDATION_LAYER
     VkDebugReportCallbackEXT debugReportCallback;

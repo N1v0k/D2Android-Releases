@@ -3,6 +3,10 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.6.1 (2026-11-15)
+
+- Start: on many phones and tablets with MediaTek and Mali graphics the game stopped at a black screen or with "D2DX Fatal Error". This is fixed.
+
 ## 1.6.0 (2026-11-15)
 
 - Skill buttons: every button casts its own skill, there is no left or right any more. Put skills on the buttons with **Assign Keys**: tap a button and pick its skill from the list, **Clear** empties it. The buttons are kept per character and taken over once from your game's hotkeys; your saved game is not changed. An aura's button switches the aura on, and it keeps running while you attack.

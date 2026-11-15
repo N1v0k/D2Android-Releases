@@ -13,6 +13,9 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/mman.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #include "native_handle.h"
 #include "winlator.h"
@@ -21,9 +24,41 @@
 
 extern const native_handle_t* _Nullable AHardwareBuffer_getNativeHandle(const AHardwareBuffer* _Nonnull buffer);
 
+
+
+static uint64_t hardwareBufferBytes(const AHardwareBuffer_Desc* desc) {
+    if (desc->format == AHARDWAREBUFFER_FORMAT_BLOB) return desc->width;
+    if (desc->format == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM || desc->format == HAL_PIXEL_FORMAT_BGRA_8888)
+        return (uint64_t)desc->stride * desc->height * (desc->layers ? desc->layers : 1) * 4;
+    return 0;
+}
+
+
+
+static bool isBufferMemoryFd(int fd, uint64_t bytes) {
+    int flags = fcntl(fd, F_GETFL);
+    if (flags < 0 || (flags & O_ACCMODE) != O_RDWR) return false;
+    off_t end = lseek(fd, 0, SEEK_END);
+    if (end < 0) return false;
+    lseek(fd, 0, SEEK_SET);
+    return (uint64_t)end >= bytes && end > 0;
+}
+
+
+
+
+
+
 int AHardwareBuffer_getFd(AHardwareBuffer* hardwareBuffer) {
     const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(hardwareBuffer);
-    return nativeHandle->numFds > 0 ? nativeHandle->data[0] : -1;
+    if (!nativeHandle || nativeHandle->numFds <= 0) return -1;
+    AHardwareBuffer_Desc desc = {0};
+    AHardwareBuffer_describe(hardwareBuffer, &desc);
+    uint64_t bytes = hardwareBufferBytes(&desc);
+    for (int i = 0; i < nativeHandle->numFds; i++) {
+        if (isBufferMemoryFd(nativeHandle->data[i], bytes)) return nativeHandle->data[i];
+    }
+    return nativeHandle->data[0];
 }
 
 EGLImageKHR createImageKHR(AHardwareBuffer* hardwareBuffer, int textureId) {

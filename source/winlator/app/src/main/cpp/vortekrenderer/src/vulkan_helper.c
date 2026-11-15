@@ -15,7 +15,9 @@ static VkBool32 debugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportOb
 }
 #endif
 
-static bool isExternalMemoryHandleTypeSupported(VkPhysicalDevice physicalDevice, VkExternalMemoryHandleTypeFlagBits handleType) {
+
+static bool isExternalMemoryHandleTypeSupported(VkPhysicalDevice physicalDevice, VkExternalMemoryHandleTypeFlagBits handleType,
+                                                VkExternalMemoryFeatureFlags neededFeature) {
     VkPhysicalDeviceExternalBufferInfo bufferInfo = {0};
     bufferInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO;
     bufferInfo.handleType = handleType;
@@ -25,7 +27,7 @@ static bool isExternalMemoryHandleTypeSupported(VkPhysicalDevice physicalDevice,
     vulkanWrapper.vkGetPhysicalDeviceExternalBufferProperties(physicalDevice, &bufferInfo, &bufferProperties);
     VkExternalMemoryProperties* memoryProperties = &bufferProperties.externalMemoryProperties;
 
-    return (memoryProperties->externalMemoryFeatures & (VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT | VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT)) != 0 &&
+    return (memoryProperties->externalMemoryFeatures & neededFeature) != 0 &&
            (memoryProperties->compatibleHandleTypes & handleType) != 0;
 }
 
@@ -69,6 +71,19 @@ static void logDevice(VkContext* context, VkPhysicalDevice physicalDevice, VkPhy
     logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT, "opaque fd");
     logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT, "dma-buf");
     logExternalMemory(physicalDevice, VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID, "ahardwarebuffer");
+
+    uint32_t extensionCount = 0;
+    bool externalMemoryHost = false;
+    if (vulkanWrapper.vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &extensionCount, NULL) == VK_SUCCESS && extensionCount > 0) {
+        VkExtensionProperties* extensions = calloc(extensionCount, sizeof(VkExtensionProperties));
+        if (extensions && vulkanWrapper.vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &extensionCount, extensions) == VK_SUCCESS) {
+            for (uint32_t i = 0; i < extensionCount; i++) {
+                if (strcmp(extensions[i].extensionName, "VK_EXT_external_memory_host") == 0) externalMemoryHost = true;
+            }
+        }
+        MEMFREE(extensions);
+    }
+    vortekLog("device extensions %u, VK_EXT_external_memory_host %s", extensionCount, externalMemoryHost ? "yes" : "no");
     vortekLog("hasExternalMemoryFd %d, hasExternalMemoryDMABuf %d, resourceMemoryType %d (0 auto, 1 opaque fd, 2 dma-buf, 3 ahardwarebuffer), engine '%s' 0x%x",
               context->hasExternalMemoryFd, context->hasExternalMemoryDMABuf, context->resourceMemoryType,
               context->engineName ? context->engineName : "", context->engineVersion);
@@ -140,8 +155,10 @@ void initVulkanInstance(VkContext* context, VkInstance instance, const VkApplica
     vulkanWrapper.vkGetPhysicalDeviceProperties2(physicalDevices[0], &properties2);
     context->driverID = driverProperties.driverID;
 
-    context->hasExternalMemoryFd = isExternalMemoryHandleTypeSupported(physicalDevices[0], VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
-    context->hasExternalMemoryDMABuf = isExternalMemoryHandleTypeSupported(physicalDevices[0], VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
+    context->hasExternalMemoryFd = isExternalMemoryHandleTypeSupported(physicalDevices[0], VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT,
+                                                                       VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT);
+    context->hasExternalMemoryDMABuf = isExternalMemoryHandleTypeSupported(physicalDevices[0], VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+                                                                           VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT);
 
     MEMFREE(context->engineName);
     context->engineVersion = 0;
