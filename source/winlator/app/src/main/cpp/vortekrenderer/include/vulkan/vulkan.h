@@ -1,4 +1,4 @@
-#ifndef VULKAN_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
+#ifndef VULKAN_H_  // Modified by D2Android (changes 2026-10-09 to 2026-11-16).
 #define VULKAN_H_ 1
 
 /*

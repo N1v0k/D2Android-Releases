@@ -1,4 +1,4 @@
-#ifndef VORTEK_CONTEXT_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
+#ifndef VORTEK_CONTEXT_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-16).
 #define VORTEK_CONTEXT_H
 
 #include "vortek.h"

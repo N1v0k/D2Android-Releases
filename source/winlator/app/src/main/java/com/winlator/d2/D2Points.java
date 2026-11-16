@@ -310,6 +310,21 @@ public final class D2Points {
         return new int[]{d[at + PLACE_WEAPON_SET] & 0xFF, u16(d, at + PLACE_WEAPON_SET + 1)};
     }
 
+
+    static final int PLACE_SKILL_LIST = 149, LENGTH_SKILL_LIST = 151;
+    public static final int LIST_NONE = -1, LIST_UNKNOWN = -2, LIST_CLOSED = -3;
+
+
+
+    public static int[] parseSkillList(byte[] d, int length, int at) {
+        if (at < 0 || length <= at) return null;
+        int n = d[at] & 0xFF;
+        if (n < LENGTH_SKILL_LIST || length < at + 1 + n) return null;
+        int v = u16(d, at + PLACE_SKILL_LIST);
+        int entry = v == 0xFFFF ? LIST_NONE : v == 0xFFFD ? LIST_CLOSED : v >= 0xFFF0 ? LIST_UNKNOWN : v;
+        return new int[]{d[at + PLACE_SKILL_LIST + 2] & 0xFF, entry};
+    }
+
     private static int s32(byte[] d, int at) {
         return (d[at] & 0xFF) | (d[at + 1] & 0xFF) << 8 | (d[at + 2] & 0xFF) << 16 | (d[at + 3] & 0xFF) << 24;
     }

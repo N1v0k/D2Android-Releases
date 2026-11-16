@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-11-15). -->
+<?xml version="1.0" encoding="utf-8"?><!-- Modified by D2Android (changes 2026-10-09 to 2026-11-16). -->
 
 
 <resources>
@@ -393,7 +393,7 @@
     <string name="assign_bar_clear">Clear</string>
     <string name="assign_cleared">%1$s is free now</string>
     <string name="assign_clear_free">%1$s is free already</string>
-    <string name="assign_no_change">No new skill seen. The one already chosen goes on the button from the skill tree (hold it).</string>
+    <string name="assign_no_change">No skill seen. Tap a skill\'s icon in the list.</string>
     <string name="note_skill_not_for_attack">This skill cannot go on Attack</string>
     <string name="note_slot_free">%1$s is free: tap \"%2$s\", then %1$s</string>
     <string name="note_swap_cast_failed">Weapon swap did not come through, nothing cast</string>

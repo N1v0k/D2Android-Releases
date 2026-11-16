@@ -285,6 +285,7 @@ public class D2TouchOverlay extends View {
     private Button assignButton;
 
     private boolean assignRight;
+    private int listRequest;
 
     private final D2AssignBar assignBar = new D2AssignBar();
     private boolean assignBarShown;
@@ -4233,20 +4234,106 @@ public class D2TouchOverlay extends View {
 
 
 
+
+
     private void assignAtScreen(int[] p) {
         Button button = assignButton;
         assignButton = null;
-        if (button == null) return;
-        D2ModState s = mod;
-        final boolean right = assignRight;
-        final int before = s != null ? (right ? s.rightSkill : s.leftSkill) : -1;
-        final long since = SystemClock.uptimeMillis();
-        enqueue(moveTo(p[0], p[1]), settle(HOVER_SETTLE_MS));
-        setLmb(true);
-        enqueue(waitMs(60));
-        setLmb(false);
-        handler.postDelayed(() -> takeAssigned(button, right, before, since), 150);
+        if (button == null || mod == null) return;
+        askListEntry(button, assignRight, p, SystemClock.uptimeMillis());
         invalidate();
+    }
+
+
+
+
+
+    private void askListEntry(Button button, boolean right, int[] p, long since) {
+        long now = SystemClock.uptimeMillis();
+        D2ModState s = modLink.state();
+        int act = D2SkillListPick.beforeAsk(s != null && s.isOpen(D2ModState.UI_MINISKILL), now - modLink.lastStateAt(),
+            modLink.drawnLayersAt() > 0, now - since);
+        if (act == D2SkillListPick.WAIT) {
+            handler.postDelayed(() -> askListEntry(button, right, p, since), 20);
+            return;
+        }
+        if (act == D2SkillListPick.GIVE_UP) {
+            D2Trace.log("assign: " + button.label + ": the list did not open");
+            showNote(text(R.string.assign_no_change));
+            return;
+        }
+        final int request = listRequest = D2SkillListPick.nextRequest(listRequest, modLink.skillListSeen());
+        float[] g = desktopToGame(p[0], p[1], s);
+        modLink.skillListAt(request, Math.round(g[0]), Math.round(g[1]));
+        takeListEntry(button, right, p, request, now);
+    }
+
+
+    private void closeSkillList(boolean right) {
+        D2ModState s = mod;
+        if (s == null) return;
+        float[] g = D2SkillButton.center(!right, s.gameWidth, s.gameHeight);
+        int[] at = gameToDesktop(g[0] - positionShiftX, g[1] - positionShiftY);
+        enqueue(moveTo(at[0], at[1]), settle(60), (now) -> {
+            D2ModState fresh = modLink.state();
+            if (fresh == null || !D2SkillListPick.clickAllowed(fresh.isOpen(D2ModState.UI_MINISKILL), now - modLink.lastStateAt())) {
+                D2Trace.log("assign: the list is not open (or no fresh state), not clicked to close");
+                return true;
+            }
+            setLmb(true);
+            enqueue(waitMs(60));
+            setLmb(false);
+            return true;
+        });
+    }
+
+
+    private void takeListEntry(Button button, boolean right, int[] p, int request, long since) {
+        int[] answer = modLink.skillListAnswer();
+        int act = D2SkillListPick.decide(answer, request, SystemClock.uptimeMillis() - since);
+        if (act == D2SkillListPick.WAIT) {
+            handler.postDelayed(() -> takeListEntry(button, right, p, request, since), 20);
+            return;
+        }
+        if (act == D2SkillListPick.BY_HAND) {
+            D2Trace.log("assign: " + button.label + ": no list entry known (" + (answer == null ? "no answer" : answer[1]) + "), by the hand");
+            assignByHand(button, right, p);
+            return;
+        }
+        D2ModState s = mod;
+        if (D2SkillListPick.listOpen(answer)) closeSkillList(right);
+        if (act == D2SkillListPick.TAKE) {
+            D2Trace.log("assign: " + button.label + " = list entry " + answer[1]);
+            putAssigned(button, answer[1]);
+        }
+        else {
+            D2Trace.log("assign: " + button.label + ": no list entry there (" + answer[1] + ")");
+            showNote(text(R.string.assign_no_change));
+        }
+        invalidate();
+    }
+
+
+
+
+
+    private void assignByHand(Button button, boolean right, int[] p) {
+        enqueue(moveTo(p[0], p[1]), settle(HOVER_SETTLE_MS), (now) -> {
+            D2ModState s = modLink.state();
+            boolean open = s != null && s.isOpen(D2ModState.UI_MINISKILL);
+            if (!D2SkillListPick.clickAllowed(open, now - modLink.lastStateAt())) {
+                D2Trace.log("assign: " + button.label + ": the list is not open (or no fresh state), no click");
+                showNote(text(R.string.assign_no_change));
+                return true;
+            }
+            final int before = right ? s.rightSkill : s.leftSkill;
+            final long since = SystemClock.uptimeMillis();
+            setLmb(true);
+            enqueue(waitMs(60));
+            setLmb(false);
+            handler.postDelayed(() -> takeAssigned(button, right, before, since), 150);
+            return true;
+        });
     }
 
 
@@ -4263,16 +4350,21 @@ public class D2TouchOverlay extends View {
             showNote(text(R.string.assign_no_change));
             return;
         }
-        if (button.kind == KIND_ATTACK) {
-            if (!setAttackSlot(now)) {
-                D2Trace.log("assign: aura " + now + " refused for Angriff");
-                showNote(text(R.string.note_skill_not_for_attack));
-            }
-        }
-        else if (button.vk >= VK_F1 && button.vk < VK_F1 + D2SkillSlots.PLACES) setSlot(button.vk - VK_F1, now);
+        putAssigned(button, now);
         D2Trace.log("assign: " + button.label + " = skill " + now + ", the hand gets " + before + " back");
         if (before >= 0) selectSkillFor(before, !right);
         invalidate();
+    }
+
+
+    private void putAssigned(Button button, int skill) {
+        if (button.kind == KIND_ATTACK) {
+            if (!setAttackSlot(skill)) {
+                D2Trace.log("assign: aura " + skill + " refused for Angriff");
+                showNote(text(R.string.note_skill_not_for_attack));
+            }
+        }
+        else if (button.vk >= VK_F1 && button.vk < VK_F1 + D2SkillSlots.PLACES) setSlot(button.vk - VK_F1, skill);
     }
 
     private Button findButton(float x, float y) {

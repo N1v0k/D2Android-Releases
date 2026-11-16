@@ -394,7 +394,7 @@
     <string name="assign_bar_clear">Svuota</string>
     <string name="assign_cleared">%1$s ora è libero</string>
     <string name="assign_clear_free">%1$s è già libero</string>
-    <string name="assign_no_change">Nessuna nuova abilità vista. Quella già scelta va sul pulsante dall\'albero delle abilità (tieni premuto).</string>
+    <string name="assign_no_change">Nessuna abilità vista. Tocca l\'icona di un\'abilità nella lista.</string>
     <string name="note_skill_not_for_attack">Questa abilità non può andare su Attacca</string>
     <string name="note_slot_free">%1$s è libero: tocca \"%2$s\", poi %1$s</string>
     <string name="note_swap_cast_failed">Il cambio d\'arma non è arrivato, nulla lanciato</string>

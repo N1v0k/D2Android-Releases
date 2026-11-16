@@ -162,6 +162,7 @@ public final class D2ModLink {
 
 
     private volatile int[] weaponSet;
+    private volatile int[] skillList;
 
     private volatile boolean appDps;
 
@@ -320,6 +321,7 @@ public final class D2ModLink {
             int extension = extensionAt(data, length);
             D2Points points = D2Points.parse(data, length, extension);
             resumeState = D2ResumeState.parse(data, length, extension);
+            skillList = D2Points.parseSkillList(data, length, extension);
             resumeStateAt = SystemClock.uptimeMillis();
             attackKind = D2Points.parseAttack(data, length, extension);
             attackKindAt = resumeStateAt;
@@ -1237,6 +1239,26 @@ public final class D2ModLink {
 
     public int[] weaponSet() {
         return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? weaponSet : null;
+    }
+
+
+
+    public int[] skillListAnswer() {
+        return SystemClock.uptimeMillis() - gridFactsAt < 3000 ? skillList : null;
+    }
+
+
+    public int skillListSeen() {
+        int[] answer = skillList;
+        return answer != null ? answer[0] : -1;
+    }
+
+
+    private static final int CMD_LIST_AT = 39;
+
+    public void skillListAt(int request, int x, int y) {
+        D2Trace.log("-> skill list at " + x + "," + y + " (request " + request + ")");
+        send(command(CMD_LIST_AT, 5).put((byte) request).putShort((short) x).putShort((short) y));
     }
 
 

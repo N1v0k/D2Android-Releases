@@ -510,5 +510,6 @@ static void putPointsBlock(Packet* p) {
     putDpsFields(p);
     putU32(p, sharedGoldNow(hero));
     putWeaponSetFields(p);
+    putSkillListField(p);
     p->data[lengthAt] = (BYTE) (p->len - lengthAt - 1);
 }

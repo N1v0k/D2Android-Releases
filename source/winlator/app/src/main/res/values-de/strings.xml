@@ -390,7 +390,7 @@
     <string name="assign_bar_clear">Leeren</string>
     <string name="assign_cleared">%1$s ist jetzt frei</string>
     <string name="assign_clear_free">%1$s ist schon frei</string>
-    <string name="assign_no_change">Keine neue Fertigkeit erkannt. Die schon gewählte legst du über den Fertigkeitenbaum auf den Knopf (lange drücken).</string>
+    <string name="assign_no_change">Keine Fertigkeit erkannt. Tippe in der Liste auf das Symbol einer Fertigkeit.</string>
     <string name="note_skill_not_for_attack">Diese Fertigkeit geht nicht auf Angriff</string>
     <string name="note_slot_free">%1$s ist frei: \"%2$s\" antippen, dann %1$s</string>
     <string name="note_swap_cast_failed">Waffenwechsel kam nicht an, nichts gewirkt</string>

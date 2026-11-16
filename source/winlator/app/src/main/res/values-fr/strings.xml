@@ -394,7 +394,7 @@
     <string name="assign_bar_clear">Vider</string>
     <string name="assign_cleared">%1$s est libre maintenant</string>
     <string name="assign_clear_free">%1$s est déjà libre</string>
-    <string name="assign_no_change">Aucune nouvelle aptitude vue. Celle déjà choisie se met sur le bouton depuis l\'arbre des aptitudes (appui long).</string>
+    <string name="assign_no_change">Aucune aptitude vue. Touche l\'icône d\'une aptitude dans la liste.</string>
     <string name="note_skill_not_for_attack">Cette aptitude ne peut pas aller sur Attaque</string>
     <string name="note_slot_free">%1$s est libre : touche \"%2$s\", puis %1$s</string>
     <string name="note_swap_cast_failed">Le changement d\'arme n\'a pas eu lieu, rien lancé</string>

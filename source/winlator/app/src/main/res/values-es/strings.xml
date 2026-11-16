@@ -394,7 +394,7 @@
     <string name="assign_bar_clear">Vaciar</string>
     <string name="assign_cleared">%1$s está libre ahora</string>
     <string name="assign_clear_free">%1$s ya está libre</string>
-    <string name="assign_no_change">No se vio ninguna habilidad nueva. La ya elegida se pone en el botón desde el árbol de habilidades (mantén pulsado).</string>
+    <string name="assign_no_change">No se vio ninguna habilidad. Toca el icono de una habilidad en la lista.</string>
     <string name="note_skill_not_for_attack">Esta habilidad no puede ir en Atacar</string>
     <string name="note_slot_free">%1$s está libre: toca \"%2$s\" y luego %1$s</string>
     <string name="note_swap_cast_failed">El cambio de arma no llegó, no se lanzó nada</string>

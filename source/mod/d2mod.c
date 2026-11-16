@@ -3287,6 +3287,7 @@ static void stashTest(BYTE op, BYTE value);
 #include "d2sharedgold.c"
 #include "d2stashpages.c"
 #include "d2weaponset.c"
+#include "d2skilllist.c"
 #include "d2points.c"
 #include "d2playtest.c"
 #include "d2map.c"
@@ -3380,6 +3381,7 @@ static void handleCommands(void* player, int stale) {
         if (cmd == 32) selfCheckCommand(buf, n);
         if (cmd == CMD_LAYER) layerCommand(buf, n);
         if (cmd == CMD_SOUND && player) soundCommand(buf, n);
+        if (cmd == CMD_LIST_AT) skillListCommand(buf, n);
         if (cmd == CMD_DRINK && n >= 9 && player) {
             int kind = buf[8] == 1 ? 2 : (buf[8] == 2 ? 3 : (buf[8] == 3 ? 5 : 1));
 
@@ -3937,7 +3939,8 @@ static void sendEffects(void* player) {
     lastTrack = now;
     trackEffects(player, dt, now - lastAt >= 500);
 
-    int pointsChanged = pointsTick(player) | equipReportDue() | sortReportDue(player) | weaponSetTick(player);
+    int pointsChanged = pointsTick(player) | equipReportDue() | sortReportDue(player) | weaponSetTick(player)
+        | skillListTick();
     if (now - lastAt < 500 && !pointsChanged) return;
     lastAt = now;
     DWORD game = (DWORD) GetModuleHandleA("D2Game.dll");

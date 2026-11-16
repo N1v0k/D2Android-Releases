@@ -1,4 +1,4 @@
-#ifndef VORTEK_SERIALIZER_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-15).
+#ifndef VORTEK_SERIALIZER_H  // Modified by D2Android (changes 2026-10-09 to 2026-11-16).
 #define VORTEK_SERIALIZER_H
 
 #include "vortek.h"

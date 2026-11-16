@@ -3,6 +3,10 @@
 <!-- One section per public release, newest first: "## <version> (<YYYY-MM-DD>)", then bullet points.
      The top section is the version being released; its text becomes the release notes and the app's "What's new" page. -->
 
+## 1.6.2 (2026-11-16)
+
+- Assign Keys: a skill that was already selected in the game could not be put on a button, for example Fire Bolt from the Sorceress's starting staff, a running aura or a skill from an item. This is fixed.
+
 ## 1.6.1 (2026-11-15)
 
 - Start: on many phones and tablets with MediaTek and Mali graphics the game stopped at a black screen or with "D2DX Fatal Error". This is fixed.
